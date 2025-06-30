@@ -1,0 +1,48 @@
+name: emora_mobile_app
+description: "A new Flutter project."
+publish_to: "none"
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Icons
+  cupertino_icons: ^1.0.8
+  flutter_svg: ^2.1.0
+
+  # State Management & Architecture
+  equatable: ^2.0.7
+  dartz: ^0.10.1
+  flutter_bloc: ^9.1.1
+
+  # Networking & Storage
+  internet_connection_checker: ^3.0.1
+  dio: ^5.8.0+1
+  shared_preferences: ^2.5.3
+
+  # Dependency Injection & Utils
+  get_it: ^8.0.3
+  package_info_plus: ^8.3.0
+
+  # Location Services (NEW)
+  geolocator: ^10.1.0
+  geocoding: ^3.0.0
+  permission_handler: ^11.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/EmoraLogo.svg
+    - assets/images/Congrats_user_illus.png
+    - assets/images/3d/earth.glb
