@@ -15,6 +15,7 @@ class AppConfig {
   // API CONFIGURATION
   // ===========================
   static const String apiBaseUrl = 'http://localhost:8000';
+
   static const Duration connectTimeout = Duration(seconds: 30);
   static const Duration receiveTimeout = Duration(seconds: 30);
   static const Duration sendTimeout = Duration(seconds: 30);
@@ -292,7 +293,7 @@ class AppConfig {
   ];
 
   static const String defaultPronoun = 'They / Them';
-  static const String defaultAgeGroup = '18-25';
+  static const String defaultAgeGroup = '20s';
   static const String defaultAvatar = 'panda';
 
   static const List<String> reservedUsernames = [

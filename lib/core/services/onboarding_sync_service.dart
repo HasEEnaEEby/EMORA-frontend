@@ -139,7 +139,7 @@ class OnboardingSyncService {
   Future<bool> _syncUserData(String userDataJson) async {
     try {
       final userData = UserOnboardingModel.fromJson(json.decode(userDataJson));
-      final success = await remoteDataSource.syncUserOnboardingData(userData);
+      final success = await remoteDataSource.saveUserData(userData);
 
       if (success) {
         Logger.info('✅ User data synced successfully');

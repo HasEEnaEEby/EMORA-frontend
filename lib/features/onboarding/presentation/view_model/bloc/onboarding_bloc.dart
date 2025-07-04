@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:emora_mobile_app/core/config/app_config.dart';
+import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/errors/failures.dart';
@@ -92,7 +93,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     LoadOnboardingSteps event,
     Emitter<OnboardingState> emit,
   ) async {
-    print('[EMORA_INFO] 📋 Loading onboarding steps...');
+    Logger.info('📋 Loading onboarding steps...');
     emit(OnboardingLoading());
 
     try {
@@ -108,7 +109,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           final defaultSteps = _getDefaultSteps();
           final initialUserData = const UserOnboardingEntity();
 
-          print('[EMORA_INFO] Using default steps due to: ${failure.message}');
+          Logger.info('Using default steps due to: ${failure.message}');
 
           emit(
             OnboardingStepsLoaded(
@@ -124,7 +125,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           final stepsToUse = (steps.isEmpty) ? _getDefaultSteps() : steps;
           final initialUserData = const UserOnboardingEntity();
 
-          print('[EMORA_INFO] Loaded ${stepsToUse.length} onboarding steps');
+          Logger.info('Loaded ${stepsToUse.length} onboarding steps');
 
           emit(
             OnboardingStepsLoaded(
@@ -159,32 +160,28 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
   }
 
   void _onNextStep(NextStep event, Emitter<OnboardingState> emit) {
-    print('[EMORA_INFO] 🔄 Processing NextStep event...');
+    Logger.info('🔄 Processing NextStep event...');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
 
-      print(
-        '[EMORA_INFO] Current step index: ${currentState.currentStepIndex}',
-      );
-      print('[EMORA_INFO] Total steps: ${currentState.steps.length}');
+      Logger.info('Current step index: ${currentState.currentStepIndex}');
+      Logger.info('Total steps: ${currentState.steps.length}');
 
       // Check if we can move to next step
       if (currentState.currentStepIndex < currentState.steps.length - 1) {
         final newIndex = currentState.currentStepIndex + 1;
         final nextStep = currentState.steps[newIndex];
 
-        print('[EMORA_INFO] Next step type: ${nextStep.type}');
+        Logger.info('Next step type: ${nextStep.type}');
 
         // If next step is completion, trigger completion instead of navigation
         if (nextStep.type == OnboardingStepType.completion) {
-          print(
-            '[EMORA_INFO] 🎯 Reached completion step - completing onboarding',
-          );
+          Logger.info('🎯 Reached completion step - completing onboarding');
           add(CompleteOnboardingEvent(currentState.userData));
         } else {
           // Normal step progression
-          print('[EMORA_INFO] Moving to step index: $newIndex');
+          Logger.info('Moving to step index: $newIndex');
 
           emit(
             currentState.copyWith(
@@ -195,18 +192,18 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
             ),
           );
 
-          print('[EMORA_INFO] ✅ State updated - moved to step $newIndex');
+          Logger.info('✅ State updated - moved to step $newIndex');
         }
       } else {
         // Reached the actual end
-        print('[EMORA_INFO] 🎯 Reached final step - completing onboarding');
+        Logger.info('🎯 Reached final step - completing onboarding');
         add(CompleteOnboardingEvent(currentState.userData));
       }
     }
   }
 
   void _onPreviousStep(PreviousStep event, Emitter<OnboardingState> emit) {
-    print('[EMORA_INFO] 🔄 Processing PreviousStep event...');
+    Logger.info('🔄 Processing PreviousStep event...');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -215,7 +212,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       if (currentState.currentStepIndex > 1) {
         final newIndex = currentState.currentStepIndex - 1;
 
-        print('[EMORA_INFO] Moving back to step index: $newIndex');
+        Logger.info('Moving back to step index: $newIndex');
 
         emit(
           currentState.copyWith(
@@ -225,10 +222,10 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           ),
         );
 
-        print('[EMORA_INFO] ✅ State updated - moved back to step $newIndex');
+        Logger.info('✅ State updated - moved back to step $newIndex');
       } else {
-        print(
-          '[EMORA_INFO] Cannot go back - already at first displayable step',
+        Logger.info(
+          'Cannot go back - already at first displayable step',
         );
       }
     }
@@ -238,7 +235,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     SavePronouns event,
     Emitter<OnboardingState> emit,
   ) async {
-    print('[EMORA_INFO] 💾 Saving pronouns: ${event.pronouns}');
+    Logger.info('💾 Saving pronouns: ${event.pronouns}');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -249,11 +246,11 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       // Save data gracefully
       await _saveUserDataGracefully(updatedUserData);
 
-      print('[EMORA_INFO] Updated userData: ${updatedUserData.toString()}');
+      Logger.info('Updated userData: ${updatedUserData.toString()}');
 
       emit(currentState.copyWith(userData: updatedUserData, canGoNext: true));
 
-      print('[EMORA_INFO] ✅ Pronouns saved and state updated');
+      Logger.info('✅ Pronouns saved and state updated');
     }
   }
 
@@ -261,7 +258,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     SaveAgeGroup event,
     Emitter<OnboardingState> emit,
   ) async {
-    print('[EMORA_INFO] 💾 Saving age group: ${event.ageGroup}');
+    Logger.info('💾 Saving age group: ${event.ageGroup}');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -273,7 +270,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
       emit(currentState.copyWith(userData: updatedUserData, canGoNext: true));
 
-      print('[EMORA_INFO] ✅ Age group saved and state updated');
+      Logger.info('✅ Age group saved and state updated');
     }
   }
 
@@ -281,7 +278,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     SaveAvatar event,
     Emitter<OnboardingState> emit,
   ) async {
-    print('[EMORA_INFO] 💾 Saving avatar: ${event.avatar}');
+    Logger.info('💾 Saving avatar: ${event.avatar}');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -293,7 +290,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
       emit(currentState.copyWith(userData: updatedUserData, canGoNext: true));
 
-      print('[EMORA_INFO] ✅ Avatar saved and state updated');
+      Logger.info('✅ Avatar saved and state updated');
     }
   }
 
@@ -308,23 +305,21 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
             failure is NotFoundFailure ? 404 : null,
             failure.message,
           )) {
-            print(
-              '[EMORA_INFO] 💾 Data saved locally (server not available in dev mode)',
+            Logger.info(
+              '💾 Data saved locally (server not available in dev mode)',
             );
           } else {
-            print(
-              '[EMORA_WARNING] Non-critical save error: ${failure.message}',
-            );
+            Logger.warning('Non-critical save error: ${failure.message}');
           }
         },
         (_) {
-          print('[EMORA_INFO] ✅ User data saved successfully to server');
+          Logger.info('✅ User data saved successfully to server');
         },
       );
     } catch (e) {
       // Gracefully handle any save errors during development
       if (AppConfig.isDevelopmentMode) {
-        print('[EMORA_INFO] 💾 Save handled gracefully in development: $e');
+        Logger.info('💾 Save handled gracefully in development: $e');
       } else {
         developer.log('Save error: $e', name: 'OnboardingBloc');
         rethrow;
@@ -336,7 +331,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     SaveUsername event,
     Emitter<OnboardingState> emit,
   ) async {
-    print('[EMORA_INFO] 💾 Saving username: ${event.username}');
+    Logger.info('💾 Saving username: ${event.username}');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -353,7 +348,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         currentState.copyWith(userData: updatedUserData, canGoNext: canGoNext),
       );
 
-      print('[EMORA_INFO] ✅ Username saved and state updated');
+      Logger.info('✅ Username saved and state updated');
     }
   }
 
@@ -469,7 +464,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     CompleteOnboardingEvent event,
     Emitter<OnboardingState> emit,
   ) async {
-    print('[EMORA_INFO] 🎯 Starting onboarding completion...');
+    Logger.info('🎯 Starting onboarding completion...');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -524,19 +519,17 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
                 'Server completion not available: ${failure.message}',
                 name: 'OnboardingBloc',
               );
-              print(
-                '[EMORA_INFO] Onboarding completed locally - will sync after registration',
+              Logger.info(
+                'Onboarding completed locally - will sync after registration',
               );
               remoteSync = false;
             } else {
-              print(
-                '[EMORA_WARNING] Server completion failed: ${failure.message}',
-              );
+              Logger.warning('Server completion failed: ${failure.message}');
               remoteSync = false;
             }
           },
           (success) {
-            print('[EMORA_INFO] ✅ Onboarding completed on server');
+            Logger.info('✅ Onboarding completed on server');
             remoteSync = true;
           },
         );
@@ -563,7 +556,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     SkipOnboarding event,
     Emitter<OnboardingState> emit,
   ) async {
-    print('[EMORA_INFO] 🚀 Skipping onboarding...');
+    Logger.info('🚀 Skipping onboarding...');
 
     emit(OnboardingDataSaving());
 
@@ -610,14 +603,12 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
             );
             remoteSync = false;
           } else {
-            print(
-              '[EMORA_WARNING] Server skip completion failed: ${failure.message}',
-            );
+            Logger.warning('Server skip completion failed: ${failure.message}');
             remoteSync = false;
           }
         },
         (success) {
-          print('[EMORA_INFO] ✅ Onboarding skip completed on server');
+          Logger.info('✅ Onboarding skip completed on server');
           remoteSync = true;
         },
       );

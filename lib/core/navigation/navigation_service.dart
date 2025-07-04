@@ -1,8 +1,18 @@
+// lib/core/navigation/navigation_service.dart - ENHANCED VERSION
 import 'package:flutter/material.dart';
 
-/// Centralized navigation service to handle navigation throughout the app
+import '../utils/logger.dart';
+
+/// Centralized navigation service with comprehensive error handling and debugging
 class NavigationService {
   static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+  // Navigation state tracking
+  static bool _isNavigating = false;
+  static String? _lastRoute;
+  static DateTime? _lastNavigationTime;
+  static const Duration _navigationDebounce = Duration(milliseconds: 500);
+  static final List<String> _navigationHistory = [];
 
   /// Get the current context
   static BuildContext? get currentContext => navigatorKey.currentContext;
@@ -10,8 +20,103 @@ class NavigationService {
   /// Get the current navigator state
   static NavigatorState? get currentState => navigatorKey.currentState;
 
-  /// Convenience getter for context (fixes the connectivity service error)
+  /// Convenience getter for context
   static BuildContext? get context => currentContext;
+
+  /// Enhanced safe navigation with comprehensive error handling
+  static Future<T?> safeNavigate<T extends Object?>(
+    String routeName, {
+    Object? arguments,
+    bool replacement = false,
+    bool clearStack = false,
+    bool allowDuplicates = false,
+  }) async {
+    try {
+      Logger.info('🚀 SafeNavigate: $routeName (replacement: $replacement, clearStack: $clearStack)');
+
+      // Prevent rapid duplicate navigation
+      if (!allowDuplicates && _isDuplicateNavigation(routeName)) {
+        Logger.warning('🔄 Preventing duplicate navigation to: $routeName');
+        return null;
+      }
+
+      if (currentState == null) {
+        Logger.error('❌ NavigationService: Navigator state is null');
+        return null;
+      }
+
+      // Handle navigation queue
+      if (_isNavigating) {
+        Logger.info('⏳ Navigation in progress, queuing: $routeName');
+        await Future.delayed(const Duration(milliseconds: 100));
+        return safeNavigate<T>(
+          routeName,
+          arguments: arguments,
+          replacement: replacement,
+          clearStack: clearStack,
+          allowDuplicates: true, // Allow on retry
+        );
+      }
+
+      _isNavigating = true;
+      _updateNavigationHistory(routeName);
+
+      try {
+        T? result;
+        
+        if (clearStack) {
+          Logger.info('🔄 Clearing navigation stack and navigating to: $routeName');
+          result = await pushNamedAndClearStack<T>(routeName, arguments: arguments);
+        } else if (replacement) {
+          Logger.info('🔄 Replacing current route with: $routeName');
+          result = await pushReplacementNamed<T, dynamic>(routeName, arguments: arguments);
+        } else {
+          Logger.info('▶️ Pushing new route: $routeName');
+          result = await pushNamed<T>(routeName, arguments: arguments);
+        }
+
+        Logger.info('✅ Navigation completed successfully to: $routeName');
+        return result;
+      } finally {
+        // Reset navigation flag after a delay
+        Future.delayed(_navigationDebounce, () {
+          _isNavigating = false;
+        });
+      }
+    } catch (e, stackTrace) {
+      Logger.error('❌ NavigationService safeNavigate error for $routeName', e, stackTrace);
+      _isNavigating = false;
+      
+      // Show user-friendly error
+      showErrorSnackBar('Navigation failed: Please try again');
+      return null;
+    }
+  }
+
+  /// Check for duplicate navigation
+  static bool _isDuplicateNavigation(String routeName) {
+    final now = DateTime.now();
+
+    if (_lastRoute == routeName &&
+        _lastNavigationTime != null &&
+        now.difference(_lastNavigationTime!) < _navigationDebounce) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /// Update navigation history
+  static void _updateNavigationHistory(String routeName) {
+    _lastRoute = routeName;
+    _lastNavigationTime = DateTime.now();
+    
+    // Add to history (keep last 10 entries)
+    _navigationHistory.add('${DateTime.now().toIso8601String()}: $routeName');
+    if (_navigationHistory.length > 10) {
+      _navigationHistory.removeAt(0);
+    }
+  }
 
   /// Push a named route
   static Future<T?> pushNamed<T extends Object?>(
@@ -25,11 +130,11 @@ class NavigationService {
           arguments: arguments,
         );
       } else {
-        debugPrint('❌ NavigationService: Navigator state is null');
+        Logger.error('❌ NavigationService: Navigator state is null for pushNamed');
         return null;
       }
     } catch (e) {
-      debugPrint('❌ NavigationService pushNamed error: $e');
+      Logger.error('❌ NavigationService pushNamed error for $routeName', e);
       return null;
     }
   }
@@ -48,11 +153,11 @@ class NavigationService {
           arguments: arguments,
         );
       } else {
-        debugPrint('❌ NavigationService: Navigator state is null');
+        Logger.error('❌ NavigationService: Navigator state is null for pushNamedAndRemoveUntil');
         return null;
       }
     } catch (e) {
-      debugPrint('❌ NavigationService pushNamedAndRemoveUntil error: $e');
+      Logger.error('❌ NavigationService pushNamedAndRemoveUntil error for $routeName', e);
       return null;
     }
   }
@@ -62,6 +167,7 @@ class NavigationService {
     String routeName, {
     Object? arguments,
   }) async {
+    Logger.info('🗑️ Clearing entire navigation stack for: $routeName');
     return await pushNamedAndRemoveUntil<T>(
       routeName,
       (route) => false, // Remove all previous routes
@@ -83,11 +189,11 @@ class NavigationService {
           result: result,
         );
       } else {
-        debugPrint('❌ NavigationService: Navigator state is null');
+        Logger.error('❌ NavigationService: Navigator state is null for pushReplacementNamed');
         return null;
       }
     } catch (e) {
-      debugPrint('❌ NavigationService pushReplacementNamed error: $e');
+      Logger.error('❌ NavigationService pushReplacementNamed error for $routeName', e);
       return null;
     }
   }
@@ -96,14 +202,13 @@ class NavigationService {
   static void pop<T extends Object?>([T? result]) {
     try {
       if (currentState != null && currentState!.canPop()) {
+        Logger.info('⬅️ Popping current route');
         currentState!.pop<T>(result);
       } else {
-        debugPrint(
-          '❌ NavigationService: Cannot pop - navigator state is null or cannot pop',
-        );
+        Logger.warning('⚠️ NavigationService: Cannot pop - no routes available or navigator state null');
       }
     } catch (e) {
-      debugPrint('❌ NavigationService pop error: $e');
+      Logger.error('❌ NavigationService pop error', e);
     }
   }
 
@@ -111,64 +216,93 @@ class NavigationService {
   static void popUntil(bool Function(Route<dynamic>) predicate) {
     try {
       if (currentState != null) {
+        Logger.info('⬅️ Popping until condition met');
         currentState!.popUntil(predicate);
       } else {
-        debugPrint('❌ NavigationService: Navigator state is null');
+        Logger.error('❌ NavigationService: Navigator state is null for popUntil');
       }
     } catch (e) {
-      debugPrint('❌ NavigationService popUntil error: $e');
+      Logger.error('❌ NavigationService popUntil error', e);
     }
   }
 
-  /// Show a snackbar
+  /// Show a snackbar with enhanced styling
   static void showSnackBar(
     String message, {
     Color? backgroundColor,
     Duration duration = const Duration(seconds: 3),
     SnackBarAction? action,
+    IconData? icon,
   }) {
     try {
       if (currentContext != null) {
         ScaffoldMessenger.of(currentContext!).showSnackBar(
           SnackBar(
-            content: Text(message),
-            backgroundColor: backgroundColor,
+            content: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, color: Colors.white, size: 20),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(child: Text(message)),
+              ],
+            ),
+            backgroundColor: backgroundColor ?? const Color(0xFF374151),
             duration: duration,
             action: action,
             behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            margin: const EdgeInsets.all(16),
           ),
         );
       } else {
-        debugPrint(
-          '❌ NavigationService: Context is null, cannot show snackbar',
-        );
+        Logger.warning('⚠️ NavigationService: Context is null, cannot show snackbar: $message');
       }
     } catch (e) {
-      debugPrint('❌ NavigationService showSnackBar error: $e');
+      Logger.error('❌ NavigationService showSnackBar error', e);
     }
   }
 
   /// Show a success snackbar
   static void showSuccessSnackBar(String message) {
-    showSnackBar(message, backgroundColor: const Color(0xFF4CAF50));
+    showSnackBar(
+      message, 
+      backgroundColor: const Color(0xFF10B981),
+      icon: Icons.check_circle,
+    );
   }
 
   /// Show an error snackbar
   static void showErrorSnackBar(String message) {
-    showSnackBar(message, backgroundColor: const Color(0xFFf44336));
+    showSnackBar(
+      message, 
+      backgroundColor: const Color(0xFFEF4444),
+      icon: Icons.error,
+      duration: const Duration(seconds: 4),
+    );
   }
 
   /// Show an info snackbar
   static void showInfoSnackBar(String message) {
-    showSnackBar(message, backgroundColor: const Color(0xFF2196F3));
+    showSnackBar(
+      message, 
+      backgroundColor: const Color(0xFF3B82F6),
+      icon: Icons.info,
+    );
   }
 
   /// Show a warning snackbar
   static void showWarningSnackBar(String message) {
-    showSnackBar(message, backgroundColor: const Color(0xFFFF9800));
+    showSnackBar(
+      message, 
+      backgroundColor: const Color(0xFFF59E0B),
+      icon: Icons.warning,
+    );
   }
 
-  /// Show a dialog
+  /// Show a custom dialog
   static Future<T?> showCustomDialog<T>({
     required Widget dialog,
     bool barrierDismissible = true,
@@ -181,28 +315,27 @@ class NavigationService {
           builder: (context) => dialog,
         );
       } else {
-        debugPrint('❌ NavigationService: Context is null, cannot show dialog');
+        Logger.error('❌ NavigationService: Context is null, cannot show dialog');
         return null;
       }
     } catch (e) {
-      debugPrint('❌ NavigationService showCustomDialog error: $e');
+      Logger.error('❌ NavigationService showCustomDialog error', e);
       return null;
     }
   }
 
-  /// Show a confirmation dialog
+  /// Show a confirmation dialog with enhanced styling
   static Future<bool?> showConfirmationDialog({
     required String title,
     required String message,
     String confirmText = 'Confirm',
     String cancelText = 'Cancel',
     Color? confirmColor,
+    IconData? icon,
   }) async {
     try {
       if (currentContext == null) {
-        debugPrint(
-          '❌ NavigationService: Context is null, cannot show confirmation dialog',
-        );
+        Logger.error('❌ NavigationService: Context is null, cannot show confirmation dialog');
         return null;
       }
 
@@ -211,17 +344,27 @@ class NavigationService {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF1A1A2E),
+            backgroundColor: const Color(0xFF1F2937),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            title: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-              ),
+            title: Row(
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, color: const Color(0xFF8B5CF6), size: 24),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
             content: Text(
               message,
@@ -242,7 +385,7 @@ class NavigationService {
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: confirmColor ?? const Color(0xFF8B5FBF),
+                  backgroundColor: confirmColor ?? const Color(0xFF8B5CF6),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -261,12 +404,12 @@ class NavigationService {
         },
       );
     } catch (e) {
-      debugPrint('❌ NavigationService showConfirmationDialog error: $e');
+      Logger.error('❌ NavigationService showConfirmationDialog error', e);
       return null;
     }
   }
 
-  /// Show an error dialog
+  /// Show an error dialog with enhanced styling
   static Future<void> showErrorDialog({
     required String title,
     required String message,
@@ -275,9 +418,7 @@ class NavigationService {
   }) async {
     try {
       if (currentContext == null) {
-        debugPrint(
-          '❌ NavigationService: Context is null, cannot show error dialog',
-        );
+        Logger.error('❌ NavigationService: Context is null, cannot show error dialog');
         return;
       }
 
@@ -286,7 +427,7 @@ class NavigationService {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: const Color(0xFF1A1A2E),
+            backgroundColor: const Color(0xFF1F2937),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
@@ -338,7 +479,7 @@ class NavigationService {
         },
       );
     } catch (e) {
-      debugPrint('❌ NavigationService showErrorDialog error: $e');
+      Logger.error('❌ NavigationService showErrorDialog error', e);
     }
   }
 
@@ -353,7 +494,7 @@ class NavigationService {
             return PopScope(
               canPop: false,
               child: AlertDialog(
-                backgroundColor: const Color(0xFF1A1A2E),
+                backgroundColor: const Color(0xFF1F2937),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -362,7 +503,7 @@ class NavigationService {
                   children: [
                     const CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF8B5FBF),
+                        Color(0xFF8B5CF6),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -377,12 +518,10 @@ class NavigationService {
           },
         );
       } else {
-        debugPrint(
-          '❌ NavigationService: Context is null, cannot show loading dialog',
-        );
+        Logger.error('❌ NavigationService: Context is null, cannot show loading dialog');
       }
     } catch (e) {
-      debugPrint('❌ NavigationService showLoadingDialog error: $e');
+      Logger.error('❌ NavigationService showLoadingDialog error', e);
     }
   }
 
@@ -392,10 +531,10 @@ class NavigationService {
       if (currentContext != null) {
         Navigator.of(currentContext!).pop();
       } else {
-        debugPrint('❌ NavigationService: Context is null, cannot hide dialog');
+        Logger.warning('⚠️ NavigationService: Context is null, cannot hide dialog');
       }
     } catch (e) {
-      debugPrint('❌ NavigationService hideDialog error: $e');
+      Logger.error('❌ NavigationService hideDialog error', e);
     }
   }
 
@@ -407,7 +546,7 @@ class NavigationService {
       }
       return null;
     } catch (e) {
-      debugPrint('❌ NavigationService getCurrentRouteName error: $e');
+      Logger.error('❌ NavigationService getCurrentRouteName error', e);
       return null;
     }
   }
@@ -417,38 +556,8 @@ class NavigationService {
     try {
       return currentState?.canPop() ?? false;
     } catch (e) {
-      debugPrint('❌ NavigationService canPop error: $e');
+      Logger.error('❌ NavigationService canPop error', e);
       return false;
-    }
-  }
-
-  /// Safe navigation with error handling
-  static Future<T?> safeNavigate<T extends Object?>(
-    String routeName, {
-    Object? arguments,
-    bool replacement = false,
-    bool clearStack = false,
-  }) async {
-    try {
-      if (currentState == null) {
-        debugPrint('❌ NavigationService: Navigator state is null');
-        return null;
-      }
-
-      if (clearStack) {
-        return await pushNamedAndClearStack<T>(routeName, arguments: arguments);
-      } else if (replacement) {
-        return await pushReplacementNamed<T, dynamic>(
-          routeName,
-          arguments: arguments,
-        );
-      } else {
-        return await pushNamed<T>(routeName, arguments: arguments);
-      }
-    } catch (e) {
-      debugPrint('❌ NavigationService safeNavigate error: $e');
-      showErrorSnackBar('Navigation failed: ${e.toString()}');
-      return null;
     }
   }
 
@@ -460,6 +569,8 @@ class NavigationService {
     bool replacement = false,
   }) async {
     try {
+      Logger.info('🎯 Attempting navigation with fallback: $primaryRoute -> $fallbackRoute');
+      
       // Try primary route
       final result = await safeNavigate(
         primaryRoute,
@@ -468,13 +579,11 @@ class NavigationService {
       );
 
       if (result == null && fallbackRoute != null) {
-        debugPrint(
-          '🔄 Primary navigation failed, trying fallback: $fallbackRoute',
-        );
+        Logger.info('🔄 Primary navigation failed, trying fallback: $fallbackRoute');
         await safeNavigate(fallbackRoute, replacement: replacement);
       }
     } catch (e) {
-      debugPrint('❌ NavigationService navigateWithFallback error: $e');
+      Logger.error('❌ NavigationService navigateWithFallback error', e);
       if (fallbackRoute != null) {
         await safeNavigate(fallbackRoute, replacement: replacement);
       }
@@ -487,51 +596,11 @@ class NavigationService {
     Object? arguments,
   }) async {
     try {
-      await pushNamedAndClearStack(routeName, arguments: arguments);
+      Logger.info('🔄 Resetting navigation stack and navigating to: $routeName');
+      await safeNavigate(routeName, arguments: arguments, clearStack: true);
     } catch (e) {
-      debugPrint('❌ NavigationService resetAndNavigateTo error: $e');
+      Logger.error('❌ NavigationService resetAndNavigateTo error', e);
       showErrorSnackBar('Failed to reset navigation');
-    }
-  }
-
-  /// Navigate back to a specific route by name
-  static void popToRoute(String routeName) {
-    try {
-      if (currentState != null) {
-        currentState!.popUntil((route) {
-          return route.settings.name == routeName;
-        });
-      } else {
-        debugPrint('❌ NavigationService: Navigator state is null');
-      }
-    } catch (e) {
-      debugPrint('❌ NavigationService popToRoute error: $e');
-    }
-  }
-
-  /// Check if a specific route is in the navigation stack
-  static bool isRouteInStack(String routeName) {
-    try {
-      if (currentContext == null) return false;
-
-      // This is a simplified check - you might need a more robust implementation
-      return getCurrentRouteName() == routeName;
-    } catch (e) {
-      debugPrint('❌ NavigationService isRouteInStack error: $e');
-      return false;
-    }
-  }
-
-  /// Get navigation history depth (approximate)
-  static int getNavigationDepth() {
-    try {
-      if (currentState == null) return 0;
-
-      // This is an approximation - Flutter doesn't provide direct access to navigation stack depth
-      return currentState!.canPop() ? 1 : 0;
-    } catch (e) {
-      debugPrint('❌ NavigationService getNavigationDepth error: $e');
-      return 0;
     }
   }
 
@@ -542,7 +611,7 @@ class NavigationService {
         ScaffoldMessenger.of(currentContext!).clearSnackBars();
       }
     } catch (e) {
-      debugPrint('❌ NavigationService clearSnackBars error: $e');
+      Logger.error('❌ NavigationService clearSnackBars error', e);
     }
   }
 
@@ -555,9 +624,7 @@ class NavigationService {
   }) async {
     try {
       if (currentContext == null) {
-        debugPrint(
-          '❌ NavigationService: Context is null, cannot show bottom sheet',
-        );
+        Logger.error('❌ NavigationService: Context is null, cannot show bottom sheet');
         return null;
       }
 
@@ -570,8 +637,59 @@ class NavigationService {
         builder: (context) => child,
       );
     } catch (e) {
-      debugPrint('❌ NavigationService showBottomSheet error: $e');
+      Logger.error('❌ NavigationService showBottomSheet error', e);
       return null;
     }
+  }
+
+  /// Get navigation statistics for debugging
+  static Map<String, dynamic> getNavigationStats() {
+    return {
+      'isNavigating': _isNavigating,
+      'lastRoute': _lastRoute,
+      'lastNavigationTime': _lastNavigationTime?.toIso8601String(),
+      'canPop': canPop(),
+      'currentRoute': getCurrentRouteName(),
+      'navigationHistory': _navigationHistory,
+      'hasContext': currentContext != null,
+      'hasNavigatorState': currentState != null,
+    };
+  }
+
+  /// Debug method to print navigation statistics
+  static void debugPrintNavigationStats() {
+    final stats = getNavigationStats();
+    Logger.info('📊 Navigation Statistics:');
+    stats.forEach((key, value) {
+      Logger.info('   $key: $value');
+    });
+  }
+
+  /// Clear navigation history (for testing/debugging)
+  static void clearNavigationHistory() {
+    _navigationHistory.clear();
+    _lastRoute = null;
+    _lastNavigationTime = null;
+    Logger.info('🗑️ Navigation history cleared');
+  }
+
+  /// Check if navigation service is properly initialized
+  static bool isInitialized() {
+    return navigatorKey.currentContext != null;
+  }
+
+  /// Get a health check of the navigation service
+  static Map<String, dynamic> healthCheck() {
+    return {
+      'initialized': isInitialized(),
+      'hasContext': currentContext != null,
+      'hasNavigatorState': currentState != null,
+      'canPop': canPop(),
+      'currentRoute': getCurrentRouteName(),
+      'isNavigating': _isNavigating,
+      'lastRoute': _lastRoute,
+      'historyLength': _navigationHistory.length,
+      'timestamp': DateTime.now().toIso8601String(),
+    };
   }
 }

@@ -125,52 +125,49 @@ void _verifyRegistrations() {
 }
 
 /// Verify that critical services can be retrieved successfully
+/// FIXED: Lightweight verification without creating or closing bloc instances
 void _verifyCriticalServices() {
-  Logger.info('🔧 Testing critical service retrieval...');
+  Logger.info('🔧 Testing critical service registrations...');
 
-  final criticalServices = <String, Function()>{
-    'FeatureFlagService': () => sl<FeatureFlagService>(),
-  };
-
-  // Check feature flags first to determine what services to test
   final featureFlags = sl<FeatureFlagService>();
+  Logger.info('✅ FeatureFlagService retrieved and tested successfully');
 
-  // Always check these core services
-  criticalServices.addAll({
-    'AuthBloc': () {
-      final bloc = sl<AuthBloc>();
-      bloc.close();
-      return bloc;
-    },
-    'HomeBloc': () {
-      final bloc = sl<HomeBloc>();
-      bloc.close();
-      return bloc;
-    },
-    'SplashCubit': () {
-      final cubit = sl<SplashCubit>();
-      cubit.close();
-      return cubit;
-    },
-  });
+  // Define critical services to verify based on feature flags
+  final List<String> criticalServices = ['AuthBloc', 'HomeBloc', 'SplashCubit'];
 
-  // Conditionally check emotion bloc
+  // Add conditional services based on feature flags
   if (featureFlags.isEmotionEnabled) {
-    criticalServices['EmotionBloc'] = () {
-      final bloc = sl<EmotionBloc>();
-      bloc.close();
-      return bloc;
-    };
+    criticalServices.add('EmotionBloc');
   }
-  for (final entry in criticalServices.entries) {
-    final serviceName = entry.key;
-    final serviceGetter = entry.value;
 
+  // Verify each service is registered using correct GetIt syntax
+  for (final serviceName in criticalServices) {
     try {
-      serviceGetter();
-      Logger.info('✅ $serviceName retrieved and tested successfully');
+      bool isRegistered = false;
+
+      // Use correct GetIt.isRegistered syntax for each service type
+      switch (serviceName) {
+        case 'AuthBloc':
+          isRegistered = sl.isRegistered<AuthBloc>();
+          break;
+        case 'HomeBloc':
+          isRegistered = sl.isRegistered<HomeBloc>();
+          break;
+        case 'SplashCubit':
+          isRegistered = sl.isRegistered<SplashCubit>();
+          break;
+        case 'EmotionBloc':
+          isRegistered = sl.isRegistered<EmotionBloc>();
+          break;
+      }
+
+      if (isRegistered) {
+        Logger.info('✅ $serviceName is registered and available');
+      } else {
+        throw Exception('$serviceName is not registered');
+      }
     } catch (e) {
-      Logger.error('❌ Failed to retrieve $serviceName', e);
+      Logger.error('❌ Failed to verify $serviceName registration', e);
       throw Exception(
         'Critical service verification failed for $serviceName: $e',
       );
@@ -233,7 +230,17 @@ int _getTotalServiceCount() {
 /// Reset GetIt for testing purposes
 void resetForTesting() {
   Logger.info('🧪 Resetting GetIt for testing...');
-  sl.reset();
+
+  try {
+    // First, attempt to close any open blocs before resetting
+    _closeExistingBlocs();
+    sl.reset();
+    Logger.info('✅ GetIt reset completed for testing');
+  } catch (e) {
+    Logger.error('❌ Error during testing reset', e);
+    // Force reset even if cleanup fails
+    sl.reset();
+  }
 }
 
 /// Validate the entire injection container
@@ -284,6 +291,108 @@ T? getServiceSafely<T extends Object>() {
   }
 }
 
+/// Safe method to get bloc instances only when needed
+T getBlocSafely<T extends Object>() {
+  try {
+    final bloc = sl<T>();
+
+    // Additional safety check for blocs that have isClosed property
+    if (bloc is AuthBloc && bloc.isClosed) {
+      throw Exception('AuthBloc is already closed');
+    }
+    if (bloc is HomeBloc && bloc.isClosed) {
+      throw Exception('HomeBloc is already closed');
+    }
+    if (bloc is EmotionBloc && bloc.isClosed) {
+      throw Exception('EmotionBloc is already closed');
+    }
+    if (bloc is SplashCubit && bloc.isClosed) {
+      throw Exception('SplashCubit is already closed');
+    }
+
+    return bloc;
+  } catch (e) {
+    Logger.error('❌ Failed to get bloc ${T.toString()} safely', e);
+    rethrow;
+  }
+}
+
+/// Close existing bloc instances safely
+void _closeExistingBlocs() {
+  Logger.info('🧹 Closing existing bloc instances...');
+
+  final blocsToClose = <String, Function()>{
+    'AuthBloc': () {
+      if (sl.isRegistered<AuthBloc>()) {
+        try {
+          final bloc = sl<AuthBloc>();
+          if (!bloc.isClosed) {
+            bloc.close();
+            Logger.info('✅ AuthBloc closed successfully');
+          } else {
+            Logger.info('ℹ️ AuthBloc was already closed');
+          }
+        } catch (e) {
+          Logger.warning('⚠️ Error closing AuthBloc: $e');
+        }
+      }
+    },
+    'HomeBloc': () {
+      if (sl.isRegistered<HomeBloc>()) {
+        try {
+          final bloc = sl<HomeBloc>();
+          if (!bloc.isClosed) {
+            bloc.close();
+            Logger.info('✅ HomeBloc closed successfully');
+          } else {
+            Logger.info('ℹ️ HomeBloc was already closed');
+          }
+        } catch (e) {
+          Logger.warning('⚠️ Error closing HomeBloc: $e');
+        }
+      }
+    },
+    'EmotionBloc': () {
+      if (sl.isRegistered<EmotionBloc>()) {
+        try {
+          final bloc = sl<EmotionBloc>();
+          if (!bloc.isClosed) {
+            bloc.close();
+            Logger.info('✅ EmotionBloc closed successfully');
+          } else {
+            Logger.info('ℹ️ EmotionBloc was already closed');
+          }
+        } catch (e) {
+          Logger.warning('⚠️ Error closing EmotionBloc: $e');
+        }
+      }
+    },
+    'SplashCubit': () {
+      if (sl.isRegistered<SplashCubit>()) {
+        try {
+          final cubit = sl<SplashCubit>();
+          if (!cubit.isClosed) {
+            cubit.close();
+            Logger.info('✅ SplashCubit closed successfully');
+          } else {
+            Logger.info('ℹ️ SplashCubit was already closed');
+          }
+        } catch (e) {
+          Logger.warning('⚠️ Error closing SplashCubit: $e');
+        }
+      }
+    },
+  };
+
+  for (final entry in blocsToClose.entries) {
+    try {
+      entry.value();
+    } catch (e) {
+      Logger.warning('⚠️ Error in ${entry.key} cleanup: $e');
+    }
+  }
+}
+
 /// Debug method to print all registrations (only in debug mode)
 void debugPrintRegistrations() {
   if (kDebugMode) {
@@ -293,12 +402,33 @@ void debugPrintRegistrations() {
       final featureFlags = sl<FeatureFlagService>();
       Logger.info('🚩 Feature Flags: $featureFlags');
 
-      final services = ['AuthBloc', 'HomeBloc', 'SplashCubit'];
-      if (featureFlags.isEmotionEnabled) services.add('EmotionBloc');
-      if (featureFlags.isMoodEnabled) services.add('MoodBloc');
+      final services = <String, Type>{
+        'AuthBloc': AuthBloc,
+        'HomeBloc': HomeBloc,
+        'SplashCubit': SplashCubit,
+      };
 
-      for (final service in services) {
-        Logger.info('🔍 $service: Available');
+      if (featureFlags.isEmotionEnabled) {
+        services['EmotionBloc'] = EmotionBloc;
+      }
+
+      if (featureFlags.isMoodEnabled) {
+        services['MoodBloc'] =
+            Object; // Replace with actual MoodBloc type when available
+      }
+
+      for (final entry in services.entries) {
+        final serviceName = entry.key;
+        final serviceType = entry.value;
+
+        try {
+          final isRegistered = sl.isRegistered(instance: serviceType);
+          Logger.info(
+            '🔍 $serviceName: ${isRegistered ? 'Registered' : 'Not Registered'}',
+          );
+        } catch (e) {
+          Logger.info('🔍 $serviceName: Error checking registration - $e');
+        }
       }
     } catch (e) {
       Logger.warning('⚠️ Could not print debug registrations: $e');
@@ -311,10 +441,25 @@ Future<void> cleanup() async {
   Logger.info('🧹 Cleaning up dependency injection...');
 
   try {
+    // Close all blocs properly before resetting
+    _closeExistingBlocs();
+
+    // Wait a bit for async cleanup to complete
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Reset the service locator
     sl.reset();
+
     Logger.info('✅ Dependency injection cleanup completed');
   } catch (e) {
     Logger.error('❌ Error during cleanup', e);
+    // Force reset even if cleanup fails
+    try {
+      sl.reset();
+      Logger.info('✅ Forced cleanup completed');
+    } catch (resetError) {
+      Logger.error('❌ Failed to force reset GetIt', resetError);
+    }
   }
 }
 
@@ -326,32 +471,163 @@ Map<String, dynamic> healthCheck() {
     'modules': <String, dynamic>{},
     'features': <String, dynamic>{},
     'errors': <String>[],
+    'summary': <String, dynamic>{},
   };
 
   try {
+    // Check feature flags
     final featureFlags = sl<FeatureFlagService>();
     health['features'] = featureFlags.allFeatures;
 
-    final criticalServices = ['AuthBloc', 'HomeBloc', 'SplashCubit'];
-    if (featureFlags.isEmotionEnabled) criticalServices.add('EmotionBloc');
-    if (featureFlags.isMoodEnabled) criticalServices.add('MoodBloc');
+    // Define services to check based on features
+    final Map<String, Type> servicesToCheck = {
+      'AuthBloc': AuthBloc,
+      'HomeBloc': HomeBloc,
+      'SplashCubit': SplashCubit,
+    };
 
+    if (featureFlags.isEmotionEnabled) {
+      servicesToCheck['EmotionBloc'] = EmotionBloc;
+    }
+
+    if (featureFlags.isMoodEnabled) {
+      // servicesToCheck['MoodBloc'] = MoodBloc; // Add when available
+    }
+
+    // Check each service
     bool allHealthy = true;
-    for (final service in criticalServices) {
+    int healthyCount = 0;
+    int totalCount = servicesToCheck.length;
+
+    for (final entry in servicesToCheck.entries) {
+      final serviceName = entry.key;
+      final serviceType = entry.value;
+
       try {
-        health['modules'][service] = 'healthy';
+        if (sl.isRegistered(instance: serviceType)) {
+          health['modules'][serviceName] = 'registered';
+          healthyCount++;
+        } else {
+          health['modules'][serviceName] = 'not_registered';
+          health['errors'].add('$serviceName is not registered');
+          allHealthy = false;
+        }
       } catch (e) {
-        health['modules'][service] = 'unhealthy';
-        health['errors'].add('$service: ${e.toString()}');
+        health['modules'][serviceName] = 'error';
+        health['errors'].add('$serviceName: ${e.toString()}');
         allHealthy = false;
       }
     }
 
-    health['status'] = allHealthy ? 'healthy' : 'degraded';
+    // Set overall status
+    if (allHealthy) {
+      health['status'] = 'healthy';
+    } else if (healthyCount > 0) {
+      health['status'] = 'degraded';
+    } else {
+      health['status'] = 'unhealthy';
+    }
+
+    // Add summary
+    health['summary'] = {
+      'healthy_services': healthyCount,
+      'total_services': totalCount,
+      'health_percentage': totalCount > 0
+          ? (healthyCount / totalCount * 100).round()
+          : 0,
+      'enabled_features': featureFlags.enabledFeatures.length,
+      'total_features': featureFlags.allFeatures.length,
+    };
   } catch (e) {
     health['status'] = 'unhealthy';
     health['errors'].add('Health check failed: ${e.toString()}');
+    Logger.error('❌ Health check failed', e);
   }
 
   return health;
+}
+
+/// Get detailed service information for debugging
+Map<String, dynamic> getServiceDetails() {
+  final details = <String, dynamic>{
+    'timestamp': DateTime.now().toIso8601String(),
+    'registered_services': <String, dynamic>{},
+    'feature_flags': <String, dynamic>{},
+    'statistics': <String, dynamic>{},
+  };
+
+  try {
+    // Get feature flags
+    final featureFlags = sl<FeatureFlagService>();
+    details['feature_flags'] = {
+      'enabled_features': featureFlags.enabledFeatures,
+      'all_features': featureFlags.allFeatures,
+      'has_any_enabled': featureFlags.hasAnyFeatureEnabled,
+    };
+
+    // Count registered services by type
+    final serviceTypes = <String, Type>{
+      'AuthBloc': AuthBloc,
+      'HomeBloc': HomeBloc,
+      'SplashCubit': SplashCubit,
+      'EmotionBloc': EmotionBloc,
+      'FeatureFlagService': FeatureFlagService,
+    };
+
+    int registeredCount = 0;
+    for (final entry in serviceTypes.entries) {
+      final serviceName = entry.key;
+      final serviceType = entry.value;
+
+      try {
+        final isRegistered = sl.isRegistered(instance: serviceType);
+        details['registered_services'][serviceName] = {
+          'registered': isRegistered,
+          'type': serviceType.toString(),
+        };
+
+        if (isRegistered) registeredCount++;
+      } catch (e) {
+        details['registered_services'][serviceName] = {
+          'registered': false,
+          'error': e.toString(),
+        };
+      }
+    }
+
+    // Add statistics
+    details['statistics'] = {
+      'total_checked': serviceTypes.length,
+      'registered_count': registeredCount,
+      'registration_rate': serviceTypes.isNotEmpty
+          ? (registeredCount / serviceTypes.length * 100).round()
+          : 0,
+      'expected_services': _getTotalServiceCount(),
+    };
+  } catch (e) {
+    details['error'] = e.toString();
+    Logger.error('❌ Failed to get service details', e);
+  }
+
+  return details;
+}
+
+/// Force re-initialization of a specific service (for recovery scenarios)
+Future<bool> reinitializeService<T extends Object>() async {
+  try {
+    Logger.info('🔄 Attempting to reinitialize ${T.toString()}...');
+
+    // Unregister if exists
+    if (sl.isRegistered<T>()) {
+      sl.unregister<T>();
+    }
+
+    // Note: This would require module-specific reinitialization logic
+    // For now, we'll just report the attempt
+    Logger.info('⚠️ Service reinitialization requires module-specific logic');
+    return false;
+  } catch (e) {
+    Logger.error('❌ Failed to reinitialize ${T.toString()}', e);
+    return false;
+  }
 }

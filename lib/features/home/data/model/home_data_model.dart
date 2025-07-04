@@ -33,7 +33,22 @@ class HomeDataModel extends Equatable {
       userStats: UserStatsModel.fromJson(json['userStats'] ?? {}),
       selectedAvatar: json['selectedAvatar'],
       dashboardData: Map<String, dynamic>.from(json['dashboardData'] ?? {}),
-      lastUpdated: DateTime.tryParse(json['lastUpdated'] ?? '') ?? DateTime.now(),
+      lastUpdated:
+          DateTime.tryParse(json['lastUpdated'] ?? '') ?? DateTime.now(),
+    );
+  }
+
+  /// ✅ NEW: Convert from Entity to Model (for clean architecture)
+  factory HomeDataModel.fromEntity(HomeDataEntity entity) {
+    return HomeDataModel(
+      username: entity.username,
+      currentMood: entity.currentMood,
+      streak: entity.streak,
+      isFirstTimeLogin: entity.isFirstTimeLogin,
+      userStats: UserStatsModel.fromEntity(entity.userStats),
+      selectedAvatar: entity.selectedAvatar,
+      dashboardData: entity.dashboardData,
+      lastUpdated: entity.lastUpdated,
     );
   }
 
@@ -91,13 +106,13 @@ class HomeDataModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        username,
-        currentMood,
-        streak,
-        isFirstTimeLogin,
-        userStats,
-        selectedAvatar,
-        dashboardData,
-        lastUpdated,
-      ];
+    username,
+    currentMood,
+    streak,
+    isFirstTimeLogin,
+    userStats,
+    selectedAvatar,
+    dashboardData,
+    lastUpdated,
+  ];
 }

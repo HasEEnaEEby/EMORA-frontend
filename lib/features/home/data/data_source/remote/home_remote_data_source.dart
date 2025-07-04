@@ -1,4 +1,9 @@
+// lib/features/home/data/data_source/remote/home_remote_data_source.dart
+import 'package:dio/dio.dart';
+
 import '../../../../../core/config/app_config.dart';
+import '../../../../../core/errors/exceptions.dart';
+import '../../../../../core/network/api_service.dart';
 import '../../../../../core/network/dio_client.dart';
 import '../../../../../core/utils/logger.dart';
 
@@ -12,46 +17,61 @@ abstract class HomeRemoteDataSource {
 
 class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   final DioClient dioClient;
+  final ApiService _apiService = ApiService();
 
-  const HomeRemoteDataSourceImpl({required this.dioClient});
+  HomeRemoteDataSourceImpl({required this.dioClient});
 
   @override
   Future<Map<String, dynamic>> getHomeData() async {
     try {
       Logger.info('🏠 Fetching home data from EMORA backend...');
 
-      // Check backend health first
-      final healthResponse = await dioClient.healthCheck();
-      if (healthResponse.statusCode != 200) {
-        throw Exception('Backend health check failed');
-      }
+      // Use ApiService for health check with caching
+      final healthResponse = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/health',
+        cacheDuration: Duration(minutes: 1),
+      );
 
-      // Get global emotion stats for the home screen
-      final globalStats = await getGlobalEmotionStats();
+      // Fetch global emotion stats with caching
+      final globalStatsResponse = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/emotions/global-stats',
+        queryParameters: {'timeframe': '24h'},
+        cacheDuration: Duration(minutes: 5),
+      );
 
-      // Get emotion feed for recent activity
-      final emotionFeed = await getEmotionFeed();
+      // Fetch emotion feed with caching
+      final emotionFeedResponse = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/emotions/feed',
+        queryParameters: {'limit': 20, 'offset': 0, 'format': 'unified'},
+        cacheDuration: Duration(minutes: 3),
+      );
 
-      // Get global heatmap data
-      final heatmapData = await getGlobalEmotionHeatmap();
-
-      // Combine all data for home screen
-      final homeData = {
-        'currentMood': 'joy', // Default mood
-        'moodEmoji': '😊',
-        'todayMoodLogged': false,
-        'streak': 0,
-        'globalStats': globalStats,
-        'emotionFeed': emotionFeed,
-        'heatmapData': heatmapData,
-        'lastUpdated': DateTime.now().toIso8601String(),
-        'backendConnected': true,
-      };
+      // Fetch global heatmap with caching
+      final heatmapResponse = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/emotions/global-heatmap',
+        queryParameters: {'format': 'unified'},
+        cacheDuration: Duration(minutes: 10),
+      );
 
       Logger.info('✅ Home data fetched successfully');
-      return homeData;
+
+      // Process and return home data
+      return _processHomeDataResponse(
+        healthResponse,
+        globalStatsResponse,
+        emotionFeedResponse,
+        heatmapResponse,
+      );
     } catch (e) {
-      Logger.error('❌ Failed to fetch home data', e);
+      Logger.error('❌ Error fetching home data from backend', e);
 
       // Return fallback data in development mode
       if (AppConfig.isDevelopmentMode) {
@@ -59,7 +79,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         return _getFallbackHomeData();
       }
 
-      rethrow;
+      throw ServerException(message: 'Failed to fetch home data: $e');
     }
   }
 
@@ -68,9 +88,12 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     try {
       Logger.info('📊 Fetching user stats for: $userId');
 
-      final response = await dioClient.getUserEmotionInsights(
-        userId: userId,
-        timeframe: '30d',
+      final response = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/emotions/users/$userId/insights',
+        queryParameters: {'timeframe': '30d'},
+        cacheDuration: Duration(minutes: 5),
       );
 
       if (response.statusCode == 200) {
@@ -99,7 +122,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         return _getFallbackUserStats();
       }
 
-      rethrow;
+      throw ServerException(message: 'Failed to fetch user stats: $e');
     }
   }
 
@@ -108,7 +131,13 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     try {
       Logger.info('🌍 Fetching global emotion stats...');
 
-      final response = await dioClient.getGlobalEmotionStats(timeframe: '24h');
+      final response = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/emotions/global-stats',
+        queryParameters: {'timeframe': '24h'},
+        cacheDuration: Duration(minutes: 5),
+      );
 
       if (response.statusCode == 200) {
         final data = response.data;
@@ -132,7 +161,9 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         return _getFallbackGlobalStats();
       }
 
-      rethrow;
+      throw ServerException(
+        message: 'Failed to fetch global emotion stats: $e',
+      );
     }
   }
 
@@ -141,15 +172,18 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     try {
       Logger.info('📰 Fetching emotion feed...');
 
-      final response = await dioClient.getEmotionFeed(
-        limit: 20,
-        offset: 0,
-        format: 'unified',
+      final response = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/emotions/feed',
+        queryParameters: {'limit': 20, 'offset': 0, 'format': 'unified'},
+        cacheDuration: Duration(minutes: 3),
       );
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final emotions = data['data']?['emotions'] ?? data['emotions'] ?? [];
+        // Backend returns: { success: true, message: "...", data: emotionsArray, meta: pagination }
+        final emotions = data['data'] ?? [];
 
         return List<Map<String, dynamic>>.from(
           emotions.map(
@@ -175,7 +209,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         return _getFallbackEmotionFeed();
       }
 
-      rethrow;
+      throw ServerException(message: 'Failed to fetch emotion feed: $e');
     }
   }
 
@@ -184,14 +218,17 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     try {
       Logger.info('🗺️ Fetching global emotion heatmap...');
 
-      final response = await dioClient.getGlobalEmotionHeatmap(
-        format: 'unified',
+      final response = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/emotions/global-heatmap',
+        queryParameters: {'format': 'unified'},
+        cacheDuration: Duration(minutes: 10),
       );
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final heatmapData =
-            data['data']?['heatmapData'] ?? data['locations'] ?? [];
+        final heatmapData = data['data']?['data'] ?? data['locations'] ?? [];
 
         return {
           'locations': List<Map<String, dynamic>>.from(
@@ -231,8 +268,30 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         return _getFallbackHeatmapData();
       }
 
-      rethrow;
+      throw ServerException(
+        message: 'Failed to fetch global emotion heatmap: $e',
+      );
     }
+  }
+
+  Map<String, dynamic> _processHomeDataResponse(
+    Response healthResponse,
+    Response globalStatsResponse,
+    Response emotionFeedResponse,
+    Response heatmapResponse,
+  ) {
+    // Combine all data for home screen
+    return {
+      'currentMood': 'joy', // Default mood
+      'moodEmoji': '😊',
+      'todayMoodLogged': false,
+      'streak': 0,
+      'globalStats': globalStatsResponse.data['data'] ?? {},
+      'emotionFeed': emotionFeedResponse.data['data'] ?? [],
+      'heatmapData': heatmapResponse.data['data'] ?? {},
+      'lastUpdated': DateTime.now().toIso8601String(),
+      'backendConnected': true,
+    };
   }
 
   // Fallback data for development mode
@@ -340,6 +399,51 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         'memory': {'description': 'Looking forward to adventures'},
         'isAnonymous': true,
       },
+      {
+        'id': 'feed_4',
+        'emotion': 'gratitude',
+        'intensity': 0.8,
+        'timestamp': now.subtract(const Duration(hours: 3)).toIso8601String(),
+        'context': {'trigger': 'Family time'},
+        'memory': {'description': 'Grateful for loved ones'},
+        'isAnonymous': true,
+      },
+      {
+        'id': 'feed_5',
+        'emotion': 'peaceful',
+        'intensity': 0.9,
+        'timestamp': now.subtract(const Duration(hours: 4)).toIso8601String(),
+        'context': {'trigger': 'Nature walk'},
+        'memory': {'description': 'Beautiful sunset by the lake'},
+        'isAnonymous': true,
+      },
+      {
+        'id': 'feed_6',
+        'emotion': 'inspired',
+        'intensity': 0.7,
+        'timestamp': now.subtract(const Duration(hours: 5)).toIso8601String(),
+        'context': {'trigger': 'Reading a good book'},
+        'memory': {'description': 'Amazing insights from the chapter'},
+        'isAnonymous': true,
+      },
+      {
+        'id': 'feed_7',
+        'emotion': 'content',
+        'intensity': 0.6,
+        'timestamp': now.subtract(const Duration(hours: 6)).toIso8601String(),
+        'context': {'trigger': 'Finished a project'},
+        'memory': {'description': 'Satisfied with the result'},
+        'isAnonymous': true,
+      },
+      {
+        'id': 'feed_8',
+        'emotion': 'hopeful',
+        'intensity': 0.8,
+        'timestamp': now.subtract(const Duration(hours: 8)).toIso8601String(),
+        'context': {'trigger': 'Planning future goals'},
+        'memory': {'description': 'Excited about new opportunities'},
+        'isAnonymous': true,
+      },
     ];
   }
 
@@ -396,11 +500,216 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
           'locationName': 'Sydney',
           'timestamp': DateTime.now().toIso8601String(),
         },
+        {
+          'id': 'loc_6',
+          'latitude': 37.7749,
+          'longitude': -122.4194,
+          'emotion': 'inspired',
+          'intensity': 0.8,
+          'count': 175,
+          'locationName': 'San Francisco',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'loc_7',
+          'latitude': 48.8566,
+          'longitude': 2.3522,
+          'emotion': 'romantic',
+          'intensity': 0.7,
+          'count': 160,
+          'locationName': 'Paris',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'loc_8',
+          'latitude': 55.7558,
+          'longitude': 37.6176,
+          'emotion': 'contemplative',
+          'intensity': 0.6,
+          'count': 110,
+          'locationName': 'Moscow',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'loc_9',
+          'latitude': -22.9068,
+          'longitude': -43.1729,
+          'emotion': 'energetic',
+          'intensity': 0.9,
+          'count': 190,
+          'locationName': 'Rio de Janeiro',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'loc_10',
+          'latitude': 1.3521,
+          'longitude': 103.8198,
+          'emotion': 'focused',
+          'intensity': 0.7,
+          'count': 140,
+          'locationName': 'Singapore',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'loc_11',
+          'latitude': 19.4326,
+          'longitude': -99.1332,
+          'emotion': 'vibrant',
+          'intensity': 0.8,
+          'count': 165,
+          'locationName': 'Mexico City',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'loc_12',
+          'latitude': 41.9028,
+          'longitude': 12.4964,
+          'emotion': 'nostalgic',
+          'intensity': 0.6,
+          'count': 125,
+          'locationName': 'Rome',
+          'timestamp': DateTime.now().toIso8601String(),
+        },
       ],
       'summary': {
-        'totalLocations': 5,
+        'totalLocations': 12,
         'lastUpdated': DateTime.now().toIso8601String(),
       },
     };
+  }
+
+  // Additional helper methods for testing and debugging
+
+  /// Clear all cached data (useful for testing)
+  void clearCache() {
+    _apiService.clearCache();
+    Logger.info('🗑️ HomeRemoteDataSource cache cleared');
+  }
+
+  /// Get cache statistics for debugging
+  Map<String, int> getCacheStats() {
+    return _apiService.getCacheStats();
+  }
+
+  /// Force refresh all data (bypasses cache)
+  Future<Map<String, dynamic>> getHomeDataForceRefresh() async {
+    try {
+      Logger.info('🔄 Force refreshing all home data...');
+
+      // Force refresh all endpoints
+      final healthResponse = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/health',
+        forceRefresh: true,
+      );
+
+      final globalStatsResponse = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/emotions/global-stats',
+        queryParameters: {'timeframe': '24h'},
+        forceRefresh: true,
+      );
+
+      final emotionFeedResponse = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/emotions/feed',
+        queryParameters: {'limit': 20, 'offset': 0, 'format': 'unified'},
+        forceRefresh: true,
+      );
+
+      final heatmapResponse = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/emotions/global-heatmap',
+        queryParameters: {'format': 'unified'},
+        forceRefresh: true,
+      );
+
+      Logger.info('✅ All home data force refreshed successfully');
+
+      return _processHomeDataResponse(
+        healthResponse,
+        globalStatsResponse,
+        emotionFeedResponse,
+        heatmapResponse,
+      );
+    } catch (e) {
+      Logger.error('❌ Error force refreshing home data', e);
+
+      if (AppConfig.isDevelopmentMode) {
+        Logger.info('🔄 Using fallback data for force refresh');
+        return _getFallbackHomeData();
+      }
+
+      throw ServerException(message: 'Failed to force refresh home data: $e');
+    }
+  }
+
+  /// Check backend connectivity
+  Future<bool> checkBackendConnectivity() async {
+    try {
+      Logger.info('🔍 Checking backend connectivity...');
+
+      final response = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/health',
+        cacheDuration: Duration(
+          seconds: 10,
+        ), // Short cache for connectivity check
+      );
+
+      final isConnected = response.statusCode == 200;
+      Logger.info(
+        isConnected
+            ? '✅ Backend is connected and healthy'
+            : '❌ Backend connectivity issue',
+      );
+
+      return isConnected;
+    } catch (e) {
+      Logger.error('❌ Backend connectivity check failed', e);
+      return false;
+    }
+  }
+
+  /// Get detailed backend status
+  Future<Map<String, dynamic>> getBackendStatus() async {
+    try {
+      Logger.info('📊 Getting detailed backend status...');
+
+      final response = await _apiService.makeRequest(
+        dioClient.dio,
+        'GET',
+        '/api/health',
+        forceRefresh: true, // Always get fresh status
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return {
+          'connected': true,
+          'status': data['data']?['status'] ?? 'unknown',
+          'environment': data['data']?['environment'] ?? 'unknown',
+          'version': data['data']?['version'] ?? 'unknown',
+          'uptime': data['data']?['uptime'] ?? 0,
+          'services': data['data']?['services'] ?? {},
+          'features': data['data']?['features'] ?? {},
+          'lastChecked': DateTime.now().toIso8601String(),
+        };
+      } else {
+        throw Exception('Health check returned ${response.statusCode}');
+      }
+    } catch (e) {
+      Logger.error('❌ Failed to get backend status', e);
+      return {
+        'connected': false,
+        'error': e.toString(),
+        'lastChecked': DateTime.now().toIso8601String(),
+      };
+    }
   }
 }

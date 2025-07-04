@@ -76,7 +76,7 @@ class HomeModule {
   static void _initBloc(GetIt sl) {
     Logger.info('🧩 Initializing home bloc...');
 
-    sl.registerFactory<HomeBloc>(
+    sl.registerLazySingleton<HomeBloc>(
       () => HomeBloc(
         loadHomeData: sl<LoadHomeData>(),
         getUserStats: sl<GetUserStats>(),

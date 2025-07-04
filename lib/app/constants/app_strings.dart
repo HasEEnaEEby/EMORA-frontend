@@ -327,8 +327,6 @@ class AppStrings {
       case 'angry':
       case 'anger':
         return angryDescription;
-      case 'peaceful':
-        return peacefulDescription;
       case 'excited':
         return excitedDescription;
       case 'numb':

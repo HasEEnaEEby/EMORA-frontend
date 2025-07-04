@@ -1,3 +1,4 @@
+// lib/features/auth/domain/repository/auth_repository.dart - UPDATED with nullable fields
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/failures.dart';
@@ -8,12 +9,13 @@ abstract class AuthRepository {
   Future<Either<Failure, AuthResponseEntity>> register({
     required String username,
     required String password,
-    required String pronouns,
-    required String ageGroup,
-    required String selectedAvatar,
+    String? pronouns, // ✅ NULLABLE
+    String? ageGroup, // ✅ NULLABLE
+    String? selectedAvatar, // ✅ NULLABLE
     String? location,
     double? latitude,
     double? longitude,
+    required String email, // ✅ REQUIRED
   });
 
   Future<Either<Failure, AuthResponseEntity>> login({

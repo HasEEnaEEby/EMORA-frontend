@@ -89,7 +89,8 @@ class EmotionBackendService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final emotions = data['data']?['emotions'] ?? data['emotions'] ?? [];
+        // Backend returns: { success: true, message: "...", data: emotionsArray, meta: pagination }
+        final emotions = data['data'] ?? [];
 
         return List<Map<String, dynamic>>.from(
           emotions.map((emotion) => _normalizeEmotionData(emotion)),
@@ -215,16 +216,31 @@ class EmotionBackendService {
   }
 
   Map<String, dynamic> _normalizeLocationData(Map<String, dynamic> location) {
+    // Safely extract coordinates
+    double latitude = 0.0;
+    double longitude = 0.0;
+    
+    try {
+      final locationData = location['location'];
+      if (locationData is Map) {
+        final coordinates = locationData['coordinates'];
+        if (coordinates is List && coordinates.length >= 2) {
+          // Handle both string and integer indices
+          final lat = coordinates[1];
+          final lng = coordinates[0];
+          
+          if (lat is num) latitude = lat.toDouble();
+          if (lng is num) longitude = lng.toDouble();
+        }
+      }
+    } catch (e) {
+      Logger.warning('⚠️ Failed to parse location coordinates: $e');
+    }
+
     return {
       'id': location['_id'] ?? location['id'],
-      'latitude':
-          location['location']?['coordinates']?[1] ??
-          location['latitude'] ??
-          0.0,
-      'longitude':
-          location['location']?['coordinates']?[0] ??
-          location['longitude'] ??
-          0.0,
+      'latitude': latitude,
+      'longitude': longitude,
       'emotion': location['emotion'] ?? location['coreEmotion'],
       'intensity': location['intensity'] ?? 0.5,
       'count': location['count'] ?? 1,

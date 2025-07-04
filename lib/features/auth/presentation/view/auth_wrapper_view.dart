@@ -19,15 +19,20 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  bool _hasShownSessionExpired = false; // Prevent multiple notifications
+  bool _hasShownSessionExpired = false;
+  bool _hasNavigated = false; // Prevent multiple navigation attempts
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
-
+    
     // Check auth status when entering
-    context.read<AuthBloc>().add(CheckAuthStatus());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<AuthBloc>().add(const CheckAuthStatus());
+      }
+    });
   }
 
   void _setupAnimations() {
@@ -49,33 +54,50 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
     super.dispose();
   }
 
+  void _handleNavigation(AuthState state) {
+    if (_hasNavigated || !mounted) return;
+
+    if (state is AuthAuthenticated) {
+      _hasNavigated = true;
+      Logger.info('🏠 User authenticated: ${state.user.username}');
+      Logger.info('📊 Onboarding completed: ${state.user.isOnboardingCompleted}');
+      
+      // Add a small delay to ensure UI is ready
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          // FIXED: Go directly to home instead of checking onboarding
+          NavigationService.safeNavigate(
+            AppRouter.home,
+            clearStack: true,
+            arguments: {
+              'isAuthenticated': true,
+              'user': state.user,
+              'isFirstTime': false,
+            },
+          );
+        }
+      });
+    } else if (state is AuthUnauthenticated || state is AuthSessionExpired) {
+      // User is not authenticated, stay on auth wrapper (show auth choice)
+      Logger.info('🔐 User not authenticated, showing auth options');
+      
+      if (state is AuthSessionExpired && !_hasShownSessionExpired) {
+        _hasShownSessionExpired = true;
+        NavigationService.showWarningSnackBar(state.message);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF090110),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthAuthenticated) {
-            // User is authenticated, check onboarding status
-            if (state.user.isOnboardingCompleted) {
-              NavigationService.pushReplacementNamed(AppRouter.home);
-            } else {
-              NavigationService.pushReplacementNamed(AppRouter.onboarding);
-            }
-          } else if (state is AuthSessionExpired && !_hasShownSessionExpired) {
-            // FIXED: Only show session expired message once
-            _hasShownSessionExpired = true;
-            NavigationService.showSnackBar(
-              state.message,
-              backgroundColor: Colors.orange.shade600,
-              duration: const Duration(seconds: 4),
-            );
-            Logger.info('Session expired message shown to returning user');
-          } else if (state is AuthError) {
-            NavigationService.showSnackBar(
-              state.message,
-              backgroundColor: Colors.red.shade600,
-            );
+          _handleNavigation(state);
+          
+          if (state is AuthError) {
+            NavigationService.showErrorSnackBar(state.message);
           }
         },
         child: BlocBuilder<AuthBloc, AuthState>(
@@ -127,18 +149,10 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
           child: Column(
             children: [
               const Spacer(),
-
-              // Welcome section
               _buildWelcomeSection(),
-
               const SizedBox(height: 60),
-
-              // Auth buttons
               _buildAuthButtons(),
-
               const Spacer(),
-
-              // Footer
               _buildFooter(),
             ],
           ),
@@ -150,7 +164,6 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
   Widget _buildWelcomeSection() {
     return Column(
       children: [
-        // App logo placeholder (you can replace with your SVG)
         Container(
           width: 120,
           height: 120,
@@ -158,12 +171,12 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
             shape: BoxShape.circle,
             gradient: LinearGradient(
               colors: [
-                const Color(0xFF8B5FBF).withOpacity(0.3),
-                const Color(0xFF6B3FA0).withOpacity(0.1),
+                const Color(0xFF8B5FBF).withValues(alpha: 0.3),
+                const Color(0xFF6B3FA0).withValues(alpha: 0.1),
               ],
             ),
             border: Border.all(
-              color: const Color(0xFF8B5FBF).withOpacity(0.5),
+              color: const Color(0xFF8B5FBF).withValues(alpha: 0.5),
               width: 2,
             ),
           ),
@@ -176,7 +189,6 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
 
         const SizedBox(height: 32),
 
-        // Welcome text
         ShaderMask(
           shaderCallback: (bounds) => const LinearGradient(
             colors: [Color(0xFF8B5FBF), Color(0xFFD8A5FF)],
@@ -206,11 +218,10 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
   Widget _buildAuthButtons() {
     return Column(
       children: [
-        // Create Account Button
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
-            onPressed: () => NavigationService.pushNamed(AppRouter.register),
+            onPressed: () => NavigationService.safeNavigate(AppRouter.register),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF8B5FBF),
               foregroundColor: Colors.white,
@@ -219,7 +230,7 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
                 borderRadius: BorderRadius.circular(16),
               ),
               elevation: 4,
-              shadowColor: const Color(0xFF8B5FBF).withOpacity(0.3),
+              shadowColor: const Color(0xFF8B5FBF).withValues(alpha: 0.3),
             ),
             child: const Text(
               'Create Account',
@@ -234,11 +245,10 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
 
         const SizedBox(height: 16),
 
-        // Login Button
         SizedBox(
           width: double.infinity,
           child: OutlinedButton(
-            onPressed: () => NavigationService.pushNamed(AppRouter.login),
+            onPressed: () => NavigationService.safeNavigate(AppRouter.login),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF8B5FBF),
               padding: const EdgeInsets.symmetric(vertical: 16),
@@ -269,10 +279,7 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.grey[600], fontSize: 12, height: 1.4),
         ),
-
         const SizedBox(height: 16),
-
-        // Version info
         Text(
           'Version 1.0.0',
           style: TextStyle(color: Colors.grey[700], fontSize: 10),

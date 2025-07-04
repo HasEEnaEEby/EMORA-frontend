@@ -1,3 +1,4 @@
+
 import '../../domain/entity/auth_response_entity.dart';
 import 'user_model.dart';
 
@@ -9,10 +10,15 @@ class AuthResponseModel extends AuthResponseEntity {
   });
 
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
+    // Handle different response structures
+    final userJson = json['user'] ?? json;
+    final token = json['token'] ?? json['access_token'] ?? '';
+    final expiresIn = json['expiresIn'] ?? json['expires_in'] ?? '7d';
+    
     return AuthResponseModel(
-      user: UserModel.fromJson(json['user'] ?? {}),
-      token: json['token'] ?? '',
-      expiresIn: json['expiresIn'] ?? '7d',
+      user: UserModel.fromJson(userJson),
+      token: token,
+      expiresIn: expiresIn,
     );
   }
 

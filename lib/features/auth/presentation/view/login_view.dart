@@ -109,7 +109,7 @@ class _LoginViewState extends State<LoginView>
           listener: (context, state) {
             if (state is AuthAuthenticated) {
               Logger.info(' Login successful, navigating to home');
-              Navigator.pushReplacementNamed(context, AppRouter.home);
+              Navigator.of(context, rootNavigator: true).pushReplacementNamed(AppRouter.home);
             } else if (state is AuthError) {
               Logger.error(' Login error:', state.message);
               _showErrorSnackBar(state.message);

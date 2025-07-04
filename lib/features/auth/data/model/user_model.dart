@@ -1,3 +1,4 @@
+
 import '../../domain/entity/user_entity.dart';
 
 class UserModel extends UserEntity {
@@ -15,18 +16,37 @@ class UserModel extends UserEntity {
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: json['id'] ?? json['_id'] ?? '',
+      id: _extractId(json),
       username: json['username'] ?? '',
       pronouns: json['pronouns'],
-      ageGroup: json['ageGroup'],
-      selectedAvatar: json['selectedAvatar'],
-      isOnboardingCompleted: json['isOnboardingCompleted'] ?? false,
-      isActive: json['isActive'] ?? true,
-      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
-      lastLoginAt: json['lastLoginAt'] != null
-          ? DateTime.tryParse(json['lastLoginAt'])
-          : null,
+      ageGroup: json['ageGroup'] ?? json['age_group'],
+      selectedAvatar: json['selectedAvatar'] ?? json['selected_avatar'] ?? json['avatar'],
+      isOnboardingCompleted: _extractOnboardingStatus(json),
+      isActive: json['isActive'] ?? json['is_active'] ?? true,
+      createdAt: _extractDateTime(json['createdAt'] ?? json['created_at']),
+      lastLoginAt: _extractDateTime(json['lastLoginAt'] ?? json['last_login_at']),
     );
+  }
+
+  static String _extractId(Map<String, dynamic> json) {
+    return (json['id'] ?? json['_id'] ?? json['userId'] ?? '').toString();
+  }
+
+  static bool _extractOnboardingStatus(Map<String, dynamic> json) {
+    // Check multiple possible field names and default to true for existing users
+    return json['isOnboardingCompleted'] ?? 
+           json['onboardingCompleted'] ?? 
+           json['onboarding_completed'] ?? 
+           true; // Default to true since user exists in system
+  }
+
+  static DateTime _extractDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is DateTime) return value;
+    if (value is String) {
+      return DateTime.tryParse(value) ?? DateTime.now();
+    }
+    return DateTime.now();
   }
 
   Map<String, dynamic> toJson() {
@@ -88,8 +108,7 @@ class UserModel extends UserEntity {
       pronouns: pronouns ?? this.pronouns,
       ageGroup: ageGroup ?? this.ageGroup,
       selectedAvatar: selectedAvatar ?? this.selectedAvatar,
-      isOnboardingCompleted:
-          isOnboardingCompleted ?? this.isOnboardingCompleted,
+      isOnboardingCompleted: isOnboardingCompleted ?? this.isOnboardingCompleted,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       lastLoginAt: lastLoginAt ?? this.lastLoginAt,

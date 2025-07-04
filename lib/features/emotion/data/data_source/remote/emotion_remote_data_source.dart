@@ -171,7 +171,8 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final emotions = data['data']?['emotions'] ?? data['emotions'] ?? [];
+        // Backend returns: { success: true, message: "...", data: emotionsArray, meta: pagination }
+        final emotions = data['data'] ?? [];
 
         // Normalize emotion data
         final normalizedEmotions = emotions.map<Map<String, dynamic>>((
@@ -406,7 +407,8 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
 
         if (response.statusCode == 200) {
           final data = response.data;
-          var emotions = data['data']?['emotions'] ?? data['emotions'] ?? [];
+          // Backend returns: { success: true, message: "...", data: emotionsArray, meta: pagination }
+          var emotions = data['data'] ?? [];
 
           // Filter by userId if the API doesn't do it automatically
           emotions = emotions.where((emotion) {
@@ -615,6 +617,27 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
 
   /// Normalize emotion data from API response
   Map<String, dynamic> _normalizeEmotionData(Map<String, dynamic> emotion) {
+    // Safely extract coordinates
+    double? latitude;
+    double? longitude;
+
+    try {
+      final location = emotion['location'];
+      if (location is Map) {
+        final coordinates = location['coordinates'];
+        if (coordinates is List && coordinates.length >= 2) {
+          // Handle both string and integer indices
+          final lat = coordinates[1];
+          final lng = coordinates[0];
+
+          if (lat is num) latitude = lat.toDouble();
+          if (lng is num) longitude = lng.toDouble();
+        }
+      }
+    } catch (e) {
+      Logger.warning('⚠️ Failed to parse location coordinates: $e');
+    }
+
     return {
       'id': emotion['_id'] ?? emotion['id'] ?? '',
       'userId': emotion['userId'] ?? emotion['user_id'] ?? '',
@@ -623,12 +646,8 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       'context': emotion['context']?.toString(),
       'memory': emotion['memory']?.toString(),
       'timestamp': emotion['timestamp'] ?? DateTime.now().toIso8601String(),
-      'latitude':
-          emotion['latitude']?.toDouble() ??
-          emotion['location']?['coordinates']?[1]?.toDouble(),
-      'longitude':
-          emotion['longitude']?.toDouble() ??
-          emotion['location']?['coordinates']?[0]?.toDouble(),
+      'latitude': latitude ?? emotion['latitude']?.toDouble(),
+      'longitude': longitude ?? emotion['longitude']?.toDouble(),
       'isAnonymous':
           emotion['isAnonymous'] ?? emotion['memory']?['isPrivate'] ?? true,
       'tags': emotion['tags'] != null
@@ -641,16 +660,31 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
 
   /// Normalize location data from API response
   Map<String, dynamic> _normalizeLocationData(Map<String, dynamic> location) {
+    // Safely extract coordinates
+    double latitude = 0.0;
+    double longitude = 0.0;
+
+    try {
+      final locationData = location['location'];
+      if (locationData is Map) {
+        final coordinates = locationData['coordinates'];
+        if (coordinates is List && coordinates.length >= 2) {
+          // Handle both string and integer indices
+          final lat = coordinates[1];
+          final lng = coordinates[0];
+
+          if (lat is num) latitude = lat.toDouble();
+          if (lng is num) longitude = lng.toDouble();
+        }
+      }
+    } catch (e) {
+      Logger.warning('⚠️ Failed to parse location coordinates: $e');
+    }
+
     return {
       'id': location['_id'] ?? location['id'] ?? '',
-      'latitude':
-          location['latitude']?.toDouble() ??
-          location['location']?['coordinates']?[1]?.toDouble() ??
-          0.0,
-      'longitude':
-          location['longitude']?.toDouble() ??
-          location['location']?['coordinates']?[0]?.toDouble() ??
-          0.0,
+      'latitude': latitude,
+      'longitude': longitude,
       'emotion': location['emotion'] ?? location['coreEmotion'] ?? '',
       'intensity': (location['intensity'] ?? 0.0).toDouble(),
       'count': location['count'] ?? 1,

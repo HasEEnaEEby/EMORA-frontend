@@ -71,21 +71,77 @@ class _WelcomePageState extends State<WelcomePage>
 
   // Discord-style username suffixes and prefixes
   final List<String> _coolSuffixes = [
-    'gaming', 'pro', 'official', 'real', 'main', 'alt', 'new', 'fresh',
-    'v2', 'v3', '2024', '2025', 'og', 'prime', 'elite', 'legend',
-    'master', 'ninja', 'warrior', 'hero', 'ace', 'star', 'king', 'queen'
+    'gaming',
+    'pro',
+    'official',
+    'real',
+    'main',
+    'alt',
+    'new',
+    'fresh',
+    'v2',
+    'v3',
+    '2024',
+    '2025',
+    'og',
+    'prime',
+    'elite',
+    'legend',
+    'master',
+    'ninja',
+    'warrior',
+    'hero',
+    'ace',
+    'star',
+    'king',
+    'queen',
   ];
 
   final List<String> _coolPrefixes = [
-    'the', 'real', 'official', 'true', 'new', 'fresh', 'pro', 'epic',
-    'super', 'mega', 'ultra', 'alpha', 'beta', 'omega', 'prime'
+    'the',
+    'real',
+    'official',
+    'true',
+    'new',
+    'fresh',
+    'pro',
+    'epic',
+    'super',
+    'mega',
+    'ultra',
+    'alpha',
+    'beta',
+    'omega',
+    'prime',
   ];
 
   final List<String> _reservedUsernames = [
-    'admin', 'administrator', 'root', 'moderator', 'support', 'help',
-    'api', 'www', 'mail', 'email', 'system', 'service', 'emora',
-    'official', 'staff', 'team', 'bot', 'null', 'undefined', 'user',
-    'test', 'demo', 'guest', 'anonymous', 'public', 'private'
+    'admin',
+    'administrator',
+    'root',
+    'moderator',
+    'support',
+    'help',
+    'api',
+    'www',
+    'mail',
+    'email',
+    'system',
+    'service',
+    'emora',
+    'official',
+    'staff',
+    'team',
+    'bot',
+    'null',
+    'undefined',
+    'user',
+    'test',
+    'demo',
+    'guest',
+    'anonymous',
+    'public',
+    'private',
   ];
 
   @override
@@ -101,8 +157,10 @@ class _WelcomePageState extends State<WelcomePage>
   }
 
   void _initializeControllers() {
+    // Initialize with normalized username if available
+    final initialUsername = widget.userData.username ?? '';
     _usernameController = TextEditingController(
-      text: widget.userData.username ?? '',
+      text: _normalizeUsername(initialUsername),
     );
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
@@ -220,14 +278,31 @@ class _WelcomePageState extends State<WelcomePage>
     super.dispose();
   }
 
+  // USERNAME NORMALIZATION HELPER - ADDED
+  String _normalizeUsername(String username) {
+    return username.toLowerCase().trim();
+  }
+
+  // UPDATED: Username change handler with normalization
   void _onUsernameChanged() {
+    final originalText = _usernameController.text;
+    final normalizedText = _normalizeUsername(originalText);
+
+    // If the text is different from normalized, update the controller
+    if (originalText != normalizedText && originalText.isNotEmpty) {
+      _usernameController.value = _usernameController.value.copyWith(
+        text: normalizedText,
+        selection: TextSelection.collapsed(offset: normalizedText.length),
+      );
+      return; // Exit early to avoid double processing
+    }
+
     _validateUsername();
     _validateAllInputs();
     _showTypingIndicator();
 
-    final username = _usernameController.text.trim();
-    if (username.isNotEmpty && _isUsernameFormatValid(username)) {
-      _debounceUsernameCheck(username);
+    if (normalizedText.isNotEmpty && _isUsernameFormatValid(normalizedText)) {
+      _debounceUsernameCheck(normalizedText);
     } else {
       setState(() {
         _showUsernameSuggestions = false;
@@ -267,6 +342,8 @@ class _WelcomePageState extends State<WelcomePage>
   }
 
   Future<void> _checkUsernameAvailability(String username) async {
+    final normalizedUsername = _normalizeUsername(username);
+
     setState(() {
       _isCheckingUsername = true;
       _usernameError = null;
@@ -278,9 +355,18 @@ class _WelcomePageState extends State<WelcomePage>
       await Future.delayed(const Duration(milliseconds: 500));
 
       // Check if username is reserved or taken
-      final isReserved = _reservedUsernames.contains(username.toLowerCase());
-      final takenUsernames = ['john', 'jane', 'mike', 'sarah', 'alex', 'chris'];
-      final isTaken = takenUsernames.contains(username.toLowerCase());
+      final isReserved = _reservedUsernames.contains(normalizedUsername);
+      final takenUsernames = [
+        'john',
+        'jane',
+        'mike',
+        'sarah',
+        'alex',
+        'chris',
+        'hkk',
+        'haseenakc',
+      ];
+      final isTaken = takenUsernames.contains(normalizedUsername);
       final isAvailable = !isReserved && !isTaken;
 
       if (mounted) {
@@ -288,7 +374,7 @@ class _WelcomePageState extends State<WelcomePage>
           _isCheckingUsername = false;
           if (isAvailable) {
             _usernameError = null;
-            _isUsernameValid = _isUsernameFormatValid(username);
+            _isUsernameValid = _isUsernameFormatValid(normalizedUsername);
             _showUsernameSuggestions = false;
             _usernameSuggestions.clear();
             HapticFeedback.lightImpact();
@@ -299,7 +385,7 @@ class _WelcomePageState extends State<WelcomePage>
               _usernameError = 'Username is already taken';
             }
             _isUsernameValid = false;
-            _generateUsernameSuggestions(username);
+            _generateUsernameSuggestions(normalizedUsername);
             HapticFeedback.mediumImpact();
           }
         });
@@ -356,16 +442,18 @@ class _WelcomePageState extends State<WelcomePage>
     _suggestionAnimationController.forward();
   }
 
+  // UPDATED: Select suggestion with normalization
   void _selectSuggestion(String suggestion) {
-    _usernameController.text = suggestion;
+    final normalizedSuggestion = _normalizeUsername(suggestion);
+    _usernameController.text = normalizedSuggestion;
     setState(() {
       _showUsernameSuggestions = false;
     });
     _suggestionAnimationController.reverse();
     HapticFeedback.lightImpact();
-    
+
     // Auto-check the suggested username
-    _debounceUsernameCheck(suggestion);
+    _debounceUsernameCheck(normalizedSuggestion);
   }
 
   bool _isUsernameFormatValid(String username) {
@@ -379,7 +467,7 @@ class _WelcomePageState extends State<WelcomePage>
   }
 
   void _validateUsername() {
-    final username = _usernameController.text.trim();
+    final username = _normalizeUsername(_usernameController.text);
     String? error;
     bool isValid = false;
 
@@ -449,15 +537,18 @@ class _WelcomePageState extends State<WelcomePage>
     });
   }
 
+  // UPDATED: Validate all inputs with normalized username
   void _validateAllInputs() {
-    final isValid = _isUsernameValid &&
+    final normalizedUsername = _normalizeUsername(_usernameController.text);
+    final isValid =
+        _isUsernameValid &&
         _isPasswordValid &&
         _isConfirmPasswordValid &&
         !_isCheckingUsername;
 
-    if (isValid) {
+    if (isValid && normalizedUsername.isNotEmpty) {
       context.read<OnboardingBloc>().add(
-        SaveUsername(_usernameController.text.trim()),
+        SaveUsername(normalizedUsername), // Save normalized username
       );
     }
   }
@@ -492,8 +583,7 @@ class _WelcomePageState extends State<WelcomePage>
                     children: [
                       _buildUsernameField(),
                       // Username suggestions
-                      if (_showUsernameSuggestions)
-                        _buildUsernameSuggestions(),
+                      if (_showUsernameSuggestions) _buildUsernameSuggestions(),
                       const SizedBox(height: 20),
                       _buildPasswordField(),
                       const SizedBox(height: 20),
@@ -563,6 +653,7 @@ class _WelcomePageState extends State<WelcomePage>
     );
   }
 
+  // UPDATED: Username field with normalization hint
   Widget _buildUsernameField() {
     return Container(
       decoration: BoxDecoration(
@@ -572,8 +663,8 @@ class _WelcomePageState extends State<WelcomePage>
           color: _usernameError != null
               ? Colors.red.withOpacity(0.5)
               : _isUsernameValid
-                  ? const Color(0xFF8B5FBF).withOpacity(0.5)
-                  : Colors.transparent,
+              ? const Color(0xFF8B5FBF).withOpacity(0.5)
+              : Colors.transparent,
           width: 1,
         ),
       ),
@@ -609,16 +700,30 @@ class _WelcomePageState extends State<WelcomePage>
               ),
             ],
           ),
+          // ADDED: Normalization hint
+          Padding(
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.grey[500], size: 14),
+                const SizedBox(width: 6),
+                Text(
+                  'Usernames are automatically converted to lowercase',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ),
           if (_usernameError != null)
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.error_outline,
-                    color: Colors.red,
-                    size: 16,
-                  ),
+                  Icon(Icons.error_outline, color: Colors.red, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -755,8 +860,8 @@ class _WelcomePageState extends State<WelcomePage>
           color: _passwordError != null
               ? Colors.red.withOpacity(0.5)
               : _showPasswordRequirements
-                  ? const Color(0xFF8B5FBF).withOpacity(0.5)
-                  : Colors.transparent,
+              ? const Color(0xFF8B5FBF).withOpacity(0.5)
+              : Colors.transparent,
           width: 1,
         ),
       ),
@@ -817,8 +922,8 @@ class _WelcomePageState extends State<WelcomePage>
           color: _confirmPasswordError != null
               ? Colors.red.withOpacity(0.5)
               : _isConfirmPasswordValid
-                  ? const Color(0xFF8B5FBF).withOpacity(0.5)
-                  : Colors.transparent,
+              ? const Color(0xFF8B5FBF).withOpacity(0.5)
+              : Colors.transparent,
           width: 1,
         ),
       ),

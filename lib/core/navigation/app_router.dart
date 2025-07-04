@@ -1,20 +1,21 @@
-import 'package:emora_mobile_app/features/home/data/model/user_stats_model.dart';
-import 'package:emora_mobile_app/features/home/presentation/view/pages/dashboard_page.dart';
-import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_state.dart';
+// lib/core/navigation/app_router.dart - COMPLETE FIXED VERSION
+import 'package:emora_mobile_app/features/auth/presentation/view/auth_choice_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../app/di/injection_container.dart' as di;
 import '../../core/config/app_config.dart';
 import '../../core/utils/logger.dart';
-import '../../features/auth/presentation/view/auth_choice_page.dart';
 import '../../features/auth/presentation/view/auth_wrapper_view.dart';
 import '../../features/auth/presentation/view/login_view.dart';
 import '../../features/auth/presentation/view/register_view.dart';
 import '../../features/auth/presentation/view_model/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/view_model/bloc/auth_state.dart';
+import '../../features/emotion/presentation/view_model/bloc/emotion_bloc.dart';
+import '../../features/home/presentation/view/pages/dashboard_page.dart';
 import '../../features/home/presentation/view_model/bloc/home_bloc.dart';
 import '../../features/home/presentation/view_model/bloc/home_event.dart';
+import '../../features/home/presentation/view_model/bloc/home_state.dart';
 import '../../features/onboarding/presentation/view/onboarding_view.dart';
 import '../../features/onboarding/presentation/view_model/bloc/onboarding_bloc.dart';
 import '../../features/onboarding/presentation/view_model/bloc/onboarding_event.dart';
@@ -48,6 +49,7 @@ class AppRouter {
 
     try {
       RouteAnalytics.trackNavigation(routeName, arguments);
+      
       switch (routeName) {
         case splash:
           return _createSplashRoute(settings);
@@ -68,10 +70,8 @@ class AppRouter {
           return _createOnboardingRoute(settings);
 
         case home:
+        case dashboard: // Both routes go to the same place now
           return _createHomeRoute(settings);
-
-        case dashboard:
-          return _createDashboardRoute(settings);
 
         case moodMap:
           return _createMoodMapRoute(settings);
@@ -91,19 +91,18 @@ class AppRouter {
       }
     } catch (e, stackTrace) {
       Logger.error('❌ Route generation error for $routeName', e, stackTrace);
-      RouteAnalytics.trackRouteError(routeName, e.toString());
-
-      // In debug mode, show detailed error
+      
       if (AppConfig.isDebugMode) {
         return _createDebugErrorRoute(routeName, e.toString(), stackTrace);
       }
-
-      // In production, show user-friendly error
+      
       return _createErrorRoute(routeName, 'Navigation failed');
     }
   }
 
-  // Route Factories
+  // ============================================================================
+  // ROUTE FACTORIES
+  // ============================================================================
 
   static Route<dynamic> _createSplashRoute(RouteSettings settings) {
     return _createFadeRoute(
@@ -196,7 +195,7 @@ class AppRouter {
     );
   }
 
-  // UPDATED HOME ROUTE - SIMPLIFIED WITHOUT FEATURE FLAGS IN ROUTER
+  // FIXED HOME ROUTE - Simplified and Direct
   static Route<dynamic> _createHomeRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
@@ -212,56 +211,19 @@ class AppRouter {
           }
         }
 
-        // Always use AdaptiveHomeView - it handles feature detection internally
-        Logger.info('✅ Using adaptive home view');
-        return BlocProvider<HomeBloc>(
-          create: (_) => di.sl<HomeBloc>()..add(const LoadHomeDataEvent()),
-          child: AdaptiveHomeView(userData: arguments),
-        );
-      },
-    );
-  }
-
-  static Route<dynamic> _createDashboardRoute(RouteSettings settings) {
-    return _createSlideRoute(
-      settings: settings,
-      builder: (context) {
-        Map<String, dynamic>? arguments;
-
-        if (settings.arguments != null) {
-          try {
-            arguments = _parseArguments(settings.arguments);
-          } catch (e) {
-            Logger.warning('⚠️ Invalid arguments for dashboard: $e');
-            arguments = null;
-          }
-        }
-
-        // Helper function to safely convert userStats argument
-        Map<String, dynamic>? getUserStatsMap() {
-          if (arguments?['userStats'] == null) return null;
-
-          final userStatsArg = arguments!['userStats'];
-          if (userStatsArg is Map<String, dynamic>) {
-            return userStatsArg;
-          } else if (userStatsArg is UserStatsModel) {
-            return userStatsArg.toMap();
-          } else {
-            Logger.warning(
-              '⚠️ Invalid userStats type: ${userStatsArg.runtimeType}',
-            );
-            return null;
-          }
-        }
-
-        // Create standalone Dashboard
-        return BlocProvider<HomeBloc>(
-          create: (_) => di.sl<HomeBloc>()..add(const LoadHomeDataEvent()),
-          child: EnhancedDarkDashboard(
-            homeData: arguments?['homeData'] as Map<String, dynamic>?,
-            userStats: getUserStatsMap(),
-            username: arguments?['username'] as String?,
-          ),
+        Logger.info('✅ Creating home route with enhanced dashboard');
+        
+        // Create a comprehensive home wrapper with all necessary BLoCs
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider<HomeBloc>(
+              create: (_) => di.sl<HomeBloc>()..add(const LoadHomeData()),
+            ),
+            BlocProvider<EmotionBloc>(
+              create: (_) => di.sl<EmotionBloc>(),
+            ),
+          ],
+          child: EnhancedHomeWrapper(userData: arguments),
         );
       },
     );
@@ -295,6 +257,10 @@ class AppRouter {
     );
   }
 
+  // ============================================================================
+  // HELPER METHODS
+  // ============================================================================
+
   static Map<String, dynamic>? _parseArguments(Object? arguments) {
     if (arguments == null) return null;
 
@@ -308,6 +274,10 @@ class AppRouter {
 
     throw ArgumentError('Invalid argument type: ${arguments.runtimeType}');
   }
+
+  // ============================================================================
+  // ROUTE TRANSITION BUILDERS
+  // ============================================================================
 
   static Route<dynamic> _createFadeRoute({
     required RouteSettings settings,
@@ -369,6 +339,10 @@ class AppRouter {
     );
   }
 
+  // ============================================================================
+  // ERROR ROUTE BUILDERS
+  // ============================================================================
+
   static Route<dynamic> _createErrorRoute(String? routeName, String message) {
     return _createFadeRoute(
       settings: const RouteSettings(name: '/error'),
@@ -392,6 +366,10 @@ class AppRouter {
     );
   }
 
+  // ============================================================================
+  // NAVIGATION UTILITY METHODS
+  // ============================================================================
+
   static bool canNavigateToRoute(String routeName, BuildContext? context) {
     switch (routeName) {
       case home:
@@ -401,7 +379,6 @@ class AppRouter {
       case friends:
       case profile:
       case settings:
-        // These routes require authentication
         if (context != null) {
           try {
             final authBloc = context.read<AuthBloc>();
@@ -423,193 +400,87 @@ class AppRouter {
     Object? arguments,
   }) async {
     if (canNavigateToRoute(routeName, context)) {
-      await NavigationService.pushNamed(routeName, arguments: arguments);
+      await NavigationService.safeNavigate(routeName, arguments: arguments);
     } else {
-      await NavigationService.pushNamedAndClearStack(authChoice);
+      await NavigationService.safeNavigate(authChoice, clearStack: true);
     }
   }
 }
 
-// NEW ADAPTIVE HOME VIEW THAT GOES DIRECTLY TO DASHBOARD
-class AdaptiveHomeView extends StatefulWidget {
+// ============================================================================
+// ENHANCED HOME WRAPPER - Replaces the problematic AdaptiveHomeView
+// ============================================================================
+
+class EnhancedHomeWrapper extends StatefulWidget {
   final Map<String, dynamic>? userData;
 
-  const AdaptiveHomeView({super.key, this.userData});
+  const EnhancedHomeWrapper({super.key, this.userData});
 
   @override
-  State<AdaptiveHomeView> createState() => _AdaptiveHomeViewState();
+  State<EnhancedHomeWrapper> createState() => _EnhancedHomeWrapperState();
 }
 
-class _AdaptiveHomeViewState extends State<AdaptiveHomeView> {
+class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
   @override
   void initState() {
     super.initState();
-    // Initialize the bloc event
-    context.read<HomeBloc>().add(const LoadHomeDataEvent());
+    // Ensure home data is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HomeBloc>().add(const LoadHomeData());
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false,
+      canPop: false, // Prevent back navigation from home
       child: BlocListener<HomeBloc, HomeState>(
         listener: (context, state) {
           if (state is HomeError) {
-            NavigationService.showErrorSnackBar(state.message);
+            Logger.error('Home error: ${state.message}');
+            // Show error but don't block the UI
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Connection issue: ${state.message}'),
+                backgroundColor: Colors.orange,
+                action: SnackBarAction(
+                  label: 'Retry',
+                  onPressed: () {
+                    context.read<HomeBloc>().add(const LoadHomeData());
+                  },
+                ),
+              ),
+            );
           }
         },
         child: BlocBuilder<HomeBloc, HomeState>(
-          builder: (context, homeState) {
-            if (homeState is HomeLoading || homeState is HomeInitial) {
+          builder: (context, state) {
+            Logger.info('🏠 Home state: ${state.runtimeType}');
+            
+            if (state is HomeLoading || state is HomeInitial) {
               return _buildLoadingView();
-            } else if (homeState is HomeDashboardState) {
-              // Go directly to DashboardPage which has the beautiful UI
-              return EnhancedDarkDashboard(
-                homeData: _buildHomeData(homeState),
-                userStats: homeState.userStatsMap,
-                username: _getUserName(homeState),
-              );
-            } else if (homeState is HomeError) {
-              return _buildErrorView(homeState.message);
+            } else if (state is HomeError) {
+              // Show dashboard with error state instead of blocking
+              return const Dashboard();
+            } else {
+              // Success state or any other state - show dashboard
+              return const Dashboard();
             }
-            return _buildLoadingView();
           },
         ),
       ),
     );
   }
 
-  String _getUserName(HomeDashboardState state) {
-    return widget.userData?['username'] ??
-        widget.userData?['userData']?['username'] ??
-        widget.userData?['user']?.username ??
-        state.username ??
-        'User';
-  }
-
-  Map<String, dynamic> _buildHomeData(HomeDashboardState state) {
-    // Create a comprehensive homeData map for DashboardPage
-    final Map<String, dynamic> baseData = <String, dynamic>{
-      'currentMood': state.homeData.currentMood ?? 'joy',
-      'moodEmoji': _getMoodEmoji(state.homeData.currentMood ?? 'joy'),
-      'todayMoodLogged': true,
-      'streak': state.homeData.streak ?? 7,
-      'totalSessions': 25,
-      'weekMoods': <String>['😊', '😌', '😊', '😰', '😊', '😑', '😊'],
-      'recommendations': <Map<String, dynamic>>[
-        <String, dynamic>{
-          'title': 'Happy Vibes\nPlaylist',
-          'type': 'music',
-          'image': 'mood_1.jpg',
-        },
-        <String, dynamic>{
-          'title': 'Calm Mind\nMeditation',
-          'type': 'meditation',
-          'image': 'meditation_1.jpg',
-        },
-        <String, dynamic>{
-          'title': 'Energy Boost\nWorkout',
-          'type': 'exercise',
-          'image': 'energy_1.jpg',
-        },
-      ],
-      'risingFromCards': <Map<String, dynamic>>[
-        <String, dynamic>{
-          'title': 'Rising from\nOverwhelm',
-          'completed': false,
-          'progress': 0.3,
-        },
-        <String, dynamic>{
-          'title': 'Building\nConfidence',
-          'completed': false,
-          'progress': 0.6,
-        },
-        <String, dynamic>{
-          'title': 'Managing\nAnxiety',
-          'completed': false,
-          'progress': 0.2,
-        },
-        <String, dynamic>{
-          'title': 'Finding\nBalance',
-          'completed': false,
-          'progress': 0.8,
-        },
-      ],
-      'globalEmotions': <String, dynamic>{
-        'totalUsers': 2300000,
-        'todayEntries': 450000,
-        'locations': <Map<String, dynamic>>[
-          <String, dynamic>{
-            'city': 'New York',
-            'emotion': 'Happy',
-            'percentage': 42,
-          },
-          <String, dynamic>{
-            'city': 'Tokyo',
-            'emotion': 'Calm',
-            'percentage': 38,
-          },
-          <String, dynamic>{
-            'city': 'London',
-            'emotion': 'Anxious',
-            'percentage': 28,
-          },
-          <String, dynamic>{
-            'city': 'Sydney',
-            'emotion': 'Happy',
-            'percentage': 52,
-          },
-          <String, dynamic>{
-            'city': 'Kathmandu',
-            'emotion': 'Happy',
-            'percentage': 45,
-          },
-        ],
-      },
-    };
-
-    // Merge with dashboard data if available
-    if (state.dashboardData.isNotEmpty) {
-      baseData.addAll(state.dashboardData);
-    }
-
-    return baseData;
-  }
-
-  String _getMoodEmoji(String mood) {
-    switch (mood.toLowerCase()) {
-      case 'joy':
-      case 'happy':
-        return '😊';
-      case 'sad':
-      case 'sadness':
-        return '😢';
-      case 'angry':
-      case 'anger':
-        return '😠';
-      case 'fear':
-      case 'anxious':
-        return '😰';
-      case 'disgust':
-        return '🤢';
-      case 'calm':
-        return '😌';
-      case 'overwhelmed':
-        return '🤯';
-      default:
-        return '😊';
-    }
-  }
-
   Widget _buildLoadingView() {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: const Color(0xFF090110),
       body: SafeArea(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Enhanced loading animation
+              // Animated loading indicator
               Container(
                 width: 120,
                 height: 120,
@@ -644,13 +515,16 @@ class _AdaptiveHomeViewState extends State<AdaptiveHomeView> {
                   ],
                 ),
               ),
+              
               const SizedBox(height: 40),
+              
+              // Gradient text
               ShaderMask(
                 shaderCallback: (bounds) => const LinearGradient(
                   colors: [Color(0xFF8B5CF6), Color(0xFFD8A5FF)],
                 ).createShader(bounds),
                 child: const Text(
-                  'Connecting to EMORA',
+                  'Loading EMORA',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -659,9 +533,11 @@ class _AdaptiveHomeViewState extends State<AdaptiveHomeView> {
                   ),
                 ),
               ),
+              
               const SizedBox(height: 16),
+              
               Text(
-                'Loading your emotional journey and global insights...',
+                'Preparing your emotional dashboard...',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.grey[400],
@@ -669,65 +545,27 @@ class _AdaptiveHomeViewState extends State<AdaptiveHomeView> {
                   fontWeight: FontWeight.w400,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildErrorView(String message) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.red.withValues(alpha: 0.1),
-                  border: Border.all(
-                    color: Colors.red.withValues(alpha: 0.3),
-                    width: 2,
+              
+              const SizedBox(height: 40),
+              
+              // Skip button for development
+              if (AppConfig.isDebugMode)
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => const Dashboard(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Skip Loading (Debug)',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
                   ),
                 ),
-                child: const Icon(
-                  Icons.sentiment_very_dissatisfied,
-                  size: 50,
-                  color: Colors.red,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Connection Lost',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  context.read<HomeBloc>().add(const LoadHomeDataEvent());
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B5CF6),
-                  foregroundColor: Colors.white,
-                ),
-                child: const Text('Try Again'),
-              ),
             ],
           ),
         ),
@@ -736,16 +574,19 @@ class _AdaptiveHomeViewState extends State<AdaptiveHomeView> {
   }
 }
 
-// Keep your existing placeholder views
+// ============================================================================
+// PLACEHOLDER VIEWS FOR INCOMPLETE FEATURES
+// ============================================================================
+
 class MoodMapPlaceholderView extends StatelessWidget {
   const MoodMapPlaceholderView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: const Color(0xFF090110),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0F),
+        backgroundColor: const Color(0xFF090110),
         title: const Text('Mood Atlas', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Color(0xFF8B5CF6)),
         elevation: 0,
@@ -777,9 +618,9 @@ class InsightsPlaceholderView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: const Color(0xFF090110),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0F),
+        backgroundColor: const Color(0xFF090110),
         title: const Text('Insights', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Color(0xFF8B5CF6)),
         elevation: 0,
@@ -811,9 +652,9 @@ class FriendsPlaceholderView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: const Color(0xFF090110),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0F),
+        backgroundColor: const Color(0xFF090110),
         title: const Text('Friends', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Color(0xFF8B5CF6)),
         elevation: 0,
@@ -845,9 +686,9 @@ class ProfilePlaceholderView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: const Color(0xFF090110),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0F),
+        backgroundColor: const Color(0xFF090110),
         title: const Text('Profile', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Color(0xFF8B5CF6)),
         elevation: 0,
@@ -873,6 +714,10 @@ class ProfilePlaceholderView extends StatelessWidget {
   }
 }
 
+// ============================================================================
+// ERROR SCREENS
+// ============================================================================
+
 class ErrorScreen extends StatelessWidget {
   final String? routeName;
   final String message;
@@ -888,7 +733,7 @@ class ErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: const Color(0xFF090110),
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -937,8 +782,9 @@ class ErrorScreen extends StatelessWidget {
                 ],
                 const SizedBox(height: 32),
                 ElevatedButton(
-                  onPressed: () => NavigationService.pushNamedAndClearStack(
+                  onPressed: () => NavigationService.safeNavigate(
                     AppRouter.splash,
+                    clearStack: true,
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5CF6),
@@ -978,7 +824,7 @@ class DebugErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
+      backgroundColor: const Color(0xFF090110),
       appBar: AppBar(
         backgroundColor: const Color(0xFF1A1A2E),
         title: const Text('Debug Error', style: TextStyle(color: Colors.white)),
@@ -1063,8 +909,9 @@ class DebugErrorScreen extends StatelessWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => NavigationService.pushNamedAndClearStack(
+                    onPressed: () => NavigationService.safeNavigate(
                       AppRouter.splash,
+                      clearStack: true,
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF8B5CF6),

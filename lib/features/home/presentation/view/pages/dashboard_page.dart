@@ -1,1173 +1,770 @@
-import 'package:emora_mobile_app/app/constants/app_dimensions.dart';
-import 'package:emora_mobile_app/app/constants/emotion_constants.dart';
-import 'package:emora_mobile_app/features/home/presentation/widget/emotion_greeting_card.dart';
+import 'package:emora_mobile_app/features/emotion/presentation/view_model/bloc/view/pages/mood_atlas_view.dart';
+import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_bloc.dart';
+import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_event.dart';
+import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_state.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/community_feed_widget.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/custom_mood_face.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/emotion_analytics_card.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/mood_capsule_timeline.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/quick_actions_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 
+import '../../../../../core/navigation/app_router.dart';
+import '../../../../../core/navigation/navigation_service.dart';
+import '../../../../../core/network/dio_client.dart';
 import '../../../../../core/utils/logger.dart';
-import '../../view_model/bloc/home_bloc.dart';
-import '../../view_model/bloc/home_event.dart';
+import '../../../../../features/emotion/presentation/view_model/bloc/emotion_bloc.dart';
+import '../../services/emotion_backend_service.dart';
 
-class EnhancedDarkDashboard extends StatefulWidget {
-  final Map<String, dynamic>? homeData;
-  final Map<String, dynamic>? userStats;
-  final String? username;
-  final bool? hasLoggedMoodToday;
-
-  const EnhancedDarkDashboard({
-    super.key,
-    this.homeData,
-    this.userStats,
-    this.username,
-    this.hasLoggedMoodToday,
-  });
+// 🔧 CRITICAL FIX: Use builder pattern to ensure context has access to HomeBloc
+class Dashboard extends StatelessWidget {
+  const Dashboard({super.key});
 
   @override
-  State<EnhancedDarkDashboard> createState() => _EnhancedDarkDashboardState();
+  Widget build(BuildContext context) {
+    return BlocBuilder<HomeBloc, HomeState>(
+      builder: (context, state) {
+        // Now this context definitely has access to HomeBloc
+        return _DashboardContent(homeState: state);
+      },
+    );
+  }
 }
 
-class _EnhancedDarkDashboardState extends State<EnhancedDarkDashboard>
-    with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late AnimationController _bounceController;
-  late AnimationController _pulseController;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _bounceAnimation;
-  late Animation<double> _pulseAnimation;
+class _DashboardContent extends StatefulWidget {
+  final HomeState homeState;
 
-  String selectedMood = 'happy';
+  const _DashboardContent({required this.homeState});
+
+  @override
+  State<_DashboardContent> createState() => _DashboardContentState();
+}
+
+class _DashboardContentState extends State<_DashboardContent>
+    with TickerProviderStateMixin {
+  // Animation Controllers
+  late AnimationController _breathingController;
+  late AnimationController _rippleController;
+  late AnimationController _glowController;
+  late Animation<double> _breathingAnimation;
+
+  // Navigation & State - Using MoodType from custom_mood_face.dart
   int selectedNavIndex = 0;
+  MoodType currentMood = MoodType.good;
+  String currentMoodLabel = 'good';
+
+  // Backend Integration - Safe access
+  EmotionBackendService? _emotionService;
+  EmotionBloc? _emotionBloc;
+  HomeBloc? _homeBloc;
+  bool _isBackendConnected = false;
+  final String _userId = 'demo_user_123';
+
+  // Track if user is new
+  bool _isNewUser = true;
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _initializeData();
+    // Delay initialization to ensure context is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeBackendServices();
+      _loadInitialData();
+    });
   }
 
   void _initializeAnimations() {
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 1200),
+    _breathingController = AnimationController(
+      duration: const Duration(seconds: 4),
       vsync: this,
-    );
+    )..repeat(reverse: true);
 
-    _bounceController = AnimationController(
+    _rippleController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
 
-    _pulseController = AnimationController(
+    _glowController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
-    );
+    )..repeat(reverse: true);
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _fadeController, curve: Curves.easeInOut),
+    _breathingAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _breathingController, curve: Curves.easeInOut),
     );
-
-    _bounceAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _bounceController, curve: Curves.elasticOut),
-    );
-
-    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-
-    _fadeController.forward();
-    _bounceController.forward();
-    _pulseController.repeat(reverse: true);
   }
 
-  void _initializeData() {
-    if (widget.homeData != null) {
-      selectedMood = widget.homeData!['currentMood']?.toLowerCase() ?? 'happy';
-      if (!EmotionConstants.emotions.containsKey(selectedMood)) {
-        selectedMood = 'happy';
+  // 🔧 FIXED: Safe initialization with proper context access
+  void _initializeBackendServices() {
+    try {
+      if (!mounted) return;
+
+      // Initialize DIO client and emotion service
+      try {
+        final dioClient = GetIt.instance<DioClient>();
+        _emotionService = EmotionBackendService(dioClient);
+        Logger.info('✅ EmotionService initialized');
+      } catch (e) {
+        Logger.warning('⚠️ Could not initialize EmotionService: $e');
       }
+
+      // Get EmotionBloc from GetIt
+      try {
+        _emotionBloc = GetIt.instance<EmotionBloc>();
+        Logger.info('✅ EmotionBloc retrieved from GetIt');
+      } catch (e) {
+        Logger.warning('⚠️ Could not get EmotionBloc: $e');
+      }
+
+      // 🔧 CRITICAL FIX: Now context definitely has HomeBloc access
+      try {
+        _homeBloc = context.read<HomeBloc>();
+        Logger.info('✅ HomeBloc retrieved from context successfully');
+      } catch (e) {
+        Logger.warning('⚠️ HomeBloc access failed, trying GetIt: $e');
+        try {
+          _homeBloc = GetIt.instance<HomeBloc>();
+          Logger.info('✅ HomeBloc retrieved from GetIt as fallback');
+        } catch (e2) {
+          Logger.error('❌ Could not get HomeBloc from anywhere: $e2');
+        }
+      }
+
+      Logger.info('✅ Backend services initialization completed');
+      _testBackendConnection();
+    } catch (e) {
+      Logger.error('❌ Failed to initialize backend services', e);
+      _isBackendConnected = false;
     }
   }
 
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    _bounceController.dispose();
-    _pulseController.dispose();
-    super.dispose();
+  Future<void> _testBackendConnection() async {
+    try {
+      if (_emotionService == null) return;
+
+      final isHealthy = await _emotionService!.checkBackendHealth();
+      if (mounted) {
+        setState(() {
+          _isBackendConnected = isHealthy;
+        });
+      }
+      Logger.info(isHealthy ? '✅ Backend is healthy' : '⚠️ Backend offline');
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isBackendConnected = false;
+        });
+      }
+      Logger.warning('⚠️ Backend connection test failed: $e');
+    }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F), // Pure dark background
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: _handleRefresh,
-                  backgroundColor: const Color(0xFF1A1A2E),
-                  color: const Color(0xFF8B5CF6),
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    child: Column(
-                      children: [
-                        // Enhanced Dark Header
-                        _buildDarkHeader(),
-                        const SizedBox(height: AppDimensions.paddingLarge),
-
-                        // Personalized greeting card with dark theme
-                        ScaleTransition(
-                          scale: _bounceAnimation,
-                          child: EmotionGreetingCard(
-                            username: widget.username,
-                            hasLoggedMoodToday: widget.hasLoggedMoodToday,
-                            selectedMood: selectedMood,
-                          ),
-                        ),
-
-                        const SizedBox(height: AppDimensions.paddingXLarge),
-
-                        // Enhanced stats grid
-                        _buildEnhancedStats(),
-
-                        const SizedBox(height: AppDimensions.paddingXLarge),
-
-                        // Dark themed emotion selector
-                        _buildDarkEmotionSelector(),
-
-                        const SizedBox(height: AppDimensions.paddingXLarge),
-
-                        // Insights card
-                        _buildInsightsCard(),
-
-                        const SizedBox(height: AppDimensions.paddingXLarge),
-
-                        // Global emotion preview with dark theme
-                        _buildDarkGlobalEmotions(),
-
-                        const SizedBox(height: AppDimensions.paddingXLarge),
-
-                        // Safe space message
-                        _buildDarkSafeSpace(),
-
-                        const SizedBox(height: 100),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-
-              // Enhanced dark navigation
-              _buildDarkBottomNavigation(),
-            ],
-          ),
-        ),
-      ),
-    );
+  void _loadInitialData() {
+    try {
+      Logger.info(
+        '🎭 Dashboard initialized - emotion data handled by HomeBloc',
+      );
+    } catch (e) {
+      Logger.error('❌ Failed to load initial data', e);
+    }
   }
 
-  Widget _buildDarkHeader() {
-    final emotion = EmotionConstants.getEmotion(selectedMood);
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-      child: Row(
-        children: [
-          // Animated logo with emotion color
-          AnimatedBuilder(
-            animation: _pulseAnimation,
-            builder: (context, child) {
-              return Transform.scale(
-                scale: _pulseAnimation.value,
-                child: Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [
-                        emotion['color'].withOpacity(0.8),
-                        emotion['color'].withOpacity(0.6),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: emotion['color'].withOpacity(0.4),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.psychology,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 15),
-
-          // App title and greeting
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ShaderMask(
-                  shaderCallback: (bounds) => LinearGradient(
-                    colors: [
-                      emotion['color'],
-                      emotion['color'].withOpacity(0.7),
-                    ],
-                  ).createShader(bounds),
-                  child: const Text(
-                    'EMORA',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 2.0,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  _getTimeBasedGreeting(),
-                  style: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Notification icon with emotion accent
-          Container(
-            width: 45,
-            height: 45,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A2E),
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: emotion['color'].withOpacity(0.3),
-                width: 1,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: emotion['color'].withOpacity(0.2),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                Center(
-                  child: Icon(
-                    Icons.notifications_outlined,
-                    color: emotion['color'],
-                    size: 22,
-                  ),
-                ),
-                Positioned(
-                  top: 8,
-                  right: 8,
-                  child: Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: emotion['color'],
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEnhancedStats() {
-    final streak = widget.userStats?['streakDays'] ?? 7;
-    final totalSessions = widget.userStats?['totalSessions'] ?? 25;
-    final moodCheckins = widget.userStats?['moodCheckins'] ?? 25;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLarge,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildDarkStatCard(
-              '🔥',
-              '$streak',
-              'Day Streak',
-              const Color(0xFFFF6B35),
-            ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: _buildDarkStatCard(
-              '📊',
-              '$totalSessions',
-              'Sessions',
-              const Color(0xFF00BCD4),
-            ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: _buildDarkStatCard(
-              '💭',
-              '$moodCheckins',
-              'Check-ins',
-              const Color(0xFF4CAF50),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDarkStatCard(
-    String emoji,
-    String value,
-    String label,
-    Color accentColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor.withOpacity(0.3), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: accentColor.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Text(emoji, style: const TextStyle(fontSize: 24)),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[400],
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDarkEmotionSelector() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLarge,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.mood, color: Colors.white, size: 20),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Express Yourself',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            childAspectRatio: 1.1,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            children: [
-              _buildDarkEmotionCard('😊', 'Happy', const Color(0xFFFFC107)),
-              _buildDarkEmotionCard('😌', 'Calm', const Color(0xFF4CAF50)),
-              _buildDarkEmotionCard('😰', 'Anxious', const Color(0xFF9C27B0)),
-              _buildDarkEmotionCard('😢', 'Sad', const Color(0xFF2196F3)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDarkEmotionCard(String emoji, String emotion, Color color) {
-    return GestureDetector(
-      onTap: () => _onEmotionSelected(emotion),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A2E),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3), width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: color.withOpacity(0.2),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Text(emoji, style: const TextStyle(fontSize: 40)),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              emotion,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInsightsCard() {
-    final emotion = EmotionConstants.getEmotion(selectedMood);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLarge,
-      ),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF00BCD4).withOpacity(0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF00BCD4).withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF00BCD4), Color(0xFF0097A7)],
-              ),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF00BCD4).withOpacity(0.4),
-                  blurRadius: 15,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.insights, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Quick Insights',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${_getRandomPercentage()}% of people feel ${emotion['name']} today',
-                  style: TextStyle(fontSize: 14, color: Colors.grey[300]),
-                ),
-              ],
-            ),
-          ),
-          Text(emotion['emoji'], style: const TextStyle(fontSize: 32)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDarkGlobalEmotions() {
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLarge,
-      ),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF4CAF50).withOpacity(0.3),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF4CAF50).withOpacity(0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF4CAF50), Color(0xFF2E7D32)],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF4CAF50).withOpacity(0.4),
-                      blurRadius: 15,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.public, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 16),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Global Emotions',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'See how the world feels today',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios, color: Colors.grey, size: 16),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Container(
-            height: 120,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2196F3), Color(0xFF4CAF50)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Text('🌍', style: TextStyle(fontSize: 48)),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Your emotions connect you to the world 🌊',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-              fontStyle: FontStyle.italic,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDarkSafeSpace() {
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.paddingLarge,
-      ),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF4CAF50).withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: const Color(0xFF4CAF50).withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.shield_outlined,
-              color: Color(0xFF4CAF50),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'This is your safe space',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Express your emotions freely and authentically',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDarkBottomNavigation() {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        vertical: AppDimensions.paddingMedium,
-        horizontal: AppDimensions.paddingSmall,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A2E),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, -10),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(
-              0,
-              Icons.home_filled,
-              'Home',
-              const Color(0xFF8B5CF6),
-            ),
-            _buildNavItem(1, Icons.public, 'Atlas', const Color(0xFF4CAF50)),
-            _buildNavItem(
-              2,
-              Icons.insights,
-              'Insights',
-              const Color(0xFF00BCD4),
-            ),
-            _buildNavItem(3, Icons.people, 'Friends', const Color(0xFFFF6B35)),
-            _buildVentingNavItem(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(int index, IconData icon, String label, Color color) {
-    final isSelected = selectedNavIndex == index;
-
-    return GestureDetector(
-      onTap: () => _onNavigationItemSelected(index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.2) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: isSelected ? color : Colors.grey, size: 22),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                color: isSelected ? color : Colors.grey,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildVentingNavItem() {
-    return GestureDetector(
-      onTap: _showVentingInterface,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
-          ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE91E63).withOpacity(0.3)),
-        ),
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.air, color: Colors.white, size: 22),
-            SizedBox(height: 4),
-            Text(
-              'Vent',
-              style: TextStyle(
-                fontSize: 11,
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Helper methods
-  String _getTimeBasedGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
-  }
-
-  int _getRandomPercentage() {
-    return 25 + (DateTime.now().millisecond % 30); // 25-55%
-  }
-
-  Future<void> _handleRefresh() async {
-    context.read<HomeBloc>().add(const RefreshHomeDataEvent());
-    await Future.delayed(const Duration(seconds: 1));
-  }
-
-  void _onEmotionSelected(String emotion) {
-    Logger.info('🎭 Emotion selected: $emotion');
+  void _onNavItemTapped(int index) {
     setState(() {
-      selectedMood = emotion.toLowerCase();
+      selectedNavIndex = index;
     });
-    _showEmotionIntensityDialog(emotion);
+
+    switch (index) {
+      case 0: // Atlas
+        _navigateToMoodAtlas();
+        break;
+      case 1: // Friends
+        NavigationService.pushNamed(AppRouter.friends);
+        break;
+      case 2: // Insights
+        NavigationService.pushNamed(AppRouter.insights);
+        break;
+      case 3: // Profile
+        NavigationService.pushNamed(AppRouter.profile);
+        break;
+    }
   }
 
-  void _showEmotionIntensityDialog(String emotion) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => EmotionIntensitySelector(
-        emotion: emotion,
-        onSelected: (intensity) {
-          Navigator.pop(context);
-          _logEmotion(emotion, intensity);
+  void _onMoodTapped() {
+    _showCustomMoodSelector();
+  }
+
+  void _navigateToMoodAtlas() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const MoodAtlasView(),
+        transitionDuration: const Duration(milliseconds: 600),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(
+            opacity: animation,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.8, end: 1.0).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              ),
+              child: child,
+            ),
+          );
         },
       ),
     );
   }
 
-  void _logEmotion(String emotion, double intensity) {
-    Logger.info('📝 Logging emotion: $emotion with intensity: $intensity');
+  void _updateMood(MoodType newMood) {
+    setState(() {
+      currentMood = newMood;
+      currentMoodLabel = MoodUtils.moodTypeToString(newMood);
+    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Text(EmotionConstants.getEmotionEmoji(emotion)),
-            const SizedBox(width: 8),
-            Text('Emotion logged: $emotion'),
-          ],
-        ),
-        backgroundColor: const Color(0xFF8B5CF6),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    // Safe EmotionBloc access
+    try {
+      if (_emotionBloc != null) {
+        _emotionBloc!.add(
+          LogEmotionEvent(
+            emotion: currentMoodLabel,
+            intensity: MoodUtils.getMoodIntensity(newMood),
+            context: 'daily_check_in',
+            userId: _userId,
+          ),
+        );
+      }
+    } catch (e) {
+      Logger.error('❌ Failed to log mood update', e);
+    }
+
+    // Show success feedback for new users
+    if (_isNewUser) {
+      _showFirstEmotionSuccess();
+    }
+  }
+
+  void _showCustomMoodSelector() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => CustomMoodSelectorModal(
+        currentMood: currentMood,
+        onMoodSelected: _updateMood,
       ),
     );
   }
 
-  void _onNavigationItemSelected(int index) {
-    setState(() {
-      selectedNavIndex = index;
-    });
-    _handleNavigation(index);
-  }
-
-  void _showVentingInterface() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (context) => const VentingModal(),
+  void _showFirstEmotionSuccess() {
+    NavigationService.showSuccessSnackBar(
+      '🎉 Congratulations! You logged your first emotion!',
     );
   }
 
-  void _handleNavigation(int index) {
-    final homeBloc = context.read<HomeBloc>();
+  Future<void> _handleRefresh() async {
+    try {
+      await Future.delayed(const Duration(milliseconds: 500));
+      await _testBackendConnection();
 
-    switch (index) {
-      case 0:
-        homeBloc.add(const LoadHomeDataEvent());
-        break;
-      case 1:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Mood Atlas coming soon! 🗺️'),
-            backgroundColor: Color(0xFF4CAF50),
-          ),
-        );
-        break;
-      case 2:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Insights coming soon! 📊'),
-            backgroundColor: Color(0xFF00BCD4),
-          ),
-        );
-        break;
-      case 3:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Friends coming soon! 👥'),
-            backgroundColor: Color(0xFFFF6B35),
-          ),
-        );
-        break;
+      // Safe HomeBloc refresh
+      if (_homeBloc != null) {
+        _homeBloc!.add(const RefreshHomeDataEvent());
+      }
+
+      Logger.info('🔄 Dashboard refresh completed');
+    } catch (e) {
+      Logger.error('❌ Error refreshing data', e);
     }
   }
-}
-
-// Emotion Intensity Selector for Dark Theme
-class EmotionIntensitySelector extends StatefulWidget {
-  final String emotion;
-  final Function(double) onSelected;
-
-  const EmotionIntensitySelector({
-    super.key,
-    required this.emotion,
-    required this.onSelected,
-  });
 
   @override
-  State<EmotionIntensitySelector> createState() =>
-      _EmotionIntensitySelectorState();
-}
-
-class _EmotionIntensitySelectorState extends State<EmotionIntensitySelector> {
-  double _intensity = 0.5;
+  void dispose() {
+    _breathingController.dispose();
+    _rippleController.dispose();
+    _glowController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final emotion = EmotionConstants.getEmotion(widget.emotion);
-
-    return Container(
-      padding: const EdgeInsets.all(28),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1A1A2E),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0A0A0F),
+        body: SafeArea(
+          // 🔧 CRITICAL FIX: Now we can safely use BlocListener since context has HomeBloc
+          child: BlocListener<HomeBloc, HomeState>(
+            listener: (context, state) {
+              if (state is HomeDashboardState) {
+                final isNewUser = state.userStats?.totalMoodEntries == 0;
+                if (_isNewUser != isNewUser) {
+                  setState(() {
+                    _isNewUser = isNewUser;
+                  });
+                }
+              }
+            },
+            child: Column(
+              children: [
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: _handleRefresh,
+                    backgroundColor: const Color(0xFF1A1A2E),
+                    color: const Color(0xFF8B5CF6),
+                    child: _buildContent(widget.homeState),
+                  ),
+                ),
+                EnhancedBottomNavigationCustom(
+                  selectedIndex: selectedNavIndex,
+                  onItemTapped: _onNavItemTapped,
+                  onMoodTapped: _onMoodTapped,
+                  currentMood: currentMood,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
+    );
+  }
+
+  Widget _buildContent(HomeState state) {
+    if (state is HomeLoading) {
+      return _buildLoadingState();
+    } else if (state is HomeError) {
+      return _buildErrorState(state.message);
+    } else if (state is HomeDashboardState) {
+      return _buildDashboardContent(state);
+    }
+    return _buildLoadingState();
+  }
+
+  Widget _buildLoadingState() {
+    return const Center(
       child: Column(
-        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 45,
-            height: 5,
-            decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(3),
-            ),
-          ),
-          const SizedBox(height: 28),
+          CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+          SizedBox(height: 16),
           Text(
-            'How intense is this ${widget.emotion.toLowerCase()} feeling?',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-            textAlign: TextAlign.center,
+            'Loading your dashboard...',
+            style: TextStyle(color: Colors.white, fontSize: 16),
           ),
-          const SizedBox(height: 36),
-          SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              activeTrackColor: emotion['color'],
-              inactiveTrackColor: emotion['color'].withOpacity(0.3),
-              thumbColor: emotion['color'],
-              overlayColor: emotion['color'].withOpacity(0.2),
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 14),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
-            ),
-            child: Slider(
-              value: _intensity,
-              onChanged: (value) {
-                setState(() {
-                  _intensity = value;
-                });
-              },
-              min: 0.1,
-              max: 1.0,
-              divisions: 9,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Mild',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Text(
-                'Intense',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 36),
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton(
-              onPressed: () => widget.onSelected(_intensity),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: emotion['color'],
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 8,
-                shadowColor: emotion['color'].withOpacity(0.3),
-              ),
-              child: const Text(
-                'Log Emotion',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
         ],
       ),
     );
   }
-}
 
-// Enhanced Venting Modal for Dark Theme
-class VentingModal extends StatefulWidget {
-  const VentingModal({super.key});
-
-  @override
-  State<VentingModal> createState() => _VentingModalState();
-}
-
-class _VentingModalState extends State<VentingModal> {
-  String ventingText = '';
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF2D1B69), Color(0xFF1A1A2E), Color(0xFF0A0A0F)],
-        ),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, color: Colors.red[400], size: 64),
+          const SizedBox(height: 16),
+          const Text(
+            'Oops! Something went wrong',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: TextStyle(color: Colors.grey[400], fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: () {
+              if (_homeBloc != null) {
+                _homeBloc!.add(const LoadHomeDataEvent(forceRefresh: true));
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF8B5CF6),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Try Again'),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: 24,
-          left: 24,
-          right: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+    );
+  }
+
+  Widget _buildDashboardContent(HomeDashboardState state) {
+    final isNewUser = state.userStats?.totalMoodEntries == 0;
+
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: Column(
+        children: [
+          if (isNewUser)
+            _buildNewUserHeader(state)
+          else
+            _buildRegularHeader(state),
+          const SizedBox(height: 24),
+          if (isNewUser) _buildNewUserContent() else _buildRegularContent(),
+          const SizedBox(height: 100),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNewUserHeader(HomeDashboardState state) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+              const Color(0xFF6366F1).withValues(alpha: 0.1),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+            width: 1,
+          ),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHandleBar(),
-            const SizedBox(height: 24),
-            _buildVentingHeader(),
-            const SizedBox(height: 24),
-            _buildSafeSpaceMessage(),
-            const SizedBox(height: 24),
-            _buildVentingTextArea(),
-            const SizedBox(height: 24),
-            _buildReleaseButton(),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.waving_hand,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Welcome to EMORA!',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        'Hi ${state.homeData.username}, ready to start your emotional journey?',
+                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Track your emotions, discover patterns, and connect with a global community of emotional wellness.',
+              style: TextStyle(
+                color: Colors.grey[300],
+                fontSize: 14,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20),
+            GestureDetector(
+              onTap: _onMoodTapped,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.favorite, color: Colors.white, size: 20),
+                    SizedBox(width: 8),
+                    Text(
+                      'Log Your First Emotion',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHandleBar() {
-    return Container(
-      width: 45,
-      height: 5,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(3),
+  Widget _buildRegularHeader(HomeDashboardState state) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: AnimatedBuilder(
+        animation: _breathingAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _breathingAnimation.value,
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                    const Color(0xFF6366F1).withValues(alpha: 0.05),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                  width: 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: CustomMoodFace(
+                      mood: currentMood,
+                      size: 70,
+                      backgroundColor: _isBackendConnected
+                          ? MoodUtils.getMoodColor(currentMood)
+                          : Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              'Current Mood',
+                              style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _isBackendConnected
+                                    ? const Color(0xFF10B981)
+                                    : Colors.orange,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          MoodUtils.getMoodLabel(currentMood),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _isBackendConnected
+                              ? 'Tap to update your mood'
+                              : 'Backend offline - mood saved locally',
+                          style: TextStyle(
+                            color: Colors.grey[500],
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _onMoodTapped,
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF8B5CF6,
+                            ).withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.edit_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildVentingHeader() {
-    return Row(
+  Widget _buildNewUserContent() {
+    return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFFE91E63).withOpacity(0.3),
-                blurRadius: 15,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: const Icon(Icons.air, color: Colors.white, size: 28),
-        ),
-        const SizedBox(width: 16),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Let It Out',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                'Release what\'s weighing on your mind',
-                style: TextStyle(fontSize: 16, color: Colors.white70),
-              ),
-            ],
-          ),
+        _buildFeaturePreview(),
+        const SizedBox(height: 24),
+        const EmotionAnalyticsCard(),
+        const SizedBox(height: 24),
+        CommunityFeedWidget(
+          onViewAllTapped: () => NavigationService.pushNamed(AppRouter.friends),
         ),
       ],
     );
   }
 
-  Widget _buildSafeSpaceMessage() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
-      ),
-      child: const Row(
+  Widget _buildRegularContent() {
+    return Column(
+      children: [
+        MoodCapsuleTimeline(onCapsuleTapped: _showMoodCapsuleDetail),
+        const SizedBox(height: 24),
+        QuickActionsGrid(
+          onVentTapped: _showVentingModal,
+          onJournalTapped: _showJournalModal,
+          onInsightsTapped: () =>
+              NavigationService.pushNamed(AppRouter.insights),
+          onAtlasTapped: _navigateToMoodAtlas,
+        ),
+        const SizedBox(height: 24),
+        const EmotionAnalyticsCard(),
+        const SizedBox(height: 24),
+        CommunityFeedWidget(
+          onViewAllTapped: () => NavigationService.pushNamed(AppRouter.friends),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeaturePreview() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.security, color: Colors.white70, size: 24),
-          SizedBox(width: 16),
+          const Text(
+            'What you\'ll discover:',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildFeatureItem(
+            icon: Icons.timeline,
+            title: 'Emotion Timeline',
+            description: 'Track your emotional patterns over time',
+          ),
+          _buildFeatureItem(
+            icon: Icons.insights,
+            title: 'Personal Insights',
+            description: 'Discover what influences your mood',
+          ),
+          _buildFeatureItem(
+            icon: Icons.public,
+            title: 'Global Community',
+            description: 'See how others around the world are feeling',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureItem({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+            ),
+            child: Icon(icon, color: const Color(0xFF8B5CF6), size: 20),
+          ),
+          const SizedBox(width: 16),
           Expanded(
-            child: Text(
-              'This is your safe space. Nothing you write here will be saved or shared.',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: 14,
-                fontStyle: FontStyle.italic,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  description,
+                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                ),
+              ],
             ),
           ),
         ],
@@ -1175,77 +772,264 @@ class _VentingModalState extends State<VentingModal> {
     );
   }
 
-  Widget _buildVentingTextArea() {
-    return Expanded(
+  // Modal Methods
+  void _showMoodCapsuleDetail(dynamic capsule) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mood Capsule'),
+        content: Text('Capsule details: $capsule'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showVentingModal() {
+    NavigationService.showBottomSheet(
       child: Container(
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
-        ),
-        child: TextField(
-          onChanged: (value) => setState(() => ventingText = value),
-          maxLines: null,
-          expands: true,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            height: 1.5,
-          ),
-          decoration: InputDecoration(
-            hintText:
-                'Just let it all out... \n\nType whatever you\'re feeling. Get frustrated, be angry, feel sad - it\'s all okay here. \n\nNo one will judge you. This is your moment.',
-            hintStyle: TextStyle(
-              color: Colors.white.withOpacity(0.4),
-              fontSize: 16,
-              height: 1.5,
-            ),
-            border: InputBorder.none,
-          ),
-          textAlignVertical: TextAlignVertical.top,
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Venting Modal', style: TextStyle(fontSize: 24)),
+            SizedBox(height: 20),
+            Text('Express your feelings freely here...'),
+          ],
         ),
       ),
+      isScrollControlled: true,
     );
   }
 
-  Widget _buildReleaseButton() {
+  void _showJournalModal() {
+    NavigationService.showBottomSheet(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Journal Modal', style: TextStyle(fontSize: 24)),
+            SizedBox(height: 20),
+            Text('Write about your day and emotions...'),
+          ],
+        ),
+      ),
+      isScrollControlled: true,
+    );
+  }
+}
+
+// Enhanced Bottom Navigation with Custom Mood Face
+class EnhancedBottomNavigationCustom extends StatefulWidget {
+  final int selectedIndex;
+  final Function(int) onItemTapped;
+  final VoidCallback? onMoodTapped;
+  final MoodType currentMood;
+
+  const EnhancedBottomNavigationCustom({
+    super.key,
+    required this.selectedIndex,
+    required this.onItemTapped,
+    this.onMoodTapped,
+    this.currentMood = MoodType.good,
+  });
+
+  @override
+  State<EnhancedBottomNavigationCustom> createState() =>
+      _EnhancedBottomNavigationCustomState();
+}
+
+
+class _EnhancedBottomNavigationCustomState
+    extends State<EnhancedBottomNavigationCustom>
+    with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late AnimationController _glowController;
+  late Animation<double> _pulseAnimation;
+  late Animation<double> _glowAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnimations();
+  }
+
+  void _initializeAnimations() {
+    _pulseController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _glowController = AnimationController(
+      duration: const Duration(milliseconds: 3000),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _glowAnimation = Tween<double>(begin: 0.3, end: 0.8).animate(
+      CurvedAnimation(parent: _glowController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _glowController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      height: 54,
+      height: 95,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFE91E63), Color(0xFF9C27B0)],
+          colors: [Color(0xFF1A1A2E), Color(0xFF0F0F1A)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
-        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFE91E63).withOpacity(0.4),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
           ),
         ],
       ),
-      child: ElevatedButton(
-        onPressed: ventingText.isNotEmpty ? _releaseEmotions : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+      child: Stack(
+        children: [
+          // Main Navigation Bar
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: Container(
+              height: 75,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // Atlas (Map)
+                  Expanded(
+                    child: _buildNavItem(
+                      index: 0,
+                      icon: Icons.public_rounded,
+                      activeIcon: Icons.public_rounded,
+                      label: 'Atlas',
+                      isActive: widget.selectedIndex == 0,
+                    ),
+                  ),
+
+                  // Friends
+                  Expanded(
+                    child: _buildNavItem(
+                      index: 1,
+                      icon: Icons.people_outline_rounded,
+                      activeIcon: Icons.people_rounded,
+                      label: 'Friends',
+                      isActive: widget.selectedIndex == 1,
+                    ),
+                  ),
+
+                  // Space for floating mood button
+                  const SizedBox(width: 70),
+
+                  // Insights
+                  Expanded(
+                    child: _buildNavItem(
+                      index: 2,
+                      icon: Icons.insights_outlined,
+                      activeIcon: Icons.insights_rounded,
+                      label: 'Insights',
+                      isActive: widget.selectedIndex == 2,
+                    ),
+                  ),
+
+                  // Profile
+                  Expanded(
+                    child: _buildNavItem(
+                      index: 3,
+                      icon: Icons.person_outline_rounded,
+                      activeIcon: Icons.person_rounded,
+                      label: 'Profile',
+                      isActive: widget.selectedIndex == 3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
+
+          // Floating Mood Button with Custom Face
+          Positioned(
+            top: 5,
+            left: MediaQuery.of(context).size.width / 2 - 35,
+            child: _buildFloatingMoodButton(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required bool isActive,
+  }) {
+    return GestureDetector(
+      onTap: () => widget.onItemTapped(index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: isActive
+              ? const Color(0xFF8B5CF6).withValues(alpha: 0.15)
+              : Colors.transparent,
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.whatshot, color: Colors.white, size: 24),
-            SizedBox(width: 12),
-            Text(
-              'Release & Let Go 🔥',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isActive
+                    ? const Color(0xFF8B5CF6).withValues(alpha: 0.2)
+                    : Colors.transparent,
+              ),
+              child: Icon(
+                isActive ? activeIcon : icon,
+                color: isActive ? const Color(0xFF8B5CF6) : Colors.grey[400],
+                size: 22,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: isActive ? const Color(0xFF8B5CF6) : Colors.grey[500],
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                  height: 1.2,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
               ),
             ),
           ],
@@ -1254,29 +1038,256 @@ class _VentingModalState extends State<VentingModal> {
     );
   }
 
-  void _releaseEmotions() {
-    Navigator.pop(context);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Row(
-          children: [
-            Text('🌸', style: TextStyle(fontSize: 20)),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                'You\'ve let it go. Take a deep breath. You\'re okay. 💙',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+  Widget _buildFloatingMoodButton() {
+    return GestureDetector(
+      onTap: widget.onMoodTapped,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_pulseAnimation, _glowAnimation]),
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _pulseAnimation.value,
+            child: Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const RadialGradient(
+                  colors: [
+                    Color(0xFF8B5CF6),
+                    Color(0xFF6366F1),
+                    Color(0xFF4F46E5),
+                  ],
+                  stops: [0.0, 0.7, 1.0],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(
+                      0xFF8B5CF6,
+                    ).withValues(alpha: _glowAnimation.value),
+                    blurRadius: 25,
+                    spreadRadius: 5,
+                    offset: const Offset(0, 5),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.3),
+                    width: 2,
+                  ),
+                ),
+                child: Center(
+                  child: CustomMoodFace(
+                    mood: widget.currentMood,
+                    size: 45,
+                    backgroundColor: Colors.white.withValues(alpha: 0.9),
+                    faceColor: Colors.black87,
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
-        backgroundColor: const Color(0xFF4CAF50),
-        duration: const Duration(seconds: 4),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
+          );
+        },
       ),
     );
+  }
+}
+
+
+// Custom Mood Selector Modal with Purple Theme
+class CustomMoodSelectorModal extends StatefulWidget {
+  final MoodType currentMood;
+  final Function(MoodType) onMoodSelected;
+
+  const CustomMoodSelectorModal({
+    super.key,
+    required this.currentMood,
+    required this.onMoodSelected,
+  });
+
+  @override
+  State<CustomMoodSelectorModal> createState() =>
+      _CustomMoodSelectorModalState();
+}
+
+class _CustomMoodSelectorModalState extends State<CustomMoodSelectorModal>
+    with TickerProviderStateMixin {
+  late AnimationController _slideController;
+  late AnimationController _fadeController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeAnimations();
+    _slideController.forward();
+    _fadeController.forward();
+  }
+
+  void _initializeAnimations() {
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
+        );
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
+  }
+
+  @override
+  void dispose() {
+    _slideController.dispose();
+    _fadeController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.5,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1F2937), Color(0xFF111827)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(
+          color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                // Handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Title
+                ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
+                  ).createShader(bounds),
+                  child: const Text(
+                    'How are you feeling?',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Mood Options
+                Wrap(
+                  spacing: 20,
+                  runSpacing: 20,
+                  alignment: WrapAlignment.center,
+                  children: MoodUtils.getAllMoods().map((mood) {
+                    final isSelected = mood == widget.currentMood;
+                    return _buildMoodOption(
+                      mood: mood,
+                      isSelected: isSelected,
+                      onTap: () => _selectMood(mood),
+                    );
+                  }).toList(),
+                ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMoodOption({
+    required MoodType mood,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected
+                    ? const Color(0xFF8B5CF6)
+                    : Colors.transparent,
+                width: 3,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: CustomMoodFace(mood: mood, size: 60),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            MoodUtils.getMoodLabel(mood),
+            style: TextStyle(
+              color: isSelected ? const Color(0xFF8B5CF6) : Colors.grey[400],
+              fontSize: 12,
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _selectMood(MoodType mood) {
+    widget.onMoodSelected(mood);
+    Navigator.of(context).pop();
   }
 }

@@ -80,7 +80,7 @@ class OnboardingModule {
   static void _initBloc(GetIt sl) {
     Logger.info('🧩 Initializing onboarding bloc...');
 
-    sl.registerFactory<OnboardingBloc>(
+    sl.registerLazySingleton<OnboardingBloc>(
       () => OnboardingBloc(
         getOnboardingSteps: sl<GetOnboardingSteps>(),
         saveUserData: sl<SaveUserData>(),

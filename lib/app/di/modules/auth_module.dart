@@ -90,7 +90,7 @@ class AuthModule {
   static void _initBloc(GetIt sl) {
     Logger.info('🧩 Initializing auth bloc...');
 
-    sl.registerFactory<AuthBloc>(
+    sl.registerLazySingleton<AuthBloc>(
       () => AuthBloc(
         checkUsernameAvailability: sl<CheckUsernameAvailability>(),
         registerUser: sl<RegisterUser>(),

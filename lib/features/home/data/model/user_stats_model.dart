@@ -32,11 +32,25 @@ class UserStatsModel extends Equatable {
       totalSessions: json['totalSessions'] ?? 0,
       moodCheckins: json['moodCheckins'] ?? 0,
       averageMoodScore: (json['averageMoodScore'] ?? 0.0).toDouble(),
-      mostFrequentMood: json['mostFrequentMood'] ?? 'joy',
+      mostFrequentMood: json['mostFrequentMood'] ?? 'neutral',
       lastMoodLog:
           DateTime.tryParse(json['lastMoodLog'] ?? '') ?? DateTime.now(),
       weeklyStats: Map<String, dynamic>.from(json['weeklyStats'] ?? {}),
       monthlyStats: Map<String, dynamic>.from(json['monthlyStats'] ?? {}),
+    );
+  }
+
+  factory UserStatsModel.fromEntity(UserStatsEntity entity) {
+    return UserStatsModel(
+      totalMoodEntries: entity.totalMoodEntries,
+      streakDays: entity.streakDays,
+      totalSessions: entity.totalSessions,
+      moodCheckins: entity.moodCheckins,
+      averageMoodScore: entity.averageMoodScore,
+      mostFrequentMood: entity.mostFrequentMood,
+      lastMoodLog: entity.lastMoodLog,
+      weeklyStats: entity.weeklyStats,
+      monthlyStats: entity.monthlyStats,
     );
   }
 
@@ -54,9 +68,7 @@ class UserStatsModel extends Equatable {
     };
   }
 
-  Map<String, dynamic> toMap() {
-    return toJson();
-  }
+  Map<String, dynamic> toMap() => toJson();
 
   UserStatsEntity toEntity() {
     return UserStatsEntity(

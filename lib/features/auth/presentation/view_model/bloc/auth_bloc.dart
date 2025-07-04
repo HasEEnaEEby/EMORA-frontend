@@ -39,6 +39,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<ClearAuthError>(_onClearAuthError);
   }
 
+  String _normalizeUsername(String username) {
+    return username.toLowerCase().trim();
+  }
+
   Future<void> _onCheckAuthStatus(
     CheckAuthStatus event,
     Emitter<AuthState> emit,
@@ -83,13 +87,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           }
         },
         (user) {
-          if (user != null) {
-            Logger.info('✅ User authenticated: ${user.username}');
-            emit(AuthAuthenticated(user));
-          } else {
-            Logger.info('❌ No user found');
-            emit(AuthUnauthenticated());
-          }
+          Logger.info('✅ User authenticated: ${user.username}');
+          emit(AuthAuthenticated(user));
         },
       );
     } catch (e, stackTrace) {
@@ -102,22 +101,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     CheckUsernameAvailabilityEvent event,
     Emitter<AuthState> emit,
   ) async {
-    final username = event.username.trim();
+    final normalizedUsername = _normalizeUsername(event.username);
 
     // Skip check for empty usernames
-    if (username.isEmpty) {
+    if (normalizedUsername.isEmpty) {
       return;
     }
 
+    Logger.info(
+      '🔍 Checking availability for normalized username: "$normalizedUsername" (original: "${event.username}")',
+    );
+
     // Don't emit checking state if already checking the same username
     if (state is! AuthUsernameChecking ||
-        (state as AuthUsernameChecking).username != username) {
-      emit(AuthUsernameChecking(username));
+        (state as AuthUsernameChecking).username != normalizedUsername) {
+      emit(AuthUsernameChecking(normalizedUsername));
     }
 
     try {
       final result = await checkUsernameAvailability(
-        CheckUsernameParams(username: username),
+        CheckUsernameParams(username: normalizedUsername),
       );
 
       result.fold(
@@ -125,17 +128,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           Logger.error('❌ Username check failed', failure);
           emit(
             AuthUsernameCheckResult(
-              username: username,
+              username: normalizedUsername,
               isAvailable: false,
               message: failure.message,
             ),
           );
         },
         (isAvailable) {
-          Logger.info('✅ Username "$username" availability: $isAvailable');
+          Logger.info(
+            '✅ Username "$normalizedUsername" availability: $isAvailable',
+          );
           emit(
             AuthUsernameCheckResult(
-              username: username,
+              username: normalizedUsername,
               isAvailable: isAvailable,
               message: isAvailable
                   ? 'Username is available'
@@ -148,7 +153,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       Logger.error('❌ Username check error', e, stackTrace);
       emit(
         AuthUsernameCheckResult(
-          username: username,
+          username: normalizedUsername,
           isAvailable: false,
           message: 'Failed to check username availability',
         ),
@@ -157,102 +162,87 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onRegisterUser(
-    RegisterUserEvent event,
-    Emitter<AuthState> emit,
-  ) async {
-    Logger.info('📝 Starting registration for: ${event.username}');
-    emit(AuthLoading());
+  RegisterUserEvent event,
+  Emitter<AuthState> emit,
+) async {
+  final normalizedUsername = _normalizeUsername(event.username);
 
-    try {
-      // Validate input before making the request
-      if (event.username.trim().isEmpty || event.password.isEmpty) {
-        emit(AuthError('Username and password are required'));
-        return;
-      }
+  Logger.info('📝 Starting registration for: "$normalizedUsername"');
+  emit(const AuthLoading());
 
-      final result = await registerUser(
-        RegisterUserParams(
-          username: event.username.trim(),
-          password: event.password,
-          pronouns: event.pronouns,
-          ageGroup: event.ageGroup,
-          selectedAvatar: event.selectedAvatar,
-        ),
-      );
-
-      await result.fold(
-        (failure) async {
-          Logger.error('❌ Registration failed', failure);
-          emit(AuthError(failure.message));
-        },
-        (authResponse) async {
-          Logger.info(
-            '✅ Registration successful for: ${authResponse.user.username}',
-          );
-
-          // Emit success state first
-          emit(AuthAuthenticated(authResponse.user));
-
-          // Navigate to home after successful registration
-          await _navigateToHomeAfterAuth(
-            user: authResponse.user,
-            message: '🎉 Welcome to Emora! Registration successful.',
-            isFirstTime: true,
-          );
-        },
-      );
-    } catch (e, stackTrace) {
-      Logger.error('❌ Registration error', e, stackTrace);
-      emit(AuthError('Registration failed: ${e.toString()}'));
+  try {
+    if (normalizedUsername.isEmpty || event.password.isEmpty) {
+      emit(AuthError('Username and password are required'));
+      return;
     }
+
+    final result = await registerUser(
+      RegisterUserParams(
+        username: normalizedUsername,
+        password: event.password,
+        pronouns: event.pronouns,
+        ageGroup: event.ageGroup,
+        selectedAvatar: event.selectedAvatar,
+        location: event.location,
+        latitude: event.latitude,
+        longitude: event.longitude,
+        email: event.email,
+      ),
+    );
+
+    result.fold(
+      (failure) {
+        Logger.error('❌ Registration failed: ${failure.message}');
+        emit(AuthError(failure.message));
+      },
+      (authResponse) {
+        Logger.info('✅ Registration successful for: ${authResponse.user.username}');
+        emit(AuthAuthenticated(authResponse.user));
+      },
+    );
+  } catch (e, stackTrace) {
+    Logger.error('❌ Registration error', e, stackTrace);
+    emit(AuthError('Registration failed: ${e.toString()}'));
   }
+}
 
   Future<void> _onLoginUser(
-    LoginUserEvent event,
-    Emitter<AuthState> emit,
-  ) async {
-    Logger.info('🔐 Starting login for: ${event.username}');
-    emit(AuthLoading());
+  LoginUserEvent event,
+  Emitter<AuthState> emit,
+) async {
+  final normalizedUsername = _normalizeUsername(event.username);
 
-    try {
-      // Validate input before making the request
-      if (event.username.trim().isEmpty || event.password.isEmpty) {
-        emit(AuthError('Username and password are required'));
-        return;
-      }
+  Logger.info('🔐 Starting login for: "$normalizedUsername"');
+  emit(const AuthLoading());
 
-      final result = await loginUser(
-        LoginUserParams(
-          username: event.username.trim(),
-          password: event.password,
-        ),
-      );
-
-      await result.fold(
-        (failure) async {
-          Logger.error('❌ Login failed', failure);
-          emit(AuthError(failure.message));
-        },
-        (authResponse) async {
-          Logger.info('✅ Login successful for: ${authResponse.user.username}');
-
-          // Emit success state first
-          emit(AuthAuthenticated(authResponse.user));
-
-          // Navigate to home after successful login
-          await _navigateToHomeAfterAuth(
-            user: authResponse.user,
-            message: '👋 Welcome back!',
-            isFirstTime: false,
-          );
-        },
-      );
-    } catch (e, stackTrace) {
-      Logger.error('❌ Login error', e, stackTrace);
-      emit(AuthError('Login failed: ${e.toString()}'));
+  try {
+    if (normalizedUsername.isEmpty || event.password.isEmpty) {
+      emit(AuthError('Username and password are required'));
+      return;
     }
-  }
 
+    final result = await loginUser(
+      LoginUserParams(
+        username: normalizedUsername,
+        password: event.password,
+      ),
+    );
+
+    result.fold(
+      (failure) {
+        Logger.error('❌ Login failed: ${failure.message}');
+        emit(AuthError(failure.message));
+      },
+      (authResponse) {
+        Logger.info('✅ Login successful for: ${authResponse.user.username}');
+        emit(AuthAuthenticated(authResponse.user));
+      },
+    );
+  } catch (e, stackTrace) {
+    Logger.error('❌ Login error', e, stackTrace);
+    emit(AuthError('Login failed: ${e.toString()}'));
+  }
+}
   Future<void> _onLogoutUser(
     LogoutUserEvent event,
     Emitter<AuthState> emit,
@@ -354,7 +344,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         'pronouns': user.pronouns ?? '',
         'ageGroup': user.ageGroup ?? '',
         'selectedAvatar': user.selectedAvatar ?? '',
-        'createdAt': user.createdAt.toIso8601String() ?? '',
+        'createdAt': user.createdAt.toIso8601String(),
         // Add any other user properties you need that actually exist in UserEntity
       };
     } catch (e, stackTrace) {

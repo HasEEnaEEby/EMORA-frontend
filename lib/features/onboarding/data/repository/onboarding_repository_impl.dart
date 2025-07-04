@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 
 import 'package:dartz/dartz.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
@@ -133,7 +134,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
       if (await networkInfo.isConnected) {
         try {
           Logger.info('🌐 Attempting to sync user data with server...');
-          final syncSuccess = await remoteDataSource.syncUserOnboardingData(
+          final syncSuccess = await remoteDataSource.saveUserData(
             userDataModel,
           );
 
@@ -296,9 +297,23 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   Future<Either<Failure, bool>> clearOnboardingData() async {
     try {
       await localDataSource.clearOnboardingData();
+      Logger.info('🧹 Cleared all onboarding data from cache');
       return const Right(true);
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
+    } catch (e) {
+      return Left(UnexpectedFailure(message: e.toString()));
+    }
+  }
+
+  // FIXED: Add method to clear only pronouns data (for debugging)
+  Future<Either<Failure, bool>> clearPronounsData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('onboarding_pronouns');
+      await prefs.remove('user_onboarding_data');
+      Logger.info('🧹 Cleared pronouns data from cache');
+      return const Right(true);
     } catch (e) {
       return Left(UnexpectedFailure(message: e.toString()));
     }

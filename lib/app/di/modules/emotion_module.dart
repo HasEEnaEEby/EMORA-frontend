@@ -91,7 +91,7 @@ class EmotionModule {
   static void _initBloc(GetIt sl) {
     Logger.info('🧩 Initializing emotion bloc...');
 
-    sl.registerFactory<EmotionBloc>(
+    sl.registerLazySingleton<EmotionBloc>(
       () => EmotionBloc(
         logEmotion: sl<LogEmotion>(),
         getEmotionFeed: sl<GetEmotionFeed>(),

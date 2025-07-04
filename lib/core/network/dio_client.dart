@@ -1,9 +1,15 @@
 // lib/core/network/dio_client.dart
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../config/app_config.dart';
+import 'api_service.dart';
 
 class DioClient {
   late Dio _dio;
+  SharedPreferences? _prefs;
+  final ApiService _apiService = ApiService();
 
   // EMORA Backend Configuration
   static const String _baseUrl = 'http://localhost:8000';
@@ -13,6 +19,7 @@ class DioClient {
 
   DioClient._() {
     _dio = Dio();
+    _initPrefs();
     _setupDio();
   }
 
@@ -26,6 +33,10 @@ class DioClient {
   factory DioClient.create() => instance;
 
   Dio get dio => _dio;
+
+  Future<void> _initPrefs() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
 
   void _setupDio() {
     _dio.options = BaseOptions(
@@ -44,6 +55,7 @@ class DioClient {
       _createAuthInterceptor(),
       _createLoggingInterceptor(),
       _createErrorInterceptor(),
+      _createRetryInterceptor(),
     ]);
   }
 
@@ -62,6 +74,9 @@ class DioClient {
         if (error.response?.statusCode == 401) {
           // Token expired or invalid - clear stored token
           _clearStoredToken();
+          if (kDebugMode) {
+            print('🔑 Token expired or invalid, cleared stored token');
+          }
         }
         handler.next(error);
       },
@@ -123,17 +138,62 @@ class DioClient {
           error = error.copyWith(
             message: 'No internet connection. Please check your network.',
           );
+        } else if (error.response?.statusCode == 404) {
+          error = error.copyWith(message: 'Resource not found on server.');
+        } else if (error.response?.statusCode == 500) {
+          error = error.copyWith(
+            message: 'Server error. Please try again later.',
+          );
         }
         handler.next(error);
       },
     );
   }
 
-  // API Methods for EMORA Backend
+  // Retry Interceptor - retries failed requests
+  Interceptor _createRetryInterceptor() {
+    return InterceptorsWrapper(
+      onError: (error, handler) async {
+        if (_shouldRetry(error)) {
+          if (kDebugMode) {
+            print('🔄 Retrying request: ${error.requestOptions.uri}');
+          }
+
+          try {
+            // Wait before retry
+            await Future.delayed(const Duration(milliseconds: 1000));
+
+            // Retry the request
+            final response = await _dio.fetch(error.requestOptions);
+            handler.resolve(response);
+            return;
+          } catch (e) {
+            // If retry fails, continue with original error
+            if (kDebugMode) {
+              print('❌ Retry failed: $e');
+            }
+          }
+        }
+        handler.next(error);
+      },
+    );
+  }
+
+  bool _shouldRetry(DioException error) {
+    return error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.response?.statusCode == 502 ||
+        error.response?.statusCode == 503 ||
+        error.response?.statusCode == 504;
+  }
+
+  // Enhanced API Methods with ApiService integration
 
   // Auth endpoints
   Future<Response> checkUsernameAvailability(String username) async {
-    return await _dio.post(
+    return await _apiService.makeRequest(
+      _dio,
+      'POST',
       '/api/auth/check-username',
       data: {'username': username},
     );
@@ -145,7 +205,9 @@ class DioClient {
     required String name,
     Map<String, dynamic>? deviceInfo,
   }) async {
-    return await _dio.post(
+    return await _apiService.makeRequest(
+      _dio,
+      'POST',
       '/api/auth/register',
       data: {
         'email': email,
@@ -160,20 +222,28 @@ class DioClient {
     required String email,
     required String password,
   }) async {
-    return await _dio.post(
+    return await _apiService.makeRequest(
+      _dio,
+      'POST',
       '/api/auth/login',
       data: {'email': email, 'password': password},
     );
   }
 
   Future<Response> logout() async {
-    return await _dio.post('/api/auth/logout');
+    return await _apiService.makeRequest(_dio, 'POST', '/api/auth/logout');
   }
 
   Future<Response> getCurrentUser() async {
-    return await _dio.get('/api/auth/me');
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
+      '/api/auth/me',
+      cacheDuration: Duration(minutes: 5),
+    );
   }
 
+  // Emotion endpoints with caching
   Future<Response> logEmotion({
     required String userId,
     required String emotion,
@@ -182,9 +252,12 @@ class DioClient {
     Map<String, dynamic>? memory,
     Map<String, dynamic>? location,
     Map<String, dynamic>? globalSharing,
-    String source = 'mobile', required Map<String, dynamic> emotionData,
+    String source = 'mobile',
+    Map<String, dynamic>? emotionData,
   }) async {
-    return await _dio.post(
+    return await _apiService.makeRequest(
+      _dio,
+      'POST',
       '/api/emotions/users/$userId/log',
       data: {
         'emotion': emotion,
@@ -195,6 +268,7 @@ class DioClient {
         'globalSharing': globalSharing,
         'source': source,
         'timestamp': DateTime.now().toIso8601String(),
+        if (emotionData != null) ...emotionData,
       },
     );
   }
@@ -204,16 +278,22 @@ class DioClient {
     int days = 30,
     String format = 'unified',
   }) async {
-    return await _dio.get(
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
       '/api/emotions/users/$userId/journey',
       queryParameters: {'days': days, 'format': format},
+      cacheDuration: Duration(minutes: 10),
     );
   }
 
   Future<Response> getGlobalEmotionStats({String timeframe = '24h'}) async {
-    return await _dio.get(
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
       '/api/emotions/global-stats',
       queryParameters: {'timeframe': timeframe},
+      cacheDuration: Duration(minutes: 5),
     );
   }
 
@@ -221,9 +301,12 @@ class DioClient {
     Map<String, dynamic>? bounds,
     String format = 'unified',
   }) async {
-    return await _dio.get(
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
       '/api/emotions/global-heatmap',
       queryParameters: {'format': format, if (bounds != null) ...bounds},
+      cacheDuration: Duration(minutes: 10),
     );
   }
 
@@ -233,7 +316,9 @@ class DioClient {
     String? emotion,
     String format = 'unified',
   }) async {
-    return await _dio.get(
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
       '/api/emotions/feed',
       queryParameters: {
         'limit': limit,
@@ -241,6 +326,7 @@ class DioClient {
         'format': format,
         if (emotion != null) 'emotion': emotion,
       },
+      cacheDuration: Duration(minutes: 3),
     );
   }
 
@@ -252,7 +338,9 @@ class DioClient {
     Map<String, double>? intensity,
     String? thoughts,
   }) async {
-    return await _dio.post(
+    return await _apiService.makeRequest(
+      _dio,
+      'POST',
       '/api/emotions/vent',
       data: {
         'sessionId': sessionId,
@@ -269,9 +357,25 @@ class DioClient {
     required String userId,
     String timeframe = '30d',
   }) async {
-    return await _dio.get(
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
       '/api/emotions/users/$userId/insights',
       queryParameters: {'timeframe': timeframe},
+      cacheDuration: Duration(minutes: 5),
+    );
+  }
+
+  Future<Response> getUserEmotionStats(
+    String userId, {
+    String timeframe = '30d',
+  }) async {
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
+      '/api/emotions/users/$userId/stats',
+      queryParameters: {'timeframe': timeframe},
+      cacheDuration: Duration(minutes: 5),
     );
   }
 
@@ -286,30 +390,66 @@ class DioClient {
     if (intensity != null) data['intensity'] = intensity;
     if (memory != null) data['memory'] = memory;
 
-    return await _dio.put('/api/emotions/$emotionId', data: data);
+    return await _apiService.makeRequest(
+      _dio,
+      'PUT',
+      '/api/emotions/$emotionId',
+      data: data,
+    );
   }
 
   Future<Response> deleteEmotion(String emotionId) async {
-    return await _dio.delete('/api/emotions/$emotionId');
+    return await _apiService.makeRequest(
+      _dio,
+      'DELETE',
+      '/api/emotions/$emotionId',
+    );
   }
 
-  // Health check
+  // Health and monitoring endpoints
   Future<Response> healthCheck() async {
-    return await _dio.get('/api/health');
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
+      '/api/health',
+      cacheDuration: Duration(minutes: 1),
+    );
   }
 
-  // Generic HTTP methods
+  Future<Response> getSystemStatus() async {
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
+      '/api/status',
+      cacheDuration: Duration(minutes: 2),
+    );
+  }
+
+  Future<Response> getApiVersion() async {
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
+      '/api/version',
+      cacheDuration: Duration(minutes: 30),
+    );
+  }
+
+  // Enhanced Generic HTTP methods with ApiService
   Future<Response> get(
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
     CancelToken? cancelToken,
+    Duration? cacheDuration,
+    bool forceRefresh = false,
   }) async {
-    return await _dio.get(
+    return await _apiService.makeRequest(
+      _dio,
+      'GET',
       path,
       queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
+      cacheDuration: cacheDuration,
+      forceRefresh: forceRefresh,
     );
   }
 
@@ -320,12 +460,12 @@ class DioClient {
     Options? options,
     CancelToken? cancelToken,
   }) async {
-    return await _dio.post(
+    return await _apiService.makeRequest(
+      _dio,
+      'POST',
       path,
       data: data,
       queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
     );
   }
 
@@ -336,12 +476,12 @@ class DioClient {
     Options? options,
     CancelToken? cancelToken,
   }) async {
-    return await _dio.put(
+    return await _apiService.makeRequest(
+      _dio,
+      'PUT',
       path,
       data: data,
       queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
     );
   }
 
@@ -352,34 +492,217 @@ class DioClient {
     Options? options,
     CancelToken? cancelToken,
   }) async {
-    return await _dio.delete(
+    return await _apiService.makeRequest(
+      _dio,
+      'DELETE',
       path,
       data: data,
       queryParameters: queryParameters,
-      options: options,
-      cancelToken: cancelToken,
     );
   }
 
-  // Token management (you'll need to implement based on your storage solution)
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    return await _apiService.makeRequest(
+      _dio,
+      'PATCH',
+      path,
+      data: data,
+      queryParameters: queryParameters,
+    );
+  }
+
+  // Token management
   String? _getStoredToken() {
-    // TODO: Implement token retrieval from SharedPreferences or secure storage
-    return null;
+    try {
+      return _prefs?.getString(AppConfig.authTokenKey);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error getting stored token: $e');
+      }
+      return null;
+    }
   }
 
   void _clearStoredToken() {
-    // TODO: Implement token clearing from storage
+    try {
+      _prefs?.remove(AppConfig.authTokenKey);
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error clearing stored token: $e');
+      }
+    }
   }
 
   void setAuthToken(String token) {
-    // TODO: Store token and update headers
-    _dio.options.headers['Authorization'] = 'Bearer $token';
+    try {
+      _prefs?.setString(AppConfig.authTokenKey, token);
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+      if (kDebugMode) {
+        print('🔑 Auth token set successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error setting auth token: $e');
+      }
+    }
   }
 
   void clearAuthToken() {
     _dio.options.headers.remove('Authorization');
     _clearStoredToken();
+    if (kDebugMode) {
+      print('🔑 Auth token cleared');
+    }
   }
 
-  Future getUserEmotionStats(String userId) async {}
+  String? getAuthToken() {
+    return _getStoredToken();
+  }
+
+  bool get hasAuthToken {
+    return _getStoredToken() != null;
+  }
+
+  // Cache management methods
+  void clearCache() {
+    _apiService.clearCache();
+    if (kDebugMode) {
+      print('🗑️ DioClient cache cleared');
+    }
+  }
+
+  void clearExpiredCache() {
+    _apiService.clearExpiredCache();
+    if (kDebugMode) {
+      print('🧹 Expired cache cleared');
+    }
+  }
+
+  Map<String, int> getCacheStats() {
+    return _apiService.getCacheStats();
+  }
+
+  // Connection testing methods
+  Future<bool> testConnection() async {
+    try {
+      final response = await healthCheck();
+      return response.statusCode == 200;
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Connection test failed: $e');
+      }
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> getConnectionInfo() async {
+    try {
+      final response = await healthCheck();
+      if (response.statusCode == 200) {
+        final data = response.data;
+        return {
+          'connected': true,
+          'status': data['data']?['status'] ?? 'unknown',
+          'environment': data['data']?['environment'] ?? 'unknown',
+          'version': data['data']?['version'] ?? 'unknown',
+          'uptime': data['data']?['uptime'] ?? 0,
+          'responseTime': DateTime.now().millisecondsSinceEpoch,
+        };
+      } else {
+        return {
+          'connected': false,
+          'statusCode': response.statusCode,
+          'error': 'Unexpected status code',
+        };
+      }
+    } catch (e) {
+      return {
+        'connected': false,
+        'error': e.toString(),
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+    }
+  }
+
+  // Configuration methods
+  void updateBaseUrl(String newBaseUrl) {
+    _dio.options.baseUrl = newBaseUrl;
+    if (kDebugMode) {
+      print('🔧 Base URL updated to: $newBaseUrl');
+    }
+  }
+
+  void updateTimeout({
+    Duration? connectTimeout,
+    Duration? receiveTimeout,
+    Duration? sendTimeout,
+  }) {
+    if (connectTimeout != null) {
+      _dio.options.connectTimeout = connectTimeout;
+    }
+    if (receiveTimeout != null) {
+      _dio.options.receiveTimeout = receiveTimeout;
+    }
+    if (sendTimeout != null) {
+      _dio.options.sendTimeout = sendTimeout;
+    }
+    if (kDebugMode) {
+      print('🔧 Timeout settings updated');
+    }
+  }
+
+  void addCustomHeader(String key, String value) {
+    _dio.options.headers[key] = value;
+    if (kDebugMode) {
+      print('🔧 Custom header added: $key');
+    }
+  }
+
+  void removeCustomHeader(String key) {
+    _dio.options.headers.remove(key);
+    if (kDebugMode) {
+      print('🔧 Custom header removed: $key');
+    }
+  }
+
+  // Debug and monitoring methods
+  Map<String, dynamic> getClientInfo() {
+    return {
+      'baseUrl': _dio.options.baseUrl,
+      'connectTimeout': _dio.options.connectTimeout?.inMilliseconds,
+      'receiveTimeout': _dio.options.receiveTimeout?.inMilliseconds,
+      'sendTimeout': _dio.options.sendTimeout?.inMilliseconds,
+      'hasAuthToken': hasAuthToken,
+      'headers': _dio.options.headers,
+      'cacheStats': getCacheStats(),
+    };
+  }
+
+  void logClientInfo() {
+    if (kDebugMode) {
+      final info = getClientInfo();
+      print('📊 DioClient Info: $info');
+    }
+  }
+
+  // Cleanup method
+  void dispose() {
+    _dio.close();
+    clearCache();
+    if (kDebugMode) {
+      print('🗑️ DioClient disposed');
+    }
+  }
+
+  // Singleton cleanup for testing
+  static void resetInstance() {
+    _instance?.dispose();
+    _instance = null;
+  }
 }

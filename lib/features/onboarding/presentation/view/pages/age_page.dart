@@ -121,8 +121,7 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
 
   Widget _buildDescriptionText() {
     return Text(
-      widget.step.description ??
-          'We want to tailor your experience — your age helps us do that better.',
+      widget.step.description,
       style: TextStyle(
         color: Colors.grey[300],
         fontSize: 16,

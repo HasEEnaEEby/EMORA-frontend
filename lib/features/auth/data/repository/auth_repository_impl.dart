@@ -55,56 +55,57 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, AuthResponseEntity>> register({
-    required String username,
-    required String password,
-    required String pronouns,
-    required String ageGroup,
-    required String selectedAvatar,
-    String? location,
-    double? latitude,
-    double? longitude,
-  }) async {
-    try {
-      if (await networkInfo.isConnected) {
-        final authResponse = await remoteDataSource.register(
-          username: username,
-          password: password,
-          pronouns: pronouns,
-          ageGroup: ageGroup,
-          selectedAvatar: selectedAvatar,
-          location: location,
-          latitude: latitude,
-          longitude: longitude,
-        );
+Future<Either<Failure, AuthResponseEntity>> register({
+  required String username,
+  required String password,
+  String? pronouns, 
+  String? ageGroup,
+  String? selectedAvatar, 
+  String? location,
+  double? latitude,
+  double? longitude,
+  required String email, 
+}) async {
+  try {
+    if (await networkInfo.isConnected) {
+      final authResponse = await remoteDataSource.register(
+        username: username,
+        password: password,
+        pronouns: pronouns ?? '',
+        ageGroup: ageGroup ?? '',
+        selectedAvatar: selectedAvatar ?? '',
+        location: location,
+        latitude: latitude,
+        longitude: longitude,
+        email: email, // ✅ REQUIRED
+      );
 
-        // Save auth data locally
-        await localDataSource.saveToken(authResponse.token);
-        await localDataSource.saveUser(UserModel.fromEntity(authResponse.user));
+      // Save auth data locally
+      await localDataSource.saveToken(authResponse.token);
+      await localDataSource.saveUser(UserModel.fromEntity(authResponse.user));
 
-        return Right(authResponse.toEntity());
-      } else {
-        return const Left(NetworkFailure(message: 'No internet connection'));
-      }
-    } on ServerException catch (e) {
-      // Handle 404 errors gracefully for development
-      if (e.message.contains('not available') || e.message.contains('404')) {
-        return const Left(
-          ServerFailure(
-            message: 'Registration unavailable in development mode',
-          ),
-        );
-      }
-      return Left(ServerFailure(message: e.message));
-    } on NetworkException catch (e) {
-      return Left(NetworkFailure(message: e.message));
-    } on CacheException catch (e) {
-      return Left(CacheFailure(message: e.message));
-    } catch (e) {
-      return Left(ServerFailure(message: 'Registration failed: $e'));
+      return Right(authResponse.toEntity());
+    } else {
+      return const Left(NetworkFailure(message: 'No internet connection'));
     }
+  } on ServerException catch (e) {
+    // Handle 404 errors gracefully for development
+    if (e.message.contains('not available') || e.message.contains('404')) {
+      return const Left(
+        ServerFailure(
+          message: 'Registration unavailable in development mode',
+        ),
+      );
+    }
+    return Left(ServerFailure(message: e.message));
+  } on NetworkException catch (e) {
+    return Left(NetworkFailure(message: e.message));
+  } on CacheException catch (e) {
+    return Left(CacheFailure(message: e.message));
+  } catch (e) {
+    return Left(ServerFailure(message: 'Registration failed: $e'));
   }
+}
 
   @override
   Future<Either<Failure, AuthResponseEntity>> login({

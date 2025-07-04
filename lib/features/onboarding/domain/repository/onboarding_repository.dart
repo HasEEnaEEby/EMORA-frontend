@@ -10,4 +10,11 @@ abstract class OnboardingRepository {
   );
   Future<Either<Failure, bool>> completeOnboarding();
   Future<Either<Failure, bool>> isOnboardingCompleted();
+  
+  // Additional methods for better data management
+  Future<Either<Failure, UserOnboardingEntity>> getCurrentUserData();
+  Future<Either<Failure, bool>> clearOnboardingData();
+  Future<Either<Failure, bool>> validateUserData(
+    UserOnboardingEntity userData,
+  );
 }

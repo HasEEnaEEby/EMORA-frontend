@@ -11,7 +11,6 @@ class EmotionBackendService {
 
   const EmotionBackendService(this._dioClient);
 
-  /// Log user's emotion entry to backend (Unified EMORA format)
   Future<bool> logEmotionEntry({
     required String userId,
     required String emotion,
@@ -75,8 +74,7 @@ class EmotionBackendService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final List<dynamic> emotions =
-            data['data']?['emotions'] ?? data['emotions'] ?? [];
+        final List<dynamic> emotions = data['data'] ?? [];
         return emotions
             .map((json) => EmotionEntryEntity.fromJson(json))
             .toList();
@@ -187,8 +185,8 @@ class EmotionBackendService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        final List<dynamic> emotions =
-            data['data']?['emotions'] ?? data['emotions'] ?? [];
+        // Backend returns: { success: true, message: "...", data: emotionsArray, meta: pagination }
+        final List<dynamic> emotions = data['data'] ?? [];
         return emotions
             .map((json) => EmotionEntryEntity.fromJson(json))
             .toList();

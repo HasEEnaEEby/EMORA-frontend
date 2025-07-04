@@ -1,3 +1,4 @@
+// lib/features/auth/presentation/view_model/bloc/auth_event.dart - UPDATED RegisterUserEvent
 import 'package:equatable/equatable.dart';
 
 abstract class AuthEvent extends Equatable {
@@ -20,26 +21,29 @@ class CheckUsernameAvailabilityEvent extends AuthEvent {
   List<Object?> get props => [username];
 }
 
+// ✅ UPDATED: RegisterUserEvent with nullable onboarding data
 class RegisterUserEvent extends AuthEvent {
   final String username;
   final String password;
-  final String pronouns;
-  final String ageGroup;
-  final String selectedAvatar;
+  final String? pronouns; // ✅ CAN BE NULL
+  final String? ageGroup; // ✅ CAN BE NULL
+  final String? selectedAvatar; // ✅ CAN BE NULL
   final String? location;
   final double? latitude;
   final double? longitude;
+  final String email; // ✅ REQUIRED
 
   const RegisterUserEvent(
     this.username,
     this.password,
-    this.pronouns,
-    this.ageGroup,
-    this.selectedAvatar, [
+    this.pronouns, // ✅ NULLABLE
+    this.ageGroup, // ✅ NULLABLE
+    this.selectedAvatar, // ✅ NULLABLE
     this.location,
     this.latitude,
     this.longitude,
-  ]);
+    this.email, // ✅ REQUIRED
+  );
 
   @override
   List<Object?> get props => [
@@ -51,6 +55,7 @@ class RegisterUserEvent extends AuthEvent {
     location,
     latitude,
     longitude,
+    email,
   ];
 }
 

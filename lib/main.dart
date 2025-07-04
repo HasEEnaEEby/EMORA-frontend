@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
 import 'app/bloc_observer.dart';
@@ -14,6 +15,12 @@ Future<void> main() async {
   try {
     Logger.info(' Starting Emora Mobile App...');
 
+    // --- PROFESSIONAL PRACTICE ---
+    // Do NOT clear onboarding data on every app start.
+    // If you need to clear onboarding data for a migration or bug fix,
+    // use the utility below ONCE, then comment it out again.
+    // await clearOnboardingDataForMigration(); // <-- Only run manually if needed
+
     await _setupSystemUI();
     await _initializeDependencies();
 
@@ -25,6 +32,27 @@ Future<void> main() async {
     Logger.error(' Failed to start app: $e', stackTrace);
     runApp(_buildErrorApp(e.toString()));
   }
+}
+
+// --- ONBOARDING DATA CLEAR UTILITY (for one-time migrations/bugfixes) ---
+// Call this ONLY if you need to reset onboarding for all users (e.g. after a breaking change).
+// Never call this in production code on every app start!
+Future<void> clearOnboardingDataForMigration() async {
+  final prefs = await SharedPreferences.getInstance();
+  final onboardingKeys = [
+    'onboarding_pronouns',
+    'onboarding_age_group',
+    'onboarding_avatar',
+    'onboarding_username',
+    'onboarding_completed',
+    'onboarding_timestamp',
+    'onboarding_data_json',
+    'user_onboarding_data',
+  ];
+  for (final key in onboardingKeys) {
+    await prefs.remove(key);
+  }
+  Logger.info('🧹 Cleared cached onboarding data for migration/debug.');
 }
 
 Future<void> _setupSystemUI() async {
