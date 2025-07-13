@@ -6,7 +6,8 @@ import 'package:emora_mobile_app/core/use_case/use_case.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/features/home/data/model/home_data_model.dart';
 import 'package:emora_mobile_app/features/home/data/model/user_stats_model.dart';
-import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart';
+import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart' hide WeeklyInsightsModel;
+import 'package:emora_mobile_app/features/home/data/model/weekly_insights_model.dart';
 import 'package:emora_mobile_app/features/home/domain/use_case/get_user_stats.dart';
 import 'package:emora_mobile_app/features/home/domain/use_case/load_home_data.dart'
     as use_case;
@@ -15,6 +16,8 @@ import 'package:emora_mobile_app/features/home/domain/use_case/navigate_to_main_
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_event.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../../core/network/dio_client.dart';
+import '../../services/emotion_api_service.dart';
 
 import '../../../../../core/errors/failures.dart';
 
@@ -22,12 +25,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final use_case.LoadHomeData loadHomeData;
   final GetUserStats getUserStats;
   final nav_use_case.NavigateToMainFlow navigateToMainFlow;
+  late final EmotionApiService _emotionApiService;
 
   // Add these fields to prevent duplicate requests
   bool _isLoadingHomeData = false;
   bool _isLoadingUserStats = false;
+  bool _isLoadingEmotionHistory = false;
+  bool _isLoadingWeeklyInsights = false;
   DateTime? _lastHomeDataLoad;
   DateTime? _lastUserStatsLoad;
+  DateTime? _lastEmotionHistoryLoad;
+  DateTime? _lastWeeklyInsightsLoad;
 
   // Cache duration for API calls
   static const Duration _cacheDuration = Duration(minutes: 2);
@@ -38,6 +46,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     required this.getUserStats,
     required this.navigateToMainFlow,
   }) : super(const HomeInitial()) {
+    // Initialize emotion API service
+    _emotionApiService = EmotionApiService(DioClient.instance);
     // Register all event handlers
     on<LoadHomeDataEvent>(_onLoadHomeData);
     on<LoadHomeData>(_onLoadHomeDataCompatibility); // Compatibility handler
@@ -59,6 +69,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<EmotionLoggedEvent>(_onEmotionLogged);
     on<LoadEmotionHistoryEvent>(_onLoadEmotionHistory);
     on<LoadWeeklyInsightsEvent>(_onLoadWeeklyInsights);
+    on<LoadTodaysJourneyEvent>(_onLoadTodaysJourney);
+    on<LoadEmotionCalendarEvent>(_onLoadEmotionCalendar);
+    on<SelectCalendarDateEvent>(_onSelectCalendarDate);
+    on<LogEmotionEvent>(_onLogEmotion);
     on<HomeErrorOccurredEvent>(_onHomeErrorOccurred);
     on<RetryHomeOperationEvent>(_onRetryHomeOperation);
     on<ClearHomeErrorEvent>(_onClearHomeError);
@@ -298,26 +312,52 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      Logger.info('📊 Loading emotion history...');
+      // Prevent duplicate requests
+      if (_isLoadingEmotionHistory) {
+        Logger.info('⏳ Emotion history already loading, skipping...');
+        return;
+      }
 
+      // Check cache
+      if (!event.forceRefresh && _lastEmotionHistoryLoad != null) {
+        final timeSinceLastLoad = DateTime.now().difference(_lastEmotionHistoryLoad!);
+        if (timeSinceLastLoad < _cacheDuration) {
+          Logger.info('📦 Using cached emotion history');
+          return;
+        }
+      }
+
+      _isLoadingEmotionHistory = true;
+      Logger.info('🎭 Loading emotion history from backend...');
+
+      // Load emotion history from backend
+      final emotions = await _emotionApiService.getUserEmotions(
+        limit: 100,
+        offset: 0,
+        startDate: DateTime.now().subtract(const Duration(days: 30)),
+        endDate: DateTime.now(),
+      );
+
+      _lastEmotionHistoryLoad = DateTime.now();
+      _isLoadingEmotionHistory = false;
+
+      Logger.info('✅ Loaded ${emotions.length} emotion entries');
+
+      // Update current state with emotion history
       if (state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
-
-        // TODO: Implement actual emotion history loading from backend
-        // For now, we'll use mock data or empty list
-        final emotionEntries = <EmotionEntryModel>[];
-
-        emit(
-          currentState.copyWith(
-            emotionEntries: emotionEntries,
-          ),
-        );
-
-        Logger.info('✅ Emotion history loaded successfully');
+        emit(currentState.copyWith(
+          emotionEntries: emotions,
+        ));
       }
+      // Note: HomeWelcomeState doesn't support emotion entries yet
+
     } catch (e) {
-      Logger.error('❌ Error loading emotion history', e);
-      // Don't emit error state, just log the error
+      _isLoadingEmotionHistory = false;
+      Logger.error('❌ Failed to load emotion history', e);
+      
+      // Don't emit error state for emotion history loading
+      // Just log the error and continue
     }
   }
 
@@ -326,25 +366,43 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      Logger.info('📈 Loading weekly insights...');
+      // Prevent duplicate requests
+      if (_isLoadingWeeklyInsights) {
+        Logger.info('⏳ Weekly insights already loading, skipping...');
+        return;
+      }
+
+      // Check cache
+      if (!event.forceRefresh && _lastWeeklyInsightsLoad != null) {
+        final timeSinceLastLoad = DateTime.now().difference(_lastWeeklyInsightsLoad!);
+        if (timeSinceLastLoad < _cacheDuration) {
+          Logger.info('📦 Using cached weekly insights');
+          return;
+        }
+      }
+
+      _isLoadingWeeklyInsights = true;
+      Logger.info('📈 Loading weekly insights from backend...');
 
       if (state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
 
-        // TODO: Implement actual weekly insights calculation
-        // For now, we'll use mock data
+        // Get weekly insights from backend
+        final weeklyInsightsData = await _emotionApiService.getWeeklyInsights();
+
+        // Create weekly insights model from backend data
         final weeklyInsights = WeeklyInsightsModel(
-          mostCommonMood: 'neutral',
-          averageMoodScore: 3.0,
-          totalEntries: currentState.userStats?.totalMoodEntries ?? 0,
+          mostCommonMood: weeklyInsightsData['mostCommonEmotion'] ?? 'neutral',
+          averageMoodScore: (weeklyInsightsData['averageIntensity'] ?? 3.0).toDouble(),
+          totalEntries: weeklyInsightsData['totalEntries'] ?? 0,
           currentStreak: currentState.userStats?.streakDays ?? 0,
-          moodDistribution: {},
-          insights: [
-            'Your mood has been consistent this week',
-            'Try logging emotions at different times of day',
-          ],
-          weekProgress: 0.7,
+          moodDistribution: Map<String, int>.from(weeklyInsightsData['stats']?['emotionBreakdown'] ?? {}),
+          insights: List<String>.from(weeklyInsightsData['insights'] ?? []),
+          weekProgress: _calculateWeekProgress(currentState.emotionEntries),
         );
+
+        _lastWeeklyInsightsLoad = DateTime.now();
+        _isLoadingWeeklyInsights = false;
 
         emit(
           currentState.copyWith(
@@ -355,7 +413,148 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         Logger.info('✅ Weekly insights loaded successfully');
       }
     } catch (e) {
-      Logger.error('❌ Error loading weekly insights', e);
+      _isLoadingWeeklyInsights = false;
+      Logger.error('❌ Failed to load weekly insights', e);
+      
+      // Don't emit error state for weekly insights loading
+      // Just log the error and continue
+    }
+  }
+
+  Future<void> _onLoadTodaysJourney(
+    LoadTodaysJourneyEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      Logger.info('🌅 Loading today\'s emotion journey...');
+
+      if (state is HomeDashboardState) {
+        final currentState = state as HomeDashboardState;
+
+        // Get today's emotions from backend
+        final todaysEmotions = await _emotionApiService.getTodaysJourney();
+
+        emit(
+          currentState.copyWith(
+            todaysEmotions: todaysEmotions,
+          ),
+        );
+
+        Logger.info('✅ Today\'s journey loaded: ${todaysEmotions.length} emotions');
+      }
+    } catch (e) {
+      Logger.error('❌ Failed to load today\'s journey', e);
+      // Don't emit error state, just log the error
+    }
+  }
+
+  Future<void> _onLoadEmotionCalendar(
+    LoadEmotionCalendarEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      Logger.info('📅 Loading emotion calendar data...');
+
+      if (state is HomeDashboardState) {
+        final currentState = state as HomeDashboardState;
+
+        // Get calendar data from backend
+        final calendarData = await _emotionApiService.getEmotionCalendar(
+          month: event.month,
+        );
+
+        emit(
+          currentState.copyWith(
+            emotionCalendarData: calendarData,
+            selectedMonth: event.month,
+          ),
+        );
+
+        Logger.info('✅ Calendar data loaded for ${calendarData.length} days');
+      }
+    } catch (e) {
+      Logger.error('❌ Failed to load calendar data', e);
+      // Don't emit error state, just log the error
+    }
+  }
+
+  Future<void> _onSelectCalendarDate(
+    SelectCalendarDateEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      Logger.info('📅 Calendar date selected: ${event.selectedDate}');
+
+      if (state is HomeDashboardState) {
+        final currentState = state as HomeDashboardState;
+
+        emit(
+          currentState.copyWith(
+            selectedDate: event.selectedDate,
+          ),
+        );
+
+        // Optionally load emotions for the selected date
+        final dateKey = '${event.selectedDate.year}-${event.selectedDate.month.toString().padLeft(2, '0')}-${event.selectedDate.day.toString().padLeft(2, '0')}';
+        final emotionsForDate = currentState.emotionCalendarData?[dateKey] ?? [];
+
+        emit(
+          currentState.copyWith(
+            selectedDateEmotions: emotionsForDate,
+          ),
+        );
+
+        Logger.info('✅ Selected date emotions: ${emotionsForDate.length} entries');
+      }
+    } catch (e) {
+      Logger.error('❌ Failed to select calendar date', e);
+    }
+  }
+
+  Future<void> _onLogEmotion(
+    LogEmotionEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      Logger.info('🎭 Logging new emotion: ${event.emotion}');
+
+      // Log emotion to backend
+      final result = await _emotionApiService.logEmotion(
+        emotion: event.emotion,
+        intensity: event.intensity,
+        note: event.note,
+        tags: event.tags,
+        location: event.location,
+        context: event.context,
+      );
+
+      if (state is HomeDashboardState) {
+        final currentState = state as HomeDashboardState;
+
+        // Create new emotion entry
+        final newEmotion = EmotionEntryModel(
+          id: result['data']?['emotion']?['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          userId: '', // Will be set by backend
+          emotion: event.emotion,
+          intensity: event.intensity.toDouble(),
+          context: event.note,
+          timestamp: DateTime.now(),
+          tags: event.tags,
+        );
+
+        // Add to current emotion entries
+        final updatedEmotions = [newEmotion, ...currentState.emotionEntries];
+
+        emit(
+          currentState.copyWith(
+            emotionEntries: updatedEmotions,
+          ),
+        );
+
+        Logger.info('✅ Emotion logged successfully');
+      }
+    } catch (e) {
+      Logger.error('❌ Failed to log emotion', e);
       // Don't emit error state, just log the error
     }
   }
@@ -430,6 +629,54 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   ) async {
     Logger.info('🏠 Initializing home with data: ${event.initialData}');
     add(const LoadHomeDataEvent());
+  }
+
+  // ============================================================================
+  // HELPER METHODS
+  // ============================================================================
+
+  List<String> _generateInsightsFromData(Map<String, dynamic> emotionSummary) {
+    final insights = <String>[];
+    
+    final totalEmotions = emotionSummary['totalEmotions'] ?? 0;
+    final averageIntensity = emotionSummary['averageIntensity'] ?? 3.0;
+    final mostCommonEmotion = emotionSummary['mostCommonEmotion'] ?? 'neutral';
+    
+    if (totalEmotions == 0) {
+      insights.add('Start logging your emotions to get personalized insights');
+      insights.add('Try logging at least one emotion per day');
+    } else if (totalEmotions < 3) {
+      insights.add('Great start! Try logging emotions more frequently');
+      insights.add('Your most common emotion this week was $mostCommonEmotion');
+    } else {
+      insights.add('Your most common emotion this week was $mostCommonEmotion');
+      
+      if (averageIntensity > 4.0) {
+        insights.add('You\'ve been experiencing strong emotions this week');
+      } else if (averageIntensity < 2.0) {
+        insights.add('Your emotions have been relatively mild this week');
+      } else {
+        insights.add('Your emotional intensity has been balanced this week');
+      }
+    }
+    
+    return insights;
+  }
+
+  double _calculateWeekProgress(List<EmotionEntryModel> emotionEntries) {
+    if (emotionEntries.isEmpty) return 0.0;
+    
+    final now = DateTime.now();
+    final weekStart = now.subtract(Duration(days: now.weekday - 1));
+    final weekEnd = weekStart.add(const Duration(days: 6));
+    
+    final weekEmotions = emotionEntries.where((emotion) {
+      return emotion.timestamp.isAfter(weekStart) && 
+             emotion.timestamp.isBefore(weekEnd.add(const Duration(days: 1)));
+    }).length;
+    
+    // Assume 7 emotions per week is 100% progress
+    return (weekEmotions / 7.0).clamp(0.0, 1.0);
   }
 
   // ============================================================================

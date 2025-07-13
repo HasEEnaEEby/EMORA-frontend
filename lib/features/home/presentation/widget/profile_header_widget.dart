@@ -113,17 +113,31 @@ class ProfileHeaderWidget extends StatelessWidget {
   Widget _buildUserInfo(BuildContext context) {
     return Column(
       children: [
-        // Display name prominently (editable)
-        Text(
-          profile.name,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
+        // Display displayName only (no fallback)
+        if (profile.displayName != null)
+          Text(
+            profile.displayName!,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
-        ),
+        if (profile.bio != null && profile.bio!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
+            child: Text(
+              profile.bio!,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 15,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
         const SizedBox(height: 6),
 
         // Username as secondary info (read-only)
@@ -209,6 +223,8 @@ class ProfileHeaderWidget extends StatelessWidget {
       ],
     );
   }
+
+
 
   Widget _buildStatsRow(BuildContext context) {
     return Container(

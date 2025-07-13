@@ -29,6 +29,7 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
   late Animation<double> _backgroundAnimation;
 
   bool _hasOnboardingData = false;
+  bool _isFromLogout = false;
 
   @override
   void initState() {
@@ -39,13 +40,18 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
   }
 
   void _checkOnboardingData() {
-    _hasOnboardingData =
+    // Check if this is from logout (no onboarding data)
+    _isFromLogout = widget.onboardingData == null || widget.onboardingData!.isEmpty;
+    
+    // Only show onboarding data if not from logout
+    _hasOnboardingData = !_isFromLogout &&
         widget.onboardingData != null &&
         widget.onboardingData!.isNotEmpty &&
         (widget.onboardingData!['pronouns'] != null ||
             widget.onboardingData!['ageGroup'] != null ||
             widget.onboardingData!['selectedAvatar'] != null);
 
+    Logger.info('🔍 Auth Choice - Is from logout: $_isFromLogout');
     Logger.info('🔍 Auth Choice - Has onboarding data: $_hasOnboardingData');
     Logger.info('📊 Onboarding data: ${widget.onboardingData}');
   }
@@ -403,7 +409,7 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
                 const Icon(Icons.rocket_launch, size: 20),
                 const SizedBox(width: 12),
                 Text(
-                  _hasOnboardingData ? 'Create Account' : 'Get Started',
+                  _isFromLogout ? 'Create New Account' : (_hasOnboardingData ? 'Create Account' : 'Get Started'),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -462,13 +468,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
                 color: Colors.grey.withValues(alpha: 0.3),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                'or',
-                style: TextStyle(color: Colors.grey[500], fontSize: 14),
-              ),
-            ),
             Expanded(
               child: Container(
                 height: 1,
@@ -480,28 +479,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
 
         const SizedBox(height: 24),
 
-        // Guest Button
-        TextButton(
-          onPressed: _continueAsGuest,
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.person_outline, size: 16, color: Colors.grey[400]),
-              const SizedBox(width: 8),
-              Text(
-                'Continue as Guest',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -537,7 +514,7 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
               ),
               const SizedBox(width: 12),
               Text(
-                'Your emotional journey awaits',
+                _isFromLogout ? 'Welcome back to your emotional journey' : 'Your emotional journey awaits',
                 style: TextStyle(
                   color: Colors.grey[400],
                   fontSize: 13,
@@ -561,6 +538,17 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
           const SizedBox(height: 12),
           Text(
             'We\'ve saved your preferences!',
+            style: TextStyle(
+              color: Colors.grey[500],
+              fontSize: 12,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ],
+        if (_isFromLogout) ...[
+          const SizedBox(height: 12),
+          Text(
+            'You\'ve been successfully signed out',
             style: TextStyle(
               color: Colors.grey[500],
               fontSize: 12,

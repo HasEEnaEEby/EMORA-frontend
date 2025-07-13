@@ -1,5 +1,6 @@
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_bloc.dart';
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_event.dart';
+import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_state.dart';
 import 'package:emora_mobile_app/features/profile/domain/entity/achievement_entity.dart';
 import 'package:emora_mobile_app/features/profile/domain/entity/profile_entity.dart';
 import 'package:emora_mobile_app/features/profile/domain/entity/user_preferences_entity.dart';
@@ -18,6 +19,9 @@ import '../../widget/profile_settings_widget.dart';
 import '../../widget/profile_stats_widget.dart';
 import '../../widget/dialog/edit_profile_dialog.dart';
 import '../../../../../core/navigation/navigation_service.dart';
+import '../../../../../core/navigation/app_router.dart';
+import '../../../../../core/utils/logger.dart';
+import '../../../../../core/services/logout_service.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -39,8 +43,6 @@ class _ProfileViewState extends State<ProfileView>
     super.initState();
     _initializeAnimations();
     _startAnimations();
-
-    // Load profile data
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<ProfileBloc>().add(const LoadProfile());
@@ -146,11 +148,20 @@ class _ProfileViewState extends State<ProfileView>
         ],
       ),
       body: SafeArea(
-        child: BlocConsumer<ProfileBloc, ProfileState>(
-          listener: _handleBlocListener,
-          builder: (context, state) {
-            return _buildMainContent(state);
-          },
+        child: MultiBlocListener(
+          listeners: [
+            BlocListener<ProfileBloc, ProfileState>(
+              listener: _handleBlocListener,
+            ),
+            BlocListener<AuthBloc, AuthState>(
+              listener: _handleAuthListener,
+            ),
+          ],
+          child: BlocBuilder<ProfileBloc, ProfileState>(
+            builder: (context, state) {
+              return _buildMainContent(state);
+            },
+          ),
         ),
       ),
       floatingActionButton: _buildFloatingActionButton(),
@@ -162,6 +173,28 @@ class _ProfileViewState extends State<ProfileView>
       _showErrorSnackBar(state.message);
     } else if (state is ProfileDataExported) {
       _showSuccessSnackBar('Data export started! Check your email.');
+    } else if (state is ProfileLoaded) {
+      // Show success message for profile updates
+      // We'll use a simpler approach - just show success for ProfileLoaded states
+      // The actual update detection will be handled in the edit profile dialog
+    }
+  }
+
+  void _handleAuthListener(BuildContext context, AuthState state) {
+    if (state is AuthUnauthenticated) {
+      Logger.info('🚪 User logged out, navigating to auth wrapper');
+      // Navigate to auth wrapper to show auth choice
+      NavigationService.safeNavigate(
+        AppRouter.auth,
+        clearStack: true,
+      );
+    } else if (state is AuthSessionExpired) {
+      Logger.info('🔄 Session expired, navigating to auth wrapper');
+      NavigationService.showErrorSnackBar(state.message);
+      NavigationService.safeNavigate(
+        AppRouter.auth,
+        clearStack: true,
+      );
     }
   }
 
@@ -716,35 +749,7 @@ class _ProfileViewState extends State<ProfileView>
 
   void _handleSignOut() {
     HapticFeedback.lightImpact();
-
-    showCupertinoDialog(
-      context: context,
-      builder: (context) => CupertinoAlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          CupertinoDialogAction(
-            child: const Text('Cancel'),
-            onPressed: () => Navigator.pop(context),
-          ),
-          CupertinoDialogAction(
-            isDestructiveAction: true,
-            onPressed: () {
-              Navigator.pop(context);
-              // ✅ Check if BLoC is still mounted and not closed before adding event
-              if (mounted) {
-                final authBloc = context.read<AuthBloc>();
-                if (!authBloc.isClosed) {
-                  authBloc.add(const AuthLogout());
-                  _showSimpleMessage('Signing out...');
-                }
-              }
-            },
-            child: const Text('Sign Out'),
-          ),
-        ],
-      ),
-    );
+    LogoutService.showLogoutConfirmation(context);
   }
 
   void _showSimpleMessage(String message) {

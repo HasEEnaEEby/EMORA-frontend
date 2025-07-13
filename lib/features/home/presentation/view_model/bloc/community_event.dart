@@ -136,6 +136,31 @@ class AddCommentEvent extends CommunityEvent {
   String toString() => 'AddCommentEvent { postId: $postId, message: $message, isAnonymous: $isAnonymous }';
 }
 
+/// Create a new community post
+class CreateCommunityPostEvent extends CommunityEvent {
+  final String emoji;
+  final String note;
+  final List<String> tags;
+  final bool isAnonymous;
+  final String? emotionType;
+  final int? emotionIntensity;
+
+  const CreateCommunityPostEvent({
+    required this.emoji,
+    required this.note,
+    this.tags = const [],
+    this.isAnonymous = false,
+    this.emotionType,
+    this.emotionIntensity,
+  });
+
+  @override
+  List<Object?> get props => [emoji, note, tags, isAnonymous, emotionType, emotionIntensity];
+
+  @override
+  String toString() => 'CreateCommunityPostEvent { emoji: $emoji, note: $note, isAnonymous: $isAnonymous }';
+}
+
 /// Load comments for a post
 class LoadCommentsEvent extends CommunityEvent {
   final String postId;

@@ -1,7 +1,8 @@
 // lib/features/home/presentation/view_model/bloc/home_state.dart
 import 'package:emora_mobile_app/features/home/data/model/home_data_model.dart';
 import 'package:emora_mobile_app/features/home/data/model/user_stats_model.dart';
-import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart';
+import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart' hide WeeklyInsightsModel;
+import 'package:emora_mobile_app/features/home/data/model/weekly_insights_model.dart';
 import 'package:equatable/equatable.dart';
 
 abstract class HomeState extends Equatable {
@@ -33,16 +34,36 @@ class HomeDashboardState extends HomeState {
   final UserStatsModel? userStats;
   final List<EmotionEntryModel> emotionEntries;
   final WeeklyInsightsModel? weeklyInsights;
+  final List<EmotionEntryModel> todaysEmotions;
+  final Map<String, List<EmotionEntryModel>>? emotionCalendarData;
+  final DateTime? selectedMonth;
+  final DateTime? selectedDate;
+  final List<EmotionEntryModel> selectedDateEmotions;
 
   const HomeDashboardState({
     required this.homeData, 
     this.userStats,
     this.emotionEntries = const [],
     this.weeklyInsights,
+    this.todaysEmotions = const [],
+    this.emotionCalendarData,
+    this.selectedMonth,
+    this.selectedDate,
+    this.selectedDateEmotions = const [],
   });
 
   @override
-  List<Object?> get props => [homeData, userStats, emotionEntries, weeklyInsights];
+  List<Object?> get props => [
+    homeData, 
+    userStats, 
+    emotionEntries, 
+    weeklyInsights,
+    todaysEmotions,
+    emotionCalendarData,
+    selectedMonth,
+    selectedDate,
+    selectedDateEmotions,
+  ];
 
   // Add these getter methods for compatibility with AppRouter
   Map<String, dynamic> get dashboardData => homeData.toMap();
@@ -54,12 +75,22 @@ class HomeDashboardState extends HomeState {
     UserStatsModel? userStats,
     List<EmotionEntryModel>? emotionEntries,
     WeeklyInsightsModel? weeklyInsights,
+    List<EmotionEntryModel>? todaysEmotions,
+    Map<String, List<EmotionEntryModel>>? emotionCalendarData,
+    DateTime? selectedMonth,
+    DateTime? selectedDate,
+    List<EmotionEntryModel>? selectedDateEmotions,
   }) {
     return HomeDashboardState(
       homeData: homeData ?? this.homeData,
       userStats: userStats ?? this.userStats,
       emotionEntries: emotionEntries ?? this.emotionEntries,
       weeklyInsights: weeklyInsights ?? this.weeklyInsights,
+      todaysEmotions: todaysEmotions ?? this.todaysEmotions,
+      emotionCalendarData: emotionCalendarData ?? this.emotionCalendarData,
+      selectedMonth: selectedMonth ?? this.selectedMonth,
+      selectedDate: selectedDate ?? this.selectedDate,
+      selectedDateEmotions: selectedDateEmotions ?? this.selectedDateEmotions,
     );
   }
 }

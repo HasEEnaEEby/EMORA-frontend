@@ -1,6 +1,8 @@
 // lib/features/home/presentation/widget/profile_settings_widget.dart
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
+import 'package:emora_mobile_app/core/services/logout_service.dart';
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_bloc.dart';
+import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_event.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/dialog/edit_profile_dialog.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/dialog/language_selector_dialog.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/dialog/theme_selector_dialog.dart';
@@ -510,37 +512,6 @@ class ProfileSettingsWidget extends StatelessWidget {
   }
 
   void _performLogout(BuildContext context) {
-    try {
-      // Trigger logout using AuthBloc - this is the key implementation
-      context.read<AuthBloc>().add(const AuthLogout());
-
-      // Provide user feedback
-      HapticFeedback.lightImpact();
-
-      // Show success message (optional, as user will be redirected)
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.check_circle, color: Colors.white),
-              const SizedBox(width: 12),
-              const Text('Successfully logged out'),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    } catch (e) {
-      // Handle any errors during logout
-      DialogUtils.showErrorSnackBar(
-        context,
-        'Failed to logout. Please try again.',
-      );
-    }
+    LogoutService.performLogout(context);
   }
 }

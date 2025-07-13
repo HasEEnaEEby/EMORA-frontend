@@ -297,7 +297,7 @@ class AppConfig {
   static const bool enableNetworkLogging = true;
   static const bool enableOfflineMode = true;
   static const bool gracefullyHandleMissingEndpoints = false; // ✅ DISABLED: Let real auth errors propagate
-  static const bool enableProfileDialogMockData = true; // For testing dialogs
+  static const bool enableProfileDialogMockData = false; // ✅ DISABLED: Always use real profile data
   static const bool enableAchievementMockData =
       true; // For testing achievements
 
@@ -1114,115 +1114,6 @@ class AppConfig {
         'sad': 0.08,
       },
     };
-  }
-
-  /// Get mock profile data for testing dialogs
-  static Map<String, dynamic> getMockProfileData({
-    String? username,
-    String? email,
-    String? bio,
-    String? pronouns,
-    String? ageGroup,
-    String? selectedAvatar,
-    bool? isPrivate,
-  }) {
-    return {
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'username': username ?? 'dream_wanderer42',
-      'email': email ?? 'user@example.com',
-      'bio': bio ?? 'Living my best emotional life 🌸',
-      'pronouns': pronouns ?? defaultPronoun,
-      'ageGroup': ageGroup ?? defaultAgeGroup,
-      'avatar': selectedAvatar ?? defaultAvatar,
-      'isPrivate': isPrivate ?? false,
-      'theme': defaultTheme,
-      'language': defaultLanguage,
-      'joinedAt': DateTime.now()
-          .subtract(const Duration(days: 30))
-          .toIso8601String(),
-      'lastActivity': DateTime.now().toIso8601String(),
-      'preferences': {
-        'notifications': true,
-        'emailUpdates': false,
-        'shareData': true,
-        'darkMode': false,
-      },
-    };
-  }
-
-  /// Get mock achievements data for testing
-  static List<Map<String, dynamic>> getMockAchievementsData() {
-    return [
-      {
-        'id': '1',
-        'title': 'First Steps',
-        'description': 'Complete your first emotion log',
-        'category': 'progress',
-        'points': 10,
-        'icon': 'star',
-        'isEarned': true,
-        'progress': 1.0,
-        'maxProgress': 1.0,
-        'rarity': 'common',
-        'dateEarned': DateTime.now()
-            .subtract(const Duration(days: 2))
-            .toIso8601String(),
-      },
-      {
-        'id': '2',
-        'title': 'Streak Master',
-        'description': 'Log emotions for 7 consecutive days',
-        'category': 'milestone',
-        'points': 50,
-        'icon': 'fire',
-        'isEarned': false,
-        'progress': 4.0,
-        'maxProgress': 7.0,
-        'rarity': 'rare',
-        'dateEarned': null,
-      },
-      {
-        'id': '3',
-        'title': 'Emotion Explorer',
-        'description': 'Log 10 different emotions',
-        'category': 'special',
-        'points': 25,
-        'icon': 'compass',
-        'isEarned': true,
-        'progress': 10.0,
-        'maxProgress': 10.0,
-        'rarity': 'uncommon',
-        'dateEarned': DateTime.now()
-            .subtract(const Duration(days: 5))
-            .toIso8601String(),
-      },
-      {
-        'id': '4',
-        'title': 'Mindful Moments',
-        'description': 'Complete 50 emotion check-ins',
-        'category': 'progress',
-        'points': 75,
-        'icon': 'heart',
-        'isEarned': false,
-        'progress': 32.0,
-        'maxProgress': 50.0,
-        'rarity': 'epic',
-        'dateEarned': null,
-      },
-      {
-        'id': '5',
-        'title': 'Community Helper',
-        'description': 'Help 5 other users in the community',
-        'category': 'special',
-        'points': 100,
-        'icon': 'people',
-        'isEarned': false,
-        'progress': 2.0,
-        'maxProgress': 5.0,
-        'rarity': 'legendary',
-        'dateEarned': null,
-      },
-    ];
   }
 
   static Map<String, dynamic> getMockAuthResponse({

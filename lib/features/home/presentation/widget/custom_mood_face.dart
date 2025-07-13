@@ -442,8 +442,24 @@ class MoodUtils {
     }
   }
 
-  // Get mood intensity (0.0 to 1.0)
-  static double getMoodIntensity(MoodType mood) {
+  // Get mood intensity (1 to 5 scale for backend API)
+  static int getMoodIntensity(MoodType mood) {
+    switch (mood) {
+      case MoodType.amazing:
+        return 5;
+      case MoodType.good:
+        return 4;
+      case MoodType.okay:
+        return 3;
+      case MoodType.down:
+        return 2;
+      case MoodType.awful:
+        return 1;
+    }
+  }
+
+  // Get mood intensity as double (0.0 to 1.0 for UI purposes)
+  static double getMoodIntensityDouble(MoodType mood) {
     switch (mood) {
       case MoodType.amazing:
         return 0.9;

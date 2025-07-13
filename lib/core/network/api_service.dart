@@ -6,7 +6,6 @@ import 'package:dio/dio.dart';
 import 'package:emora_mobile_app/core/config/app_config.dart';
 import 'package:emora_mobile_app/core/network/api_response_handler.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   late Dio _dio;
@@ -21,46 +20,9 @@ class ApiService {
   // Default cache duration
   static const Duration _defaultCacheDuration = Duration(minutes: 2);
 
-  // In-memory mock profile storage for development
-  static Map<String, dynamic> _mockProfileData = {
-    'id': '1752133689047',
-    'username': 'jois',
-    'email': 'jois@gmail.com',
-    'selectedAvatar': 'fox',
-    'profile': {
-      'displayName': 'jois',
-      'bio': '',
-      'isPrivate': false,
-    },
-    'stats': {
-      'totalEntries': 0,
-      'currentStreak': 0,
-      'longestStreak': 0,
-      'totalFriends': 0,
-      'helpedFriends': 0,
-      'level': 'New Explorer',
-      'badgesEarned': 0,
-      'favoriteEmotion': null,
-      'emotionDiversity': 0,
-    },
-    'preferences': {
-      'notificationsEnabled': true,
-      'sharingEnabled': false,
-      'language': 'English',
-      'theme': 'Cosmic Purple',
-      'darkModeEnabled': true,
-      'privacySettings': {'shareLocation': false, 'anonymousMode': false, 'moodPrivacy': 'private'},
-      'customSettings': {'reminderTime': '20:00', 'autoBackup': true},
-    },
-  };
-  
-  // Flag to track if mock data has been loaded from persistence
-  static bool _mockDataLoaded = false;
-
   ApiService({required Dio dio}) {
     _dio = dio;
     _setupInterceptors();
-    _loadMockDataFromStorage();
     
     // ✅ UPDATED: Optimized timeout configuration
     _dio.options.connectTimeout = Duration(seconds: 10);
@@ -119,48 +81,11 @@ class ApiService {
     Logger.info('🔑 Auth token cleared');
   }
 
-  // Load mock profile data from SharedPreferences
-  Future<void> _loadMockDataFromStorage() async {
-    if (_mockDataLoaded) return;
-    
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final savedProfile = prefs.getString('mock_profile_data');
-      
-      if (savedProfile != null) {
-        final Map<String, dynamic> savedData = Map<String, dynamic>.from(
-          jsonDecode(savedProfile) as Map
-        );
-        _mockProfileData = savedData;
-        Logger.info('🔧 Mock profile data loaded from storage: displayName=${_mockProfileData['profile']['displayName']}');
-      } else {
-        Logger.info('🔧 No saved mock profile data found, using defaults');
-      }
-      
-      _mockDataLoaded = true;
-    } catch (e) {
-      Logger.error('❌ Error loading mock profile data', e);
-      _mockDataLoaded = true; // Mark as loaded to avoid retrying
-    }
-  }
-
-  // Save mock profile data to SharedPreferences
-  Future<void> _saveMockDataToStorage() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final jsonString = jsonEncode(_mockProfileData);
-      await prefs.setString('mock_profile_data', jsonString);
-      Logger.info('🔧 Mock profile data saved to storage: displayName=${_mockProfileData['profile']['displayName']}');
-    } catch (e) {
-      Logger.error('❌ Error saving mock profile data', e);
-    }
-  }
-
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
       Logger.info('👤 Fetching user profile from backend...');
 
-      final data = await getData('/api/user/profile');
+      final data = await getData('/api/user/profile', forceRefresh: true);
 
       Logger.info('✅ Profile data received successfully');
       return data;
@@ -177,7 +102,7 @@ class ApiService {
     try {
       Logger.info('📝 Updating user profile...', profileData);
 
-      final data = await putData('/api/user/profile', data: profileData);
+      final data = await patchData('/api/user/profile', data: profileData);
 
       Logger.info('✅ Profile updated successfully');
       return data;
@@ -262,7 +187,8 @@ class ApiService {
     try {
       Logger.info('🚪 Logging out user...');
 
-      final data = await postData('/auth/logout');
+      // Send empty JSON object to satisfy the backend's JSON validation
+      final data = await postData('/api/auth/logout', data: {});
 
       // Clear the auth token after successful logout
       clearAuthToken();
@@ -540,15 +466,13 @@ class ApiService {
     }
     
     final mockEndpoints = [
-      '/auth/logout',
-      '/auth/refresh',
-      '/api/auth/logout', 
       '/onboarding/check-username',
       '/onboarding/steps',
       '/onboarding/user-data',
       '/onboarding/complete',
-      '/api/user/profile', 
-      '/api/user/preferences', 
+      // ✅ CRITICAL: Remove profile endpoints from mock list
+      // '/api/user/profile', 
+      // '/api/user/preferences', 
       '/api/user/achievements', 
       '/api/user/export-data', 
       '/api/health',
@@ -566,103 +490,8 @@ class ApiService {
     Map<String, dynamic> mockData = {};
 
     try {
-      if (path.contains('/api/user/profile') && method.toUpperCase() == 'GET') {
-        // Use stored mock profile data
-        mockData = {
-          'status': 'success',
-          'message': 'Profile retrieved successfully',
-          'data': {
-            ..._mockProfileData,
-            'achievements': [
-              {
-                'id': 'first_steps',
-                'title': 'First Steps',
-                'description': 'Logged your first emotion',
-                'icon': 'emoji_emotions',
-                'color': '#10B981',
-                'earned': false,
-                'earnedDate': null,
-                'requirement': 1,
-                'progress': 0,
-                'category': 'milestone',
-              },
-            ],
-            'joinDate': DateTime.now()
-                .subtract(const Duration(days: 1))
-                .toIso8601String(),
-            'lastActive': DateTime.now().toIso8601String(),
-          },
-        };
-      } else if (path.contains('/api/user/profile') &&
-          method.toUpperCase() == 'PUT') {
-        final requestData = data is Map<String, dynamic>
-            ? data
-            : <String, dynamic>{};
-        
-        // Update stored mock profile data
-        if (requestData['name'] != null) {
-          _mockProfileData['profile']['displayName'] = requestData['name'];
-        }
-        if (requestData['email'] != null) {
-          _mockProfileData['email'] = requestData['email'];
-        }
-        if (requestData['avatar'] != null) {
-          _mockProfileData['selectedAvatar'] = requestData['avatar'];
-        }
-        if (requestData['isPrivate'] != null) {
-          _mockProfileData['profile']['isPrivate'] = requestData['isPrivate'];
-        }
-        
-        // Save the updated data to storage (fire and forget)
-        _saveMockDataToStorage().catchError((e) {
-          Logger.error('❌ Failed to save mock data to storage', e);
-        });
-        
-        mockData = {
-          'status': 'success',
-          'message': 'Profile updated successfully',
-          'data': {
-            ..._mockProfileData,
-            'updatedAt': DateTime.now().toIso8601String(),
-          },
-        };
-      } else if (path.contains('/api/user/preferences') &&
-          method.toUpperCase() == 'PUT') {
-        final requestData = data is Map<String, dynamic>
-            ? data
-            : <String, dynamic>{};
-
-        mockData = {
-          'status': 'success',
-          'message': 'Preferences updated successfully',
-          'data': {
-            'notificationsEnabled': requestData['notificationsEnabled'] ?? true,
-            'sharingEnabled':
-                requestData['dataSharingEnabled'] ??
-                requestData['sharingEnabled'] ??
-                false,
-            'language': requestData['language'] ?? 'English',
-            'theme': requestData['theme'] ?? 'Cosmic Purple',
-            'darkModeEnabled': requestData['darkModeEnabled'] ?? true,
-            'privacySettings':
-                requestData['privacySettings'] ?? <String, dynamic>{},
-            'customSettings':
-                requestData['customSettings'] ?? <String, dynamic>{},
-            'notifications': {
-              'dailyReminder': requestData['notificationsEnabled'] ?? true,
-              'friendRequests': requestData['notificationsEnabled'] ?? true,
-              'comfortReactions': requestData['notificationsEnabled'] ?? true,
-            },
-            'shareLocation': false,
-            'shareEmotions':
-                requestData['dataSharingEnabled'] ??
-                requestData['sharingEnabled'] ??
-                false,
-            'anonymousMode': false,
-            'moodPrivacy': 'friends',
-          },
-        };
-      } else if (path.contains('/api/user/achievements')) {
+      // ✅ CRITICAL: Remove profile mock data - always use real API calls
+      if (path.contains('/api/user/achievements')) {
         mockData = {
           'status': 'success',
           'message': 'Achievements retrieved successfully',
@@ -703,12 +532,6 @@ class ApiService {
                 .toIso8601String(),
             'dataTypes': dataTypes,
           },
-        };
-      } else if (path.contains('/auth/logout')) {
-        mockData = {
-          'status': 'success',
-          'message': 'Logout successful',
-          'data': {'timestamp': DateTime.now().toIso8601String()},
         };
       } else if (path.contains('/onboarding/check-username')) {
         // Extract username from path

@@ -203,12 +203,17 @@ Future<void> _onUpdateProfile(
               currentState.profile.name,
         username: event.profileData['username'] ?? currentState.profile.username,
         email: event.profileData['email'] ?? currentState.profile.email,
-        avatar: event.profileData['avatar'] ?? currentState.profile.avatar,
+        avatar: event.profileData['avatar'] ?? 
+                event.profileData['selectedAvatar'] ?? 
+                currentState.profile.avatar,
         isPrivate: event.profileData['isPrivate'] ?? currentState.profile.isPrivate,
         favoriteEmotion: event.profileData['favoriteEmotion'] ?? 
                         currentState.profile.favoriteEmotion,
         // Add any other fields that might be updated
         bio: event.profileData['bio'] ?? currentState.profile.bio,
+        pronouns: event.profileData['pronouns'] ?? currentState.profile.pronouns,
+        ageGroup: event.profileData['ageGroup'] ?? currentState.profile.ageGroup,
+        themeColor: event.profileData['themeColor'] ?? currentState.profile.themeColor,
       );
 
       Logger.info('📝 Updated profile entity: ${updatedProfile.toString()}');
@@ -230,6 +235,9 @@ Future<void> _onUpdateProfile(
         },
         (updatedProfileFromServer) {
           Logger.info('✅ Profile updated successfully: ${updatedProfileFromServer.name}');
+          
+          // Refresh the profile data to get the latest information from server
+          // This ensures we have all the updated fields including any server-side changes
           emit(
             ProfileLoaded(
               profile: updatedProfileFromServer,
@@ -237,6 +245,13 @@ Future<void> _onUpdateProfile(
               achievements: currentState.achievements,
             ),
           );
+          
+          // Optionally reload the full profile to ensure we have the latest data
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (!isClosed) {
+              add(const RefreshProfile());
+            }
+          });
         },
       );
     } catch (error) {

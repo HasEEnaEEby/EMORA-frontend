@@ -42,6 +42,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     on<AddCommentEvent>(_onAddComment);
     on<LoadCommentsEvent>(_onLoadComments);
     on<LoadGlobalStatsEvent>(_onLoadGlobalStats);
+    on<CreateCommunityPostEvent>(_onCreateCommunityPost);
     on<RefreshCommunityDataEvent>(_onRefreshCommunityData);
     on<RefreshCurrentFeedEvent>(_onRefreshCurrentFeed);
     on<ClearCommunityErrorEvent>(_onClearCommunityError);
@@ -643,6 +644,58 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       emit(CommentsError(
         postId: event.postId,
         message: 'Failed to load comments: ${e.toString()}',
+      ));
+    }
+  }
+
+  Future<void> _onCreateCommunityPost(
+    CreateCommunityPostEvent event,
+    Emitter<CommunityState> emit,
+  ) async {
+    try {
+      Logger.info('🌍 Creating community post: ${event.emoji} - ${event.note}');
+
+      // For now, we'll create a simple community post entity
+      // In a real implementation, this would call a use case to create the post
+      final newPost = CommunityPostEntity(
+        id: DateTime.now().millisecondsSinceEpoch.toString(), // Temporary ID
+        name: event.isAnonymous ? 'Anonymous User' : 'Current User',
+        username: event.isAnonymous ? 'anonymous' : 'current_user',
+        displayName: event.isAnonymous ? 'Anonymous' : 'Current User',
+        selectedAvatar: 'avatar_1',
+        emoji: event.emoji,
+        location: 'Unknown',
+        message: event.note,
+        timestamp: DateTime.now(),
+        reactions: const [],
+        comments: const [],
+        viewCount: 0,
+        shareCount: 0,
+        moodColor: '#8b5cf6', // Purple for emotion posts
+        activityType: 'General',
+        isFriend: false,
+        privacy: 'public',
+        isAnonymous: event.isAnonymous,
+      );
+
+      Logger.info('✅ Community post created successfully');
+      
+      // Add the new post to the current feed
+      if (state is CommunityFeedLoaded) {
+        final currentState = state as CommunityFeedLoaded;
+        final updatedGlobalPosts = [newPost, ...currentState.globalPosts];
+        
+        emit(currentState.copyWith(
+          globalPosts: updatedGlobalPosts,
+          isRefreshing: false,
+        ));
+      }
+      
+    } catch (e) {
+      Logger.error('❌ Unexpected error creating community post', e);
+      emit(CommunityError(
+        message: 'Failed to create community post: ${e.toString()}',
+        errorType: 'create_post',
       ));
     }
   }

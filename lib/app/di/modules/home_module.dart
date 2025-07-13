@@ -8,6 +8,7 @@ import '../../../features/home/data/data_source/local/home_local_data_source.dar
 import '../../../features/home/data/data_source/remote/home_remote_data_source.dart';
 import '../../../features/home/data/data_source/remote/community_remote_data_source.dart';
 import '../../../features/home/data/data_source/remote/friend_remote_data_source.dart';
+import '../../../features/home/data/data_source/remote/emotion_api_service.dart';
 import '../../../features/home/data/repository/home_repository_impl.dart';
 import '../../../features/home/data/repository/community_repository_impl.dart';
 import '../../../features/home/data/repository/friend_repository_impl.dart';
@@ -69,6 +70,13 @@ class HomeModule {
       () => FriendRemoteDataSourceImpl(
         apiService: sl<ApiService>(),
         dioClient: sl<DioClient>(),
+      ),
+    );
+
+    // Emotion API Service
+    sl.registerLazySingleton<EmotionApiService>(
+      () => EmotionApiService(
+        sl<ApiService>(),
       ),
     );
   }

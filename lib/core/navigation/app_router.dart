@@ -11,7 +11,6 @@ import 'package:get_it/get_it.dart';
 import '../../app/di/injection_container.dart' as di;
 import '../../core/config/app_config.dart';
 import '../../core/utils/logger.dart';
-import '../../features/auth/presentation/view/auth_wrapper_view.dart';
 import '../../features/auth/presentation/view/login_view.dart';
 import '../../features/auth/presentation/view/register_view.dart';
 import '../../features/auth/presentation/view_model/bloc/auth_bloc.dart';
@@ -145,7 +144,7 @@ class AppRouter {
       builder: (context) {
         return BlocProvider<AuthBloc>(
           create: (_) => di.sl<AuthBloc>(),
-          child: const AuthWrapperView(),
+          child: const AuthChoiceView(),
         );
       },
     );

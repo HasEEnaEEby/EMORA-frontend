@@ -165,6 +165,74 @@ class LoadWeeklyInsightsEvent extends HomeEvent {
   String toString() => 'LoadWeeklyInsightsEvent { forceRefresh: $forceRefresh }';
 }
 
+/// Load today's emotion journey
+class LoadTodaysJourneyEvent extends HomeEvent {
+  final bool forceRefresh;
+  
+  const LoadTodaysJourneyEvent({this.forceRefresh = false});
+
+  @override
+  List<Object?> get props => [forceRefresh];
+
+  @override
+  String toString() => 'LoadTodaysJourneyEvent { forceRefresh: $forceRefresh }';
+}
+
+/// Load emotion calendar data
+class LoadEmotionCalendarEvent extends HomeEvent {
+  final DateTime month;
+  final bool forceRefresh;
+  
+  const LoadEmotionCalendarEvent({
+    required this.month,
+    this.forceRefresh = false,
+  });
+
+  @override
+  List<Object?> get props => [month, forceRefresh];
+
+  @override
+  String toString() => 'LoadEmotionCalendarEvent { month: $month, forceRefresh: $forceRefresh }';
+}
+
+/// Select calendar date
+class SelectCalendarDateEvent extends HomeEvent {
+  final DateTime selectedDate;
+  
+  const SelectCalendarDateEvent({required this.selectedDate});
+
+  @override
+  List<Object?> get props => [selectedDate];
+
+  @override
+  String toString() => 'SelectCalendarDateEvent { selectedDate: $selectedDate }';
+}
+
+/// Log new emotion
+class LogEmotionEvent extends HomeEvent {
+  final String emotion;
+  final int intensity;
+  final String? note;
+  final List<String>? tags;
+  final Map<String, dynamic>? location;
+  final Map<String, dynamic>? context;
+  
+  const LogEmotionEvent({
+    required this.emotion,
+    required this.intensity,
+    this.note,
+    this.tags,
+    this.location,
+    this.context,
+  });
+
+  @override
+  List<Object?> get props => [emotion, intensity, note, tags, location, context];
+
+  @override
+  String toString() => 'LogEmotionEvent { emotion: $emotion, intensity: $intensity }';
+}
+
 // ============================================================================
 // DATA MANAGEMENT EVENTS
 // ============================================================================

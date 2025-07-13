@@ -6,6 +6,7 @@ import 'package:emora_mobile_app/features/emotion/presentation/widget/orbit_path
 import 'package:emora_mobile_app/features/emotion/presentation/widget/solar_system.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/widget/space_background.dart';
 import 'package:flutter/material.dart';
+import 'package:emora_mobile_app/features/emotion/presentation/view/pages/enhanced_atlas_view.dart';
 
 class MoodAtlasView extends StatefulWidget {
   const MoodAtlasView({super.key});
@@ -169,13 +170,13 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
     _transitionController.forward().then((_) {
       print('✅ Transition complete! Navigating to map...');
 
-      // Navigate to map after transition
+      // Navigate to enhanced atlas after transition
       Navigator.push(
             context,
             PageRouteBuilder(
               transitionDuration: const Duration(milliseconds: 800),
               pageBuilder: (context, animation, secondaryAnimation) =>
-                  const EarthEmotionalMapView(),
+                  const EnhancedAtlasView(),
               transitionsBuilder: (context, animation, _, child) {
                 return FadeTransition(
                   opacity: Tween<double>(begin: 0.0, end: 1.0).animate(

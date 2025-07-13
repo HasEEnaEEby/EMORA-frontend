@@ -13,7 +13,7 @@ abstract class AuthRemoteDataSource {
     required String username,
     required String email,
     required String password,
-    required String confirmPassword, // ✅ Added confirmPassword parameter
+    required String confirmPassword, 
     String? pronouns,
     String? ageGroup,
     String? selectedAvatar,
@@ -373,7 +373,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       if (await networkInfo.isConnected) {
         try {
-          await apiService.post('/auth/logout');
+          // Send empty JSON object to satisfy the backend's JSON validation
+          await apiService.post('/api/auth/logout', data: {});
           Logger.info('✅ Server logout successful');
         } catch (e) {
           Logger.warning('⚠️ Server logout failed: $e');
@@ -398,7 +399,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       Logger.info('🔄 Refreshing auth token');
 
       final response = await apiService.post(
-        '/auth/refresh',
+        '/api/auth/refresh',
         data: {'refreshToken': refreshToken},
       );
 

@@ -1,6 +1,8 @@
 // lib/features/home/presentation/widget/dialogs/account_management_dialog.dart
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
+import 'package:emora_mobile_app/core/services/logout_service.dart';
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_bloc.dart';
+import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_event.dart';
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_state.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -577,63 +579,9 @@ class AccountManagementDialog {
     ];
   }
 
-  /// Performs the actual sign out using BLoC
+  /// Performs the actual sign out using professional logout service
   static void _performSignOut(BuildContext context) {
-    try {
-      // Show loading indicator
-      showCupertinoDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => CupertinoAlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CupertinoActivityIndicator(radius: 15),
-              const SizedBox(height: 16),
-              const Text('Signing out...'),
-            ],
-          ),
-        ),
-      );
-
-      // Add the logout event to AuthBloc
-      context.read<AuthBloc>().add(const AuthLogout());
-
-      // Listen for auth state changes
-      context.read<AuthBloc>().stream.listen((state) {
-        if (state is AuthUnauthenticated) {
-          // Close loading dialog
-          Navigator.of(context).pop();
-
-          // Navigate to login/onboarding
-          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
-
-          // Show success message
-          DialogUtils.showSuccessSnackBar(context, 'Signed out successfully');
-
-          HapticFeedback.lightImpact();
-        } else if (state is AuthError) {
-          // Close loading dialog
-          Navigator.of(context).pop();
-
-          // Show error message
-          DialogUtils.showErrorSnackBar(
-            context,
-            'Sign out failed: ${state.message}',
-          );
-        }
-      });
-    } catch (e) {
-      // Close loading dialog if open
-      try {
-        Navigator.of(context).pop();
-      } catch (_) {}
-
-      DialogUtils.showErrorSnackBar(
-        context,
-        'Sign out failed: ${e.toString()}',
-      );
-    }
+    LogoutService.performLogout(context);
   }
 
   // MARK: - Delete Account Dialog Components

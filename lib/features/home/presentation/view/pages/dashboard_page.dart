@@ -1,6 +1,7 @@
 import 'package:emora_mobile_app/features/emotion/presentation/view/pages/mood_atlas_view.dart';
+import 'package:emora_mobile_app/features/home/presentation/view/pages/enhanced_insights_view.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_bloc.dart';
-import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_event.dart';
+import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_event.dart' as home_events;
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_state.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/community_bloc.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/community_event.dart';
@@ -13,11 +14,16 @@ import 'package:emora_mobile_app/features/home/presentation/widget/mood_capsule_
 import 'package:emora_mobile_app/features/home/presentation/widget/quick_actions_grid.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/enhanced_stats_widget.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/todays_journey_widget.dart';
-import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/emotion_calendar_widget.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/weekly_insights_preview_widget.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/enhanced_emotion_entry_modal.dart';
+import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart' hide WeeklyInsightsModel;
+import 'package:emora_mobile_app/features/home/data/model/weekly_insights_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
+import 'package:geolocator/geolocator.dart';
 
 import '../../../../../core/navigation/app_router.dart';
 import '../../../../../core/navigation/navigation_service.dart';
@@ -161,9 +167,35 @@ class _DashboardContentState extends State<_DashboardContent>
   List<Map<String, dynamic>>? get _weeklyMoodData {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
-      // For now, return null since we don't have weekly analytics in the model yet
-      // In a real implementation, this would extract weekly mood data from userStats
-      return null;
+      
+      // Generate weekly mood data from emotion entries
+      if (_emotionEntries.isNotEmpty) {
+        final now = DateTime.now();
+        final weekStart = now.subtract(Duration(days: now.weekday - 1));
+        
+        return List.generate(7, (index) {
+          final day = weekStart.add(Duration(days: index));
+          final dayEmotions = _emotionEntries.where((emotion) {
+            final emotionDate = DateTime(
+              emotion.timestamp.year,
+              emotion.timestamp.month,
+              emotion.timestamp.day,
+            );
+            final checkDate = DateTime(day.year, day.month, day.day);
+            return emotionDate.isAtSameMomentAs(checkDate);
+          }).toList();
+          
+          final avgIntensity = dayEmotions.isNotEmpty
+              ? dayEmotions.map((e) => e.intensity).reduce((a, b) => a + b) / dayEmotions.length
+              : 0.0;
+          
+          return {
+            'day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index],
+            'intensity': avgIntensity / 5.0, // Normalize to 0-1 range
+            'color': _getMoodColor(avgIntensity),
+          };
+        });
+      }
     }
     return null;
   }
@@ -171,11 +203,56 @@ class _DashboardContentState extends State<_DashboardContent>
   Map<String, dynamic>? get _analyticsData {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
-      // For now, return null since we don't have analytics data in the model yet
-      // In a real implementation, this would extract analytics from userStats
-      return null;
+      
+      // Generate analytics data from emotion entries
+      if (_emotionEntries.isNotEmpty) {
+        final totalEntries = _emotionEntries.length;
+        final avgIntensity = _emotionEntries.map((e) => e.intensity).reduce((a, b) => a + b) / totalEntries;
+        
+        // Determine mood trend based on recent emotions
+        final recentEmotions = _emotionEntries.take(5).toList();
+        final recentAvg = recentEmotions.isNotEmpty
+            ? recentEmotions.map((e) => e.intensity).reduce((a, b) => a + b) / recentEmotions.length
+            : avgIntensity;
+        
+        String moodTrend;
+        if (recentAvg > avgIntensity + 0.5) {
+          moodTrend = 'improving';
+        } else if (recentAvg < avgIntensity - 0.5) {
+          moodTrend = 'needs_attention';
+        } else {
+          moodTrend = 'stable';
+        }
+        
+        return {
+          'totalEntries': totalEntries,
+          'averageIntensity': avgIntensity,
+          'moodTrend': moodTrend,
+          'musicRecommendation': _getMusicRecommendation(avgIntensity),
+          'dominantEmotion': _emotionEntries.isNotEmpty ? _emotionEntries.first.emotion : null,
+        };
+      }
     }
     return null;
+  }
+
+  Color _getMoodColor(double intensity) {
+    if (intensity >= 4.0) return const Color(0xFF4CAF50); // Green for good mood
+    if (intensity >= 3.0) return const Color(0xFF8B5CF6); // Purple for neutral
+    if (intensity >= 2.0) return const Color(0xFFFFD700); // Yellow for okay
+    return const Color(0xFFFF6B6B); // Red for low mood
+  }
+
+  String _getMusicRecommendation(double avgIntensity) {
+    if (avgIntensity >= 4.0) {
+      return 'Upbeat pop with positive vibes';
+    } else if (avgIntensity >= 3.0) {
+      return 'Reflective indie with hopeful undertones';
+    } else if (avgIntensity >= 2.0) {
+      return 'Calming ambient with gentle melodies';
+    } else {
+      return 'Soothing instrumental for emotional support';
+    }
   }
 
   @override
@@ -186,7 +263,35 @@ class _DashboardContentState extends State<_DashboardContent>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeBackendServices();
       _loadInitialData();
+      _loadEnhancedDashboardData();
     });
+  }
+
+  void _loadEnhancedDashboardData() {
+    try {
+      final homeBloc = context.read<HomeBloc>();
+      
+      Logger.info('🎭 Loading enhanced dashboard data...');
+      
+      // Load emotion history
+      homeBloc.add(const home_events.LoadEmotionHistoryEvent(forceRefresh: true));
+      
+      // Load weekly insights
+      homeBloc.add(const home_events.LoadWeeklyInsightsEvent(forceRefresh: true));
+      
+      // Load today's journey
+      homeBloc.add(const home_events.LoadTodaysJourneyEvent(forceRefresh: true));
+      
+      // Load current month calendar data
+      homeBloc.add(home_events.LoadEmotionCalendarEvent(
+        month: DateTime.now(),
+        forceRefresh: true,
+      ));
+      
+      Logger.info('✅ Enhanced dashboard data loading initiated');
+    } catch (e) {
+      Logger.error('❌ Failed to load enhanced dashboard data', e);
+    }
   }
 
   void _initializeAnimations() {
@@ -283,8 +388,8 @@ class _DashboardContentState extends State<_DashboardContent>
       
       // Load emotion history and weekly insights
       if (_homeBloc != null && !_homeBloc!.isClosed) {
-        _homeBloc!.add(const LoadEmotionHistoryEvent());
-        _homeBloc!.add(const LoadWeeklyInsightsEvent());
+        _homeBloc!.add(const home_events.LoadEmotionHistoryEvent());
+        _homeBloc!.add(const home_events.LoadWeeklyInsightsEvent());
       }
     } catch (e) {
       Logger.error('❌ Failed to load initial data', e);
@@ -304,7 +409,12 @@ class _DashboardContentState extends State<_DashboardContent>
         NavigationService.pushNamed(AppRouter.friends);
         break;
       case 2: // Insights
-        NavigationService.pushNamed(AppRouter.insights);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const EnhancedInsightsView(),
+          ),
+        );
         break;
       case 3: // Profile
         NavigationService.pushNamed(AppRouter.profile);
@@ -337,31 +447,90 @@ class _DashboardContentState extends State<_DashboardContent>
     );
   }
 
-  void _updateMood(MoodType newMood) {
+  void _handleEnhancedEmotionLog(
+    String emotion,
+    int intensity,
+    String? contextText,
+    List<String> tags,
+    Position? location,
+    bool isPrivate,
+    bool isAnonymous,
+  ) {
+    // Update UI immediately
     setState(() {
-      currentMood = newMood;
-      currentMoodLabel = MoodUtils.moodTypeToString(newMood);
+      currentMood = _mapEmotionToMoodType(emotion);
+      currentMoodLabel = emotion;
     });
 
-    // Safe EmotionBloc access
+    // Log emotion to backend via HomeBloc
     try {
-      if (_emotionBloc != null) {
-        _emotionBloc!.add(
-          LogEmotionEvent(
-            emotion: currentMoodLabel,
-            intensity: MoodUtils.getMoodIntensity(newMood),
-            context: 'daily_check_in',
-            userId: _userId,
-          ),
-        );
+      final homeBloc = this.context.read<HomeBloc>();
+      
+      Logger.info('🎭 Logging enhanced emotion: $emotion with intensity $intensity (Private: $isPrivate, Anonymous: $isAnonymous)');
+      
+      // Show immediate feedback
+      NavigationService.showInfoSnackBar('🔄 Logging your emotion...');
+      
+      homeBloc.add(home_events.LogEmotionEvent(
+        emotion: emotion,
+        intensity: intensity,
+        note: contextText ?? 'Logged via enhanced emotion entry',
+        tags: tags.isNotEmpty ? tags : ['enhanced_entry'],
+        location: location != null ? {
+          'latitude': location.latitude,
+          'longitude': location.longitude,
+        } : null,
+        context: null,
+      ));
+      
+      // If posting to community, also create a community post
+      if (!isPrivate) {
+        _postToCommunity(emotion, intensity, contextText, tags, isAnonymous);
       }
+      
+      // Show success feedback with rich information
+      final now = DateTime.now();
+      final timeString = '${now.hour}:${now.minute.toString().padLeft(2, '0')}';
+      
+      final actionText = isPrivate ? 'logged' : 'posted to community';
+      NavigationService.showSuccessSnackBar(
+        '✅ $emotion $actionText at $timeString',
+      );
+      
+      // Show first emotion success for new users
+      if (_isNewUser) {
+        _showFirstEmotionSuccess();
+      }
+      
+      // Refresh dashboard data after a short delay
+      Future.delayed(const Duration(milliseconds: 500), () {
+        _loadEnhancedDashboardData();
+      });
+      
     } catch (e) {
-      Logger.error('❌ Failed to log mood update', e);
+      Logger.error('❌ Failed to log enhanced emotion', e);
+      NavigationService.showErrorSnackBar('Failed to log emotion. Please try again.');
     }
+  }
 
-    // Show success feedback for new users
-    if (_isNewUser) {
-      _showFirstEmotionSuccess();
+  MoodType _mapEmotionToMoodType(String emotion) {
+    switch (emotion) {
+      case 'happiness':
+      case 'excitement':
+      case 'gratitude':
+        return MoodType.good;
+      case 'contentment':
+      case 'calm':
+        return MoodType.okay;
+      case 'sadness':
+      case 'fear':
+      case 'anxiety':
+        return MoodType.down;
+      case 'anger':
+      case 'frustration':
+        return MoodType.awful;
+      default:
+        return MoodType.okay;
     }
   }
 
@@ -370,9 +539,8 @@ class _DashboardContentState extends State<_DashboardContent>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => CustomMoodSelectorModal(
-        currentMood: currentMood,
-        onMoodSelected: _updateMood,
+      builder: (context) => EnhancedEmotionEntryModal(
+        onEmotionLogged: _handleEnhancedEmotionLog,
       ),
     );
   }
@@ -383,6 +551,52 @@ class _DashboardContentState extends State<_DashboardContent>
     );
   }
 
+  void _postToCommunity(String emotion, int intensity, String? contextText, List<String> tags, bool isAnonymous) {
+    try {
+      // Get the emotion emoji
+      final emotionEmoji = _getEmotionEmoji(emotion);
+      
+      // Create community post content
+      final postContent = contextText?.isNotEmpty == true 
+          ? contextText! 
+          : 'Feeling $emotion today';
+      
+      // Get CommunityBloc and post to community
+      final communityBloc = context.read<CommunityBloc>();
+      
+      communityBloc.add(CreateCommunityPostEvent(
+        emoji: emotionEmoji,
+        note: postContent,
+        tags: tags,
+        isAnonymous: isAnonymous,
+        emotionType: emotion,
+        emotionIntensity: intensity,
+      ));
+      
+      Logger.info('🌍 Posted emotion to community: $emotion');
+      
+    } catch (e) {
+      Logger.error('❌ Failed to post to community', e);
+      NavigationService.showErrorSnackBar('Emotion logged but failed to post to community.');
+    }
+  }
+
+  String _getEmotionEmoji(String emotion) {
+    switch (emotion) {
+      case 'happiness': return '😊';
+      case 'excitement': return '🤩';
+      case 'gratitude': return '🙏';
+      case 'contentment': return '😌';
+      case 'calm': return '😌';
+      case 'sadness': return '😢';
+      case 'anger': return '😠';
+      case 'fear': return '😰';
+      case 'anxiety': return '😰';
+      case 'frustration': return '😤';
+      default: return '😊';
+    }
+  }
+
   Future<void> _handleRefresh() async {
     try {
       await Future.delayed(const Duration(milliseconds: 500));
@@ -390,7 +604,7 @@ class _DashboardContentState extends State<_DashboardContent>
 
       // ✅ Safe HomeBloc refresh with proper lifecycle check
       if (_homeBloc != null && !_homeBloc!.isClosed) {
-        _homeBloc!.add(const RefreshHomeDataEvent());
+        _homeBloc!.add(const home_events.RefreshHomeDataEvent());
       }
 
       Logger.info('🔄 Dashboard refresh completed');
@@ -686,13 +900,13 @@ class _DashboardContentState extends State<_DashboardContent>
     if (_homeBloc != null && !_homeBloc!.isClosed) {
       switch (operation) {
         case 'load_home_data':
-          _homeBloc!.add(const LoadHomeDataEvent(forceRefresh: true));
+          _homeBloc!.add(const home_events.LoadHomeDataEvent(forceRefresh: true));
           break;
         case 'load_user_stats':
-          _homeBloc!.add(const LoadUserStatsEvent(forceRefresh: true));
+          _homeBloc!.add(const home_events.LoadUserStatsEvent(forceRefresh: true));
           break;
         default:
-          _homeBloc!.add(const LoadHomeDataEvent(forceRefresh: true));
+          _homeBloc!.add(const home_events.LoadHomeDataEvent(forceRefresh: true));
       }
       
       // Show retry feedback
@@ -1061,11 +1275,16 @@ class _DashboardContentState extends State<_DashboardContent>
       children: [
         // Enhanced Stats Row
         EnhancedStatsWidget(
-          totalLogs: _totalLogs,
-          currentStreak: _currentStreak,
-          averageMood: _averageMood,
           emotionEntries: _emotionEntries,
           onStatsTap: () => NavigationService.pushNamed(AppRouter.insights),
+        ),
+        const SizedBox(height: 24),
+        
+        // Emotion Analytics Card
+        EmotionAnalyticsCard(
+          weeklyMoodData: _weeklyMoodData,
+          analyticsData: _analyticsData,
+          isNewUser: _isUserNew,
         ),
         const SizedBox(height: 24),
         
@@ -1074,6 +1293,7 @@ class _DashboardContentState extends State<_DashboardContent>
           emotionEntries: _emotionEntries,
           onDateSelected: _onCalendarDateSelected,
           selectedDate: null, // TODO: Add selected date state
+          isLoading: false, // TODO: Add loading state
         ),
         const SizedBox(height: 24),
         
@@ -1744,19 +1964,17 @@ class _EnhancedBottomNavigationCustomState
               height: 70,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const RadialGradient(
+                gradient: RadialGradient(
                   colors: [
-                    Color(0xFF8B5CF6),
-                    Color(0xFF6366F1),
-                    Color(0xFF4F46E5),
+                    MoodUtils.getMoodColor(widget.currentMood).withValues(alpha: 0.8),
+                    MoodUtils.getMoodColor(widget.currentMood).withValues(alpha: 0.6),
+                    const Color(0xFF8B5CF6).withValues(alpha: 0.4),
                   ],
-                  stops: [0.0, 0.7, 1.0],
+                  stops: const [0.0, 0.7, 1.0],
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(
-                      0xFF8B5CF6,
-                    ).withValues(alpha: _glowAnimation.value),
+                    color: MoodUtils.getMoodColor(widget.currentMood).withValues(alpha: _glowAnimation.value),
                     blurRadius: 25,
                     spreadRadius: 5,
                     offset: const Offset(0, 5),

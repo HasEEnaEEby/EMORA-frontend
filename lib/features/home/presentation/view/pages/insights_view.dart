@@ -116,7 +116,10 @@ class _InsightsViewState extends State<InsightsView>
                       ),
                       const SizedBox(height: 24),
                       if (_showDetailed) ...[
-                        DetailedStatsWidget(period: _selectedPeriod),
+                        DetailedStatsWidget(
+                          period: _selectedPeriod,
+                          emotionEntries: [], // TODO: Pass real emotion entries
+                        ),
                         const SizedBox(height: 24),
                       ],
                       PatternAnalysisWidget(

@@ -6,6 +6,10 @@ class UserProfileModel {
   final String username;
   final String email;
   final String? avatar;
+  final String? bio;
+  final String pronouns;
+  final String ageGroup;
+  final String themeColor;
   final DateTime joinDate;
   final int totalEntries;
   final int currentStreak;
@@ -24,6 +28,10 @@ class UserProfileModel {
     required this.username,
     required this.email,
     this.avatar,
+    this.bio,
+    this.pronouns = 'They / Them',
+    this.ageGroup = '18-24',
+    this.themeColor = '#8B5CF6',
     required this.joinDate,
     this.totalEntries = 0,
     this.currentStreak = 0,
@@ -39,27 +47,45 @@ class UserProfileModel {
 
   // Factory constructor from JSON
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
+    // Handle nested user object if present
+    final userData = json['user'] as Map<String, dynamic>? ?? json;
+    final profileData = userData['profile'] as Map<String, dynamic>? ?? {};
+    
+    // DEBUG LOGGING
+    print('[DEBUG] profileData["displayName"]: \'${profileData['displayName']}\'');
+    final computedName = profileData['displayName']?.toString() ?? 
+          userData['name']?.toString() ?? 
+          userData['username']?.toString() ?? '';
+    print('[DEBUG] Computed name for UserProfileModel: \'$computedName\'');
+
     return UserProfileModel(
-      id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
-      username: json['username']?.toString() ?? '',
-      email: json['email']?.toString() ?? '',
-      avatar: json['avatar']?.toString(),
-      joinDate: json['joinDate'] != null
-          ? DateTime.parse(json['joinDate'])
+      id: userData['id']?.toString() ?? '',
+      name: computedName,
+      username: userData['username']?.toString() ?? '',
+      email: userData['email']?.toString() ?? '',
+      avatar: userData['selectedAvatar']?.toString() ?? 
+              userData['avatar']?.toString(),
+      bio: profileData['bio']?.toString() ?? userData['bio']?.toString(),
+      pronouns: userData['pronouns']?.toString() ?? 'They / Them',
+      ageGroup: userData['ageGroup']?.toString() ?? '18-24',
+      themeColor: profileData['themeColor']?.toString() ?? 
+                  userData['themeColor']?.toString() ?? 
+                  '#8B5CF6',
+      joinDate: userData['joinDate'] != null
+          ? DateTime.parse(userData['joinDate'])
           : DateTime.now(),
-      totalEntries: json['totalEntries'] ?? 0,
-      currentStreak: json['currentStreak'] ?? 0,
-      longestStreak: json['longestStreak'] ?? 0,
-      favoriteEmotion: json['favoriteEmotion']?.toString(),
-      totalFriends: json['totalFriends'] ?? 0,
-      helpedFriends: json['helpedFriends'] ?? 0,
-      level: json['level']?.toString() ?? 'Explorer',
-      badgesEarned: json['badgesEarned'] ?? 0,
-      lastActive: json['lastActive'] != null
-          ? DateTime.parse(json['lastActive'])
+      totalEntries: userData['totalEntries'] ?? 0,
+      currentStreak: userData['currentStreak'] ?? 0,
+      longestStreak: userData['longestStreak'] ?? 0,
+      favoriteEmotion: userData['favoriteEmotion']?.toString(),
+      totalFriends: userData['totalFriends'] ?? 0,
+      helpedFriends: userData['helpedFriends'] ?? 0,
+      level: userData['level']?.toString() ?? 'Explorer',
+      badgesEarned: userData['badgesEarned'] ?? 0,
+      lastActive: userData['lastActive'] != null
+          ? DateTime.parse(userData['lastActive'])
           : null,
-      isPrivate: json['isPrivate'] ?? false,
+      isPrivate: profileData['isPrivate'] ?? userData['isPrivate'] ?? false,
     );
   }
 
@@ -71,6 +97,10 @@ class UserProfileModel {
       'username': username,
       'email': email,
       'avatar': avatar,
+      'bio': bio,
+      'pronouns': pronouns,
+      'ageGroup': ageGroup,
+      'themeColor': themeColor,
       'joinDate': joinDate.toIso8601String(),
       'totalEntries': totalEntries,
       'currentStreak': currentStreak,
@@ -87,12 +117,16 @@ class UserProfileModel {
 
   // Convert to Entity
   ProfileEntity toEntity() {
+    print('[DEBUG] UserProfileModel.toEntity() - name: \'$name\', username: \'$username\'');
     return ProfileEntity(
       id: id,
       name: name,
+      displayName: name, // <-- Set displayName from name (which is displayName from backend)
       username: username,
       email: email,
+      bio: bio,
       avatar: avatar,
+      selectedAvatar: avatar,
       joinDate: joinDate,
       totalEntries: totalEntries,
       currentStreak: currentStreak,
@@ -104,6 +138,9 @@ class UserProfileModel {
       badgesEarned: badgesEarned,
       lastActive: lastActive,
       isPrivate: isPrivate,
+      pronouns: pronouns,
+      ageGroup: ageGroup,
+      themeColor: themeColor,
     );
   }
 
@@ -115,6 +152,10 @@ class UserProfileModel {
       username: entity.username,
       email: entity.email,
       avatar: entity.avatar,
+      bio: entity.bio,
+      pronouns: entity.pronouns,
+      ageGroup: entity.ageGroup,
+      themeColor: entity.themeColor,
       joinDate: entity.joinDate,
       totalEntries: entity.totalEntries,
       currentStreak: entity.currentStreak,
@@ -135,6 +176,10 @@ class UserProfileModel {
     String? username,
     String? email,
     String? avatar,
+    String? bio,
+    String? pronouns,
+    String? ageGroup,
+    String? themeColor,
     DateTime? joinDate,
     int? totalEntries,
     int? currentStreak,
@@ -153,6 +198,10 @@ class UserProfileModel {
       username: username ?? this.username,
       email: email ?? this.email,
       avatar: avatar ?? this.avatar,
+      bio: bio ?? this.bio,
+      pronouns: pronouns ?? this.pronouns,
+      ageGroup: ageGroup ?? this.ageGroup,
+      themeColor: themeColor ?? this.themeColor,
       joinDate: joinDate ?? this.joinDate,
       totalEntries: totalEntries ?? this.totalEntries,
       currentStreak: currentStreak ?? this.currentStreak,

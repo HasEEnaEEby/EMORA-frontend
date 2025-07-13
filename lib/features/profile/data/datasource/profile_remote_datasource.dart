@@ -30,47 +30,39 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     try {
       Logger.info('🔍 Fetching profile from API for user: $userId');
 
-      // First, try to get the current user from auth storage
-      final authDataSource = GetIt.instance<AuthLocalDataSource>();
-      final currentUser = await authDataSource.getCurrentUser();
-
-      if (currentUser != null) {
-        Logger.info('✅ Found logged-in user data: ${currentUser.username}');
-
-        // Convert UserModel to UserProfileModel
-        return UserProfileModel(
-          id: currentUser.id,
-          name: currentUser.username, // Use username as display name
-          username: currentUser.username,
-          email: currentUser.email,
-          avatar: currentUser.selectedAvatar ?? 'fox',
-          joinDate: currentUser.createdAt,
-          totalEntries: 0, // Will be updated from analytics if available
-          currentStreak: 0,
-          longestStreak: 0,
-          favoriteEmotion: null,
-          totalFriends: 0,
-          helpedFriends: 0,
-          level: 'New Explorer',
-          badgesEarned: 0,
-          lastActive: currentUser.updatedAt,
-          isPrivate: false,
-        );
-      }
-
-      // Fallback: try API call
+      // Always try API call first to get fresh data with force refresh
       final response = await apiService.getUserProfile();
 
       Logger.info('✅ Profile API response received');
 
+      // Handle nested response structure from backend
+      final userData = response['user'] as Map<String, dynamic>? ?? response;
+      final profileData = userData['profile'] as Map<String, dynamic>? ?? {};
+      final preferencesData = userData['preferences'] as Map<String, dynamic>? ?? {};
+
+      // DEBUG: Log the actual backend response
+      Logger.info('🔍 Backend response - userData: $userData');
+      Logger.info('🔍 Backend response - profileData: $profileData');
+      Logger.info('🔍 Backend response - displayName: ${profileData['displayName']}');
+
+      final displayName = profileData['displayName']?.toString() ?? 
+                         userData['name']?.toString() ?? 
+                         userData['username']?.toString() ?? 'User';
+
+      Logger.info('🔍 Computed displayName: $displayName');
+
       return UserProfileModel(
-        id: response['id']?.toString() ?? userId,
-        name: response['username'] ?? 'User',
-        username: response['username'] ?? 'user',
-        email: response['email'] ?? 'user@example.com',
-        avatar: response['selectedAvatar'] ?? 'fox',
-        joinDate: response['createdAt'] != null
-            ? DateTime.parse(response['createdAt'])
+        id: userData['id']?.toString() ?? userId,
+        name: displayName, // Use the computed displayName
+        username: userData['username']?.toString() ?? 'user',
+        email: userData['email']?.toString() ?? '', // ✅ Remove fallback - use real email only
+        avatar: userData['selectedAvatar']?.toString() ?? 'fox',
+        bio: profileData['bio']?.toString(),
+        pronouns: userData['pronouns']?.toString() ?? 'They / Them',
+        ageGroup: userData['ageGroup']?.toString() ?? '18-24',
+        themeColor: profileData['themeColor']?.toString() ?? '#8B5CF6',
+        joinDate: userData['createdAt'] != null
+            ? DateTime.parse(userData['createdAt'])
             : DateTime.now(),
         totalEntries: _calculateTotalEntries(response),
         currentStreak: _calculateCurrentStreak(response),
@@ -80,18 +72,20 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         helpedFriends: _getHelpedFriends(response),
         level: _calculateUserLevel(response),
         badgesEarned: _getBadgesEarned(response),
-        lastActive: response['lastLoginAt'] != null
-            ? DateTime.parse(response['lastLoginAt'])
-            : response['updatedAt'] != null
-            ? DateTime.parse(response['updatedAt'])
+        lastActive: userData['lastLoginAt'] != null
+            ? DateTime.parse(userData['lastLoginAt'])
+            : userData['updatedAt'] != null
+            ? DateTime.parse(userData['updatedAt'])
             : null,
-        isPrivate:
-            response['preferences']?['privacy']?['moodPrivacy'] == 'private' ||
-            response['isPrivate'] == true,
+        isPrivate: preferencesData['moodPrivacy'] == 'private' ||
+            profileData['isPrivate'] == true ||
+            userData['isPrivate'] == true,
       );
     } catch (e) {
       Logger.error('❌ Error fetching profile: $e');
-      return _createFallbackProfile(userId);
+      // ✅ CRITICAL: Remove fallback to mock data - always throw error
+      // This ensures the app only uses real data from the backend
+      throw Exception('Failed to fetch user profile: $e');
     }
   }
 
@@ -101,20 +95,24 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       Logger.info('📝 Updating profile via API');
 
       final updateData = {
-        'username': profile.username,
-        'email': profile.email,
-        'selectedAvatar': profile.avatar,
+        'pronouns': profile.pronouns ?? 'They / Them',
+        'ageGroup': profile.ageGroup ?? '18-24',
+        'selectedAvatar': profile.avatar ?? 'fox',
         'profile': {
           'displayName': profile.name,
-          'bio': '', // Add bio if available in your model
-        },
-        'preferences': {
-          'privacy': {'moodPrivacy': profile.isPrivate ? 'private' : 'public'},
+          'bio': profile.bio ?? '',
+          'themeColor': profile.themeColor ?? '#8B5CF6',
         },
       };
 
       final response = await apiService.updateUserProfile(updateData);
       Logger.info('✅ Profile updated successfully');
+      
+      // Clear cache to ensure fresh data is fetched
+      apiService.clearCache();
+      
+      // After successful update, fetch the updated profile from the server
+      // to ensure we have the latest data including any server-side changes
       return await getUserProfile(profile.id);
     } catch (e) {
       Logger.error('❌ Error updating profile: $e');
@@ -312,27 +310,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       'mindfulness': 'legendary',
     };
     return rarityMap[category] ?? 'common';
-  }
-
-  UserProfileModel _createFallbackProfile(String userId) {
-    return UserProfileModel(
-      id: userId,
-      name: 'User',
-      username: 'user',
-      email: 'user@example.com',
-      avatar: 'fox',
-      joinDate: DateTime.now(),
-      totalEntries: 0,
-      currentStreak: 0,
-      longestStreak: 0,
-      favoriteEmotion: null,
-      totalFriends: 0,
-      helpedFriends: 0,
-      level: 'New Explorer',
-      badgesEarned: 0,
-      lastActive: DateTime.now(),
-      isPrivate: false,
-    );
   }
 
   List<AchievementModel> _createStarterAchievements(String userId) {

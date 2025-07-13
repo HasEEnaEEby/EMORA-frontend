@@ -40,6 +40,12 @@ dependencies:
   intl: ^0.20.2
   share_plus: ^11.0.0
 
+  # Enhanced Analytics & Charts
+  fl_chart: ^0.65.0
+  # syncfusion_flutter_charts: ^23.2.7
+
+  # Enhanced Map Features (heatmap functionality built into flutter_map)
+
   # Calendar & Date/Time
   table_calendar: ^3.0.9
 
