@@ -1,91 +1,76 @@
 import 'dart:convert';
 
-import 'package:emora_mobile_app/features/onboarding/domain/entity/onboarding_entity.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../../core/config/app_config.dart';
 import '../../../../../core/errors/exceptions.dart';
 import '../../../../../core/utils/logger.dart';
 import '../../model/onboarding_model.dart';
 
 abstract class OnboardingLocalDataSource {
-  Future<List<OnboardingStepModel>> getOnboardingSteps();
   Future<List<OnboardingStepModel>> getCachedOnboardingSteps();
-  Future<void> cacheOnboardingSteps(List<OnboardingStepModel> steps);
+  Future<bool> cacheOnboardingSteps(List<OnboardingStepModel> steps);
   Future<UserOnboardingModel> getUserOnboardingData();
   Future<bool> saveUserOnboardingData(UserOnboardingModel userData);
   Future<bool> completeOnboarding();
   Future<bool> isOnboardingCompleted();
   Future<void> clearOnboardingData();
-  bool isCacheFresh({Duration maxAge = const Duration(hours: 24)});
+  bool isCacheFresh();
 }
 
 class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
   final SharedPreferences sharedPreferences;
 
-  OnboardingLocalDataSourceImpl({required this.sharedPreferences});
-
-  static const String _onboardingStepsKey = 'onboarding_steps';
+  // Cache keys
+  static const String _cachedStepsKey = 'cached_onboarding_steps';
+  static const String _cacheTimestampKey = 'onboarding_cache_timestamp';
   static const String _userDataKey = 'user_onboarding_data';
-  static const String _onboardingCompletedKey = 'onboarding_completed';
-  static const String _lastSyncKey = 'onboarding_last_sync';
-  static const String _stepsVersionKey = 'onboarding_steps_version';
+  static const String _completionKey = 'onboarding_completed';
+  static const String _completionTimestampKey = 'onboarding_completed_at';
 
-  @override
-  Future<List<OnboardingStepModel>> getOnboardingSteps() async {
-    return getCachedOnboardingSteps();
-  }
+  OnboardingLocalDataSourceImpl({required this.sharedPreferences});
 
   @override
   Future<List<OnboardingStepModel>> getCachedOnboardingSteps() async {
     try {
-      final stepsJson = sharedPreferences.getString(_onboardingStepsKey);
+      final stepsJson = sharedPreferences.getString(_cachedStepsKey);
+
       if (stepsJson != null) {
-        final List<dynamic> stepsList = json.decode(stepsJson);
-        final steps = stepsList
-            .map((step) => OnboardingStepModel.fromJson(step))
+        final stepsData = jsonDecode(stepsJson) as List;
+        final steps = stepsData
+            .map((stepData) => OnboardingStepModel.fromJson(stepData))
             .toList();
 
-        Logger.info('✅ Loaded ${steps.length} cached onboarding steps');
+        Logger.info('📱 Retrieved ${steps.length} cached onboarding steps');
         return steps;
       }
 
-      // Return default steps if none cached
-      Logger.info('📋 No cached steps found, using defaults');
-      return _getDefaultOnboardingSteps();
+      // Return default steps if no cache
+      Logger.info('📱 No cached steps, returning default steps');
+      return _getDefaultSteps();
     } catch (e) {
-      Logger.error('Failed to get cached onboarding steps', e);
-
-      // Fallback to default steps on any error
-      Logger.info('🔄 Falling back to default onboarding steps');
-      return _getDefaultOnboardingSteps();
+      Logger.error('Error getting cached onboarding steps', e);
+      return _getDefaultSteps();
     }
   }
 
   @override
-  Future<void> cacheOnboardingSteps(List<OnboardingStepModel> steps) async {
+  Future<bool> cacheOnboardingSteps(List<OnboardingStepModel> steps) async {
     try {
-      final stepsJson = json.encode(
-        steps.map((step) => step.toJson()).toList(),
+      final stepsData = steps.map((step) => step.toJson()).toList();
+      final stepsJson = jsonEncode(stepsData);
+
+      await sharedPreferences.setString(_cachedStepsKey, stepsJson);
+      await sharedPreferences.setInt(
+        _cacheTimestampKey,
+        DateTime.now().millisecondsSinceEpoch,
       );
 
-      await Future.wait([
-        sharedPreferences.setString(_onboardingStepsKey, stepsJson),
-        sharedPreferences.setInt(
-          _lastSyncKey,
-          DateTime.now().millisecondsSinceEpoch,
-        ),
-        sharedPreferences.setString(
-          _stepsVersionKey,
-          DateTime.now().toIso8601String(),
-        ),
-      ]);
-
-      Logger.info('✅ Cached ${steps.length} onboarding steps successfully');
+      Logger.info('💾 Cached ${steps.length} onboarding steps');
+      return true;
     } catch (e) {
-      Logger.error('Failed to cache onboarding steps', e);
-      throw CacheException(
-        message: 'Failed to cache onboarding steps: ${e.toString()}',
-      );
+      Logger.error('Error caching onboarding steps', e);
+      return false;
     }
   }
 
@@ -93,125 +78,95 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
   Future<UserOnboardingModel> getUserOnboardingData() async {
     try {
       final userDataJson = sharedPreferences.getString(_userDataKey);
+
       if (userDataJson != null) {
-        final Map<String, dynamic> userData = json.decode(userDataJson);
+        final userData = jsonDecode(userDataJson);
         final model = UserOnboardingModel.fromJson(userData);
-        Logger.info('✅ Retrieved user onboarding data');
+        Logger.info('📱 Retrieved user onboarding data: ${model.toString()}');
         return model;
       }
 
       // Return empty user data if none exists
-      Logger.info('ℹ️ No user onboarding data found, returning empty model');
-      return const UserOnboardingModel();
+      Logger.info('📱 No cached user data, returning empty model');
+      return UserOnboardingModel();
     } catch (e) {
-      Logger.error('Failed to get user onboarding data', e);
-      throw CacheException(
-        message: 'Failed to get user onboarding data: ${e.toString()}',
-      );
+      Logger.error('Error getting user onboarding data', e);
+      throw CacheException(message: 'Failed to get user onboarding data: $e');
     }
   }
 
   @override
   Future<bool> saveUserOnboardingData(UserOnboardingModel userData) async {
     try {
-      final userDataJson = json.encode(userData.toJson());
-      final success = await sharedPreferences.setString(
-        _userDataKey,
-        userDataJson,
-      );
+      final userDataJson = jsonEncode(userData.toJson());
+      await sharedPreferences.setString(_userDataKey, userDataJson);
 
-      if (success) {
-        Logger.info('✅ Saved user onboarding data locally');
-      }
-
-      return success;
+      Logger.info('💾 Saved user onboarding data: ${userData.toString()}');
+      return true;
     } catch (e) {
-      Logger.error('Failed to save user onboarding data', e);
-      throw CacheException(
-        message: 'Failed to save user onboarding data: ${e.toString()}',
-      );
+      Logger.error('Error saving user onboarding data', e);
+      throw CacheException(message: 'Failed to save user onboarding data: $e');
     }
   }
 
   @override
   Future<bool> completeOnboarding() async {
     try {
-      // Get current user data and mark as completed
-      final currentUserData = await getUserOnboardingData();
-      final completedUserData = UserOnboardingModel(
-        username: currentUserData.username,
-        pronouns: currentUserData.pronouns,
-        ageGroup: currentUserData.ageGroup,
-        selectedAvatar: currentUserData.selectedAvatar,
-        isCompleted: true,
+      await sharedPreferences.setBool(_completionKey, true);
+      await sharedPreferences.setString(
+        _completionTimestampKey,
+        DateTime.now().toIso8601String(),
       );
 
-      // Save both completion flag and updated user data
-      final results = await Future.wait([
-        sharedPreferences.setBool(_onboardingCompletedKey, true),
-        saveUserOnboardingData(completedUserData),
-      ]);
-
-      final success = results.every((result) => result == true);
-
-      if (success) {
-        Logger.info('✅ Onboarding marked as completed locally');
-      }
-
-      return success;
+      Logger.info('✅ Marked onboarding as completed locally');
+      return true;
     } catch (e) {
-      Logger.error('Failed to complete onboarding', e);
-      throw CacheException(
-        message: 'Failed to complete onboarding: ${e.toString()}',
-      );
+      Logger.error('Error completing onboarding', e);
+      throw CacheException(message: 'Failed to complete onboarding: $e');
     }
   }
 
   @override
   Future<bool> isOnboardingCompleted() async {
     try {
-      final isCompleted =
-          sharedPreferences.getBool(_onboardingCompletedKey) ?? false;
-      Logger.info('ℹ️ Onboarding completion status: $isCompleted');
+      final isCompleted = sharedPreferences.getBool(_completionKey) ?? false;
+      Logger.info('🔍 Onboarding completion status: $isCompleted');
       return isCompleted;
     } catch (e) {
-      Logger.error('Failed to check onboarding status', e);
-      return false; // Default to false on error
+      Logger.error('Error checking onboarding completion', e);
+      return false;
     }
   }
 
   @override
   Future<void> clearOnboardingData() async {
     try {
-      await Future.wait([
-        sharedPreferences.remove(_userDataKey),
-        sharedPreferences.remove(_onboardingCompletedKey),
-        sharedPreferences.remove(_onboardingStepsKey),
-        sharedPreferences.remove(_lastSyncKey),
-        sharedPreferences.remove(_stepsVersionKey),
-      ]);
-      Logger.info('🗑️ Cleared all onboarding data');
+      await sharedPreferences.remove(_userDataKey);
+      await sharedPreferences.remove(_completionKey);
+      await sharedPreferences.remove(_completionTimestampKey);
+      // Keep cached steps for reuse
+
+      Logger.info('🧹 Cleared onboarding data');
     } catch (e) {
-      Logger.error('Failed to clear onboarding data', e);
-      throw CacheException(
-        message: 'Failed to clear onboarding data: ${e.toString()}',
-      );
+      Logger.error('Error clearing onboarding data', e);
+      throw CacheException(message: 'Failed to clear onboarding data: $e');
     }
   }
 
   @override
-  bool isCacheFresh({Duration maxAge = const Duration(hours: 24)}) {
+  bool isCacheFresh() {
     try {
-      final lastSync = sharedPreferences.getInt(_lastSyncKey);
-      if (lastSync == null) return false;
+      final cacheTimestamp = sharedPreferences.getInt(_cacheTimestampKey);
 
-      final lastSyncTime = DateTime.fromMillisecondsSinceEpoch(lastSync);
+      if (cacheTimestamp == null) return false;
+
+      final cacheDate = DateTime.fromMillisecondsSinceEpoch(cacheTimestamp);
       final now = DateTime.now();
+      final difference = now.difference(cacheDate);
 
-      final isFresh = now.difference(lastSyncTime) < maxAge;
-      Logger.info(
-        '🔍 Cache freshness check: $isFresh (age: ${now.difference(lastSyncTime).inHours}h)',
-      );
+      final isFresh = difference < AppConfig.cacheValidityDuration;
+      Logger.info('🔍 Cache freshness: $isFresh (age: ${difference.inHours}h)');
+
       return isFresh;
     } catch (e) {
       Logger.error('Error checking cache freshness', e);
@@ -219,64 +174,49 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
     }
   }
 
-  List<OnboardingStepModel> _getDefaultOnboardingSteps() {
+  // Helper method to get default onboarding steps
+  List<OnboardingStepModel> _getDefaultSteps() {
     return [
-      const OnboardingStepModel(
+      OnboardingStepModel(
         stepNumber: 1,
         title: 'Welcome to',
         subtitle: 'Emora!',
         description: 'What do you want us to call you?',
-        type: OnboardingStepType.welcome,
+        type: 'welcome',
       ),
-      const OnboardingStepModel(
+      OnboardingStepModel(
         stepNumber: 2,
-        title: 'Hello!',
-        subtitle: 'How can we refer to you?',
+        title: 'Hey there! What pronouns do you',
+        subtitle: 'go by?',
         description:
-            'We\'ve committed to creating a welcoming experience for members of all gender identities.',
-        type: OnboardingStepType.pronouns,
-        data: {
-          'options': ['She / Her', 'He / Him', 'They / Them', 'Other'],
-        },
+            'We want everyone to feel seen and respected. Pick the pronouns you\'re most comfortable with.',
+        type: 'pronouns',
+        data: {'options': AppConfig.availablePronouns},
       ),
-      const OnboardingStepModel(
+      OnboardingStepModel(
         stepNumber: 3,
-        title: 'Thanks!',
-        subtitle: 'How old are you?',
+        title: 'Awesome! How',
+        subtitle: 'old are you?',
         description:
-            'We want to tailor your experience — your age helps us do that better.',
-        type: OnboardingStepType.age,
-        data: {
-          'options': ['less than 20s', '20s', '30s', '40s', '50s and above'],
-        },
+            'What\'s your age group? This helps us show the most relevant content for you.',
+        type: 'age',
+        data: {'options': AppConfig.availableAgeGroups},
       ),
-      const OnboardingStepModel(
+      OnboardingStepModel(
         stepNumber: 4,
-        title: 'Lastly, choose your',
-        subtitle: 'avatar!',
+        title: 'Lastly, pick',
+        subtitle: 'your avatar!',
         description:
-            'We\'d like you to express yourself through your favorite animal — you can change it anytime.',
-        type: OnboardingStepType.avatar,
-        data: {
-          'avatars': [
-            'panda',
-            'elephant',
-            'horse',
-            'rabbit',
-            'fox',
-            'zebra',
-            'bear',
-            'pig',
-            'raccoon',
-          ],
-        },
+            'Choose an avatar that feels like you — it\'s all about personality.',
+        type: 'avatar',
+        data: {'avatars': AppConfig.availableAvatars},
       ),
-      const OnboardingStepModel(
+      OnboardingStepModel(
         stepNumber: 5,
         title: 'Congrats,',
         subtitle: 'User!',
         description: 'You\'re free to express yourself',
-        type: OnboardingStepType.completion,
+        type: 'completion',
       ),
     ];
   }

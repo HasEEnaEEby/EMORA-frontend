@@ -1,117 +1,123 @@
-
+// lib/features/auth/data/model/user_model.dart
 import '../../domain/entity/user_entity.dart';
 
 class UserModel extends UserEntity {
   const UserModel({
     required super.id,
     required super.username,
+    required super.email,
     super.pronouns,
     super.ageGroup,
     super.selectedAvatar,
+    super.location,
+    super.latitude,
+    super.longitude,
     required super.isOnboardingCompleted,
-    required super.isActive,
     required super.createdAt,
-    super.lastLoginAt,
+    required super.updatedAt,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      id: _extractId(json),
-      username: json['username'] ?? '',
-      pronouns: json['pronouns'],
-      ageGroup: json['ageGroup'] ?? json['age_group'],
-      selectedAvatar: json['selectedAvatar'] ?? json['selected_avatar'] ?? json['avatar'],
-      isOnboardingCompleted: _extractOnboardingStatus(json),
-      isActive: json['isActive'] ?? json['is_active'] ?? true,
-      createdAt: _extractDateTime(json['createdAt'] ?? json['created_at']),
-      lastLoginAt: _extractDateTime(json['lastLoginAt'] ?? json['last_login_at']),
+      id: json['id'] as String,
+      username: json['username'] as String,
+      email: json['email'] as String,
+      pronouns: json['pronouns'] as String?,
+      ageGroup: json['ageGroup'] as String?,
+      selectedAvatar: json['selectedAvatar'] as String?,
+      location: json['location'] as String?,
+      latitude: json['latitude'] as double?,
+      longitude: json['longitude'] as double?,
+      isOnboardingCompleted: json['isOnboardingCompleted'] as bool? ?? false,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : DateTime.now(),
     );
-  }
-
-  static String _extractId(Map<String, dynamic> json) {
-    return (json['id'] ?? json['_id'] ?? json['userId'] ?? '').toString();
-  }
-
-  static bool _extractOnboardingStatus(Map<String, dynamic> json) {
-    // Check multiple possible field names and default to true for existing users
-    return json['isOnboardingCompleted'] ?? 
-           json['onboardingCompleted'] ?? 
-           json['onboarding_completed'] ?? 
-           true; // Default to true since user exists in system
-  }
-
-  static DateTime _extractDateTime(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is DateTime) return value;
-    if (value is String) {
-      return DateTime.tryParse(value) ?? DateTime.now();
-    }
-    return DateTime.now();
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'username': username,
+      'email': email,
       'pronouns': pronouns,
       'ageGroup': ageGroup,
       'selectedAvatar': selectedAvatar,
+      'location': location,
+      'latitude': latitude,
+      'longitude': longitude,
       'isOnboardingCompleted': isOnboardingCompleted,
-      'isActive': isActive,
       'createdAt': createdAt.toIso8601String(),
-      'lastLoginAt': lastLoginAt?.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
     };
-  }
-
-  factory UserModel.fromEntity(UserEntity entity) {
-    return UserModel(
-      id: entity.id,
-      username: entity.username,
-      pronouns: entity.pronouns,
-      ageGroup: entity.ageGroup,
-      selectedAvatar: entity.selectedAvatar,
-      isOnboardingCompleted: entity.isOnboardingCompleted,
-      isActive: entity.isActive,
-      createdAt: entity.createdAt,
-      lastLoginAt: entity.lastLoginAt,
-    );
   }
 
   UserEntity toEntity() {
     return UserEntity(
       id: id,
       username: username,
+      email: email,
       pronouns: pronouns,
       ageGroup: ageGroup,
       selectedAvatar: selectedAvatar,
+      location: location,
+      latitude: latitude,
+      longitude: longitude,
       isOnboardingCompleted: isOnboardingCompleted,
-      isActive: isActive,
       createdAt: createdAt,
-      lastLoginAt: lastLoginAt,
+      updatedAt: updatedAt,
     );
   }
 
+  factory UserModel.fromEntity(UserEntity entity) {
+    return UserModel(
+      id: entity.id,
+      username: entity.username,
+      email: entity.email,
+      pronouns: entity.pronouns,
+      ageGroup: entity.ageGroup,
+      selectedAvatar: entity.selectedAvatar,
+      location: entity.location,
+      latitude: entity.latitude,
+      longitude: entity.longitude,
+      isOnboardingCompleted: entity.isOnboardingCompleted,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    );
+  }
+
+  @override
   UserModel copyWith({
     String? id,
     String? username,
+    String? email,
     String? pronouns,
     String? ageGroup,
     String? selectedAvatar,
+    String? location,
+    double? latitude,
+    double? longitude,
     bool? isOnboardingCompleted,
-    bool? isActive,
     DateTime? createdAt,
-    DateTime? lastLoginAt,
+    DateTime? updatedAt,
   }) {
     return UserModel(
       id: id ?? this.id,
       username: username ?? this.username,
+      email: email ?? this.email,
       pronouns: pronouns ?? this.pronouns,
       ageGroup: ageGroup ?? this.ageGroup,
       selectedAvatar: selectedAvatar ?? this.selectedAvatar,
-      isOnboardingCompleted: isOnboardingCompleted ?? this.isOnboardingCompleted,
-      isActive: isActive ?? this.isActive,
+      location: location ?? this.location,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      isOnboardingCompleted:
+          isOnboardingCompleted ?? this.isOnboardingCompleted,
       createdAt: createdAt ?? this.createdAt,
-      lastLoginAt: lastLoginAt ?? this.lastLoginAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 }

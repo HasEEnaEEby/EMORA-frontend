@@ -1,10 +1,9 @@
+import 'package:emora_mobile_app/core/errors/failures.dart';
+import 'package:emora_mobile_app/core/use_case/use_case.dart';
+import 'package:emora_mobile_app/features/auth/domain/repository/auth_repository.dart';
 import 'package:dartz/dartz.dart';
 
-import '../../../../core/errors/failures.dart';
-import '../../../../core/use_case/use_case.dart';
-import '../repository/auth_repository.dart';
-
-class LogoutUser extends UseCase<void, NoParams> {
+class LogoutUser implements UseCase<void, NoParams> {
   final AuthRepository repository;
 
   LogoutUser(this.repository);

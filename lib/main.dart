@@ -9,10 +9,19 @@ import 'app/di/injection_container.dart' as di;
 import 'core/navigation/navigation_service.dart';
 import 'core/utils/logger.dart';
 
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
+    // Initialize logger with proper configuration to reduce excessive logging
+    Logger.init(
+      level: LogLevel
+          .warning, // Only log warnings, errors, and critical messages in production
+      enableFileLogging: false,
+      clearPreviousLogs: true,
+    );
+
     Logger.info(' Starting Emora Mobile App...');
 
     // --- PROFESSIONAL PRACTICE ---

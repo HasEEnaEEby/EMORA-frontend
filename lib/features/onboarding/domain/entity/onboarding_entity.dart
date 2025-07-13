@@ -1,5 +1,4 @@
-// features/onboarding/domain/entity/onboarding_entity.dart
-
+// lib/features/onboarding/domain/entity/onboarding_entity.dart
 import 'package:equatable/equatable.dart';
 
 enum OnboardingStepType { welcome, pronouns, age, avatar, completion }

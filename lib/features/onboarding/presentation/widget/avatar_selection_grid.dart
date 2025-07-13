@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AvatarSelectionGrid extends StatefulWidget {
-  final List<String> avatars;
+  final List<dynamic> avatars; // Changed from List<String> to List<dynamic>
   final String? selectedAvatar;
   final Function(String) onAvatarSelected;
   final int crossAxisCount;
@@ -77,6 +77,22 @@ class _AvatarSelectionGridState extends State<AvatarSelectionGrid>
     super.dispose();
   }
 
+  // FIXED: Safe avatar extraction that handles both String and Map types
+  String _extractAvatarValue(dynamic avatar) {
+    if (avatar is String) {
+      return avatar;
+    } else if (avatar is Map<String, dynamic>) {
+      // Try common keys that might contain the avatar value
+      return avatar['value']?.toString() ??
+          avatar['name']?.toString() ??
+          avatar['id']?.toString() ??
+          avatar['avatar']?.toString() ??
+          avatar.toString();
+    } else {
+      return avatar.toString();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GridView.builder(
@@ -89,7 +105,9 @@ class _AvatarSelectionGridState extends State<AvatarSelectionGrid>
       ),
       itemCount: widget.avatars.length,
       itemBuilder: (context, index) {
-        final avatar = widget.avatars[index];
+        final avatar = _extractAvatarValue(
+          widget.avatars[index],
+        ); // FIXED: Safe extraction
         final isSelected = widget.selectedAvatar == avatar;
 
         return AnimatedBuilder(
@@ -199,7 +217,7 @@ class _AvatarItemState extends State<AvatarItem>
       'deer': '🦌',
     };
 
-    return avatarEmojis[avatar] ?? '🐾';
+    return avatarEmojis[avatar.toLowerCase()] ?? '🐾';
   }
 
   Color _getAvatarBackgroundColor(String avatar) {
@@ -226,7 +244,7 @@ class _AvatarItemState extends State<AvatarItem>
       'deer': Color(0xFFD2B48C),
     };
 
-    return avatarColors[avatar] ?? const Color(0xFF8B5FBF);
+    return avatarColors[avatar.toLowerCase()] ?? const Color(0xFF8B5FBF);
   }
 
   @override
@@ -336,123 +354,6 @@ class _AvatarItemState extends State<AvatarItem>
           ),
         );
       },
-    );
-  }
-}
-
-// Helper class for avatar utilities
-class AvatarHelper {
-  static String getAvatarEmoji(String avatar) {
-    const avatarEmojis = {
-      'panda': '🐼',
-      'elephant': '🐘',
-      'horse': '🐴',
-      'rabbit': '🐰',
-      'fox': '🦊',
-      'zebra': '🦓',
-      'bear': '🐻',
-      'pig': '🐷',
-      'raccoon': '🦝',
-      'cat': '🐱',
-      'dog': '🐶',
-      'lion': '🦁',
-      'tiger': '🐯',
-      'monkey': '🐵',
-      'koala': '🐨',
-      'hamster': '🐹',
-      'frog': '🐸',
-      'penguin': '🐧',
-      'owl': '🦉',
-      'deer': '🦌',
-    };
-
-    return avatarEmojis[avatar] ?? '🐾';
-  }
-
-  static Color getAvatarBackgroundColor(String avatar) {
-    const avatarColors = {
-      'panda': Color(0xFF2D2D2D),
-      'elephant': Color(0xFF4A4A4A),
-      'horse': Color(0xFF8B4513),
-      'rabbit': Color(0xFFE6E6FA),
-      'fox': Color(0xFFFF6B35),
-      'zebra': Color(0xFF2F2F2F),
-      'bear': Color(0xFF8B4513),
-      'pig': Color(0xFFFFB6C1),
-      'raccoon': Color(0xFF36454F),
-      'cat': Color(0xFF708090),
-      'dog': Color(0xFFDEB887),
-      'lion': Color(0xFFDAA520),
-      'tiger': Color(0xFFFF8C00),
-      'monkey': Color(0xFFCD853F),
-      'koala': Color(0xFF808080),
-      'hamster': Color(0xFFF4A460),
-      'frog': Color(0xFF228B22),
-      'penguin': Color(0xFF2F4F4F),
-      'owl': Color(0xFF8B4513),
-      'deer': Color(0xFFD2B48C),
-    };
-
-    return avatarColors[avatar] ?? const Color(0xFF8B5FBF);
-  }
-}
-
-// Alternative compact avatar selector for smaller spaces
-class CompactAvatarSelector extends StatelessWidget {
-  final List<String> avatars;
-  final String? selectedAvatar;
-  final Function(String) onAvatarSelected;
-
-  const CompactAvatarSelector({
-    super.key,
-    required this.avatars,
-    required this.onAvatarSelected,
-    this.selectedAvatar,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 80,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: avatars.length,
-        itemBuilder: (context, index) {
-          final avatar = avatars[index];
-          final isSelected = selectedAvatar == avatar;
-
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () => onAvatarSelected(avatar),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFF8B5FBF).withValues(alpha: 0.2)
-                      : const Color(0xFF2A2A3E),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isSelected
-                        ? const Color(0xFF8B5FBF)
-                        : Colors.transparent,
-                    width: 2,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    AvatarHelper.getAvatarEmoji(avatar),
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
     );
   }
 }

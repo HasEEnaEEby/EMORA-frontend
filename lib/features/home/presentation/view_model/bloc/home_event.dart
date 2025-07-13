@@ -133,6 +133,38 @@ class EmotionLoggedEvent extends HomeEvent {
   String toString() => 'EmotionLoggedEvent { emotion: $emotion, intensity: $intensity, timestamp: $timestamp }';
 }
 
+/// Load emotion history event
+class LoadEmotionHistoryEvent extends HomeEvent {
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final bool forceRefresh;
+  
+  const LoadEmotionHistoryEvent({
+    this.startDate,
+    this.endDate,
+    this.forceRefresh = false,
+  });
+
+  @override
+  List<Object?> get props => [startDate, endDate, forceRefresh];
+
+  @override
+  String toString() => 'LoadEmotionHistoryEvent { startDate: $startDate, endDate: $endDate, forceRefresh: $forceRefresh }';
+}
+
+/// Load weekly insights event
+class LoadWeeklyInsightsEvent extends HomeEvent {
+  final bool forceRefresh;
+  
+  const LoadWeeklyInsightsEvent({this.forceRefresh = false});
+
+  @override
+  List<Object?> get props => [forceRefresh];
+
+  @override
+  String toString() => 'LoadWeeklyInsightsEvent { forceRefresh: $forceRefresh }';
+}
+
 // ============================================================================
 // DATA MANAGEMENT EVENTS
 // ============================================================================

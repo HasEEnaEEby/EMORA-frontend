@@ -1,5 +1,4 @@
-// features/onboarding/presentation/view_model/bloc/onboarding_event.dart
-
+// lib/features/onboarding/presentation/view_model/bloc/onboarding_event.dart
 import 'package:equatable/equatable.dart';
 
 import '../../../domain/entity/onboarding_entity.dart';

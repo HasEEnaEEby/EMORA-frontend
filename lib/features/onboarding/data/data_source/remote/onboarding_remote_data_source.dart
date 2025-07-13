@@ -1,9 +1,7 @@
-import 'package:dio/dio.dart';
-
-import '../../../../../core/constants/backend_mapping.dart';
+// lib/features/onboarding/data/data_source/remote/onboarding_remote_data_source.dart
 import '../../../../../core/errors/exceptions.dart';
-import '../../../../../core/network/dio_client.dart';
-import '../../../../../core/network/network_info.dart';
+import '../../../../../core/network/api_response_handler.dart';
+import '../../../../../core/network/api_service.dart';
 import '../../../../../core/utils/logger.dart';
 import '../../model/onboarding_model.dart';
 
@@ -14,192 +12,164 @@ abstract class OnboardingRemoteDataSource {
 }
 
 class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
-  final DioClient dioClient;
-  final NetworkInfo networkInfo;
+  final ApiService apiService;
 
-  OnboardingRemoteDataSourceImpl({
-    required this.dioClient,
-    required this.networkInfo,
-  });
+  OnboardingRemoteDataSourceImpl({required this.apiService});
 
   @override
   Future<List<OnboardingStepModel>> getOnboardingSteps() async {
-    if (!await networkInfo.isConnected) {
-      throw const NetworkException(message: 'No internet connection');
-    }
-
     try {
-      final response = await dioClient.get('/api/onboarding/steps');
+      Logger.info('🌐 Fetching onboarding steps from server...');
 
-      if (response.statusCode == 200) {
-        final List<dynamic> stepsData = response.data['data'];
-        return stepsData
-            .map((step) => OnboardingStepModel.fromJson(step))
-            .toList();
+      final response = await apiService.get('/onboarding/steps');
+
+      // Use the new response handler
+      final data = ApiResponseHandler.handleResponse(response);
+
+      Logger.debug('📥 Onboarding steps data received', data);
+
+      // Handle both formats: direct steps array or nested in 'steps' key
+      List<dynamic> stepsData;
+      if (data['steps'] != null) {
+        stepsData = data['steps'] as List<dynamic>;
+      } else if (data is List) {
+        stepsData = data as List;
       } else {
-        throw ServerException(
-          message: 'Failed to get onboarding steps',
-          statusCode: response.statusCode,
-        );
+        stepsData = [];
       }
-    } on DioException catch (e) {
-      Logger.error('Error getting onboarding steps', e);
-      if (e.response?.statusCode == 404) {
-        // Handle gracefully in development mode
-        Logger.info('Onboarding steps endpoint not available - using defaults');
-        return [];
-      }
+
+      final steps = stepsData
+          .map(
+            (stepData) =>
+                OnboardingStepModel.fromJson(stepData as Map<String, dynamic>),
+          )
+          .toList();
+
+      Logger.info('✅ Retrieved ${steps.length} onboarding steps from server');
+      return steps;
+    } on ValidationException catch (e) {
+      Logger.error('❌ Validation error fetching onboarding steps', e);
+      rethrow;
+    } on UnauthorizedException catch (e) {
+      Logger.error('❌ Authentication error fetching onboarding steps', e);
+      rethrow;
+    } on NotFoundException catch (e) {
+      Logger.error('❌ Onboarding steps endpoint not found', e);
+      rethrow;
+    } on ServerException catch (e) {
+      Logger.error('❌ Server error fetching onboarding steps', e);
+      rethrow;
+    } on NetworkException catch (e) {
+      Logger.error('❌ Network error fetching onboarding steps', e);
+      // Convert to ServerException for consistency
       throw ServerException(
-        message: 'Failed to get onboarding steps: ${e.message}',
-        statusCode: e.response?.statusCode,
+        message: 'Network error: ${e.message}',
+        code: e.code,
       );
     } catch (e) {
-      Logger.error('Unexpected error getting onboarding steps', e);
-      throw ServerException(
-        message: 'Failed to get onboarding steps: ${e.toString()}',
-      );
+      Logger.error('❌ Unexpected error fetching onboarding steps', e);
+      throw ServerException(message: 'Unexpected error: ${e.toString()}');
     }
   }
 
   @override
   Future<bool> saveUserData(UserOnboardingModel userData) async {
-    if (!await networkInfo.isConnected) {
-      throw const NetworkException(message: 'No internet connection');
-    }
-
     try {
-      // FIXED: Send pronouns directly without transformation
-      final requestData = <String, dynamic>{
-        'username': userData.username,
-        'pronouns': userData.pronouns, // Send directly without transformation
-        'ageGroup': BackendValues.getBackendAgeGroup(userData.ageGroup),
-        'selectedAvatar': BackendValues.getBackendAvatar(userData.selectedAvatar),
-        'isCompleted': userData.isCompleted,
-        'completedAt': userData.completedAt?.toIso8601String(),
-        'additionalData': userData.additionalData,
-      };
+      Logger.info('🌐 Saving user onboarding data to server...');
+      Logger.debug('📤 User data being sent', userData.toJson());
 
-      Logger.info(
-        '🌐 Syncing user onboarding data to server...',
-      );
-      Logger.info(
-        '📤 Using backend-mapped values: pronouns="${requestData['pronouns']}", ageGroup="${requestData['ageGroup']}", avatar="${requestData['selectedAvatar']}"',
+      final response = await apiService.post(
+        '/onboarding/user-data',
+        data: userData.toJson(),
       );
 
-      final response = await dioClient.post(
-        '/api/onboarding/user-data',
-        data: requestData,
-      );
+      // Use the new response handler
+      final data = ApiResponseHandler.handleResponse(response);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Logger.info('✅ User data saved successfully to server');
-        return true;
-      } else {
-        throw ServerException(
-          message: 'Failed to save user data',
-          statusCode: response.statusCode,
+      Logger.info('✅ User onboarding data saved to server');
+      Logger.debug('📥 Server response', data);
+
+      return true;
+    } on ValidationException catch (e) {
+      Logger.error('❌ Validation error saving user data', e);
+
+      // Check for specific age group validation error
+      if (e.message.contains('ageGroup')) {
+        Logger.error(
+          '🔧 Age group validation failed - check frontend age options',
         );
+        Logger.error('📋 Current user data: ${userData.ageGroup}');
       }
-    } on DioException catch (e) {
-      Logger.error('Network error syncing user data', e);
-      if (e.response?.statusCode == 400) {
-        // Parse validation errors from backend
-        final responseData = e.response?.data;
-        if (responseData != null && responseData['errors'] != null) {
-          final errors = responseData['errors'] as List;
-          final errorMessages = errors
-              .map((error) => error['msg'] as String)
-              .toList();
-          throw ServerException(
-            message: errorMessages.join(', '),
-            statusCode: e.response?.statusCode,
-          );
-        }
-        throw ServerException(
-          message: 'Validation failed. Please check your input.',
-          statusCode: e.response?.statusCode,
-        );
-      }
-      throw ServerException(
-        message: 'Failed to save user data: ${e.message}',
-        statusCode: e.response?.statusCode,
-      );
+
+      // Return false for validation errors but don't throw
+      // This allows the app to continue working offline
+      return false;
+    } on UnauthorizedException catch (e) {
+      Logger.error('❌ Authentication error saving user data', e);
+      rethrow;
+    } on NotFoundException catch (e) {
+      Logger.error('❌ User data endpoint not found', e);
+      rethrow;
+    } on ServerException catch (e) {
+      Logger.error('❌ Server error saving user data', e);
+      // Return false for server errors but don't throw
+      return false;
+    } on NetworkException catch (e) {
+      Logger.error('❌ Network error saving user data', e);
+      // Return false for network errors but don't throw
+      return false;
     } catch (e) {
-      Logger.error('Unexpected error saving user data', e);
-      throw ServerException(
-        message: 'Failed to save user data: ${e.toString()}',
-      );
+      Logger.error('❌ Unexpected error saving user data', e);
+      return false;
     }
   }
 
   @override
   Future<bool> completeOnboarding(UserOnboardingModel userData) async {
-    if (!await networkInfo.isConnected) {
-      throw const NetworkException(message: 'No internet connection');
-    }
-
     try {
-      // FIXED: Send pronouns directly without transformation
-      final requestData = <String, dynamic>{
-        'username': userData.username,
-        'pronouns': userData.pronouns, // Send directly without transformation
-        'ageGroup': BackendValues.getBackendAgeGroup(userData.ageGroup),
-        'selectedAvatar': BackendValues.getBackendAvatar(userData.selectedAvatar),
-        'isCompleted': true,
-        'completedAt': userData.completedAt?.toIso8601String(),
-        'additionalData': userData.additionalData,
-      };
+      Logger.info('🌐 Completing onboarding on server...');
+      Logger.debug('📤 Completion data being sent', userData.toJson());
 
-      Logger.info(
-        '🌐 Completing onboarding on server...',
-      );
-      Logger.info(
-        '📤 Using backend-mapped values: pronouns="${requestData['pronouns']}", ageGroup="${requestData['ageGroup']}", avatar="${requestData['selectedAvatar']}"',
+      final response = await apiService.post(
+        '/onboarding/complete',
+        data: userData.toJson(),
       );
 
-      final response = await dioClient.post(
-        '/api/onboarding/complete',
-        data: requestData,
-      );
+      // Use the new response handler
+      final data = ApiResponseHandler.handleResponse(response);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        Logger.info('✅ Onboarding skip completed on server');
-        return true;
-      } else {
-        throw ServerException(
-          message: 'Failed to complete onboarding',
-          statusCode: response.statusCode,
-        );
+      Logger.info('✅ Onboarding completed on server');
+      Logger.debug('📥 Server response', data);
+
+      return true;
+    } on ValidationException catch (e) {
+      Logger.error('❌ Validation error completing onboarding', e);
+
+      // Check for specific age group validation error
+      if (e.message.contains('ageGroup')) {
+        Logger.error('🔧 Age group validation failed during completion');
+        Logger.error('📋 Current user data: ${userData.ageGroup}');
       }
-    } on DioException catch (e) {
-      Logger.error('Network error completing onboarding', e);
-      if (e.response?.statusCode == 400) {
-        // Parse validation errors from backend
-        final responseData = e.response?.data;
-        if (responseData != null && responseData['errors'] != null) {
-          final errors = responseData['errors'] as List;
-          final errorMessages = errors
-              .map((error) => error['msg'] as String)
-              .toList();
-          throw ServerException(
-            message: errorMessages.join(', '),
-            statusCode: e.response?.statusCode,
-          );
-        }
-        throw ServerException(
-          message: 'Validation failed. Please check your input.',
-          statusCode: e.response?.statusCode,
-        );
-      }
-      throw ServerException(
-        message: 'Failed to complete onboarding: ${e.message}',
-        statusCode: e.response?.statusCode,
-      );
+
+      // Return false for validation errors but don't throw
+      return false;
+    } on UnauthorizedException catch (e) {
+      Logger.error('❌ Authentication error completing onboarding', e);
+      rethrow;
+    } on NotFoundException catch (e) {
+      Logger.error('❌ Onboarding completion endpoint not found', e);
+      rethrow;
+    } on ServerException catch (e) {
+      Logger.error('❌ Server error completing onboarding', e);
+      // Return false for server errors but don't throw
+      return false;
+    } on NetworkException catch (e) {
+      Logger.error('❌ Network error completing onboarding', e);
+      // Return false for network errors but don't throw
+      return false;
     } catch (e) {
-      Logger.error('Unexpected error completing onboarding', e);
-      throw ServerException(
-        message: 'Failed to complete onboarding: ${e.toString()}',
-      );
+      Logger.error('❌ Unexpected error completing onboarding', e);
+      return false;
     }
   }
 }

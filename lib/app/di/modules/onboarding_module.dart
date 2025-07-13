@@ -1,4 +1,4 @@
-import 'package:emora_mobile_app/core/network/dio_client.dart';
+import 'package:emora_mobile_app/core/network/api_service.dart';
 import 'package:emora_mobile_app/core/network/network_info.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:get_it/get_it.dart';
@@ -40,11 +40,11 @@ class OnboardingModule {
       ),
     );
 
-    // Remote Data Source
+    // Remote Data Source - Fixed constructor parameters
     sl.registerLazySingleton<OnboardingRemoteDataSource>(
       () => OnboardingRemoteDataSourceImpl(
-        dioClient: sl<DioClient>(),
-        networkInfo: sl<NetworkInfo>(),
+        apiService:
+            sl<ApiService>(), // Fixed: use apiService instead of dioClient
       ),
     );
   }

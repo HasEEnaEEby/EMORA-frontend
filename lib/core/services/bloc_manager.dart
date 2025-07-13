@@ -1,6 +1,7 @@
+// lib/core/services/bloc_manager.dart
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/features/auth/data/data_source/local/auth_local_data_source.dart';
-import 'package:emora_mobile_app/features/auth/data/repository/auth_repository_impl.dart';
+import 'package:emora_mobile_app/features/auth/domain/use_case/check_auth_status.dart';
 import 'package:emora_mobile_app/features/auth/domain/use_case/check_username_availability.dart';
 import 'package:emora_mobile_app/features/auth/domain/use_case/get_current_user.dart';
 import 'package:emora_mobile_app/features/auth/domain/use_case/login_user.dart';
@@ -91,8 +92,8 @@ class BlocManager {
           loginUser: _sl<LoginUser>(),
           getCurrentUser: _sl<GetCurrentUser>(),
           logoutUser: _sl<LogoutUser>(),
-          authRepository:
-              _sl<AuthRepositoryImpl>(), // Fixed: Added missing authRepository
+          checkAuthStatus:
+              _sl<CheckAuthStatus>(), // Fixed: Proper use case injection
         );
 
         _authBlocCreationCount++;
@@ -124,11 +125,13 @@ class BlocManager {
           getEmotionFeed: _sl<GetEmotionFeed>(),
           getGlobalEmotionStats: _sl<GetGlobalEmotionStats>(),
           getGlobalHeatmap:
-              _sl<GetGlobalEmotionHeatmap>(), // Fixed: Corrected parameter name
+              _sl<
+                GetGlobalEmotionHeatmap
+              >(), // Fixed: Corrected parameter name from getGlobalEmotionHeatmap
           emotionRepository:
               _sl<
                 EmotionRepository
-              >(), // Fixed: Added missing emotionRepository
+              >(), // Fixed: Added missing emotionRepository parameter
         );
 
         _emotionBlocCreationCount++;

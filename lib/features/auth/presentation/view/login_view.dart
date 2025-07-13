@@ -1,3 +1,4 @@
+// lib/features/auth/presentation/view/login_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -78,9 +79,12 @@ class _LoginViewState extends State<LoginView>
     // Store bloc reference before async operation
     final authBloc = context.read<AuthBloc>();
 
-    // Use positional parameters matching the LoginUserEvent constructor
+    // Fixed: Using correct AuthLogin event instead of LoginUserEvent
     authBloc.add(
-      LoginUserEvent(_usernameController.text.trim(), _passwordController.text),
+      AuthLogin(
+        username: _usernameController.text.trim(),
+        password: _passwordController.text,
+      ),
     );
   }
 
@@ -107,11 +111,21 @@ class _LoginViewState extends State<LoginView>
       body: SafeArea(
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is AuthAuthenticated) {
-              Logger.info(' Login successful, navigating to home');
-              Navigator.of(context, rootNavigator: true).pushReplacementNamed(AppRouter.home);
+            // Fixed: Using correct state types
+            if (state is AuthLoginSuccess) {
+              Logger.info('✅ Login successful, navigating to home');
+              Navigator.of(
+                context,
+                rootNavigator: true,
+              ).pushReplacementNamed(AppRouter.home);
+            } else if (state is AuthAuthenticated) {
+              Logger.info('✅ User authenticated, navigating to home');
+              Navigator.of(
+                context,
+                rootNavigator: true,
+              ).pushReplacementNamed(AppRouter.home);
             } else if (state is AuthError) {
-              Logger.error(' Login error:', state.message);
+              Logger.error('❌ Login error:', state.message);
               _showErrorSnackBar(state.message);
             }
           },

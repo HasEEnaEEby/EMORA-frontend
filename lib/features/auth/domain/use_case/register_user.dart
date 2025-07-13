@@ -1,4 +1,3 @@
-// lib/features/auth/domain/use_case/register_user.dart - UPDATED RegisterUserParams
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 
@@ -7,81 +6,72 @@ import '../../../../core/use_case/use_case.dart';
 import '../entity/auth_response_entity.dart';
 import '../repository/auth_repository.dart';
 
-class RegisterUser extends UseCase<AuthResponseEntity, RegisterUserParams> {
+class RegisterUser extends UseCase<AuthResponseEntity, RegisterParams> {
   final AuthRepository repository;
 
   RegisterUser(this.repository);
 
   @override
   Future<Either<Failure, AuthResponseEntity>> call(
-    RegisterUserParams params,
+    RegisterParams params,
   ) async {
-    return await repository.register(
+    return await repository.registerUser(
       username: params.username,
+      email: params.email,
       password: params.password,
-      pronouns: params.pronouns, // ✅ CAN BE NULL
-      ageGroup: params.ageGroup, // ✅ CAN BE NULL
-      selectedAvatar: params.selectedAvatar, // ✅ CAN BE NULL
+      confirmPassword: params.confirmPassword, // ✅ Added confirmPassword parameter
+      pronouns: params.pronouns,
+      ageGroup: params.ageGroup,
+      selectedAvatar: params.selectedAvatar,
       location: params.location,
       latitude: params.latitude,
       longitude: params.longitude,
-      email: params.email, // ✅ REQUIRED
     );
   }
 }
 
-// ✅ UPDATED: RegisterUserParams with nullable onboarding fields
-class RegisterUserParams extends Equatable {
+class RegisterParams extends Equatable {
   final String username;
+  final String email;
   final String password;
-  final String? pronouns; // ✅ NULLABLE - user can set later in profile
-  final String? ageGroup; // ✅ NULLABLE - user can set later in profile
-  final String? selectedAvatar; // ✅ NULLABLE - user can set later in profile
+  final String confirmPassword; // ✅ Added confirmPassword field
+  final String? pronouns;
+  final String? ageGroup;
+  final String? selectedAvatar;
   final String? location;
   final double? latitude;
   final double? longitude;
-  final String email; // ✅ REQUIRED
+  final bool? termsAccepted;
+  final bool? privacyAccepted;
 
-  const RegisterUserParams({
+  const RegisterParams({
     required this.username,
+    required this.email,
     required this.password,
-    this.pronouns, // ✅ NULLABLE
-    this.ageGroup, // ✅ NULLABLE
-    this.selectedAvatar, // ✅ NULLABLE
+    required this.confirmPassword, // ✅ Added confirmPassword to constructor
+    this.pronouns,
+    this.ageGroup,
+    this.selectedAvatar,
     this.location,
     this.latitude,
     this.longitude,
-    required this.email, // ✅ REQUIRED
+    this.termsAccepted,
+    this.privacyAccepted,
   });
 
   @override
   List<Object?> get props => [
     username,
+    email,
     password,
+    confirmPassword, // ✅ Added confirmPassword to props
     pronouns,
     ageGroup,
     selectedAvatar,
     location,
     latitude,
     longitude,
-    email,
+    termsAccepted,
+    privacyAccepted,
   ];
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = {
-      'username': username,
-      'password': password,
-      'email': email, // ✅ ALWAYS INCLUDE EMAIL
-    };
-
-    // ✅ ONLY ADD ONBOARDING DATA IF NOT NULL
-    if (pronouns != null) data['pronouns'] = pronouns;
-    if (ageGroup != null) data['ageGroup'] = ageGroup;
-    if (selectedAvatar != null) data['selectedAvatar'] = selectedAvatar;
-    if (location != null) data['location'] = location;
-    if (latitude != null) data['latitude'] = latitude;
-    if (longitude != null) data['longitude'] = longitude;
-
-    return data;
-  }
 }

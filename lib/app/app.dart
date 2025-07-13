@@ -1,3 +1,6 @@
+import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_event.dart';
+import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/community_bloc.dart';
+import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/community_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -6,7 +9,6 @@ import '../core/navigation/navigation_service.dart';
 import '../core/theme/app_theme.dart';
 import '../core/utils/logger.dart';
 import '../features/auth/presentation/view_model/bloc/auth_bloc.dart';
-import '../features/auth/presentation/view_model/bloc/auth_event.dart';
 import 'di/injection_container.dart' as di;
 
 class EmoraApp extends StatelessWidget {
@@ -18,39 +20,45 @@ class EmoraApp extends StatelessWidget {
       providers: [
         // Global AuthBloc provider
         BlocProvider<AuthBloc>(
-          create: (_) => di.sl<AuthBloc>()..add(const CheckAuthStatus()),
+          create: (_) => di.sl<AuthBloc>()..add(AuthCheckStatus()),
           lazy: false, // Initialize immediately
         ),
+
+        // Global CommunityBloc provider
+        BlocProvider<CommunityBloc>(
+          create: (context) {
+            final bloc = di.sl<CommunityBloc>();
+            // Load initial community data
+            bloc.add(const LoadGlobalFeedEvent());
+            bloc.add(const LoadGlobalStatsEvent());
+            return bloc;
+          },
+          lazy: false, // Initialize immediately
+        ),
+
         // Add other global providers here as needed
       ],
       child: MaterialApp(
         title: 'Emora',
         debugShowCheckedModeBanner: false,
-        
+
         // Theme configuration
         theme: AppTheme.darkTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.dark, 
-        
+        themeMode: ThemeMode.dark,
+
         // Navigation configuration
         navigatorKey: NavigationService.navigatorKey,
         onGenerateRoute: AppRouter.generateRoute,
         initialRoute: AppRouter.splash,
-        
-        // Localization (add when needed)
-        // locale: const Locale('en', 'US'),
-        // localizationsDelegates: const [],
-        // supportedLocales: const [Locale('en', 'US')],
-        
+
         // Global builders and observers
         builder: (context, child) {
           return _AppWrapper(child: child);
         },
-        
+
         // Navigation observer for analytics
-        navigatorObservers: [
-          _AppNavigatorObserver(),
-        ],
+        navigatorObservers: [_AppNavigatorObserver()],
       ),
     );
   }
@@ -67,7 +75,9 @@ class _AppWrapper extends StatelessWidget {
     return MediaQuery(
       // Ensure consistent text scaling
       data: MediaQuery.of(context).copyWith(
-        textScaleFactor: MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.2),
+        textScaler: TextScaler.linear(
+          MediaQuery.of(context).textScaleFactor.clamp(0.8, 1.2),
+        ),
       ),
       child: child ?? const SizedBox.shrink(),
     );

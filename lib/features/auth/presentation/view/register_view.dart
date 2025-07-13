@@ -1,11 +1,9 @@
-// lib/features/auth/presentation/view/register_view.dart - COMPLETE FIXED VERSION
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/utils/logger.dart';
@@ -26,7 +24,7 @@ class _RegisterViewState extends State<RegisterView>
     with TickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
-  final _emailController = TextEditingController(); // ✅ EMAIL FIELD
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -46,13 +44,23 @@ class _RegisterViewState extends State<RegisterView>
   // Animation controllers
   late AnimationController _slideController;
   late AnimationController _fadeController;
+  late AnimationController _errorController;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _fadeAnimation;
+  late Animation<Offset> _errorSlideAnimation;
+  late Animation<double> _errorFadeAnimation;
 
-  // ✅ FIXED: Only use onboarding data if user actually completed onboarding
-  String? get _onboardingPronouns => (widget.onboardingData != null && widget.onboardingData!['isCompleted'] == true) ? widget.onboardingData!['pronouns'] : null;
-  String? get _onboardingAgeGroup => (widget.onboardingData != null && widget.onboardingData!['isCompleted'] == true) ? widget.onboardingData!['ageGroup'] : null;
-  String? get _onboardingAvatar => (widget.onboardingData != null && widget.onboardingData!['isCompleted'] == true) ? widget.onboardingData!['selectedAvatar'] : null;
+  // ✅ Error handling state
+  String? _currentError;
+  String? _errorCode;
+  bool _showError = false;
+  Timer? _errorTimer;
+
+  // ✅ Onboarding data extraction
+  String? _pronouns;
+  String? _ageGroup;
+  String? _selectedAvatar;
+  bool _hasCompletedOnboarding = false;
 
   String _normalizeUsername(String username) {
     return username.toLowerCase().trim();
@@ -71,15 +79,25 @@ class _RegisterViewState extends State<RegisterView>
     _fadeController.forward();
   }
 
+@override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  if (!_hasCompletedOnboarding) {
+    _extractOnboardingData();
+  }
+}
+
   @override
   void dispose() {
     _slideController.dispose();
     _fadeController.dispose();
+    _errorController.dispose();
     _usernameController.dispose();
-    _emailController.dispose(); // ✅ DISPOSE EMAIL CONTROLLER
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _usernameDebounceTimer?.cancel();
+    _errorTimer?.cancel();
     super.dispose();
   }
 
@@ -94,6 +112,12 @@ class _RegisterViewState extends State<RegisterView>
       vsync: this,
     );
 
+    // ✅ Error animation controller
+    _errorController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
     _slideAnimation =
         Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
           CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
@@ -103,57 +127,328 @@ class _RegisterViewState extends State<RegisterView>
       begin: 0.0,
       end: 1.0,
     ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
+
+    // ✅ Error animations
+    _errorSlideAnimation =
+        Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero).animate(
+          CurvedAnimation(parent: _errorController, curve: Curves.easeOutBack),
+        );
+
+    _errorFadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _errorController, curve: Curves.easeOut));
   }
+
+  // ✅ Show error with animation
+  void _showErrorMessage(String message, String? errorCode) {
+    // Cancel any existing error timer
+    _errorTimer?.cancel();
+
+    setState(() {
+      _currentError = message;
+      _errorCode = errorCode;
+      _showError = true;
+    });
+
+    _errorController.forward();
+
+    // Auto-hide after 8 seconds
+    _errorTimer = Timer(const Duration(seconds: 8), () {
+      if (mounted) {
+        _hideErrorMessage();
+      }
+    });
+  }
+
+  // ✅ Hide error with animation
+  void _hideErrorMessage() {
+    _errorTimer?.cancel();
+    _errorController.reverse().then((_) {
+      if (mounted) {
+        setState(() {
+          _showError = false;
+          _currentError = null;
+          _errorCode = null;
+        });
+      }
+    });
+  }
+
+  // ✅ Get user-friendly error message
+  String _getUserFriendlyErrorMessage(String message, String? errorCode) {
+    switch (errorCode) {
+      case 'EMAIL_EXISTS':
+        return 'This email address is already registered. Please try logging in instead or use a different email.';
+      case 'USERNAME_EXISTS':
+        return 'This username is already taken. Please choose a different username.';
+      case 'INVALID_EMAIL':
+        return 'Please enter a valid email address.';
+      case 'WEAK_PASSWORD':
+        return 'Password does not meet security requirements. Please use a stronger password.';
+      case 'NETWORK_ERROR':
+        return 'Network connection failed. Please check your internet connection and try again.';
+      case 'SERVER_ERROR':
+        return 'Our servers are experiencing issues. Please try again in a few moments.';
+      case 'VALIDATION_ERROR':
+        return message.isNotEmpty
+            ? message
+            : 'Please check your input and try again.';
+      default:
+        return message.isNotEmpty
+            ? message
+            : 'Registration failed. Please try again.';
+    }
+  }
+
+  // ✅ Get action button text based on error
+  String _getErrorActionText(String? errorCode) {
+    switch (errorCode) {
+      case 'EMAIL_EXISTS':
+        return 'Go to Login';
+      case 'USERNAME_EXISTS':
+        return 'Try Another Username';
+      case 'NETWORK_ERROR':
+        return 'Retry';
+      default:
+        return 'Try Again';
+    }
+  }
+
+  // ✅ Handle error action
+  void _handleErrorAction(String? errorCode) {
+    switch (errorCode) {
+      case 'EMAIL_EXISTS':
+        Navigator.pushReplacementNamed(context, AppRouter.login);
+        break;
+      case 'USERNAME_EXISTS':
+        _usernameController.clear();
+        setState(() {
+          _isUsernameAvailable = false;
+        });
+        _hideErrorMessage();
+        break;
+      case 'NETWORK_ERROR':
+        _hideErrorMessage();
+        // Optionally retry the registration
+        break;
+      default:
+        _hideErrorMessage();
+        break;
+    }
+  }
+
+  // ✅ Error banner widget
+  Widget _buildErrorBanner() {
+    if (!_showError || _currentError == null) {
+      return const SizedBox.shrink();
+    }
+
+    return SlideTransition(
+      position: _errorSlideAnimation,
+      child: FadeTransition(
+        opacity: _errorFadeAnimation,
+        child: Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 20),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFFDC2626).withValues(alpha: 0.15),
+                const Color(0xFFB91C1C).withValues(alpha: 0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: const Color(0xFFDC2626).withValues(alpha: 0.3),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFDC2626).withValues(alpha: 0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDC2626).withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.error_outline,
+                      color: Color(0xFFEF4444),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Registration Failed',
+                          style: TextStyle(
+                            color: Color(0xFFEF4444),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _getUserFriendlyErrorMessage(
+                            _currentError!,
+                            _errorCode,
+                          ),
+                          style: TextStyle(
+                            color: Colors.grey[300],
+                            fontSize: 14,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: _hideErrorMessage,
+                    icon: Icon(Icons.close, color: Colors.grey[400], size: 20),
+                    padding: const EdgeInsets.all(4),
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => _handleErrorAction(_errorCode),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFFEF4444),
+                        side: const BorderSide(color: Color(0xFFEF4444)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        _getErrorActionText(_errorCode),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (_errorCode == 'EMAIL_EXISTS') ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _emailController.clear();
+                          _hideErrorMessage();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFEF4444),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Try Different Email',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+void _extractOnboardingData() {
+  Map<String, dynamic>? data;
+
+  if (widget.onboardingData != null) {
+    data = widget.onboardingData;
+  }
+
+  if (data == null && mounted) {
+    try {
+      final routeArgs = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      if (routeArgs != null) {
+        data = routeArgs;
+      }
+    } catch (e) {
+      Logger.warning('⚠️ Could not access route arguments: $e');
+      data = null;
+    }
+  }
+
+  if (data != null) {
+    _hasCompletedOnboarding =
+        data['hasCompletedOnboarding'] == true || data['isCompleted'] == true;
+
+    if (_hasCompletedOnboarding) {
+      _pronouns = data['pronouns'] as String?;
+      _ageGroup = data['ageGroup'] as String?;
+      _selectedAvatar = data['selectedAvatar'] as String?;
+    } else {
+      _pronouns = null;
+      _ageGroup = null;
+      _selectedAvatar = null;
+    }
+  } else {
+    _hasCompletedOnboarding = false;
+    _pronouns = null;
+    _ageGroup = null;
+    _selectedAvatar = null;
+  }
+}
 
   void _logOnboardingData() {
-    Logger.info('🔍 RegisterView initialized with onboarding data:');
-    Logger.info('  Full data: ${widget.onboardingData}');
-    Logger.info('  Is completed: ${widget.onboardingData?['isCompleted']}');
-    Logger.info('  Pronouns: $_onboardingPronouns');
-    Logger.info('  Age Group: $_onboardingAgeGroup');
-    Logger.info('  Avatar: $_onboardingAvatar');
+    Logger.info('🔍 RegisterView onboarding data:');
+    Logger.info('  Has completed: $_hasCompletedOnboarding');
+    Logger.info(
+      '  Pronouns: $_pronouns | Age: $_ageGroup | Avatar: $_selectedAvatar',
+    );
 
-    if (widget.onboardingData == null || widget.onboardingData?['isCompleted'] != true) {
-      Logger.info('ℹ️ No completed onboarding data - user skipped onboarding');
+    if (!_hasCompletedOnboarding) {
+      Logger.info('ℹ️ No completed onboarding data found');
     }
   }
 
-  // ✅ FIXED: Only return values if onboarding was actually completed
-  Future<Map<String, String?>> _getFinalOnboardingValues() async {
-    // If user skipped onboarding, return null values
-    if (widget.onboardingData?['isCompleted'] != true) {
-      Logger.info('📝 User skipped onboarding - using null values');
-      return {
-        'pronouns': null,
-        'ageGroup': null,
-        'selectedAvatar': null,
-      };
+  // ✅ Get final onboarding values
+  Map<String, String?> _getFinalOnboardingValues() {
+    if (!_hasCompletedOnboarding) {
+      Logger.info('📝 User did not complete onboarding - using null values');
+      return {'pronouns': null, 'ageGroup': null, 'selectedAvatar': null};
     }
 
-    String? pronounsToUse = _onboardingPronouns;
-    String? ageGroupToUse = _onboardingAgeGroup;
-    String? avatarToUse = _onboardingAvatar;
-
-    // Try SharedPreferences fallback only if onboarding was completed
-    if (pronounsToUse == null || ageGroupToUse == null || avatarToUse == null) {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final isCompleted = prefs.getBool('onboarding_completed') ?? false;
-        
-        if (isCompleted) {
-          pronounsToUse ??= prefs.getString('onboarding_pronouns');
-          ageGroupToUse ??= prefs.getString('onboarding_age_group');
-          avatarToUse ??= prefs.getString('onboarding_avatar');
-        }
-      } catch (e) {
-        Logger.error('SharedPreferences fallback failed', e);
-      }
-    }
-
+    Logger.info('📝 Using onboarding values from completed flow');
     return {
-      'pronouns': pronounsToUse,
-      'ageGroup': ageGroupToUse,
-      'selectedAvatar': avatarToUse,
+      'pronouns': _pronouns,
+      'ageGroup': _ageGroup,
+      'selectedAvatar': _selectedAvatar,
     };
   }
 
@@ -167,7 +462,6 @@ class _RegisterViewState extends State<RegisterView>
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        Logger.info('📍 Location services are disabled');
         _setDefaultLocation();
         return;
       }
@@ -177,14 +471,12 @@ class _RegisterViewState extends State<RegisterView>
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          Logger.info('📍 Location permissions denied');
           _handleLocationPermissionDenied();
           return;
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        Logger.info('📍 Location permissions permanently denied');
         _handleLocationPermissionDenied();
         return;
       }
@@ -207,9 +499,6 @@ class _RegisterViewState extends State<RegisterView>
       }
 
       Logger.info('📍 Location detected: $_currentLocation');
-      Logger.info(
-        '📍 Coordinates: ${position.latitude}, ${position.longitude}',
-      );
     } catch (e) {
       Logger.error('Failed to get location', e);
       _setDefaultLocation();
@@ -306,15 +595,12 @@ class _RegisterViewState extends State<RegisterView>
 
       _usernameDebounceTimer = Timer(const Duration(milliseconds: 500), () {
         if (mounted) {
-          context.read<AuthBloc>().add(
-            CheckUsernameAvailabilityEvent(normalizedText),
-          );
+          context.read<AuthBloc>().add(AuthCheckUsername(normalizedText));
         }
       });
     }
   }
 
-  // ✅ ENHANCED PASSWORD VALIDATION - Matches backend exactly
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Password is required';
@@ -345,13 +631,19 @@ class _RegisterViewState extends State<RegisterView>
 
     // Check for special character
     if (!value.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'))) {
-      return 'Password must contain at least one special character (!@#\$%^&*)';
+      return 'Password must contain at least one special character';
     }
 
     return null;
   }
 
-  Future<void> _handleRegistration() async {
+  // ✅ Registration handler with proper data extraction
+  void _handleRegistration() async {
+    // Hide any existing errors
+    if (_showError) {
+      _hideErrorMessage();
+    }
+
     if (!_formKey.currentState!.validate() || !_isUsernameAvailable) {
       return;
     }
@@ -359,30 +651,29 @@ class _RegisterViewState extends State<RegisterView>
     if (!mounted) return;
 
     final normalizedUsername = _normalizeUsername(_usernameController.text);
-    final finalValues = await _getFinalOnboardingValues();
+    final finalValues = _getFinalOnboardingValues();
 
-    Logger.info('🔄 Starting registration with data:');
-    Logger.info('  Username: $normalizedUsername (normalized)');
-    Logger.info('  Email: ${_emailController.text.trim()}'); // ✅ LOG EMAIL
-    Logger.info('  Pronouns: ${finalValues['pronouns'] ?? 'null'}');
-    Logger.info('  Age Group: ${finalValues['ageGroup'] ?? 'null'}');
-    Logger.info('  Avatar: ${finalValues['selectedAvatar'] ?? 'null'}');
-    Logger.info('  Location: $_currentLocation');
-    Logger.info('  Coordinates: $_currentLatitude, $_currentLongitude');
+    Logger.info('🔄 Starting registration:');
+    Logger.info('  Username: $normalizedUsername');
+    Logger.info('  Email: ${_emailController.text.trim()}');
+    Logger.info('  Onboarding data: ${finalValues.toString()}');
 
     final authBloc = context.read<AuthBloc>();
 
     authBloc.add(
-      RegisterUserEvent(
-        normalizedUsername,
-        _passwordController.text,
-        finalValues['pronouns'], // ✅ CAN BE NULL
-        finalValues['ageGroup'], // ✅ CAN BE NULL
-        finalValues['selectedAvatar'], // ✅ CAN BE NULL
-        _currentLocation,
-        _currentLatitude,
-        _currentLongitude,
-        _emailController.text.trim(), // ✅ PASS EMAIL
+      AuthRegister(
+        username: normalizedUsername,
+        password: _passwordController.text,
+        confirmPassword: _confirmPasswordController.text, // ✅ Added confirmPassword
+        email: _emailController.text.trim(),
+        pronouns: finalValues['pronouns'],
+        ageGroup: finalValues['ageGroup'],
+        selectedAvatar: finalValues['selectedAvatar'],
+        location: _currentLocation,
+        latitude: _currentLatitude,
+        longitude: _currentLongitude,
+        termsAccepted: true,
+        privacyAccepted: true,
       ),
     );
   }
@@ -394,20 +685,21 @@ class _RegisterViewState extends State<RegisterView>
       body: SafeArea(
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            if (state is AuthUsernameCheckResult) {
+            if (state is AuthUsernameChecked) {
               setState(() {
                 _isCheckingUsername = false;
                 _isUsernameAvailable = state.isAvailable;
               });
-            } else if (state is AuthUsernameChecking) {
+            } else if (state is AuthCheckingUsername) {
               setState(() {
                 _isCheckingUsername = true;
               });
-            } else if (state is AuthAuthenticated) {
+            } else if (state is AuthRegistrationSuccess) {
               Logger.info('✅ Registration successful, navigating to home');
               Navigator.pushReplacementNamed(context, AppRouter.home);
             } else if (state is AuthError) {
-              _showErrorSnackBar(state.message);
+              // ✅ Enhanced error handling
+              _showErrorMessage(state.message, state.errorCode);
             }
           },
           builder: (context, state) {
@@ -427,6 +719,8 @@ class _RegisterViewState extends State<RegisterView>
                       const SizedBox(height: 40),
                       _buildHeader(),
                       const SizedBox(height: 32),
+                      // ✅ Error banner at the top
+                      _buildErrorBanner(),
                       _buildLocationCard(),
                       const SizedBox(height: 24),
                       _buildOnboardingDataPreview(),
@@ -703,12 +997,10 @@ class _RegisterViewState extends State<RegisterView>
     );
   }
 
-  // ✅ FIXED: Only show onboarding data if actually completed
   Widget _buildOnboardingDataPreview() {
-    // Don't show if no onboarding data or if user skipped onboarding
-    if (widget.onboardingData == null || 
-        widget.onboardingData?['isCompleted'] != true ||
-        (_onboardingPronouns == null && _onboardingAgeGroup == null && _onboardingAvatar == null)) {
+    // Don't show if no onboarding data was completed
+    if (!_hasCompletedOnboarding ||
+        (_pronouns == null && _ageGroup == null && _selectedAvatar == null)) {
       return const SizedBox.shrink();
     }
 
@@ -748,7 +1040,7 @@ class _RegisterViewState extends State<RegisterView>
               ),
               const SizedBox(width: 12),
               Text(
-                'Your Preferences',
+                'Your Preferences from Onboarding',
                 style: TextStyle(
                   color: Colors.grey[300],
                   fontSize: 14,
@@ -758,15 +1050,15 @@ class _RegisterViewState extends State<RegisterView>
             ],
           ),
           const SizedBox(height: 16),
-          if (_onboardingPronouns != null)
-            _buildPreviewItem('Pronouns', _onboardingPronouns!, Icons.person),
-          if (_onboardingAgeGroup != null) ...[
+          if (_pronouns != null)
+            _buildPreviewItem('Pronouns', _pronouns!, Icons.person),
+          if (_ageGroup != null) ...[
             const SizedBox(height: 8),
-            _buildPreviewItem('Age Group', _onboardingAgeGroup!, Icons.cake),
+            _buildPreviewItem('Age Group', _ageGroup!, Icons.cake),
           ],
-          if (_onboardingAvatar != null) ...[
+          if (_selectedAvatar != null) ...[
             const SizedBox(height: 8),
-            _buildPreviewItem('Avatar', _onboardingAvatar!, Icons.emoji_emotions),
+            _buildPreviewItem('Avatar', _selectedAvatar!, Icons.emoji_emotions),
           ],
         ],
       ),
@@ -801,7 +1093,7 @@ class _RegisterViewState extends State<RegisterView>
         children: [
           _buildUsernameField(isLoading),
           const SizedBox(height: 20),
-          _buildEmailField(isLoading), // ✅ EMAIL FIELD ADDED HERE
+          _buildEmailField(isLoading),
           const SizedBox(height: 20),
           _buildPasswordField(isLoading),
           const SizedBox(height: 20),
@@ -851,7 +1143,7 @@ class _RegisterViewState extends State<RegisterView>
             if (normalized.length < 3) {
               return 'Username must be at least 3 characters';
             }
-            if (!RegExp(r'^[a-zA-Z0-9_]+$').hasMatch(normalized)) {
+            if (RegExp(r'!@#\$%^&*(),.?":{}|<>]').hasMatch(normalized)) {
               return 'Username can only contain letters, numbers, and underscores';
             }
             if (!_isUsernameAvailable && !_isCheckingUsername) {
@@ -912,7 +1204,6 @@ class _RegisterViewState extends State<RegisterView>
     return null;
   }
 
-  // ✅ EMAIL FIELD IMPLEMENTATION
   Widget _buildEmailField(bool isLoading) {
     return TextFormField(
       controller: _emailController,
@@ -945,13 +1236,14 @@ class _RegisterViewState extends State<RegisterView>
         if (value == null || value.trim().isEmpty) {
           return 'Email address is required';
         }
-        
-        // Enhanced email validation
-        final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}');
+
+        final emailRegex = RegExp(
+          r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
+        );
         if (!emailRegex.hasMatch(value.trim())) {
           return 'Please enter a valid email address';
         }
-        
+
         return null;
       },
     );
@@ -971,7 +1263,8 @@ class _RegisterViewState extends State<RegisterView>
             labelStyle: TextStyle(color: Colors.grey[400]),
             hintText: 'Create a secure password',
             hintStyle: TextStyle(color: Colors.grey[600]),
-            helperText: 'Min 8 chars, uppercase, lowercase, number, special char',
+            helperText:
+                'Min 8 chars, uppercase, lowercase, number, special char',
             helperStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
             prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
             suffixIcon: IconButton(
@@ -1001,10 +1294,9 @@ class _RegisterViewState extends State<RegisterView>
             ),
           ),
           validator: _validatePassword,
-          onChanged: (_) => setState(() {}), // Trigger rebuild for indicators
+          onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 8),
-        // Password strength indicators
         _buildPasswordStrengthIndicators(),
       ],
     );
@@ -1012,14 +1304,26 @@ class _RegisterViewState extends State<RegisterView>
 
   Widget _buildPasswordStrengthIndicators() {
     final password = _passwordController.text;
-    
+
     return Column(
       children: [
         _buildStrengthIndicator('At least 8 characters', password.length >= 8),
-        _buildStrengthIndicator('Uppercase letter (A-Z)', password.contains(RegExp(r'[A-Z]'))),
-        _buildStrengthIndicator('Lowercase letter (a-z)', password.contains(RegExp(r'[a-z]'))),
-        _buildStrengthIndicator('Number (0-9)', password.contains(RegExp(r'[0-9]'))),
-        _buildStrengthIndicator('Special character (!@#\$%^&*)', password.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'))),
+        _buildStrengthIndicator(
+          'Uppercase letter (A-Z)',
+          password.contains(RegExp(r'[A-Z]')),
+        ),
+        _buildStrengthIndicator(
+          'Lowercase letter (a-z)',
+          password.contains(RegExp(r'[a-z]')),
+        ),
+        _buildStrengthIndicator(
+          'Number (0-9)',
+          password.contains(RegExp(r'[0-9]')),
+        ),
+        _buildStrengthIndicator(
+          'Special character (!@#\$%^&*)',
+          password.contains(RegExp(r'!@#\$%^&*(),.?":{}|<>]')),
+        ),
       ],
     );
   }
@@ -1200,60 +1504,6 @@ class _RegisterViewState extends State<RegisterView>
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Container(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Icon(
-                  Icons.error_outline,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Registration Failed',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      message,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-        backgroundColor: const Color(0xFFDC2626),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 5),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        margin: const EdgeInsets.all(16),
       ),
     );
   }

@@ -1,15 +1,23 @@
-import 'package:emora_mobile_app/features/emotion/presentation/view_model/bloc/view/pages/mood_atlas_view.dart';
+import 'package:emora_mobile_app/features/emotion/presentation/view/pages/mood_atlas_view.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_bloc.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_event.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_state.dart';
+import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/community_bloc.dart';
+import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/community_event.dart';
+import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/community_state.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/community_feed_widget.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/custom_mood_face.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/dashboard_modals.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/emotion_analytics_card.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/mood_capsule_timeline.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/quick_actions_grid.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/enhanced_stats_widget.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/todays_journey_widget.dart';
+import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:intl/intl.dart';
 
 import '../../../../../core/navigation/app_router.dart';
 import '../../../../../core/navigation/navigation_service.dart';
@@ -24,11 +32,16 @@ class Dashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<HomeBloc, HomeState>(
-      builder: (context, state) {
-        // Now this context definitely has access to HomeBloc
-        return _DashboardContent(homeState: state);
-      },
+    return BlocProvider<CommunityBloc>(
+      create: (context) => GetIt.instance<CommunityBloc>()
+        ..add(const LoadGlobalFeedEvent())
+        ..add(const LoadGlobalStatsEvent()),
+      child: BlocBuilder<HomeBloc, HomeState>(
+        builder: (context, state) {
+          // Now this context definitely has access to HomeBloc and CommunityBloc
+          return _DashboardContent(homeState: state);
+        },
+      ),
     );
   }
 }
@@ -64,6 +77,106 @@ class _DashboardContentState extends State<_DashboardContent>
 
   // Track if user is new
   bool _isNewUser = true;
+
+  // Helper methods to extract data from homeState
+  bool get _isUserNew {
+    if (widget.homeState is HomeDashboardState) {
+      final dashboardState = widget.homeState as HomeDashboardState;
+      return dashboardState.userStats?.totalMoodEntries == 0;
+    }
+    return true;
+  }
+
+  // Enhanced emotion data extraction
+  List<EmotionEntryModel> get _emotionEntries {
+    if (widget.homeState is HomeDashboardState) {
+      final dashboardState = widget.homeState as HomeDashboardState;
+      return dashboardState.emotionEntries;
+    }
+    return [];
+  }
+
+  List<EmotionEntryModel> get _todaysEmotions {
+    final today = DateTime.now();
+    return _emotionEntries.where((emotion) {
+      final emotionDate = DateTime(
+        emotion.timestamp.year,
+        emotion.timestamp.month,
+        emotion.timestamp.day,
+      );
+      final todayDate = DateTime(today.year, today.month, today.day);
+      return emotionDate.isAtSameMomentAs(todayDate);
+    }).toList();
+  }
+
+  WeeklyInsightsModel? get _weeklyInsights {
+    if (widget.homeState is HomeDashboardState) {
+      final dashboardState = widget.homeState as HomeDashboardState;
+      return dashboardState.weeklyInsights;
+    }
+    return null;
+  }
+
+  // Stats calculation
+  int get _totalLogs {
+    if (widget.homeState is HomeDashboardState) {
+      final dashboardState = widget.homeState as HomeDashboardState;
+      return dashboardState.userStats?.totalMoodEntries ?? 0;
+    }
+    return 0;
+  }
+
+  int get _currentStreak {
+    if (widget.homeState is HomeDashboardState) {
+      final dashboardState = widget.homeState as HomeDashboardState;
+      return dashboardState.userStats?.streakDays ?? 0;
+    }
+    return 0;
+  }
+
+  double get _averageMood {
+    if (widget.homeState is HomeDashboardState) {
+      final dashboardState = widget.homeState as HomeDashboardState;
+      return dashboardState.userStats?.averageMoodScore ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  List<MoodCapsule>? get _moodCapsulesData {
+    if (widget.homeState is HomeDashboardState) {
+      final dashboardState = widget.homeState as HomeDashboardState;
+      // For now, return null since we don't have emotion data in the model yet
+      // In a real implementation, this would extract emotion entries from dashboardState.homeData
+      return null;
+    }
+    return null;
+  }
+
+  List<Map<String, dynamic>>? get _communityPostsData {
+    // This method is deprecated - we now get community data directly from CommunityBloc
+    // Return null to let CommunityFeedWidget handle real data from CommunityBloc
+    return null;
+  }
+
+  List<Map<String, dynamic>>? get _weeklyMoodData {
+    if (widget.homeState is HomeDashboardState) {
+      final dashboardState = widget.homeState as HomeDashboardState;
+      // For now, return null since we don't have weekly analytics in the model yet
+      // In a real implementation, this would extract weekly mood data from userStats
+      return null;
+    }
+    return null;
+  }
+
+  Map<String, dynamic>? get _analyticsData {
+    if (widget.homeState is HomeDashboardState) {
+      final dashboardState = widget.homeState as HomeDashboardState;
+      // For now, return null since we don't have analytics data in the model yet
+      // In a real implementation, this would extract analytics from userStats
+      return null;
+    }
+    return null;
+  }
 
   @override
   void initState() {
@@ -165,8 +278,14 @@ class _DashboardContentState extends State<_DashboardContent>
   void _loadInitialData() {
     try {
       Logger.info(
-        '🎭 Dashboard initialized - emotion data handled by HomeBloc',
+        '🎭 Dashboard initialized - loading enhanced emotion data',
       );
+      
+      // Load emotion history and weekly insights
+      if (_homeBloc != null && !_homeBloc!.isClosed) {
+        _homeBloc!.add(const LoadEmotionHistoryEvent());
+        _homeBloc!.add(const LoadWeeklyInsightsEvent());
+      }
     } catch (e) {
       Logger.error('❌ Failed to load initial data', e);
     }
@@ -269,8 +388,8 @@ class _DashboardContentState extends State<_DashboardContent>
       await Future.delayed(const Duration(milliseconds: 500));
       await _testBackendConnection();
 
-      // Safe HomeBloc refresh
-      if (_homeBloc != null) {
+      // ✅ Safe HomeBloc refresh with proper lifecycle check
+      if (_homeBloc != null && !_homeBloc!.isClosed) {
         _homeBloc!.add(const RefreshHomeDataEvent());
       }
 
@@ -359,40 +478,299 @@ class _DashboardContentState extends State<_DashboardContent>
   }
 
   Widget _buildErrorState(String message) {
+    return _buildEnhancedErrorState(widget.homeState);
+  }
+
+  Widget _buildEnhancedErrorState(HomeState state) {
+    // Extract error details from HomeError state
+    String message = 'Something went wrong';
+    bool canRetry = true;
+    String retryAction = 'load_home_data';
+    
+    if (state is HomeError) {
+      message = state.message;
+      canRetry = state.canRetry;
+      retryAction = state.retryAction ?? 'load_home_data';
+    }
+
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Error Icon with animation
+            AnimatedBuilder(
+              animation: _breathingAnimation,
+              builder: (context, child) {
+                return Transform.scale(
+                  scale: _breathingAnimation.value,
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          Colors.orange.withOpacity(0.3),
+                          Colors.orange.withOpacity(0.1),
+                          Colors.transparent,
+                        ],
+                      ),
+                      border: Border.all(
+                        color: Colors.orange.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.wifi_off,
+                      color: Colors.orange,
+                      size: 48,
+                    ),
+                  ),
+                );
+              },
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Error Title
+            const Text(
+              'Unable to Load Dashboard',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            
+            const SizedBox(height: 12),
+            
+            // Error Message
+            Text(
+              message,
+              style: TextStyle(
+                color: Colors.grey[300],
+                fontSize: 16,
+                height: 1.4,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Action Buttons
+            if (canRetry) ...[
+              // Primary Retry Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _retryOperation(retryAction);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8B5CF6),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  icon: const Icon(Icons.refresh, size: 20),
+                  label: const Text(
+                    'Try Again',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: 16),
+              
+              // Secondary Action - Use Offline Mode
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    _tryOfflineMode();
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey[300],
+                    side: BorderSide(color: Colors.grey[600]!),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.offline_bolt, size: 20),
+                  label: const Text(
+                    'Use Offline Mode',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ] else ...[
+              // If can't retry, show contact support option
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _showContactSupport();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF8B5CF6),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.support_agent, size: 20),
+                  label: const Text('Contact Support'),
+                ),
+              ),
+            ],
+            
+            const SizedBox(height: 24),
+            
+            // Connection Status
+            _buildConnectionStatus(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConnectionStatus() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey[900]?.withOpacity(0.5),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.grey[700]!,
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.error_outline, color: Colors.red[400], size: 64),
-          const SizedBox(height: 16),
-          const Text(
-            'Oops! Something went wrong',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _isBackendConnected ? Colors.green : Colors.red,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(width: 8),
           Text(
-            message,
-            style: TextStyle(color: Colors.grey[400], fontSize: 14),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () {
-              if (_homeBloc != null) {
-                _homeBloc!.add(const LoadHomeDataEvent(forceRefresh: true));
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B5CF6),
-              foregroundColor: Colors.white,
+            _isBackendConnected ? 'Backend Connected' : 'Backend Offline',
+            style: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 12,
             ),
-            child: const Text('Try Again'),
           ),
         ],
+      ),
+    );
+  }
+
+  void _retryOperation(String operation) {
+    if (_homeBloc != null && !_homeBloc!.isClosed) {
+      switch (operation) {
+        case 'load_home_data':
+          _homeBloc!.add(const LoadHomeDataEvent(forceRefresh: true));
+          break;
+        case 'load_user_stats':
+          _homeBloc!.add(const LoadUserStatsEvent(forceRefresh: true));
+          break;
+        default:
+          _homeBloc!.add(const LoadHomeDataEvent(forceRefresh: true));
+      }
+      
+      // Show retry feedback
+      NavigationService.showInfoSnackBar('Retrying...');
+    }
+  }
+
+  void _tryOfflineMode() {
+    // Try to load cached data
+    if (_homeBloc != null && !_homeBloc!.isClosed) {
+      // This could trigger loading cached data or showing a simplified offline UI
+      NavigationService.showInfoSnackBar('Loading offline data...');
+      _loadInitialData(); // Attempt to use any cached data
+    }
+  }
+
+  void _showContactSupport() {
+    // Show support contact options
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Contact Support',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'We\'re here to help! Reach out if this issue persists.',
+              style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      NavigationService.showInfoSnackBar('Opening email...');
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8B5CF6),
+                    ),
+                    icon: const Icon(Icons.email),
+                    label: const Text('Email'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      NavigationService.showInfoSnackBar('Opening help center...');
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                    ),
+                    icon: const Icon(Icons.help),
+                    label: const Text('Help'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -664,10 +1042,15 @@ class _DashboardContentState extends State<_DashboardContent>
       children: [
         _buildFeaturePreview(),
         const SizedBox(height: 24),
-        const EmotionAnalyticsCard(),
+        EmotionAnalyticsCard(
+          weeklyMoodData: _weeklyMoodData,
+          analyticsData: _analyticsData,
+          isNewUser: _isUserNew,
+        ),
         const SizedBox(height: 24),
         CommunityFeedWidget(
           onViewAllTapped: () => NavigationService.pushNamed(AppRouter.friends),
+          isNewUser: _isUserNew,
         ),
       ],
     );
@@ -676,20 +1059,54 @@ class _DashboardContentState extends State<_DashboardContent>
   Widget _buildRegularContent() {
     return Column(
       children: [
-        MoodCapsuleTimeline(onCapsuleTapped: _showMoodCapsuleDetail),
+        // Enhanced Stats Row
+        EnhancedStatsWidget(
+          totalLogs: _totalLogs,
+          currentStreak: _currentStreak,
+          averageMood: _averageMood,
+          emotionEntries: _emotionEntries,
+          onStatsTap: () => NavigationService.pushNamed(AppRouter.insights),
+        ),
         const SizedBox(height: 24),
+        
+        // Interactive Calendar
+        EmotionCalendarWidget(
+          emotionEntries: _emotionEntries,
+          onDateSelected: _onCalendarDateSelected,
+          selectedDate: null, // TODO: Add selected date state
+        ),
+        const SizedBox(height: 24),
+        
+        // Today's Journey
+        TodaysJourneyWidget(
+          todaysEmotions: _todaysEmotions,
+          onAddEmotion: _onMoodTapped,
+          onEmotionTap: _onEmotionTap,
+        ),
+        const SizedBox(height: 24),
+        
+        // Weekly Insights Preview
+        WeeklyInsightsPreviewWidget(
+          weeklyInsights: _weeklyInsights,
+          onViewAll: () => NavigationService.pushNamed(AppRouter.insights),
+        ),
+        const SizedBox(height: 24),
+        
+        // Quick Actions
         QuickActionsGrid(
           onVentTapped: _showVentingModal,
           onJournalTapped: _showJournalModal,
           onInsightsTapped: () =>
               NavigationService.pushNamed(AppRouter.insights),
           onAtlasTapped: _navigateToMoodAtlas,
+          onDashboardTapped: () => NavigationService.pushNamed(AppRouter.dashboard),
         ),
         const SizedBox(height: 24),
-        const EmotionAnalyticsCard(),
-        const SizedBox(height: 24),
+        
+        // Community Feed
         CommunityFeedWidget(
           onViewAllTapped: () => NavigationService.pushNamed(AppRouter.friends),
+          isNewUser: false,
         ),
       ],
     );
@@ -820,6 +1237,282 @@ class _DashboardContentState extends State<_DashboardContent>
         ),
       ),
       isScrollControlled: true,
+    );
+  }
+
+  // Enhanced dashboard interaction methods
+  void _onCalendarDateSelected(DateTime date) {
+    // TODO: Implement calendar date selection
+    // This could show a modal with emotions for the selected date
+    print('Selected date: $date');
+    
+    final emotionsForDate = _emotionEntries.where((emotion) {
+      final emotionDate = DateTime(
+        emotion.timestamp.year,
+        emotion.timestamp.month,
+        emotion.timestamp.day,
+      );
+      final selectedDate = DateTime(date.year, date.month, date.day);
+      return emotionDate.isAtSameMomentAs(selectedDate);
+    }).toList();
+
+    if (emotionsForDate.isNotEmpty) {
+      _showDateEmotionsModal(date, emotionsForDate);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No emotions logged on ${DateFormat('MMM dd, yyyy').format(date)}'),
+          backgroundColor: const Color(0xFF8B5CF6),
+        ),
+      );
+    }
+  }
+
+  void _onEmotionTap(EmotionEntryModel emotion) {
+    // TODO: Implement emotion detail view
+    // This could show a detailed view of the emotion with edit options
+    print('Tapped emotion: ${emotion.emotion}');
+    
+    _showEmotionDetailModal(emotion);
+  }
+
+  void _showDateEmotionsModal(DateTime date, List<EmotionEntryModel> emotions) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.6,
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_today, color: Color(0xFF8B5CF6)),
+                  const SizedBox(width: 12),
+                  Text(
+                    DateFormat('EEEE, MMM dd, yyyy').format(date),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: emotions.length,
+                itemBuilder: (context, index) {
+                  final emotion = emotions[index];
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: emotion.moodColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: emotion.moodColor.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          emotion.emotionEmoji,
+                          style: const TextStyle(fontSize: 32),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                emotion.emotion,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                DateFormat('HH:mm').format(emotion.timestamp),
+                                style: TextStyle(
+                                  color: Colors.grey[400],
+                                  fontSize: 12,
+                                ),
+                              ),
+                              if (emotion.context != null && emotion.context!.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  emotion.context!,
+                                  style: TextStyle(
+                                    color: Colors.grey[300],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEmotionDetailModal(EmotionEntryModel emotion) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.5,
+        decoration: const BoxDecoration(
+          color: Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Text(
+                    emotion.emotionEmoji,
+                    style: const TextStyle(fontSize: 32),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          emotion.emotion,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          DateFormat('MMM dd, yyyy HH:mm').format(emotion.timestamp),
+                          style: TextStyle(
+                            color: Colors.grey[400],
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.grey),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailRow('Intensity', emotion.intensityLabel),
+                    if (emotion.context != null && emotion.context!.isNotEmpty)
+                      _buildDetailRow('Context', emotion.context!),
+                    if (emotion.memory != null && emotion.memory!.isNotEmpty)
+                      _buildDetailRow('Memory', emotion.memory!),
+                    if (emotion.hasLocation)
+                      _buildDetailRow('Location', '${emotion.latitude!.toStringAsFixed(4)}, ${emotion.longitude!.toStringAsFixed(4)}'),
+                    if (emotion.hasTags)
+                      _buildDetailRow('Tags', emotion.tags!.join(', ')),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              // TODO: Implement edit functionality
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF8B5CF6),
+                              side: const BorderSide(color: Color(0xFF8B5CF6)),
+                            ),
+                            icon: const Icon(Icons.edit),
+                            label: const Text('Edit'),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              // TODO: Implement delete functionality
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF6B6B),
+                              foregroundColor: Colors.white,
+                            ),
+                            icon: const Icon(Icons.delete),
+                            label: const Text('Delete'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey[400],
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

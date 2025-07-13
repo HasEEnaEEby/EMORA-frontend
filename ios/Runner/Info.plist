@@ -67,6 +67,9 @@
 	<key>NSLocationUsageDescription</key>
 	<string>Emora uses your location to provide personalized emotional wellness features and connect you with nearby community insights.</string>
 
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>This app needs access to save QR codes to your photo library.</string>
+
 
 </dict>
 </plist>

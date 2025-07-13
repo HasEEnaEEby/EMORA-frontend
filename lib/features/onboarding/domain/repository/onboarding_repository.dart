@@ -1,6 +1,8 @@
+// lib/features/onboarding/domain/repository/onboarding_repository.dart
 import 'package:dartz/dartz.dart';
-import 'package:emora_mobile_app/core/errors/failures.dart';
-import 'package:emora_mobile_app/features/onboarding/domain/entity/onboarding_entity.dart';
+
+import '../../../../core/errors/failures.dart';
+import '../entity/onboarding_entity.dart';
 
 abstract class OnboardingRepository {
   Future<Either<Failure, List<OnboardingStepEntity>>> getOnboardingSteps();
@@ -10,11 +12,7 @@ abstract class OnboardingRepository {
   );
   Future<Either<Failure, bool>> completeOnboarding();
   Future<Either<Failure, bool>> isOnboardingCompleted();
-  
-  // Additional methods for better data management
   Future<Either<Failure, UserOnboardingEntity>> getCurrentUserData();
   Future<Either<Failure, bool>> clearOnboardingData();
-  Future<Either<Failure, bool>> validateUserData(
-    UserOnboardingEntity userData,
-  );
+  Future<Either<Failure, bool>> validateUserData(UserOnboardingEntity userData);
 }

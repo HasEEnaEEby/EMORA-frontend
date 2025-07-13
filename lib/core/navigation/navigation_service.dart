@@ -32,7 +32,9 @@ class NavigationService {
     bool allowDuplicates = false,
   }) async {
     try {
-      Logger.info('🚀 SafeNavigate: $routeName (replacement: $replacement, clearStack: $clearStack)');
+      Logger.info(
+        '🚀 SafeNavigate: $routeName (replacement: $replacement, clearStack: $clearStack)',
+      );
 
       // Prevent rapid duplicate navigation
       if (!allowDuplicates && _isDuplicateNavigation(routeName)) {
@@ -63,13 +65,21 @@ class NavigationService {
 
       try {
         T? result;
-        
+
         if (clearStack) {
-          Logger.info('🔄 Clearing navigation stack and navigating to: $routeName');
-          result = await pushNamedAndClearStack<T>(routeName, arguments: arguments);
+          Logger.info(
+            '🔄 Clearing navigation stack and navigating to: $routeName',
+          );
+          result = await pushNamedAndClearStack<T>(
+            routeName,
+            arguments: arguments,
+          );
         } else if (replacement) {
           Logger.info('🔄 Replacing current route with: $routeName');
-          result = await pushReplacementNamed<T, dynamic>(routeName, arguments: arguments);
+          result = await pushReplacementNamed<T, dynamic>(
+            routeName,
+            arguments: arguments,
+          );
         } else {
           Logger.info('▶️ Pushing new route: $routeName');
           result = await pushNamed<T>(routeName, arguments: arguments);
@@ -84,9 +94,13 @@ class NavigationService {
         });
       }
     } catch (e, stackTrace) {
-      Logger.error('❌ NavigationService safeNavigate error for $routeName', e, stackTrace);
+      Logger.error(
+        '❌ NavigationService safeNavigate error for $routeName',
+        e,
+        stackTrace,
+      );
       _isNavigating = false;
-      
+
       // Show user-friendly error
       showErrorSnackBar('Navigation failed: Please try again');
       return null;
@@ -110,7 +124,7 @@ class NavigationService {
   static void _updateNavigationHistory(String routeName) {
     _lastRoute = routeName;
     _lastNavigationTime = DateTime.now();
-    
+
     // Add to history (keep last 10 entries)
     _navigationHistory.add('${DateTime.now().toIso8601String()}: $routeName');
     if (_navigationHistory.length > 10) {
@@ -130,7 +144,9 @@ class NavigationService {
           arguments: arguments,
         );
       } else {
-        Logger.error('❌ NavigationService: Navigator state is null for pushNamed');
+        Logger.error(
+          '❌ NavigationService: Navigator state is null for pushNamed',
+        );
         return null;
       }
     } catch (e) {
@@ -153,11 +169,16 @@ class NavigationService {
           arguments: arguments,
         );
       } else {
-        Logger.error('❌ NavigationService: Navigator state is null for pushNamedAndRemoveUntil');
+        Logger.error(
+          '❌ NavigationService: Navigator state is null for pushNamedAndRemoveUntil',
+        );
         return null;
       }
     } catch (e) {
-      Logger.error('❌ NavigationService pushNamedAndRemoveUntil error for $routeName', e);
+      Logger.error(
+        '❌ NavigationService pushNamedAndRemoveUntil error for $routeName',
+        e,
+      );
       return null;
     }
   }
@@ -189,11 +210,16 @@ class NavigationService {
           result: result,
         );
       } else {
-        Logger.error('❌ NavigationService: Navigator state is null for pushReplacementNamed');
+        Logger.error(
+          '❌ NavigationService: Navigator state is null for pushReplacementNamed',
+        );
         return null;
       }
     } catch (e) {
-      Logger.error('❌ NavigationService pushReplacementNamed error for $routeName', e);
+      Logger.error(
+        '❌ NavigationService pushReplacementNamed error for $routeName',
+        e,
+      );
       return null;
     }
   }
@@ -205,7 +231,9 @@ class NavigationService {
         Logger.info('⬅️ Popping current route');
         currentState!.pop<T>(result);
       } else {
-        Logger.warning('⚠️ NavigationService: Cannot pop - no routes available or navigator state null');
+        Logger.warning(
+          '⚠️ NavigationService: Cannot pop - no routes available or navigator state null',
+        );
       }
     } catch (e) {
       Logger.error('❌ NavigationService pop error', e);
@@ -219,7 +247,9 @@ class NavigationService {
         Logger.info('⬅️ Popping until condition met');
         currentState!.popUntil(predicate);
       } else {
-        Logger.error('❌ NavigationService: Navigator state is null for popUntil');
+        Logger.error(
+          '❌ NavigationService: Navigator state is null for popUntil',
+        );
       }
     } catch (e) {
       Logger.error('❌ NavigationService popUntil error', e);
@@ -258,7 +288,9 @@ class NavigationService {
           ),
         );
       } else {
-        Logger.warning('⚠️ NavigationService: Context is null, cannot show snackbar: $message');
+        Logger.warning(
+          '⚠️ NavigationService: Context is null, cannot show snackbar: $message',
+        );
       }
     } catch (e) {
       Logger.error('❌ NavigationService showSnackBar error', e);
@@ -268,7 +300,7 @@ class NavigationService {
   /// Show a success snackbar
   static void showSuccessSnackBar(String message) {
     showSnackBar(
-      message, 
+      message,
       backgroundColor: const Color(0xFF10B981),
       icon: Icons.check_circle,
     );
@@ -277,7 +309,7 @@ class NavigationService {
   /// Show an error snackbar
   static void showErrorSnackBar(String message) {
     showSnackBar(
-      message, 
+      message,
       backgroundColor: const Color(0xFFEF4444),
       icon: Icons.error,
       duration: const Duration(seconds: 4),
@@ -287,7 +319,7 @@ class NavigationService {
   /// Show an info snackbar
   static void showInfoSnackBar(String message) {
     showSnackBar(
-      message, 
+      message,
       backgroundColor: const Color(0xFF3B82F6),
       icon: Icons.info,
     );
@@ -296,7 +328,7 @@ class NavigationService {
   /// Show a warning snackbar
   static void showWarningSnackBar(String message) {
     showSnackBar(
-      message, 
+      message,
       backgroundColor: const Color(0xFFF59E0B),
       icon: Icons.warning,
     );
@@ -315,7 +347,9 @@ class NavigationService {
           builder: (context) => dialog,
         );
       } else {
-        Logger.error('❌ NavigationService: Context is null, cannot show dialog');
+        Logger.error(
+          '❌ NavigationService: Context is null, cannot show dialog',
+        );
         return null;
       }
     } catch (e) {
@@ -335,7 +369,9 @@ class NavigationService {
   }) async {
     try {
       if (currentContext == null) {
-        Logger.error('❌ NavigationService: Context is null, cannot show confirmation dialog');
+        Logger.error(
+          '❌ NavigationService: Context is null, cannot show confirmation dialog',
+        );
         return null;
       }
 
@@ -418,7 +454,9 @@ class NavigationService {
   }) async {
     try {
       if (currentContext == null) {
-        Logger.error('❌ NavigationService: Context is null, cannot show error dialog');
+        Logger.error(
+          '❌ NavigationService: Context is null, cannot show error dialog',
+        );
         return;
       }
 
@@ -518,7 +556,9 @@ class NavigationService {
           },
         );
       } else {
-        Logger.error('❌ NavigationService: Context is null, cannot show loading dialog');
+        Logger.error(
+          '❌ NavigationService: Context is null, cannot show loading dialog',
+        );
       }
     } catch (e) {
       Logger.error('❌ NavigationService showLoadingDialog error', e);
@@ -531,7 +571,9 @@ class NavigationService {
       if (currentContext != null) {
         Navigator.of(currentContext!).pop();
       } else {
-        Logger.warning('⚠️ NavigationService: Context is null, cannot hide dialog');
+        Logger.warning(
+          '⚠️ NavigationService: Context is null, cannot hide dialog',
+        );
       }
     } catch (e) {
       Logger.error('❌ NavigationService hideDialog error', e);
@@ -569,8 +611,10 @@ class NavigationService {
     bool replacement = false,
   }) async {
     try {
-      Logger.info('🎯 Attempting navigation with fallback: $primaryRoute -> $fallbackRoute');
-      
+      Logger.info(
+        '🎯 Attempting navigation with fallback: $primaryRoute -> $fallbackRoute',
+      );
+
       // Try primary route
       final result = await safeNavigate(
         primaryRoute,
@@ -579,7 +623,9 @@ class NavigationService {
       );
 
       if (result == null && fallbackRoute != null) {
-        Logger.info('🔄 Primary navigation failed, trying fallback: $fallbackRoute');
+        Logger.info(
+          '🔄 Primary navigation failed, trying fallback: $fallbackRoute',
+        );
         await safeNavigate(fallbackRoute, replacement: replacement);
       }
     } catch (e) {
@@ -596,7 +642,9 @@ class NavigationService {
     Object? arguments,
   }) async {
     try {
-      Logger.info('🔄 Resetting navigation stack and navigating to: $routeName');
+      Logger.info(
+        '🔄 Resetting navigation stack and navigating to: $routeName',
+      );
       await safeNavigate(routeName, arguments: arguments, clearStack: true);
     } catch (e) {
       Logger.error('❌ NavigationService resetAndNavigateTo error', e);
@@ -624,7 +672,9 @@ class NavigationService {
   }) async {
     try {
       if (currentContext == null) {
-        Logger.error('❌ NavigationService: Context is null, cannot show bottom sheet');
+        Logger.error(
+          '❌ NavigationService: Context is null, cannot show bottom sheet',
+        );
         return null;
       }
 

@@ -1,3 +1,4 @@
+import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_event.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -5,7 +6,6 @@ import '../../../../core/navigation/app_router.dart';
 import '../../../../core/navigation/navigation_service.dart';
 import '../../../../core/utils/logger.dart';
 import '../view_model/bloc/auth_bloc.dart';
-import '../view_model/bloc/auth_event.dart';
 import '../view_model/bloc/auth_state.dart';
 
 class AuthWrapperView extends StatefulWidget {
@@ -19,18 +19,17 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
     with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  bool _hasShownSessionExpired = false;
   bool _hasNavigated = false; // Prevent multiple navigation attempts
 
   @override
   void initState() {
     super.initState();
     _setupAnimations();
-    
+
     // Check auth status when entering
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        context.read<AuthBloc>().add(const CheckAuthStatus());
+        context.read<AuthBloc>().add(AuthCheckStatus());
       }
     });
   }
@@ -60,8 +59,10 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
     if (state is AuthAuthenticated) {
       _hasNavigated = true;
       Logger.info('🏠 User authenticated: ${state.user.username}');
-      Logger.info('📊 Onboarding completed: ${state.user.isOnboardingCompleted}');
-      
+      Logger.info(
+        '📊 Onboarding completed: ${state.user.isOnboardingCompleted}',
+      );
+
       // Add a small delay to ensure UI is ready
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted) {
@@ -77,14 +78,9 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
           );
         }
       });
-    } else if (state is AuthUnauthenticated || state is AuthSessionExpired) {
+    } else if (state is AuthUnauthenticated) {
       // User is not authenticated, stay on auth wrapper (show auth choice)
       Logger.info('🔐 User not authenticated, showing auth options');
-      
-      if (state is AuthSessionExpired && !_hasShownSessionExpired) {
-        _hasShownSessionExpired = true;
-        NavigationService.showWarningSnackBar(state.message);
-      }
     }
   }
 
@@ -95,9 +91,15 @@ class _AuthWrapperViewState extends State<AuthWrapperView>
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           _handleNavigation(state);
-          
+
           if (state is AuthError) {
             NavigationService.showErrorSnackBar(state.message);
+          } else if (state is AuthSessionExpired) {
+            // ✅ Handle session expiry with user-friendly message
+            NavigationService.showErrorSnackBar(state.message);
+            // Force navigation to auth choice
+            _hasNavigated = false; // Reset navigation flag
+            Logger.info('🔄 Session expired, showing auth options');
           }
         },
         child: BlocBuilder<AuthBloc, AuthState>(

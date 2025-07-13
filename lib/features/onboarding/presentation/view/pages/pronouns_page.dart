@@ -1,10 +1,10 @@
+// lib/features/onboarding/presentation/view/pages/pronouns_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../domain/entity/onboarding_entity.dart';
 import '../../view_model/bloc/onboarding_bloc.dart';
 import '../../view_model/bloc/onboarding_event.dart';
-import '../../view_model/bloc/onboarding_state.dart';
 import '../../widget/onboarding_button.dart';
 import '../../widget/onboarding_option_button.dart';
 
@@ -29,8 +29,7 @@ class PronounsPage extends StatefulWidget {
 class _PronounsPageState extends State<PronounsPage>
     with AutomaticKeepAliveClientMixin {
   String? _selectedPronouns;
-  late List<String> _pronounOptions;
-  bool _isSaving = false;
+  late List<Map<String, String>> _pronounOptions;
 
   @override
   bool get wantKeepAlive => true;
@@ -39,67 +38,122 @@ class _PronounsPageState extends State<PronounsPage>
   void initState() {
     super.initState();
     _selectedPronouns = widget.userData.pronouns;
+    _initializePronounOptions();
+  }
+
+  void _initializePronounOptions() {
     final stepData = widget.step.data;
 
-    // FIXED: Use the exact values from the backend API response
-    // These are the display values that the backend sends and accepts
-    _pronounOptions =
-        (stepData?['options'] as List<dynamic>?)?.cast<String>() ??
-        ['She / Her', 'He / Him', 'They / Them', 'Other'];
+    // ✅ FIXED: Use exact backend values for both display and value
+    final defaultPronounOptions = [
+      {'display': 'She / Her', 'value': 'She / Her'},
+      {'display': 'He / Him', 'value': 'He / Him'},
+      {'display': 'They / Them', 'value': 'They / Them'},
+      {'display': 'Other', 'value': 'Other'},
+    ];
+
+    // Try to get options from API response first
+    if (stepData != null && stepData['options'] is List) {
+      final apiOptions = stepData['options'] as List<dynamic>;
+      _pronounOptions = apiOptions
+          .map((option) {
+            if (option is Map<String, dynamic>) {
+              final value = option['value']?.toString() ?? '';
+              final label = option['label']?.toString() ?? value;
+              return {'display': label, 'value': value};
+            } else if (option is String) {
+              // Handle simple string options
+              final normalized = _normalizePronounValue(option);
+              return {'display': option, 'value': normalized};
+            } else {
+              final optionStr = option.toString();
+              final normalized = _normalizePronounValue(optionStr);
+              return {'display': optionStr, 'value': normalized};
+            }
+          })
+          .where(
+            (option) =>
+                option['display']!.isNotEmpty && option['value']!.isNotEmpty,
+          )
+          .toList();
+
+      print(
+        '🔧 Pronoun options from API: ${_pronounOptions.map((o) => '"${o['value']}" (${o['display']})').join(', ')}',
+      );
+    } else {
+      // Fallback to default options if API doesn't provide them
+      _pronounOptions = defaultPronounOptions;
+      print(
+        '🔧 Pronoun options from default: ${_pronounOptions.map((o) => '"${o['value']}" (${o['display']})').join(', ')}',
+      );
+    }
+
+    // Validate that the current selection is in the available options
+    if (_selectedPronouns != null) {
+      final isValidSelection = _pronounOptions.any(
+        (option) => option['value'] == _selectedPronouns,
+      );
+      if (!isValidSelection) {
+        print(
+          '⚠️ Current selection "$_selectedPronouns" not in available options, clearing selection',
+        );
+        _selectedPronouns = null;
+      }
+    }
   }
 
-  void _onPronounSelected(String pronouns) {
-    // Prevent multiple selections while saving
-    if (_isSaving) return;
+  String _normalizePronounValue(String input) {
+    // ✅ FIXED: Normalize to exact backend format
+    switch (input.toLowerCase().replaceAll(' ', '').replaceAll('/', '')) {
+      case 'sheher':
+        return 'She / Her';
+      case 'hehim':
+        return 'He / Him';
+      case 'theythem':
+        return 'They / Them';
+      case 'other':
+        return 'Other';
+      default:
+        // If already in correct format, keep it
+        if (['She / Her', 'He / Him', 'They / Them', 'Other'].contains(input)) {
+          return input;
+        }
+        return 'Other'; // Safe fallback
+    }
+  }
 
+  void _onPronounsSelected(String pronounValue) {
     setState(() {
-      _selectedPronouns = pronouns;
-      _isSaving = true;
+      _selectedPronouns = pronounValue;
     });
 
-    // FIXED: Save the EXACT value that was selected (no conversion)
-    // The backend accepts these display values directly
-    context.read<OnboardingBloc>().add(SavePronouns(pronouns));
-  }
+    print('💾 Saving pronouns: "$pronounValue"');
+    print(
+      '📋 Available options: ${_pronounOptions.map((o) => '"${o['value']}"').join(', ')}',
+    );
 
-  void _handleContinue() {
-    // Only allow continue if not currently saving
-    if (!_isSaving && widget.onContinue != null) {
-      widget.onContinue!();
-    }
+    context.read<OnboardingBloc>().add(SavePronouns(pronounValue));
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
 
-    return BlocListener<OnboardingBloc, OnboardingState>(
-      listener: (context, state) {
-        if (state is OnboardingStepsLoaded) {
-          // Reset saving state when data is loaded
-          if (mounted) {
-            setState(() {
-              _isSaving = false;
-            });
-          }
-        }
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Spacer(flex: 1),
-            _buildHeaderText(),
-            const SizedBox(height: 32),
-            _buildDescriptionText(),
-            const SizedBox(height: 40),
-            _buildPronounOptions(),
-            const Spacer(flex: 2),
-            _buildContinueButton(),
-            const SizedBox(height: 32),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Spacer(flex: 1),
+          _buildHeaderText(),
+          const SizedBox(height: 32),
+          _buildDescriptionText(),
+          const SizedBox(height: 40),
+          _buildPronounOptions(),
+          const Spacer(flex: 2),
+          _buildContinueButton(),
+          const SizedBox(height: 32),
+        ],
       ),
     );
   }
@@ -159,31 +213,45 @@ class _PronounsPageState extends State<PronounsPage>
 
   Widget _buildPronounOptions() {
     return Column(
-      children: _pronounOptions.map((pronoun) {
-        final isSelected = _selectedPronouns == pronoun;
+      children: _pronounOptions.map((pronounOption) {
+        final displayText = pronounOption['display']!;
+        final value = pronounOption['value']!;
+        final isSelected = _selectedPronouns == value;
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: OnboardingOptionButton(
-            text:
-                pronoun, // Use the exact value from backend (e.g., "She / Her")
+            text: displayText,
             isSelected: isSelected,
-            onTap: () => _onPronounSelected(pronoun), // Save the exact value
+            onTap: () => _onPronounsSelected(value),
+            icon: _getPronounIcon(value),
           ),
         );
       }).toList(),
     );
   }
 
-  Widget _buildContinueButton() {
-    // Show loading state if saving, otherwise check if can continue
-    final canContinue = !_isSaving && widget.canContinue;
+  IconData _getPronounIcon(String pronouns) {
+    switch (pronouns.toLowerCase()) {
+      case 'she/her':
+        return Icons.person;
+      case 'he/him':
+        return Icons.person;
+      case 'they/them':
+        return Icons.people;
+      case 'other':
+        return Icons.person_outline;
+      default:
+        return Icons.person;
+    }
+  }
 
+  Widget _buildContinueButton() {
     return OnboardingButton(
-      text: _isSaving ? 'Saving...' : 'Continue',
-      isEnabled: canContinue,
-      onPressed: canContinue ? _handleContinue : null,
-      icon: _isSaving ? null : Icons.arrow_forward,
+      text: 'Continue',
+      isEnabled: widget.canContinue,
+      onPressed: widget.onContinue,
+      icon: Icons.arrow_forward,
     );
   }
 }

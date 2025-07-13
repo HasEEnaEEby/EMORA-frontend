@@ -1,117 +1,122 @@
-abstract class AppException implements Exception {
+// lib/core/errors/exceptions.dart
+
+class ServerException implements Exception {
   final String message;
-  final int? statusCode;
+  final String? code;
+  final int? statusCode; // Added this field
 
-  const AppException({required this.message, this.statusCode});
-
-  @override
-  String toString() =>
-      'AppException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
-}
-
-class ServerException extends AppException {
-  const ServerException({required super.message, super.statusCode});
-
-  @override
-  String toString() =>
-      'ServerException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
-}
-
-class CacheException extends AppException {
-  const CacheException({required super.message});
-
-  @override
-  String toString() => 'CacheException: $message';
-}
-
-/// Exception thrown when there's a network connectivity issue
-class NetworkException extends AppException {
-  const NetworkException({required super.message, super.statusCode});
-
-  @override
-  String toString() =>
-      'NetworkException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
-}
-
-/// Exception thrown when user is not authorized (401 status code)
-class UnauthorizedException extends AppException {
-  final String? reason;
-
-  const UnauthorizedException({
-    required super.message,
-    super.statusCode,
-    this.reason,
+  ServerException({
+    required this.message,
+    this.code,
+    this.statusCode, // Added this parameter
   });
 
   @override
   String toString() =>
-      'UnauthorizedException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
+      'ServerException(message: $message, code: $code, statusCode: $statusCode)';
 }
 
-/// Exception thrown for bad requests (400 status code)
-class BadRequestException extends AppException {
-  const BadRequestException({required super.message, super.statusCode});
+class NetworkException implements Exception {
+  final String message;
+  final String? code;
+
+  NetworkException({required this.message, this.code});
 
   @override
-  String toString() =>
-      'BadRequestException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
+  String toString() => 'NetworkException(message: $message, code: $code)';
 }
 
-/// Exception thrown when rate limit is exceeded (429 status code)
-class RateLimitException extends AppException {
-  const RateLimitException({required super.message, super.statusCode});
+class CacheException implements Exception {
+  final String message;
+  final String? code;
+
+  CacheException({required this.message, this.code});
 
   @override
-  String toString() =>
-      'RateLimitException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
+  String toString() => 'CacheException(message: $message, code: $code)';
 }
 
-/// Exception thrown when access is forbidden (403 status code)
-class ForbiddenException extends AppException {
-  const ForbiddenException({required super.message, super.statusCode});
+class UnauthorizedException implements Exception {
+  final String message;
+  final String? code;
+
+  UnauthorizedException({required this.message, this.code});
 
   @override
-  String toString() =>
-      'ForbiddenException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
+  String toString() => 'UnauthorizedException(message: $message, code: $code)';
 }
 
-/// Exception thrown when a resource is not found (404 status code)
-class NotFoundException extends AppException {
-  final String? resource;
+class NotFoundException implements Exception {
+  final String message;
+  final String? code;
 
-  const NotFoundException({
-    required super.message,
-    super.statusCode,
-    this.resource,
+  NotFoundException({required this.message, this.code});
+
+  @override
+  String toString() => 'NotFoundException(message: $message, code: $code)';
+}
+
+class ValidationException implements Exception {
+  final String message;
+  final String? code;
+
+  ValidationException({required this.message, this.code});
+
+  @override
+  String toString() => 'ValidationException(message: $message, code: $code)';
+}
+
+class TimeoutException implements Exception {
+  final String message;
+  final String? code;
+
+  TimeoutException({required this.message, this.code});
+
+  @override
+  String toString() => 'TimeoutException(message: $message, code: $code)';
+}
+
+class PermissionException implements Exception {
+  final String message;
+  final String? code;
+
+  PermissionException({required this.message, this.code});
+
+  @override
+  String toString() => 'PermissionException(message: $message, code: $code)';
+}
+
+// ✅ ADDED: Rate limit exception for friend requests
+class RateLimitException implements Exception {
+  final String message;
+  final int retryAfter; // Seconds to wait before retrying
+
+  RateLimitException({
+    required this.message,
+    this.retryAfter = 300, // Default 5 minutes
   });
 
   @override
-  String toString() =>
-      'NotFoundException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
+  String toString() => 'RateLimitException(message: $message, retryAfter: $retryAfter)';
 }
 
-/// Exception thrown when a request times out
-class TimeoutException extends AppException {
-  const TimeoutException({required super.message, super.statusCode});
+// ✅ ADDED: Friend request specific exceptions
+class FriendRequestException implements Exception {
+  final String message;
+  final String? code;
+
+  FriendRequestException({required this.message, this.code});
 
   @override
-  String toString() =>
-      'TimeoutException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
+  String toString() => 'FriendRequestException(message: $message, code: $code)';
 }
 
-/// Exception thrown when input validation fails
-class ValidationException extends AppException {
-  final String? field;
-  final Map<String, dynamic>? errors;
+class DuplicateFriendRequestException implements Exception {
+  final String message;
+  final String? code;
 
-  const ValidationException({
-    required super.message,
-    this.field,
-    this.errors,
-    super.statusCode,
-  });
+  DuplicateFriendRequestException({required this.message, this.code});
 
   @override
-  String toString() =>
-      'ValidationException: $message${statusCode != null ? ' (Status: $statusCode)' : ''}';
+  String toString() => 'DuplicateFriendRequestException(message: $message, code: $code)';
 }

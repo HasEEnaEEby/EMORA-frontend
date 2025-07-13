@@ -1,8 +1,10 @@
 // lib/core/config/app_config.dart
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 
 /// Master configuration file - Single source of truth for all app constants
-/// Updated with vibrant, child-friendly purple color palette
+/// Updated with vibrant, child-friendly purple color palette and Profile Dialog support
 class AppConfig {
   // ===========================
   // APP IDENTITY & VERSION
@@ -30,15 +32,28 @@ class AppConfig {
   static const String logoutEndpoint = '/api/auth/logout';
   static const String profileEndpoint = '/api/auth/profile';
   static const String currentUserEndpoint = '/api/auth/me';
+  static const String refreshTokenEndpoint = '/api/auth/refresh';
+  static const String updateProfileEndpoint = '/api/auth/profile/update';
+  static const String deleteAccountEndpoint = '/api/auth/account/delete';
+
+  // Profile & User Data
+  static const String userPreferencesEndpoint = '/api/user/preferences';
+  static const String updatePreferencesEndpoint =
+      '/api/user/preferences/update';
+  static const String exportUserDataEndpoint = '/api/user/export';
+  static const String achievementsEndpoint = '/api/user/achievements';
+  static const String achievementDetailEndpoint =
+      '/api/user/achievements'; // /{id}
 
   // Onboarding
-  static const String checkUsernameEndpoint = '/api/onboarding/check-username';
+  static const String checkUsernameEndpoint = '/api/auth/check-username';
   static const String onboardingStepsEndpoint = '/api/onboarding/steps';
   static const String userDataEndpoint = '/api/onboarding/user-data';
   static const String completeOnboardingEndpoint = '/api/onboarding/complete';
+  static const String suggestUsernamesEndpoint = '/api/auth/suggest-usernames';
 
   // Home & Dashboard
-  static const String homeDataEndpoint = '/api/onboarding/user-data';
+  static const String homeDataEndpoint = '/api/user/home-data';
   static const String userStatsEndpoint = '/api/user/stats';
 
   // Emotions
@@ -55,10 +70,19 @@ class AppConfig {
   // STORAGE KEYS
   // ===========================
   static const String authTokenKey = 'auth_token';
+  static const String refreshTokenKey = 'refresh_token';
   static const String userDataKey = 'user_data';
   static const String onboardingCompletedKey = 'onboarding_completed';
+  static const String hasEverBeenLoggedInKey = 'has_ever_been_logged_in';
   static const String lastEmotionLogKey = 'last_emotion_log';
   static const String userPreferencesKey = 'user_preferences';
+  static const String splashShownKey = 'splash_shown';
+  static const String firstAppLaunchKey = 'first_app_launch';
+  static const String cacheValidityDurationKey = 'cache_validity_duration';
+  static const String selectedThemeKey = 'selected_theme';
+  static const String selectedLanguageKey = 'selected_language';
+  static const String cachedAchievementsKey = 'cached_achievements';
+  static const String profileCacheKey = 'profile_cache';
 
   // ===========================
   // CHILD-FRIENDLY PURPLE COLOR PALETTE 🌈
@@ -114,6 +138,42 @@ class AppConfig {
   static const Color textMuted = Color(0xFF9CA3AF); // Purple gray
 
   // ===========================
+  // PROFILE DIALOG COLORS 🎨
+  // ===========================
+
+  static const Color dialogBackground = Color(0xFF1A1A2E);
+  static const Color dialogSurface = cloudWhite;
+  static const Color dialogOverlay = Color(0x66000000);
+  static const Color dialogBorder = Color(0xFFE5E7EB);
+  static const Color dialogShadow = Color(0x1A000000);
+
+  // Theme Colors for Profile Dialogs
+  static const Map<String, Color> themeColors = {
+    'Cosmic Purple': Color(0xFF8B5CF6),
+    'Ocean Blue': Color(0xFF3B82F6),
+    'Forest Green': Color(0xFF10B981),
+    'Sunset Orange': Color(0xFFF59E0B),
+    'Cherry Blossom': Color(0xFFEC4899),
+    'Fire Red': Color(0xFFEF4444),
+    'Mystic Teal': Color(0xFF14B8A6),
+    'Royal Indigo': Color(0xFF6366F1),
+  };
+
+  // Achievement Colors by Category
+  static const Map<String, Color> achievementColors = {
+    'progress': Color(0xFF10B981),
+    'milestone': Color(0xFF3B82F6),
+    'special': Color(0xFF8B5CF6),
+    'rare': Color(0xFFEF4444),
+    'epic': Color(0xFFF59E0B),
+    'legendary': Color(0xFFEC4899),
+    'daily': Color(0xFF14B8A6),
+    'weekly': Color(0xFF6366F1),
+    'monthly': Color(0xFFD946EF),
+    'general': Color(0xFF6B7280),
+  };
+
+  // ===========================
   // CHILD-FRIENDLY EMOTION COLORS 🎨
   // ===========================
 
@@ -153,73 +213,80 @@ class AppConfig {
   // ===========================
 
   // Spacing - More generous for little fingers
-  static const double paddingTiny = 6.0; // Increased from 4.0
-  static const double paddingSmall = 10.0; // Increased from 8.0
-  static const double paddingMedium = 16.0; // Increased from 12.0
-  static const double paddingLarge = 20.0; // Increased from 16.0
-  static const double paddingXLarge = 28.0; // Increased from 24.0
-  static const double paddingXXLarge = 36.0; // Increased from 32.0
-  static const double paddingHuge = 44.0; // Increased from 40.0
-  static const double paddingMassive = 52.0; // Increased from 48.0
+  static const double paddingTiny = 6.0;
+  static const double paddingSmall = 10.0;
+  static const double paddingMedium = 16.0;
+  static const double paddingLarge = 20.0;
+  static const double paddingXLarge = 28.0;
+  static const double paddingXXLarge = 36.0;
+  static const double paddingHuge = 44.0;
+  static const double paddingMassive = 52.0;
 
   // Border Radius - More rounded for friendly feel
-  static const double radiusTiny = 6.0; // Increased from 4.0
-  static const double radiusSmall = 12.0; // Increased from 8.0
-  static const double radiusMedium = 16.0; // Increased from 12.0
-  static const double radiusLarge = 20.0; // Increased from 16.0
-  static const double radiusXLarge = 24.0; // Increased from 20.0
-  static const double radiusXXLarge = 28.0; // Increased from 24.0
-  static const double radiusHuge = 32.0; // Increased from 28.0
-  static const double radiusCircular = 100.0; // Fully circular
+  static const double radiusTiny = 6.0;
+  static const double radiusSmall = 12.0;
+  static const double radiusMedium = 16.0;
+  static const double radiusLarge = 20.0;
+  static const double radiusXLarge = 24.0;
+  static const double radiusXXLarge = 28.0;
+  static const double radiusHuge = 32.0;
+  static const double radiusCircular = 100.0;
 
   // Text Sizes - Larger for better readability
-  static const double textTiny = 12.0; // Increased from 10.0
-  static const double textSmall = 14.0; // Increased from 12.0
-  static const double textMedium = 16.0; // Increased from 14.0
-  static const double textLarge = 18.0; // Increased from 16.0
-  static const double textXLarge = 20.0; // Increased from 18.0
-  static const double textXXLarge = 22.0; // Increased from 20.0
-  static const double textHeader = 26.0; // Increased from 24.0
-  static const double textTitle = 30.0; // Increased from 28.0
-  static const double textDisplay = 34.0; // Increased from 32.0
-  static const double textHero = 38.0; // Increased from 36.0
+  static const double textTiny = 12.0;
+  static const double textSmall = 14.0;
+  static const double textMedium = 16.0;
+  static const double textLarge = 18.0;
+  static const double textXLarge = 20.0;
+  static const double textXXLarge = 22.0;
+  static const double textHeader = 26.0;
+  static const double textTitle = 30.0;
+  static const double textDisplay = 34.0;
+  static const double textHero = 38.0;
 
   // Icon Sizes - Larger for better interaction
-  static const double iconTiny = 16.0; // Increased from 12.0
-  static const double iconSmall = 20.0; // Increased from 16.0
-  static const double iconMedium = 24.0; // Increased from 20.0
-  static const double iconLarge = 28.0; // Increased from 24.0
-  static const double iconXLarge = 36.0; // Increased from 32.0
-  static const double iconXXLarge = 52.0; // Increased from 48.0
-  static const double iconHuge = 68.0; // Increased from 64.0
-  static const double iconMassive = 84.0; // Increased from 80.0
+  static const double iconTiny = 16.0;
+  static const double iconSmall = 20.0;
+  static const double iconMedium = 24.0;
+  static const double iconLarge = 28.0;
+  static const double iconXLarge = 36.0;
+  static const double iconXXLarge = 52.0;
+  static const double iconHuge = 68.0;
+  static const double iconMassive = 84.0;
 
   // Component Sizes - Child-friendly touch targets
-  static const double buttonHeight = 52.0; // Increased from 48.0
-  static const double buttonHeightSmall = 40.0; // Increased from 36.0
-  static const double buttonHeightLarge = 60.0; // Increased from 56.0
-  static const double inputHeight = 52.0; // Increased from 48.0
-  static const double cardHeight = 180.0; // Increased from 160.0
-  static const double cardHeightLarge = 220.0; // Increased from 200.0
-  static const double avatarSize = 52.0; // Increased from 48.0
-  static const double avatarSizeLarge = 84.0; // Increased from 80.0
+  static const double buttonHeight = 52.0;
+  static const double buttonHeightSmall = 40.0;
+  static const double buttonHeightLarge = 60.0;
+  static const double inputHeight = 52.0;
+  static const double cardHeight = 180.0;
+  static const double cardHeightLarge = 220.0;
+  static const double avatarSize = 52.0;
+  static const double avatarSizeLarge = 84.0;
+
+  // Dialog-specific dimensions
+  static const double dialogMaxWidth = 420.0;
+  static const double dialogMaxHeight = 600.0;
+  static const double dialogMinHeight = 300.0;
+  static const double themeCardSize = 120.0;
+  static const double achievementCardHeight = 100.0;
 
   // Emotion-specific Dimensions
-  static const double emotionTileSize = 88.0; // Increased from 80.0
-  static const double emotionDotSize = 16.0; // Increased from 12.0
-  static const double earthSectionHeight = 340.0; // Increased from 320.0
-  static const double sliderHeight = 52.0; // Increased from 48.0
-  static const double progressBarHeight = 10.0; // Increased from 8.0
+  static const double emotionTileSize = 88.0;
+  static const double emotionDotSize = 16.0;
+  static const double earthSectionHeight = 340.0;
+  static const double sliderHeight = 52.0;
+  static const double progressBarHeight = 10.0;
 
   // Layout Constraints
-  static const double maxContentWidth = 420.0; // Increased from 400.0
-  static const double sectionSpacing = 36.0; // Increased from 32.0
-  static const double itemSpacing = 20.0; // Increased from 16.0
-  static const double gridSpacing = 16.0; // Increased from 12.0
+  static const double maxContentWidth = 420.0;
+  static const double sectionSpacing = 36.0;
+  static const double itemSpacing = 20.0;
+  static const double gridSpacing = 16.0;
 
   // Touch Targets (Child-friendly)
-  static const double minTouchTarget = 48.0; // Increased from 44.0
-  static const double comfortableTouchTarget = 52.0; // Increased from 48.0
+  static const double minTouchTarget = 48.0;
+  static const double comfortableTouchTarget = 52.0;
 
   // ===========================
   // ENVIRONMENT & FEATURE FLAGS
@@ -229,26 +296,30 @@ class AppConfig {
   static const bool enableLogging = true;
   static const bool enableNetworkLogging = true;
   static const bool enableOfflineMode = true;
-  static const bool gracefullyHandleMissingEndpoints = true;
+  static const bool gracefullyHandleMissingEndpoints = false; // ✅ DISABLED: Let real auth errors propagate
+  static const bool enableProfileDialogMockData = true; // For testing dialogs
+  static const bool enableAchievementMockData =
+      true; // For testing achievements
 
   // ===========================
   // TIMING CONFIGURATION
   // ===========================
 
-  static const Duration splashDuration = Duration(seconds: 2);
+  static const Duration splashDuration = Duration(seconds: 3);
   static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
   static const Duration longAnimationDuration = Duration(milliseconds: 600);
   static const Duration cacheExpirationDuration = Duration(hours: 24);
+  static const Duration cacheValidityDuration = Duration(hours: 24); // ✅ Increased cache duration to reduce redundant API calls
   static const Duration retryDelay = Duration(seconds: 2);
   static const int maxRetryAttempts = 3;
   static const int maxCacheSize = 100;
 
   // Animation Durations (milliseconds) - Slightly longer for children
-  static const int animationInstant = 150; // Increased from 100
-  static const int animationFast = 250; // Increased from 200
-  static const int animationMedium = 350; // Increased from 300
-  static const int animationSlow = 550; // Increased from 500
-  static const int animationXSlow = 850; // Increased from 800
+  static const int animationInstant = 150;
+  static const int animationFast = 250;
+  static const int animationMedium = 350;
+  static const int animationSlow = 550;
+  static const int animationXSlow = 850;
   static const int animationBreathing = 4000;
 
   // ===========================
@@ -259,6 +330,8 @@ class AppConfig {
   static const int maxUsernameLength = 20;
   static const int minPasswordLength = 8;
   static const int maxPasswordLength = 128;
+  static const int minBioLength = 0;
+  static const int maxBioLength = 150;
 
   // ===========================
   // BUSINESS LOGIC DATA
@@ -271,13 +344,15 @@ class AppConfig {
     'Other',
   ];
 
+  // ✅ FIXED: Match exact backend validation values
   static const List<String> availableAgeGroups = [
     'Under 18',
-    '18-25',
-    '26-35',
-    '36-45',
-    '46-60',
-    'Over 60',
+    '18-24', // Fixed: backend expects 18-24, not 18-25
+    '25-34', // Fixed: backend expects 25-34, not 26-35  
+    '35-44', // Fixed: backend expects 35-44, not 36-45
+    '45-54', // Fixed: backend expects 45-54, not 46-60
+    '55-64', // Added: missing from original list
+    '65+',   // Fixed: backend expects 65+, not Over 60
   ];
 
   static const List<String> availableAvatars = [
@@ -292,9 +367,77 @@ class AppConfig {
     'raccoon',
   ];
 
+  // Language options for Profile Dialogs
+  static const List<Map<String, String>> availableLanguages = [
+    {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
+    {'code': 'es', 'name': 'Español', 'flag': '🇪🇸'},
+    {'code': 'fr', 'name': 'Français', 'flag': '🇫🇷'},
+    {'code': 'de', 'name': 'Deutsch', 'flag': '🇩🇪'},
+    {'code': 'it', 'name': 'Italiano', 'flag': '🇮🇹'},
+    {'code': 'pt', 'name': 'Português', 'flag': '🇵🇹'},
+    {'code': 'ru', 'name': 'Русский', 'flag': '🇷🇺'},
+    {'code': 'zh', 'name': '中文', 'flag': '🇨🇳'},
+    {'code': 'ja', 'name': '日本語', 'flag': '🇯🇵'},
+    {'code': 'ko', 'name': '한국어', 'flag': '🇰🇷'},
+  ];
+
+  // Theme options for Profile Dialogs
+  static const List<Map<String, dynamic>> availableThemes = [
+    {
+      'name': 'Cosmic Purple',
+      'primaryColor': Color(0xFF8B5CF6),
+      'gradient': [Color(0xFF8B5CF6), Color(0xFF7C3AED), Color(0xFF6D28D9)],
+      'description': 'Deep cosmic vibes with purple gradients',
+    },
+    {
+      'name': 'Ocean Blue',
+      'primaryColor': Color(0xFF3B82F6),
+      'gradient': [Color(0xFF3B82F6), Color(0xFF2563EB), Color(0xFF1E40AF)],
+      'description': 'Calm ocean depths and flowing waters',
+    },
+    {
+      'name': 'Forest Green',
+      'primaryColor': Color(0xFF10B981),
+      'gradient': [Color(0xFF10B981), Color(0xFF059669), Color(0xFF065F46)],
+      'description': 'Natural forest with fresh green energy',
+    },
+    {
+      'name': 'Sunset Orange',
+      'primaryColor': Color(0xFFF59E0B),
+      'gradient': [Color(0xFFF59E0B), Color(0xFFD97706), Color(0xFFB45309)],
+      'description': 'Warm sunset with golden hour vibes',
+    },
+    {
+      'name': 'Cherry Blossom',
+      'primaryColor': Color(0xFFEC4899),
+      'gradient': [Color(0xFFEC4899), Color(0xFFDB2777), Color(0xFF9D174D)],
+      'description': 'Soft pink petals and romantic energy',
+    },
+    {
+      'name': 'Fire Red',
+      'primaryColor': Color(0xFFEF4444),
+      'gradient': [Color(0xFFEF4444), Color(0xFFDC2626), Color(0xFF991B1B)],
+      'description': 'Passionate flames and bold energy',
+    },
+    {
+      'name': 'Mystic Teal',
+      'primaryColor': Color(0xFF14B8A6),
+      'gradient': [Color(0xFF14B8A6), Color(0xFF0D9488), Color(0xFF134E4A)],
+      'description': 'Mystical waters with ancient wisdom',
+    },
+    {
+      'name': 'Royal Indigo',
+      'primaryColor': Color(0xFF6366F1),
+      'gradient': [Color(0xFF6366F1), Color(0xFF4F46E5), Color(0xFF3730A3)],
+      'description': 'Royal elegance with deep indigo tones',
+    },
+  ];
+
   static const String defaultPronoun = 'They / Them';
-  static const String defaultAgeGroup = '20s';
+  static const String defaultAgeGroup = '18-24'; // ✅ Fixed to match backend expectations
   static const String defaultAvatar = 'panda';
+  static const String defaultLanguage = 'en';
+  static const String defaultTheme = 'Cosmic Purple';
 
   static const List<String> reservedUsernames = [
     'admin',
@@ -316,6 +459,75 @@ class AppConfig {
     'bot',
     'null',
     'undefined',
+    'test',
+    'demo',
+    'guest',
+    'anonymous',
+  ];
+
+  // ===========================
+  // USERNAME SUGGESTIONS
+  // ===========================
+
+  static const List<String> usernameAdjectives = [
+    'happy',
+    'calm',
+    'bright',
+    'gentle',
+    'peaceful',
+    'joyful',
+    'serene',
+    'vibrant',
+    'cozy',
+    'dreamy',
+    'mindful',
+    'wise',
+    'brave',
+    'kind',
+    'creative',
+    'hopeful',
+    'caring',
+    'warm',
+    'sweet',
+    'lovely',
+  ];
+
+  static const List<String> usernameNouns = [
+    'moon',
+    'star',
+    'cloud',
+    'river',
+    'ocean',
+    'garden',
+    'butterfly',
+    'rainbow',
+    'sunrise',
+    'petal',
+    'breeze',
+    'whisper',
+    'sparkle',
+    'crystal',
+    'feather',
+    'heart',
+    'soul',
+    'spirit',
+    'dream',
+    'wonder',
+  ];
+
+  static const List<String> fallbackUsernames = [
+    'mindful_explorer',
+    'emotion_friend',
+    'calm_navigator',
+    'peaceful_soul',
+    'gentle_heart',
+    'bright_spirit',
+    'serene_mind',
+    'joyful_journey',
+    'wise_wanderer',
+    'kind_companion',
+    'dreamy_traveler',
+    'warm_whisper',
   ];
 
   // ===========================
@@ -324,28 +536,58 @@ class AppConfig {
 
   // Error Messages - Gentle and understanding
   static const String networkErrorMessage =
-      'Connection seems quiet. Check your network when ready';
+      'Connection seems quiet. Check your network when ready 🌸';
   static const String serverErrorMessage =
-      'Something didn\'t work. That\'s okay, let\'s try again';
+      'Something didn\'t work. That\'s okay, let\'s try again ✨';
   static const String timeoutErrorMessage =
-      'Taking a bit longer than usual. Please try again when ready';
+      'Taking a bit longer than usual. Please try again when ready 🕐';
   static const String unauthorizedErrorMessage =
-      'Please sign in to continue your journey';
+      'Please sign in to continue your journey 🔑';
   static const String validationErrorMessage =
-      'Let\'s check that information together';
+      'Let\'s check that information together 📝';
+  static const String usernameExistsMessage =
+      'This name is already taken. How about trying one of these? 💡';
+  static const String usernameAvailableMessage =
+      'Perfect! This name is available ✅';
+
+  // Profile Dialog Messages
+  static const String profileUpdateSuccessMessage =
+      'Profile updated successfully! ✨';
+  static const String profileUpdateErrorMessage =
+      'Could not update profile. Please try again 🔄';
+  static const String themeChangeSuccessMessage =
+      'Theme changed successfully! 🎨';
+  static const String languageChangeSuccessMessage =
+      'Language changed successfully! 🌍';
+  static const String dataExportSuccessMessage =
+      'Data exported successfully! 📁';
+  static const String dataExportErrorMessage =
+      'Could not export data. Please try again 📋';
+  static const String avatarChangeSuccessMessage =
+      'Avatar updated! Looking good! 🐾';
 
   // Success Messages - Encouraging and warm
   static const String loginSuccessMessage = 'Welcome back! 🌸';
   static const String registrationSuccessMessage = 'Your space is ready! ✨';
-  static const String logoutSuccessMessage = 'Take care, see you soon';
+  static const String logoutSuccessMessage = 'Take care, see you soon 👋';
   static const String onboardingCompleteMessage =
       'Your emotional journey begins 🪷';
+  static const String usernameCheckingMessage =
+      'Checking if this name is available... 🔍';
+
+  // Onboarding Messages
+  static const String onboardingWelcomeMessage =
+      'Welcome to your emotional sanctuary 🌺';
+  static const String onboardingSkipMessage =
+      'You can always complete this later in settings';
+  static const String onboardingProgressMessage =
+      'Creating your personalized space...';
 
   // Development Messages
   static const String developmentModeMessage =
-      'Running in development mode - crafting with care';
+      'Running in development mode - crafting with care 🛠️';
   static const String endpointNotAvailableMessage =
-      'This feature is being crafted with love';
+      'This feature is being crafted with love 🔧';
 
   // ===========================
   // ENVIRONMENT HELPERS
@@ -403,6 +645,10 @@ class AppConfig {
     return hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
   }
 
+  static bool isValidBio(String bio) {
+    return bio.length >= minBioLength && bio.length <= maxBioLength;
+  }
+
   static String? validateUsername(String? username) {
     if (username == null || username.isEmpty) {
       return 'Username is required';
@@ -446,6 +692,117 @@ class AppConfig {
     return null;
   }
 
+  static String? validateEmail(String? email) {
+    if (email == null || email.isEmpty) {
+      return 'Email is required';
+    }
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    if (!emailRegex.hasMatch(email)) {
+      return 'Please enter a valid email address';
+    }
+    return null;
+  }
+
+  static String? validateBio(String? bio) {
+    if (bio == null) return null;
+    if (!isValidBio(bio)) {
+      if (bio.length > maxBioLength) {
+        return 'Bio must be less than $maxBioLength characters';
+      }
+    }
+    return null;
+  }
+
+  // ===========================
+  // PROFILE DIALOG HELPERS
+  // ===========================
+
+  /// Get avatar emoji from avatar name
+  static String getAvatarEmoji(String avatarName) {
+    switch (avatarName.toLowerCase()) {
+      case 'panda':
+        return '🐼';
+      case 'elephant':
+        return '🐘';
+      case 'horse':
+        return '🐴';
+      case 'rabbit':
+        return '🐰';
+      case 'fox':
+        return '🦊';
+      case 'zebra':
+        return '🦓';
+      case 'bear':
+        return '🐻';
+      case 'pig':
+        return '🐷';
+      case 'raccoon':
+        return '🦝';
+      default:
+        return '🐼';
+    }
+  }
+
+  /// Get theme by name
+  static Map<String, dynamic>? getThemeByName(String themeName) {
+    try {
+      return availableThemes.firstWhere((theme) => theme['name'] == themeName);
+    } catch (e) {
+      return availableThemes.first; // Default to first theme
+    }
+  }
+
+  /// Get language by code
+  static Map<String, String>? getLanguageByCode(String languageCode) {
+    try {
+      return availableLanguages.firstWhere(
+        (lang) => lang['code'] == languageCode,
+      );
+    } catch (e) {
+      return availableLanguages.first; // Default to English
+    }
+  }
+
+  /// Get achievement color by category
+  static Color getAchievementColorByCategory(String category) {
+    return achievementColors[category.toLowerCase()] ??
+        achievementColors['general']!;
+  }
+
+  /// Get theme color by name
+  static Color getThemeColorByName(String themeName) {
+    return themeColors[themeName] ?? themeColors['Cosmic Purple']!;
+  }
+
+  // ===========================
+  // USERNAME SUGGESTION LOGIC
+  // ===========================
+
+  static List<String> generateUsernamesSuggestions({int count = 5}) {
+    final suggestions = <String>[];
+    final random = DateTime.now().millisecondsSinceEpoch;
+
+    // Generate adjective + noun combinations
+    for (int i = 0; i < count - 1; i++) {
+      final adjIndex = (random + i) % usernameAdjectives.length;
+      final nounIndex = (random + i * 2) % usernameNouns.length;
+      final number = (random + i * 3) % 999 + 1;
+
+      final suggestion =
+          '${usernameAdjectives[adjIndex]}_${usernameNouns[nounIndex]}$number';
+      suggestions.add(suggestion);
+    }
+
+    // Add one fallback
+    final fallbackIndex = random % fallbackUsernames.length;
+    final fallbackNumber = random % 9999 + 1;
+    suggestions.add('${fallbackUsernames[fallbackIndex]}$fallbackNumber');
+
+    return suggestions;
+  }
+
   // ===========================
   // ERROR HANDLING
   // ===========================
@@ -456,7 +813,11 @@ class AppConfig {
   ) {
     if (!isDevelopmentMode) return false;
     if (statusCode == 404) return true;
-    if (statusCode == 401 && gracefullyHandleMissingEndpoints) return true;
+    
+    // ✅ CRITICAL FIX: Never gracefully handle 401 errors
+    // Authentication errors must always propagate to auth layer
+    // if (statusCode == 401 && gracefullyHandleMissingEndpoints) return true;
+    
     if (errorMessage != null) {
       if (errorMessage.contains('user/home-data') ||
           errorMessage.contains('not found') ||
@@ -471,12 +832,12 @@ class AppConfig {
   static String getFriendlyErrorMessage(String originalError) {
     if (originalError.contains('404') || originalError.contains('not found')) {
       return isDevelopmentMode
-          ? 'Feature not available in development mode'
-          : 'Service temporarily unavailable';
+          ? 'Feature not available in development mode 🔧'
+          : 'Service temporarily unavailable 📋';
     }
     if (originalError.contains('401') ||
         originalError.contains('unauthorized')) {
-      return 'Authentication required';
+      return unauthorizedErrorMessage;
     }
     if (originalError.contains('network') ||
         originalError.contains('connection')) {
@@ -486,7 +847,7 @@ class AppConfig {
       return timeoutErrorMessage;
     }
     return isDevelopmentMode
-        ? 'Development mode: $originalError'
+        ? 'Development mode: $originalError 🛠️'
         : serverErrorMessage;
   }
 
@@ -553,7 +914,7 @@ class AppConfig {
 
   static List<Color> getEmotionGradient(String emotion) {
     final baseColor = getEmotionColor(emotion);
-    return [baseColor, baseColor.withValues(alpha: 0.3), Colors.transparent];
+    return [baseColor, baseColor.withOpacity(0.3), Colors.transparent];
   }
 
   static Color getNavColor(int index) {
@@ -582,17 +943,96 @@ class AppConfig {
   }
 
   // ===========================
+  // SPLASH & ONBOARDING LOGIC
+  // ===========================
+
+  static bool shouldShowSplash() {
+    // Always show splash on first launch
+    return true;
+  }
+
+  static bool shouldShowOnboarding() {
+    // Onboarding should only be shown once per install
+    return true; // This will be managed by local storage
+  }
+
+  // ===========================
+  // AUTHENTICATION HELPERS
+  // ===========================
+
+  static bool isTokenExpired(String? token) {
+    if (token == null || token.isEmpty) return true;
+
+    try {
+      // Parse JWT token to check expiration
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        // Invalid JWT format
+        return true;
+      }
+
+      final payload = parts[1];
+      // Add padding if needed for base64 decoding
+      final normalizedPayload = payload.padRight(
+        (payload.length + 3) ~/ 4 * 4,
+        '=',
+      );
+
+      // Decode the payload
+      final payloadBytes = base64Url.decode(normalizedPayload);
+      final payloadString = utf8.decode(payloadBytes);
+      final payloadMap = jsonDecode(payloadString) as Map<String, dynamic>;
+
+      // Check for expiration time (exp claim in JWT)
+      final exp = payloadMap['exp'];
+      if (exp == null) {
+        // No expiration claim - treat as expired for security
+        return true;
+      }
+
+      // Convert exp (seconds since epoch) to DateTime
+      final expirationTime = DateTime.fromMillisecondsSinceEpoch(
+        (exp as int) * 1000, // Convert seconds to milliseconds
+      );
+
+      // Add a small buffer (30 seconds) to account for clock skew
+      final now = DateTime.now().add(const Duration(seconds: 30));
+
+      final isExpired = now.isAfter(expirationTime);
+      
+      if (isDevelopmentMode && isExpired) {
+        // Log token expiration in development for debugging
+        print('🔑 Token expired: exp=$expirationTime, now=$now');
+      }
+
+      return isExpired;
+    } catch (e) {
+      // If we can't parse the token, treat it as expired
+      if (isDevelopmentMode) {
+        print('⚠️ Error parsing JWT token: $e');
+      }
+      return true;
+    }
+  }
+
+  static Duration getTokenExpirationTime() {
+    return const Duration(days: 7); // Default token expiration
+  }
+
+  // ===========================
   // MOCK DATA FOR DEVELOPMENT
   // ===========================
 
   static Map<String, dynamic> getDefaultOnboardingData() {
     return {
       'username': null,
+      'email': null,
       'pronouns': defaultPronoun,
       'ageGroup': defaultAgeGroup,
       'selectedAvatar': defaultAvatar,
-      'isCompleted': true,
-      'completedAt': DateTime.now().toIso8601String(),
+      'isCompleted': false,
+      'completedAt': null,
+      'skipped': false,
     };
   }
 
@@ -676,9 +1116,325 @@ class AppConfig {
     };
   }
 
+  /// Get mock profile data for testing dialogs
+  static Map<String, dynamic> getMockProfileData({
+    String? username,
+    String? email,
+    String? bio,
+    String? pronouns,
+    String? ageGroup,
+    String? selectedAvatar,
+    bool? isPrivate,
+  }) {
+    return {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'username': username ?? 'dream_wanderer42',
+      'email': email ?? 'user@example.com',
+      'bio': bio ?? 'Living my best emotional life 🌸',
+      'pronouns': pronouns ?? defaultPronoun,
+      'ageGroup': ageGroup ?? defaultAgeGroup,
+      'avatar': selectedAvatar ?? defaultAvatar,
+      'isPrivate': isPrivate ?? false,
+      'theme': defaultTheme,
+      'language': defaultLanguage,
+      'joinedAt': DateTime.now()
+          .subtract(const Duration(days: 30))
+          .toIso8601String(),
+      'lastActivity': DateTime.now().toIso8601String(),
+      'preferences': {
+        'notifications': true,
+        'emailUpdates': false,
+        'shareData': true,
+        'darkMode': false,
+      },
+    };
+  }
+
+  /// Get mock achievements data for testing
+  static List<Map<String, dynamic>> getMockAchievementsData() {
+    return [
+      {
+        'id': '1',
+        'title': 'First Steps',
+        'description': 'Complete your first emotion log',
+        'category': 'progress',
+        'points': 10,
+        'icon': 'star',
+        'isEarned': true,
+        'progress': 1.0,
+        'maxProgress': 1.0,
+        'rarity': 'common',
+        'dateEarned': DateTime.now()
+            .subtract(const Duration(days: 2))
+            .toIso8601String(),
+      },
+      {
+        'id': '2',
+        'title': 'Streak Master',
+        'description': 'Log emotions for 7 consecutive days',
+        'category': 'milestone',
+        'points': 50,
+        'icon': 'fire',
+        'isEarned': false,
+        'progress': 4.0,
+        'maxProgress': 7.0,
+        'rarity': 'rare',
+        'dateEarned': null,
+      },
+      {
+        'id': '3',
+        'title': 'Emotion Explorer',
+        'description': 'Log 10 different emotions',
+        'category': 'special',
+        'points': 25,
+        'icon': 'compass',
+        'isEarned': true,
+        'progress': 10.0,
+        'maxProgress': 10.0,
+        'rarity': 'uncommon',
+        'dateEarned': DateTime.now()
+            .subtract(const Duration(days: 5))
+            .toIso8601String(),
+      },
+      {
+        'id': '4',
+        'title': 'Mindful Moments',
+        'description': 'Complete 50 emotion check-ins',
+        'category': 'progress',
+        'points': 75,
+        'icon': 'heart',
+        'isEarned': false,
+        'progress': 32.0,
+        'maxProgress': 50.0,
+        'rarity': 'epic',
+        'dateEarned': null,
+      },
+      {
+        'id': '5',
+        'title': 'Community Helper',
+        'description': 'Help 5 other users in the community',
+        'category': 'special',
+        'points': 100,
+        'icon': 'people',
+        'isEarned': false,
+        'progress': 2.0,
+        'maxProgress': 5.0,
+        'rarity': 'legendary',
+        'dateEarned': null,
+      },
+    ];
+  }
+
+  static Map<String, dynamic> getMockAuthResponse({
+    required String username,
+    required String email,
+    String? pronouns,
+    String? ageGroup,
+    String? selectedAvatar,
+  }) {
+    return {
+      'success': true,
+      'message': 'Authentication successful',
+      'data': {
+        'user': {
+          'id': DateTime.now().millisecondsSinceEpoch.toString(),
+          'username': username,
+          'email': email,
+          'pronouns': pronouns ?? defaultPronoun,
+          'ageGroup': ageGroup ?? defaultAgeGroup,
+          'selectedAvatar': selectedAvatar ?? defaultAvatar,
+          'isOnboardingCompleted': true,
+          'createdAt': DateTime.now().toIso8601String(),
+          'updatedAt': DateTime.now().toIso8601String(),
+        },
+        'token': 'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}',
+        'refreshToken':
+            'mock_refresh_token_${DateTime.now().millisecondsSinceEpoch}',
+        'expiresAt': DateTime.now()
+            .add(getTokenExpirationTime())
+            .toIso8601String(),
+      },
+    };
+  }
+
+  static Map<String, dynamic> getMockUsernameCheckResponse({
+    required String username,
+    required bool isAvailable,
+    List<String>? suggestions,
+  }) {
+    return {
+      'success': true,
+      'data': {
+        'username': username,
+        'isAvailable': isAvailable,
+        'suggestions':
+            suggestions ?? (isAvailable ? [] : generateUsernamesSuggestions()),
+        'message': isAvailable
+            ? usernameAvailableMessage
+            : usernameExistsMessage,
+      },
+    };
+  }
+
+  static List<Map<String, dynamic>> getMockOnboardingSteps() {
+    return [
+      {
+        'id': 1,
+        'title': 'Welcome to Emora! 🌸',
+        'description': 'Let\'s create your personal emotional sanctuary',
+        'type': 'welcome',
+        'isRequired': false,
+      },
+      {
+        'id': 2,
+        'title': 'Choose Your Identity',
+        'description': 'How would you like to be addressed?',
+        'type': 'pronouns',
+        'isRequired': false,
+        'options': availablePronouns,
+      },
+      {
+        'id': 3,
+        'title': 'Select Your Age Group',
+        'description': 'This helps us customize your experience',
+        'type': 'age_group',
+        'isRequired': false,
+        'options': availableAgeGroups,
+      },
+      {
+        'id': 4,
+        'title': 'Pick Your Avatar Friend',
+        'description': 'Choose a companion for your emotional journey',
+        'type': 'avatar',
+        'isRequired': false,
+        'options': availableAvatars,
+      },
+    ];
+  }
+
   static bool isOnboardingDataComplete(Map<String, dynamic> data) {
     return data['pronouns'] != null &&
         data['ageGroup'] != null &&
         data['selectedAvatar'] != null;
+  }
+
+  // ===========================
+  // APPLICATION STATE HELPERS
+  // ===========================
+
+  static Map<String, dynamic> getInitialAppState() {
+    return {
+      'isFirstLaunch': true,
+      'splashShown': false,
+      'onboardingCompleted': false,
+      'hasEverBeenLoggedIn': false,
+      'isLoggedIn': false,
+      'currentUser': null,
+      'authToken': null,
+      'refreshToken': null,
+    };
+  }
+
+  static Map<String, dynamic> getLoggedInAppState({
+    required Map<String, dynamic> user,
+    required String token,
+    String? refreshToken,
+  }) {
+    return {
+      'isFirstLaunch': false,
+      'splashShown': true,
+      'onboardingCompleted': true,
+      'hasEverBeenLoggedIn': true,
+      'isLoggedIn': true,
+      'currentUser': user,
+      'authToken': token,
+      'refreshToken': refreshToken,
+    };
+  }
+
+  // ===========================
+  // DEVELOPMENT UTILITIES
+  // ===========================
+
+  static void logConfigInfo() {
+    if (enableLogging && isDevelopmentMode) {
+      print('🔧 AppConfig Info:');
+      print('  - App Name: $appName');
+      print('  - Version: $appVersion');
+      print('  - API Base URL: $effectiveApiBaseUrl');
+      print('  - Development Mode: $isDevelopmentMode');
+      print('  - Debug Mode: $isDebugMode');
+      print('  - Graceful Error Handling: $gracefullyHandleMissingEndpoints');
+      print('  - Profile Dialog Mock Data: $enableProfileDialogMockData');
+      print('  - Achievement Mock Data: $enableAchievementMockData');
+    }
+  }
+
+  static Map<String, dynamic> getDebugInfo() {
+    return {
+      'appName': appName,
+      'appVersion': appVersion,
+      'apiBaseUrl': effectiveApiBaseUrl,
+      'isDevelopmentMode': isDevelopmentMode,
+      'isDebugMode': isDebugMode,
+      'enableLogging': enableLogging,
+      'enableNetworkLogging': enableNetworkLogging,
+      'enableOfflineMode': enableOfflineMode,
+      'gracefulErrorHandling': gracefullyHandleMissingEndpoints,
+      'enableProfileDialogMockData': enableProfileDialogMockData,
+      'enableAchievementMockData': enableAchievementMockData,
+      'splashDuration': splashDuration.inMilliseconds,
+      'cacheExpirationDuration': cacheExpirationDuration.inHours,
+      'maxRetryAttempts': maxRetryAttempts,
+      'availableThemes': availableThemes.length,
+      'availableLanguages': availableLanguages.length,
+      'availableAvatars': availableAvatars.length,
+    };
+  }
+
+  // ===========================
+  // PROFILE DIALOG INTEGRATION
+  // ===========================
+
+  /// Check if profile dialogs should use mock data
+  static bool shouldUseMockData(String feature) {
+    if (!isDevelopmentMode) return false;
+
+    switch (feature.toLowerCase()) {
+      case 'profile':
+      case 'edit_profile':
+      case 'avatar':
+      case 'theme':
+      case 'language':
+        return enableProfileDialogMockData;
+      case 'achievements':
+        return enableAchievementMockData;
+      default:
+        return gracefullyHandleMissingEndpoints;
+    }
+  }
+
+  /// Get safe endpoint URL with fallback handling
+  static String getSafeEndpointUrl(String endpoint) {
+    return '$effectiveApiBaseUrl$endpoint';
+  }
+
+  /// Check if endpoint should be mocked based on feature flags
+  static bool shouldMockEndpoint(String endpoint) {
+    if (!isDevelopmentMode) return false;
+
+    // Profile-related endpoints
+    if (endpoint.contains('/profile') ||
+        endpoint.contains('/preferences') ||
+        endpoint.contains('/user/')) {
+      return enableProfileDialogMockData;
+    }
+
+    // Achievement endpoints
+    if (endpoint.contains('/achievements')) {
+      return enableAchievementMockData;
+    }
+
+    return gracefullyHandleMissingEndpoints;
   }
 }

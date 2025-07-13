@@ -111,10 +111,18 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
           Logger.info('Using default steps due to: ${failure.message}');
 
+          // DEBUG: Add logging to see what steps we have
+          print('🔍 DEBUG: Default steps count: ${defaultSteps.length}');
+          for (int i = 0; i < defaultSteps.length; i++) {
+            print(
+              '  Default Step $i: ${defaultSteps[i].type} - "${defaultSteps[i].title}"',
+            );
+          }
+
           emit(
             OnboardingStepsLoaded(
               steps: defaultSteps,
-              currentStepIndex: 1, // Start at pronouns step (skip welcome)
+              currentStepIndex: 0, // FIXED: Start at 0, not 1
               userData: initialUserData,
               canGoNext: true,
               canGoPrevious: false,
@@ -125,12 +133,25 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           final stepsToUse = (steps.isEmpty) ? _getDefaultSteps() : steps;
           final initialUserData = const UserOnboardingEntity();
 
+          // DEBUG: Add logging to see what steps we received
+          print('🔍 DEBUG: Received ${steps.length} steps from API');
+          for (int i = 0; i < steps.length; i++) {
+            print('  API Step $i: ${steps[i].type} - "${steps[i].title}"');
+          }
+
+          print('🔍 DEBUG: Using ${stepsToUse.length} steps total');
+          for (int i = 0; i < stepsToUse.length; i++) {
+            print(
+              '  Final Step $i: ${stepsToUse[i].type} - "${stepsToUse[i].title}"',
+            );
+          }
+
           Logger.info('Loaded ${stepsToUse.length} onboarding steps');
 
           emit(
             OnboardingStepsLoaded(
               steps: stepsToUse,
-              currentStepIndex: 1, // Start at pronouns step
+              currentStepIndex: 0, // FIXED: Start at 0 (first step), not 1
               userData: initialUserData,
               canGoNext: true,
               canGoPrevious: false,
@@ -150,12 +171,36 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       emit(
         OnboardingStepsLoaded(
           steps: defaultSteps,
-          currentStepIndex: 1, // Start at pronouns step
+          currentStepIndex: 0, // FIXED: Start at 0, not 1
           userData: initialUserData,
           canGoNext: true,
           canGoPrevious: false,
         ),
       );
+    }
+  }
+
+  // ALSO UPDATE: Make sure your _mapToDisplayIndex handles this correctly
+  int _mapToDisplayIndex(
+    int fullStepIndex,
+    List<OnboardingStepEntity> allSteps,
+  ) {
+    if (fullStepIndex < 0 || fullStepIndex >= allSteps.length) return 0;
+
+    final currentStep = allSteps[fullStepIndex];
+
+    // If the steps don't include welcome/completion, then the mapping is direct
+    switch (currentStep.type) {
+      case OnboardingStepType.welcome:
+        return 0; // First displayable step
+      case OnboardingStepType.pronouns:
+        return 0; // First displayable step
+      case OnboardingStepType.age:
+        return 1; // Second displayable step
+      case OnboardingStepType.avatar:
+        return 2; // Third displayable step
+      case OnboardingStepType.completion:
+        return 2; // Last displayable step
     }
   }
 
@@ -224,9 +269,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
         Logger.info('✅ State updated - moved back to step $newIndex');
       } else {
-        Logger.info(
-          'Cannot go back - already at first displayable step',
-        );
+        Logger.info('Cannot go back - already at first displayable step');
       }
     }
   }

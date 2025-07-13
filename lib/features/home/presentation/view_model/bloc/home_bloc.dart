@@ -1,4 +1,4 @@
-// lib/features/home/presentation/view_model/bloc/home_bloc.dart - FIXED VERSION
+// lib/features/home/presentation/view_model/bloc/home_bloc.dart - COMPLETE FIXED VERSION
 import 'package:emora_mobile_app/core/config/app_config.dart';
 import 'package:emora_mobile_app/core/navigation/app_router.dart';
 import 'package:emora_mobile_app/core/navigation/navigation_service.dart';
@@ -6,9 +6,12 @@ import 'package:emora_mobile_app/core/use_case/use_case.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/features/home/data/model/home_data_model.dart';
 import 'package:emora_mobile_app/features/home/data/model/user_stats_model.dart';
+import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart';
 import 'package:emora_mobile_app/features/home/domain/use_case/get_user_stats.dart';
-import 'package:emora_mobile_app/features/home/domain/use_case/load_home_data.dart' as use_case;
-import 'package:emora_mobile_app/features/home/domain/use_case/navigate_to_main_flow.dart' as nav_use_case;
+import 'package:emora_mobile_app/features/home/domain/use_case/load_home_data.dart'
+    as use_case;
+import 'package:emora_mobile_app/features/home/domain/use_case/navigate_to_main_flow.dart'
+    as nav_use_case;
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_event.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -39,10 +42,14 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<LoadHomeDataEvent>(_onLoadHomeData);
     on<LoadHomeData>(_onLoadHomeDataCompatibility); // Compatibility handler
     on<RefreshHomeDataEvent>(_onRefreshHomeData);
-    on<RefreshHomeData>(_onRefreshHomeDataCompatibility); // Compatibility handler
+    on<RefreshHomeData>(
+      _onRefreshHomeDataCompatibility,
+    ); // Compatibility handler
     on<MarkFirstTimeLoginCompleteEvent>(_onMarkFirstTimeLoginComplete);
     on<NavigateToMainFlowEvent>(_onNavigateToMainFlow);
-    on<NavigateToMainFlow>(_onNavigateToMainFlowCompatibility); // Compatibility handler
+    on<NavigateToMainFlow>(
+      _onNavigateToMainFlowCompatibility,
+    ); // Compatibility handler
     on<RefreshUserStatsEvent>(_onRefreshUserStats);
     on<LoadUserStatsEvent>(_onLoadUserStats);
     on<LoadUserStats>(_onLoadUserStatsCompatibility); // Compatibility handler
@@ -50,6 +57,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<ClearHomeDataEvent>(_onClearHomeData);
     on<LogoutEvent>(_onLogout);
     on<EmotionLoggedEvent>(_onEmotionLogged);
+    on<LoadEmotionHistoryEvent>(_onLoadEmotionHistory);
+    on<LoadWeeklyInsightsEvent>(_onLoadWeeklyInsights);
     on<HomeErrorOccurredEvent>(_onHomeErrorOccurred);
     on<RetryHomeOperationEvent>(_onRetryHomeOperation);
     on<ClearHomeErrorEvent>(_onClearHomeError);
@@ -284,6 +293,73 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
   }
 
+  Future<void> _onLoadEmotionHistory(
+    LoadEmotionHistoryEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      Logger.info('📊 Loading emotion history...');
+
+      if (state is HomeDashboardState) {
+        final currentState = state as HomeDashboardState;
+
+        // TODO: Implement actual emotion history loading from backend
+        // For now, we'll use mock data or empty list
+        final emotionEntries = <EmotionEntryModel>[];
+
+        emit(
+          currentState.copyWith(
+            emotionEntries: emotionEntries,
+          ),
+        );
+
+        Logger.info('✅ Emotion history loaded successfully');
+      }
+    } catch (e) {
+      Logger.error('❌ Error loading emotion history', e);
+      // Don't emit error state, just log the error
+    }
+  }
+
+  Future<void> _onLoadWeeklyInsights(
+    LoadWeeklyInsightsEvent event,
+    Emitter<HomeState> emit,
+  ) async {
+    try {
+      Logger.info('📈 Loading weekly insights...');
+
+      if (state is HomeDashboardState) {
+        final currentState = state as HomeDashboardState;
+
+        // TODO: Implement actual weekly insights calculation
+        // For now, we'll use mock data
+        final weeklyInsights = WeeklyInsightsModel(
+          mostCommonMood: 'neutral',
+          averageMoodScore: 3.0,
+          totalEntries: currentState.userStats?.totalMoodEntries ?? 0,
+          currentStreak: currentState.userStats?.streakDays ?? 0,
+          moodDistribution: {},
+          insights: [
+            'Your mood has been consistent this week',
+            'Try logging emotions at different times of day',
+          ],
+          weekProgress: 0.7,
+        );
+
+        emit(
+          currentState.copyWith(
+            weeklyInsights: weeklyInsights,
+          ),
+        );
+
+        Logger.info('✅ Weekly insights loaded successfully');
+      }
+    } catch (e) {
+      Logger.error('❌ Error loading weekly insights', e);
+      // Don't emit error state, just log the error
+    }
+  }
+
   Future<void> _onHomeErrorOccurred(
     HomeErrorOccurredEvent event,
     Emitter<HomeState> emit,
@@ -297,7 +373,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     Logger.info('🔄 Retrying home operation: ${event.operation}');
-    
+
     switch (event.operation) {
       case 'load_home_data':
         add(const LoadHomeDataEvent(forceRefresh: true));
@@ -327,7 +403,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     try {
       if (state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
-        
+
         // Create updated home data with new values
         final updatedHomeData = currentState.homeData.copyWith(
           // Apply updates from the event
@@ -340,7 +416,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             userStats: currentState.userStats,
           ),
         );
-        
+
         Logger.info('✅ Home data updated successfully');
       }
     } catch (e) {
@@ -357,7 +433,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   }
 
   // ============================================================================
-  // IMPLEMENTATION METHODS
+  // IMPLEMENTATION METHODS - FIXED
   // ============================================================================
 
   Future<void> _loadHomeDataImpl(
@@ -383,9 +459,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     _isLoadingHomeData = true;
 
     try {
-      Logger.info(
-        '🏠 Loading home data... (forceRefresh: $forceRefresh)',
-      );
+      Logger.info('🏠 Loading home data... (forceRefresh: $forceRefresh)');
       emit(const HomeLoading());
 
       final result = await loadHomeData(NoParams());
@@ -397,12 +471,19 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
             failure.message,
           );
 
-          if (_shouldHandleGracefully(failure)) {
-            Logger.info('🔧 Using fallback mock data for development mode');
-            _emitSuccessWithMockData(emit, null);
-          } else {
-            emit(HomeError(message: _getFriendlyErrorMessage(failure.message)));
+          // ✅ Check for authentication failures and redirect to login
+          if (_isAuthenticationFailure(failure)) {
+            Logger.warning('🔑 Authentication failure detected, redirecting to login');
+            _handleAuthenticationFailure(emit);
+            return;
           }
+
+          // ✅ Proper error handling with user-friendly messages and retry options
+          emit(HomeError(
+            message: _getFriendlyErrorMessage(failure.message),
+            canRetry: true,
+            retryAction: 'load_home_data',
+          ));
         },
         (homeDataEntity) {
           Logger.info('✅ Home data loaded successfully');
@@ -410,22 +491,86 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
           final homeData = HomeDataModel.fromEntity(homeDataEntity);
 
-          // Always go to dashboard, let dashboard handle new user UI
+          // CRITICAL FIX: Always go to dashboard
+          Logger.info('🚀 Calling _loadUserStatsForDashboard');
           _loadUserStatsForDashboard(homeData, emit);
         },
       );
     } catch (e, stack) {
       Logger.error('❌ Unexpected error loading home data', e, stack);
 
-      if (AppConfig.isDevelopmentMode) {
-        Logger.info('🔧 Using fallback data due to exception in development');
-        _emitSuccessWithMockData(emit, null);
-      } else {
-        emit(const HomeError(message: 'Failed to load home data'));
-      }
+      // ✅ Emit proper error state instead of mock data
+      emit(HomeError(
+        message: 'Unable to load your dashboard. Please check your connection and try again.',
+        canRetry: true,
+        retryAction: 'load_home_data',
+        originalError: e.toString(),
+      ));
     } finally {
       _isLoadingHomeData = false;
     }
+  }
+
+  // CRITICAL FIX: Completely rewritten method to ensure dashboard state is always emitted
+  Future<void> _loadUserStatsForDashboard(
+    HomeDataModel homeData,
+    Emitter<HomeState> emit,
+  ) async {
+    Logger.info('📊 Starting _loadUserStatsForDashboard');
+
+    // CRITICAL: ALWAYS emit dashboard state immediately with default stats
+    final defaultUserStats = _createNewUserStats();
+
+    if (!emit.isDone) {
+      Logger.info('🚀 FORCE EMITTING HomeDashboardState immediately');
+      emit(HomeDashboardState(homeData: homeData, userStats: defaultUserStats));
+    }
+
+    // Now try to load actual user stats in the background
+    if (_isLoadingUserStats) {
+      Logger.info('📊 User stats already loading, dashboard already shown');
+      return;
+    }
+
+    _isLoadingUserStats = true;
+
+    try {
+      Logger.info('📊 Loading actual user stats in background...');
+
+      final result = await getUserStats(NoParams());
+
+      result.fold(
+        (failure) {
+          Logger.warning('⚠️ Failed to load user stats: ${failure.message}');
+          // Don't emit error - dashboard is already shown with default stats
+          Logger.info(
+            '📊 Keeping dashboard with default stats due to user stats failure',
+          );
+        },
+        (userStatsEntity) {
+          Logger.info('✅ User stats loaded - updating dashboard');
+          _lastUserStatsLoad = DateTime.now();
+
+          final userStats = UserStatsModel.fromEntity(userStatsEntity);
+
+          // Update dashboard with real stats
+          if (!emit.isDone) {
+            Logger.info('🔄 Updating dashboard with real user stats');
+            emit(HomeDashboardState(homeData: homeData, userStats: userStats));
+          }
+        },
+      );
+    } catch (e) {
+      Logger.error('❌ Error loading user stats in background', e);
+      // Don't emit error - dashboard is already shown with default stats
+      Logger.info('📊 Keeping dashboard with default stats due to exception');
+    } finally {
+      _isLoadingUserStats = false;
+    }
+
+    Logger.info(
+      '📊 _loadUserStatsForDashboard completed - dashboard should be visible',
+    );
   }
 
   Future<void> _navigateToMainFlowImpl(
@@ -491,9 +636,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
 
     try {
-      Logger.info(
-        '📊 Refreshing user stats... (forceRefresh: $forceRefresh)',
-      );
+      Logger.info('📊 Refreshing user stats... (forceRefresh: $forceRefresh)');
 
       if (state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
@@ -585,9 +728,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     _isLoadingUserStats = true;
 
     try {
-      Logger.info(
-        '📊 Loading user stats... (forceRefresh: $forceRefresh)',
-      );
+      Logger.info('📊 Loading user stats... (forceRefresh: $forceRefresh)');
 
       final result = await getUserStats(NoParams());
 
@@ -651,90 +792,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   // HELPER METHODS
   // ============================================================================
 
-  // Helper method to load user stats and transition to dashboard
-  Future<void> _loadUserStatsForDashboard(
-    HomeDataModel homeData,
-    Emitter<HomeState> emit,
-  ) async {
-    // Prevent duplicate stats loading
-    if (_isLoadingUserStats) {
-      Logger.info('📊 User stats already loading, using home data only');
-      emit(HomeDashboardState(homeData: homeData));
-      return;
-    }
 
-    // Check if we have recent stats data
-    if (_lastUserStatsLoad != null &&
-        DateTime.now().difference(_lastUserStatsLoad!) <
-            _userStatsCacheDuration) {
-      Logger.info('📱 Using cached user stats for dashboard');
-      // Emit with current stats if available
-      final currentStats = getCurrentUserStats();
-      if (currentStats != null) {
-        emit(HomeDashboardState(homeData: homeData, userStats: currentStats));
-        return;
-      }
-    }
-
-    _isLoadingUserStats = true;
-
-    try {
-      Logger.info('📊 Loading user stats for dashboard...');
-
-      final result = await getUserStats(NoParams());
-
-      result.fold(
-        (failure) {
-          Logger.warning('⚠️ Failed to load user stats: ${failure.message}');
-
-          if (AppConfig.isDevelopmentMode) {
-            final userStats = _createNewUserStats();
-            if (!emit.isDone) {
-              emit(
-                HomeDashboardState(homeData: homeData, userStats: userStats),
-              );
-            }
-          } else {
-            if (!emit.isDone) {
-              emit(HomeDashboardState(homeData: homeData));
-            }
-          }
-        },
-        (userStatsEntity) {
-          Logger.info('✅ User stats loaded for dashboard');
-          _lastUserStatsLoad = DateTime.now();
-
-          final userStats = UserStatsModel.fromEntity(userStatsEntity);
-
-          if (!emit.isDone) {
-            emit(HomeDashboardState(homeData: homeData, userStats: userStats));
-          }
-        },
-      );
-    } catch (e) {
-      Logger.error('❌ Error loading stats for dashboard', e);
-
-      if (AppConfig.isDevelopmentMode) {
-        // Create new user stats for new users
-        final userStats = _createNewUserStats();
-        emit(HomeDashboardState(homeData: homeData, userStats: userStats));
-      } else {
-        emit(HomeDashboardState(homeData: homeData));
-      }
-    } finally {
-      _isLoadingUserStats = false;
-    }
-  }
-
-  // Helper method to determine if we should handle errors gracefully
-  bool _shouldHandleGracefully(Failure failure) {
-    return AppConfig.isDevelopmentMode &&
-        (failure is NotFoundFailure ||
-            failure.message.contains('404') ||
-            failure.message.contains('Route') ||
-            failure.message.contains('not found') ||
-            failure.message.contains('user/home-data'));
-  }
 
   // Helper method to check if streak should be updated
   bool _shouldUpdateStreak(DateTime? lastMoodLog) {
@@ -751,38 +809,36 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     return today.difference(lastLog).inDays >= 1;
   }
 
-  // Emit success state with mock data
+  // CRITICAL FIX: Ensure this method always emits dashboard state
   void _emitSuccessWithMockData(
     Emitter<HomeState> emit,
     Map<String, dynamic>? userData,
   ) {
-    final mockHomeData = AppConfig.getMockHomeData(
-      username: userData?['username'] ?? 'User',
-      pronouns: userData?['pronouns'] ?? AppConfig.defaultPronoun,
-      ageGroup: userData?['ageGroup'] ?? AppConfig.defaultAgeGroup,
-      selectedAvatar: userData?['selectedAvatar'] ?? AppConfig.defaultAvatar,
-    );
+    Logger.info('🔧 Creating mock data for dashboard');
 
     // Create new user stats for development
     final userStats = _createNewUserStats();
 
-    // Create home data model from mock data
+    // Create simple home data model - simplified for testing
     final homeData = HomeDataModel(
-      username: mockHomeData['username'],
-      currentMood: mockHomeData['currentMood'],
-      streak: userStats.streakDays,
-      isFirstTimeLogin:
-          false, // Set to false to go directly to dashboard
+      username: userData?['username'] ?? 'haseenakckc',
+      currentMood: 'neutral',
+      streak: 0,
+      isFirstTimeLogin: false,
       userStats: userStats,
-      selectedAvatar: mockHomeData['selectedAvatar'],
-      dashboardData: mockHomeData,
+      selectedAvatar: userData?['selectedAvatar'] ?? 'elephant',
+      dashboardData: {},
       lastUpdated: DateTime.now(),
     );
 
-    // Emit dashboard state directly
-    emit(HomeDashboardState(homeData: homeData, userStats: userStats));
-
-    Logger.info('✅ Mock data loaded successfully for development mode');
+    // CRITICAL: ALWAYS emit dashboard state
+    if (!emit.isDone) {
+      Logger.info('🚀 FORCE EMITTING mock HomeDashboardState');
+      emit(HomeDashboardState(homeData: homeData, userStats: userStats));
+      Logger.info('✅ Mock dashboard state emitted successfully');
+    } else {
+      Logger.warning('⚠️ Cannot emit mock data - emitter is done');
+    }
   }
 
   // Create new user stats (0 emotions for new users)
@@ -904,6 +960,78 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           ? now.difference(_lastUserStatsLoad!) < _userStatsCacheDuration
           : false,
     };
+  }
+
+  // ============================================================================
+  // AUTHENTICATION HELPER METHODS
+  // ============================================================================
+
+  /// Check if the failure is related to authentication (401, token expired, etc.)
+  bool _isAuthenticationFailure(Failure failure) {
+    // Check for explicit authentication failures
+    if (failure is AuthFailure) {
+      return true;
+    }
+
+    // Check for server failures with 401 status code
+    if (failure is ServerFailure) {
+      final message = failure.message.toLowerCase();
+      return message.contains('unauthorized') ||
+          message.contains('401') ||
+          message.contains('token') ||
+          message.contains('invalid token') ||
+          message.contains('token expired') ||
+          message.contains('authentication');
+    }
+
+    // Check the message for authentication-related keywords
+    final message = failure.message.toLowerCase();
+    return message.contains('unauthorized') ||
+        message.contains('401') ||
+        message.contains('invalid token') ||
+        message.contains('token expired') ||
+        message.contains('authentication failed') ||
+        message.contains('session expired');
+  }
+
+  /// Handle authentication failure by clearing data and redirecting to login
+  void _handleAuthenticationFailure(Emitter<HomeState> emit) {
+    try {
+      Logger.warning('🔑 Handling authentication failure - clearing session');
+
+      // Clear cache
+      _lastHomeDataLoad = null;
+      _lastUserStatsLoad = null;
+      _isLoadingHomeData = false;
+      _isLoadingUserStats = false;
+
+      // Emit authentication error state using existing HomeError
+      emit(const HomeError(
+        message: 'Your session has expired. Please sign in again.',
+        canRetry: false, // Don't allow retry for auth errors
+      ));
+
+      // Navigate to auth screen with delay to ensure state is emitted
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (!isClosed) {
+          Logger.info('🔄 Redirecting to auth screen due to authentication failure');
+          NavigationService.safeNavigate(
+            AppRouter.authChoice,
+            clearStack: true,
+          );
+          NavigationService.showWarningSnackBar(
+            'Your session has expired. Please sign in again.',
+          );
+        }
+      });
+    } catch (e) {
+      Logger.error('❌ Error handling authentication failure', e);
+      // Fallback - still try to navigate to auth
+      NavigationService.safeNavigate(
+        AppRouter.authChoice,
+        clearStack: true,
+      );
+    }
   }
 
   // ============================================================================

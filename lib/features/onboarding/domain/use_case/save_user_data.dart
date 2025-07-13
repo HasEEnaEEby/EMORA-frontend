@@ -1,5 +1,3 @@
-// features/onboarding/domain/use_case/save_user_data.dart
-
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 
@@ -15,7 +13,6 @@ class SaveUserData implements UseCase<bool, SaveUserDataParams> {
 
   @override
   Future<Either<Failure, bool>> call(SaveUserDataParams params) async {
-    // FIXED: Use the correct method name from your repository
     return await repository.saveUserOnboardingData(params.userData);
   }
 }
@@ -26,5 +23,5 @@ class SaveUserDataParams extends Equatable {
   const SaveUserDataParams({required this.userData});
 
   @override
-  List<Object?> get props => [userData];
+  List<Object> get props => [userData];
 }

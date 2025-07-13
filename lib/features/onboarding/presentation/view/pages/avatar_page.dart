@@ -1,3 +1,4 @@
+// lib/features/onboarding/presentation/view/pages/avatar_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -28,7 +29,7 @@ class AvatarPage extends StatefulWidget {
 class _AvatarPageState extends State<AvatarPage>
     with AutomaticKeepAliveClientMixin {
   String? _selectedAvatar;
-  late List<String> _avatarOptions;
+  late List<dynamic> _avatarOptions; // Changed to handle mixed types
 
   @override
   bool get wantKeepAlive => true;
@@ -37,30 +38,104 @@ class _AvatarPageState extends State<AvatarPage>
   void initState() {
     super.initState();
     _selectedAvatar = widget.userData.selectedAvatar;
-
-    final stepData = widget.step.data;
-    _avatarOptions =
-        (stepData?['avatars'] as List<dynamic>?)?.cast<String>() ??
-        [
-          'panda',
-          'elephant',
-          'horse',
-          'rabbit',
-          'fox',
-          'zebra',
-          'bear',
-          'pig',
-          'raccoon',
-        ];
+    _initializeAvatarOptions();
   }
 
-  void _onAvatarSelected(String avatar) {
+  void _initializeAvatarOptions() {
+    final stepData = widget.step.data;
+
+    // Default avatar options
+    final defaultAvatars = [
+      'panda',
+      'elephant',
+      'horse',
+      'rabbit',
+      'fox',
+      'zebra',
+      'bear',
+      'pig',
+      'raccoon',
+      'cat',
+      'dog',
+      'lion',
+    ];
+
+    // FIXED: Handle both List and nested structure from API
+    if (stepData != null) {
+      List<dynamic> apiAvatars = [];
+
+      // Try different possible structures
+      if (stepData['avatars'] is List) {
+        apiAvatars = stepData['avatars'] as List<dynamic>;
+      } else if (stepData['options'] is List) {
+        apiAvatars = stepData['options'] as List<dynamic>;
+      } else if (stepData is List) {
+        apiAvatars = stepData as List<dynamic>;
+      }
+
+      if (apiAvatars.isNotEmpty) {
+        _avatarOptions = apiAvatars;
+        print('🔧 Avatar options from API: ${_avatarOptions.length} items');
+
+        // Debug: Show what we're getting from API
+        for (int i = 0; i < _avatarOptions.length && i < 3; i++) {
+          print(
+            '  Avatar $i: ${_avatarOptions[i]} (${_avatarOptions[i].runtimeType})',
+          );
+        }
+      } else {
+        _avatarOptions = defaultAvatars;
+        print(
+          '🔧 Avatar options from default (API structure empty): ${_avatarOptions.length} items',
+        );
+      }
+    } else {
+      _avatarOptions = defaultAvatars;
+      print(
+        '🔧 Avatar options from default (no API data): ${_avatarOptions.length} items',
+      );
+    }
+
+    // Validate current selection
+    if (_selectedAvatar != null) {
+      final extractedValues = _avatarOptions.map(_extractAvatarValue).toList();
+      final isValidSelection = extractedValues.contains(_selectedAvatar);
+
+      if (!isValidSelection) {
+        print(
+          '⚠️ Current selection "$_selectedAvatar" not in available options, clearing selection',
+        );
+        _selectedAvatar = null;
+      }
+    }
+  }
+
+  // FIXED: Safe avatar value extraction
+  String _extractAvatarValue(dynamic avatar) {
+    if (avatar is String) {
+      return avatar;
+    } else if (avatar is Map<String, dynamic>) {
+      return avatar['value']?.toString() ??
+          avatar['name']?.toString() ??
+          avatar['id']?.toString() ??
+          avatar['avatar']?.toString() ??
+          avatar.toString();
+    } else {
+      return avatar.toString();
+    }
+  }
+
+  void _onAvatarSelected(String avatarValue) {
     setState(() {
-      _selectedAvatar = avatar;
+      _selectedAvatar = avatarValue;
     });
 
-    // Save to BLoC
-    context.read<OnboardingBloc>().add(SaveAvatar(avatar));
+    print('💾 Saving avatar: "$avatarValue"');
+    print(
+      '📋 Available options: ${_avatarOptions.map(_extractAvatarValue).join(', ')}',
+    );
+
+    context.read<OnboardingBloc>().add(SaveAvatar(avatarValue));
   }
 
   @override
@@ -77,8 +152,8 @@ class _AvatarPageState extends State<AvatarPage>
           const SizedBox(height: 32),
           _buildDescriptionText(),
           const SizedBox(height: 40),
-          _buildAvatarGrid(),
-          const Spacer(flex: 1),
+          Expanded(flex: 3, child: _buildAvatarGrid()),
+          const SizedBox(height: 20),
           _buildContinueButton(),
           const SizedBox(height: 32),
         ],
@@ -140,13 +215,29 @@ class _AvatarPageState extends State<AvatarPage>
   }
 
   Widget _buildAvatarGrid() {
-    return Expanded(
-      flex: 3,
-      child: AvatarSelectionGrid(
-        avatars: _avatarOptions,
-        selectedAvatar: _selectedAvatar,
-        onAvatarSelected: _onAvatarSelected,
-      ),
+    if (_avatarOptions.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.pets, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              'No avatars available',
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return AvatarSelectionGrid(
+      avatars: _avatarOptions, // Now passing List<dynamic>
+      selectedAvatar: _selectedAvatar,
+      onAvatarSelected: _onAvatarSelected,
+      crossAxisCount: 3,
+      mainAxisSpacing: 16,
+      crossAxisSpacing: 16,
     );
   }
 

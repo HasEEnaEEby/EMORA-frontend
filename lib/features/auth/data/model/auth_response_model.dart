@@ -1,4 +1,4 @@
-
+// lib/features/auth/data/model/auth_response_model.dart
 import '../../domain/entity/auth_response_entity.dart';
 import 'user_model.dart';
 
@@ -6,19 +6,18 @@ class AuthResponseModel extends AuthResponseEntity {
   const AuthResponseModel({
     required super.user,
     required super.token,
-    required super.expiresIn,
+    super.refreshToken,
+    super.expiresAt,
   });
 
   factory AuthResponseModel.fromJson(Map<String, dynamic> json) {
-    // Handle different response structures
-    final userJson = json['user'] ?? json;
-    final token = json['token'] ?? json['access_token'] ?? '';
-    final expiresIn = json['expiresIn'] ?? json['expires_in'] ?? '7d';
-    
     return AuthResponseModel(
-      user: UserModel.fromJson(userJson),
-      token: token,
-      expiresIn: expiresIn,
+      user: UserModel.fromJson(json['user']),
+      token: json['token'] as String,
+      refreshToken: json['refreshToken'] as String?,
+      expiresAt: json['expiresAt'] != null
+          ? DateTime.parse(json['expiresAt'] as String)
+          : null,
     );
   }
 
@@ -26,7 +25,8 @@ class AuthResponseModel extends AuthResponseEntity {
     return {
       'user': (user as UserModel).toJson(),
       'token': token,
-      'expiresIn': expiresIn,
+      'refreshToken': refreshToken,
+      'expiresAt': expiresAt?.toIso8601String(),
     };
   }
 
@@ -34,11 +34,17 @@ class AuthResponseModel extends AuthResponseEntity {
     return AuthResponseModel(
       user: entity.user,
       token: entity.token,
-      expiresIn: entity.expiresIn,
+      refreshToken: entity.refreshToken,
+      expiresAt: entity.expiresAt,
     );
   }
 
   AuthResponseEntity toEntity() {
-    return AuthResponseEntity(user: user, token: token, expiresIn: expiresIn);
+    return AuthResponseEntity(
+      user: user,
+      token: token,
+      refreshToken: refreshToken,
+      expiresAt: expiresAt,
+    );
   }
 }

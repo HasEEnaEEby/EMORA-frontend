@@ -25,19 +25,87 @@ class UserStatsModel extends Equatable {
     required this.monthlyStats,
   });
 
+  // Enhanced factory constructor with safe type handling
   factory UserStatsModel.fromJson(Map<String, dynamic> json) {
+    try {
+      return UserStatsModel(
+        totalMoodEntries: _safeInt(json['totalMoodEntries']),
+        streakDays: _safeInt(json['streakDays']),
+        totalSessions: _safeInt(json['totalSessions']),
+        moodCheckins: _safeInt(json['moodCheckins']),
+        averageMoodScore: _safeDouble(json['averageMoodScore']),
+        mostFrequentMood: _safeString(json['mostFrequentMood']),
+        lastMoodLog: _parseDateTime(json['lastMoodLog']),
+        weeklyStats: _parseMap(json['weeklyStats']),
+        monthlyStats: _parseMap(json['monthlyStats']),
+      );
+    } catch (e) {
+      return UserStatsModel.empty();
+    }
+  }
+
+  // Create an empty/default instance for fallback
+  factory UserStatsModel.empty() {
     return UserStatsModel(
-      totalMoodEntries: json['totalMoodEntries'] ?? 0,
-      streakDays: json['streakDays'] ?? 0,
-      totalSessions: json['totalSessions'] ?? 0,
-      moodCheckins: json['moodCheckins'] ?? 0,
-      averageMoodScore: (json['averageMoodScore'] ?? 0.0).toDouble(),
-      mostFrequentMood: json['mostFrequentMood'] ?? 'neutral',
-      lastMoodLog:
-          DateTime.tryParse(json['lastMoodLog'] ?? '') ?? DateTime.now(),
-      weeklyStats: Map<String, dynamic>.from(json['weeklyStats'] ?? {}),
-      monthlyStats: Map<String, dynamic>.from(json['monthlyStats'] ?? {}),
+      totalMoodEntries: 0,
+      streakDays: 0,
+      totalSessions: 0,
+      moodCheckins: 0,
+      averageMoodScore: 0.0,
+      mostFrequentMood: 'neutral',
+      lastMoodLog: DateTime.now(),
+      weeklyStats: {},
+      monthlyStats: {},
     );
+  }
+
+  // Safe type conversion methods
+  static int _safeInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static double _safeDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
+  static String _safeString(dynamic value) {
+    if (value == null) return 'neutral';
+    return value.toString();
+  }
+
+  static DateTime _parseDateTime(dynamic value) {
+    try {
+      if (value == null) return DateTime.now();
+      if (value is DateTime) return value;
+      if (value is String && value.isNotEmpty) {
+        return DateTime.tryParse(value) ?? DateTime.now();
+      }
+      if (value is int) {
+        return DateTime.fromMillisecondsSinceEpoch(value);
+      }
+      return DateTime.now();
+    } catch (e) {
+      return DateTime.now();
+    }
+  }
+
+  static Map<String, dynamic> _parseMap(dynamic value) {
+    try {
+      if (value == null) return {};
+      if (value is Map<String, dynamic>) return value;
+      if (value is Map) return Map<String, dynamic>.from(value);
+      return {};
+    } catch (e) {
+      return {};
+    }
   }
 
   factory UserStatsModel.fromEntity(UserStatsEntity entity) {

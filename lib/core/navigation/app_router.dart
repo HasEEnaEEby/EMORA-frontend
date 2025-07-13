@@ -1,7 +1,12 @@
-// lib/core/navigation/app_router.dart - COMPLETE FIXED VERSION
+import 'dart:async';
+
 import 'package:emora_mobile_app/features/auth/presentation/view/auth_choice_page.dart';
+import 'package:emora_mobile_app/features/home/presentation/view/pages/friends_view.dart';
+import 'package:emora_mobile_app/features/home/presentation/view/pages/insights_view.dart';
+import 'package:emora_mobile_app/features/home/presentation/view/pages/profile_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 
 import '../../app/di/injection_container.dart' as di;
 import '../../core/config/app_config.dart';
@@ -19,6 +24,7 @@ import '../../features/home/presentation/view_model/bloc/home_state.dart';
 import '../../features/onboarding/presentation/view/onboarding_view.dart';
 import '../../features/onboarding/presentation/view_model/bloc/onboarding_bloc.dart';
 import '../../features/onboarding/presentation/view_model/bloc/onboarding_event.dart';
+import '../../features/profile/presentation/view_model/profile_bloc.dart';
 import '../../features/splash/presentation/view/splash_view.dart';
 import '../../features/splash/presentation/view_model/cubit/splash_cubit.dart';
 import 'navigation_service.dart';
@@ -38,6 +44,7 @@ class AppRouter {
   static const String insights = '/insights';
   static const String friends = '/friends';
   static const String profile = '/profile';
+  static const String profileFull = '/profile-full'; // NEW: Full profile page
   static const String settings = '/settings';
 
   /// Main route generator with proper error handling
@@ -49,7 +56,7 @@ class AppRouter {
 
     try {
       RouteAnalytics.trackNavigation(routeName, arguments);
-      
+
       switch (routeName) {
         case splash:
           return _createSplashRoute(settings);
@@ -70,8 +77,15 @@ class AppRouter {
           return _createOnboardingRoute(settings);
 
         case home:
-        case dashboard: // Both routes go to the same place now
           return _createHomeRoute(settings);
+
+        case dashboard:
+          // ✅ Redirect dashboard to home for consistency
+          Logger.info('🔄 Redirecting /dashboard to /home for consistency');
+          return _createHomeRoute(RouteSettings(
+            name: home, // Change route name to home for clarity
+            arguments: settings.arguments,
+          ));
 
         case moodMap:
           return _createMoodMapRoute(settings);
@@ -82,8 +96,17 @@ class AppRouter {
         case friends:
           return _createFriendsRoute(settings);
 
-        case profile:
-          return _createProfileRoute(settings);
+        case '/profile':
+          return MaterialPageRoute(
+            builder: (context) => BlocProvider(
+              create: (context) => GetIt.instance<ProfileBloc>(),
+              child: const ProfileView(),
+            ),
+            settings: settings,
+          );
+
+        case profileFull:
+          return _createFullProfileRoute(settings); // NEW: Full profile page
 
         default:
           Logger.warning('❌ Unknown route: $routeName');
@@ -91,11 +114,11 @@ class AppRouter {
       }
     } catch (e, stackTrace) {
       Logger.error('❌ Route generation error for $routeName', e, stackTrace);
-      
+
       if (AppConfig.isDebugMode) {
         return _createDebugErrorRoute(routeName, e.toString(), stackTrace);
       }
-      
+
       return _createErrorRoute(routeName, 'Navigation failed');
     }
   }
@@ -195,7 +218,7 @@ class AppRouter {
     );
   }
 
-  // FIXED HOME ROUTE - Simplified and Direct
+  // CRITICAL FIX: Simplified and guaranteed to work home route
   static Route<dynamic> _createHomeRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
@@ -212,18 +235,29 @@ class AppRouter {
         }
 
         Logger.info('✅ Creating home route with enhanced dashboard');
-        
+
         // Create a comprehensive home wrapper with all necessary BLoCs
         return MultiBlocProvider(
           providers: [
             BlocProvider<HomeBloc>(
               create: (_) => di.sl<HomeBloc>()..add(const LoadHomeData()),
+              lazy: false,
             ),
             BlocProvider<EmotionBloc>(
               create: (_) => di.sl<EmotionBloc>(),
+              lazy: false,
+            ),
+            // NEW: Add ProfileBloc for tab-based profile access
+            BlocProvider<ProfileBloc>(
+              create: (_) => di.sl<ProfileBloc>(),
+              lazy: true, // Lazy load since it's not always needed
             ),
           ],
-          child: EnhancedHomeWrapper(userData: arguments),
+          child: Builder(
+            builder: (context) {
+              return EnhancedHomeWrapper(userData: arguments);
+            },
+          ),
         );
       },
     );
@@ -236,24 +270,45 @@ class AppRouter {
     );
   }
 
-  static Route<dynamic> _createInsightsRoute(RouteSettings settings) {
-    return _createSlideRoute(
-      settings: settings,
-      builder: (context) => const InsightsPlaceholderView(),
-    );
-  }
-
   static Route<dynamic> _createFriendsRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
-      builder: (context) => const FriendsPlaceholderView(),
+      builder: (context) => const FriendsView(),
     );
   }
 
-  static Route<dynamic> _createProfileRoute(RouteSettings settings) {
+  static Route<dynamic> _createInsightsRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
-      builder: (context) => const ProfilePlaceholderView(),
+      builder: (context) => const InsightsView(),
+    );
+  }
+
+  // NEW: Tab-based profile route (simplified for bottom navigation)
+  static Route<dynamic> _createProfileTabRoute(RouteSettings settings) {
+    return _createSlideRoute(
+      settings: settings,
+      builder: (context) => const ProfileView(), // Home tab profile
+    );
+  }
+
+  // NEW: Full-screen profile route with BLoC
+  static Route<dynamic> _createFullProfileRoute(RouteSettings settings) {
+    return _createSlideRoute(
+      settings: settings,
+      builder: (context) {
+        final featureFlags = di.getFeatureFlags();
+
+        if (!featureFlags.isProfileEnabled) {
+          Logger.warning('❌ Profile feature is disabled');
+          return const ProfileDisabledView();
+        }
+
+        return BlocProvider<ProfileBloc>(
+          create: (_) => di.sl<ProfileBloc>(),
+          child: const FullProfileView(), // Full-featured profile page
+        );
+      },
     );
   }
 
@@ -378,6 +433,7 @@ class AppRouter {
       case insights:
       case friends:
       case profile:
+      case profileFull: // NEW: Full profile requires auth
       case settings:
         if (context != null) {
           try {
@@ -405,12 +461,28 @@ class AppRouter {
       await NavigationService.safeNavigate(authChoice, clearStack: true);
     }
   }
+
+  // NEW: Navigate to full profile with feature check
+  static Future<void> navigateToProfile(BuildContext context) async {
+    final featureFlags = di.getFeatureFlags();
+
+    if (!featureFlags.isProfileEnabled) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile feature is currently disabled'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    await navigateToAuthenticatedRoute(profileFull, context);
+  }
 }
 
 // ============================================================================
-// ENHANCED HOME WRAPPER - Replaces the problematic AdaptiveHomeView
+// ENHANCED HOME WRAPPER - COMPLETELY FIXED
 // ============================================================================
-
 class EnhancedHomeWrapper extends StatefulWidget {
   final Map<String, dynamic>? userData;
 
@@ -421,13 +493,39 @@ class EnhancedHomeWrapper extends StatefulWidget {
 }
 
 class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
+  Timer? _loadingTimeoutTimer;
+  bool _shouldShowDashboard = false;
+
   @override
   void initState() {
     super.initState();
+
     // Ensure home data is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HomeBloc>().add(const LoadHomeData());
+      if (mounted) {
+        try {
+          context.read<HomeBloc>().add(const LoadHomeData());
+        } catch (e) {
+          Logger.error('Failed to trigger home data load: $e');
+        }
+      }
     });
+
+    // CRITICAL FIX: Set a timeout to show dashboard if loading takes too long
+    _loadingTimeoutTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted && !_shouldShowDashboard) {
+        Logger.warning('⏰ Loading timeout reached - forcing dashboard display');
+        setState(() {
+          _shouldShowDashboard = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _loadingTimeoutTimer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -439,31 +537,44 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
           if (state is HomeError) {
             Logger.error('Home error: ${state.message}');
             // Show error but don't block the UI
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Connection issue: ${state.message}'),
-                backgroundColor: Colors.orange,
-                action: SnackBarAction(
-                  label: 'Retry',
-                  onPressed: () {
-                    context.read<HomeBloc>().add(const LoadHomeData());
-                  },
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Connection issue: ${state.message}'),
+                  backgroundColor: Colors.orange,
+                  action: SnackBarAction(
+                    label: 'Retry',
+                    onPressed: () {
+                      context.read<HomeBloc>().add(const LoadHomeData());
+                    },
+                  ),
                 ),
-              ),
-            );
+              );
+            }
+          } else if (state is HomeDashboardState) {
+            // Cancel timeout timer when we get to dashboard state
+            _loadingTimeoutTimer?.cancel();
+            if (!_shouldShowDashboard) {
+              setState(() {
+                _shouldShowDashboard = true;
+              });
+            }
           }
         },
         child: BlocBuilder<HomeBloc, HomeState>(
           builder: (context, state) {
             Logger.info('🏠 Home state: ${state.runtimeType}');
-            
-            if (state is HomeLoading || state is HomeInitial) {
+
+            // CRITICAL FIX: Show dashboard if timeout occurred OR we're in success state
+            if (_shouldShowDashboard || state is HomeDashboardState) {
+              return const Dashboard();
+            } else if (state is HomeLoading || state is HomeInitial) {
               return _buildLoadingView();
             } else if (state is HomeError) {
               // Show dashboard with error state instead of blocking
               return const Dashboard();
             } else {
-              // Success state or any other state - show dashboard
+              // Fallback - show dashboard for any unknown state
               return const Dashboard();
             }
           },
@@ -480,7 +591,7 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Animated loading indicator
+              // ✅ Enhanced loading indicator with smooth transition
               Container(
                 width: 120,
                 height: 120,
@@ -511,20 +622,20 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
                         strokeCap: StrokeCap.round,
                       ),
                     ),
-                    Text('🌍', style: TextStyle(fontSize: 32)),
+                    Text('🏠', style: TextStyle(fontSize: 32)),
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
-              // Gradient text
+
+              // ✅ Clearer loading message
               ShaderMask(
                 shaderCallback: (bounds) => const LinearGradient(
                   colors: [Color(0xFF8B5CF6), Color(0xFFD8A5FF)],
                 ).createShader(bounds),
                 child: const Text(
-                  'Loading EMORA',
+                  'Setting up your dashboard',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -533,11 +644,11 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               Text(
-                'Preparing your emotional dashboard...',
+                'Almost ready! Just a moment while we prepare your personal space...',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.grey[400],
@@ -545,29 +656,127 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
                   fontWeight: FontWeight.w400,
                 ),
               ),
-              
+
               const SizedBox(height: 40),
-              
-              // Skip button for development
-              if (AppConfig.isDebugMode)
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => const Dashboard(),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    'Skip Loading (Debug)',
+
+              // ✅ More encouraging continue button
+              TextButton(
+                onPressed: () {
+                  Logger.info('👆 User manually continued to dashboard');
+                  setState(() {
+                    _shouldShowDashboard = true;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Text(
+                    'Enter Dashboard →',
                     style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
+                      color: Color(0xFF8B5CF6),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// PROFILE VIEWS
+// ============================================================================
+
+// NEW: Full-featured profile view with BLoC integration
+class FullProfileView extends StatelessWidget {
+  const FullProfileView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<ProfileBloc>(
+      create: (_) => di.sl<ProfileBloc>(),
+      child:
+          const ProfileView(), // Your existing ProfileView from the widget files
+    );
+  }
+}
+
+// NEW: Profile disabled view
+class ProfileDisabledView extends StatelessWidget {
+  const ProfileDisabledView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF090110),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF090110),
+        title: const Text('Profile', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Color(0xFF8B5CF6)),
+        elevation: 0,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey.withOpacity(0.1),
+                border: Border.all(
+                  color: Colors.grey.withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: const Icon(Icons.person_off, size: 50, color: Colors.grey),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Profile Unavailable',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Profile features are currently disabled.\nPlease check back later.',
+              style: TextStyle(fontSize: 16, color: Colors.grey[400]),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B5CF6),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 0,
+              ),
+              child: const Text('Go Back'),
+            ),
+          ],
         ),
       ),
     );
@@ -603,108 +812,6 @@ class MoodMapPlaceholderView extends StatelessWidget {
             ),
             Text(
               'Explore emotions worldwide!',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class InsightsPlaceholderView extends StatelessWidget {
-  const InsightsPlaceholderView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF090110),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF090110),
-        title: const Text('Insights', style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Color(0xFF8B5CF6)),
-        elevation: 0,
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.insights, size: 80, color: Color(0xFF8B5CF6)),
-            SizedBox(height: 16),
-            Text(
-              'Emotional Insights',
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
-            Text(
-              'Deep analytics coming soon!',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class FriendsPlaceholderView extends StatelessWidget {
-  const FriendsPlaceholderView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF090110),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF090110),
-        title: const Text('Friends', style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Color(0xFF8B5CF6)),
-        elevation: 0,
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.people, size: 80, color: Color(0xFF8B5CF6)),
-            SizedBox(height: 16),
-            Text(
-              'Friends & Social',
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
-            Text(
-              'Connect with your emotional community!',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ProfilePlaceholderView extends StatelessWidget {
-  const ProfilePlaceholderView({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF090110),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF090110),
-        title: const Text('Profile', style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Color(0xFF8B5CF6)),
-        elevation: 0,
-      ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.person, size: 80, color: Color(0xFF8B5CF6)),
-            SizedBox(height: 16),
-            Text(
-              'Your Profile',
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
-            Text(
-              'Personalization options coming soon!',
               style: TextStyle(color: Colors.grey, fontSize: 16),
             ),
           ],

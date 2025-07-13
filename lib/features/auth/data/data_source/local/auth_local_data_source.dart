@@ -1,60 +1,94 @@
+// lib/features/auth/data/data_source/local/auth_local_data_source.dart
 import 'dart:convert';
 
+import 'package:emora_mobile_app/core/config/app_config.dart';
+import 'package:emora_mobile_app/core/errors/exceptions.dart';
+import 'package:emora_mobile_app/core/utils/logger.dart';
+import 'package:emora_mobile_app/features/auth/data/model/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../../core/config/app_config.dart';
-import '../../../../../core/errors/exceptions.dart';
-import '../../model/user_model.dart';
-
 abstract class AuthLocalDataSource {
-  Future<void> saveToken(String token);
-  Future<String?> getToken();
-  Future<void> saveUser(UserModel user);
-  Future<UserModel?> getUser();
+  Future<void> saveAuthToken(String token);
+  Future<String?> getAuthToken();
+  Future<void> saveRefreshToken(String refreshToken);
+  Future<String?> getRefreshToken();
+  Future<void> saveUserData(UserModel user);
+  Future<UserModel?> getUserData();
+  Future<UserModel?> getCurrentUser(); // Add this method
   Future<void> clearAuthData();
-  Future<bool> isLoggedIn();
-  // NEW: Check if user has ever been logged in
   Future<bool> hasEverBeenLoggedIn();
-  Future<void> markAsLoggedInBefore();
+  Future<void> markAsLoggedIn();
 }
 
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   final SharedPreferences sharedPreferences;
 
-  // Storage keys
-  static const String _hasEverBeenLoggedInKey = 'has_ever_been_logged_in';
-
   AuthLocalDataSourceImpl({required this.sharedPreferences});
 
   @override
-  Future<void> saveToken(String token) async {
+  Future<void> saveAuthToken(String token) async {
     try {
       final success = await sharedPreferences.setString(
         AppConfig.authTokenKey,
         token,
       );
       if (!success) {
-        throw const CacheException(message: 'Failed to save auth token');
+        throw CacheException(message: 'Failed to save auth token');
       }
-
-      // Mark that user has been logged in before
-      await markAsLoggedInBefore();
+      Logger.info('💾 Auth token saved successfully');
     } catch (e) {
+      Logger.error('❌ Failed to save auth token', e);
       throw CacheException(message: 'Failed to save auth token: $e');
     }
   }
 
   @override
-  Future<String?> getToken() async {
+  Future<String?> getAuthToken() async {
     try {
-      return sharedPreferences.getString(AppConfig.authTokenKey);
+      final token = sharedPreferences.getString(AppConfig.authTokenKey);
+      Logger.info(
+        '🔑 Retrieved auth token: ${token != null ? 'Found' : 'Not found'}',
+      );
+      return token;
     } catch (e) {
-      throw CacheException(message: 'Failed to get auth token: $e');
+      Logger.error('❌ Failed to get auth token', e);
+      return null;
     }
   }
 
   @override
-  Future<void> saveUser(UserModel user) async {
+  Future<void> saveRefreshToken(String refreshToken) async {
+    try {
+      final success = await sharedPreferences.setString(
+        AppConfig.refreshTokenKey,
+        refreshToken,
+      );
+      if (!success) {
+        throw CacheException(message: 'Failed to save refresh token');
+      }
+      Logger.info('💾 Refresh token saved successfully');
+    } catch (e) {
+      Logger.error('❌ Failed to save refresh token', e);
+      throw CacheException(message: 'Failed to save refresh token: $e');
+    }
+  }
+
+  @override
+  Future<String?> getRefreshToken() async {
+    try {
+      final token = sharedPreferences.getString(AppConfig.refreshTokenKey);
+      Logger.info(
+        '🔄 Retrieved refresh token: ${token != null ? 'Found' : 'Not found'}',
+      );
+      return token;
+    } catch (e) {
+      Logger.error('❌ Failed to get refresh token', e);
+      return null;
+    }
+  }
+
+  @override
+  Future<void> saveUserData(UserModel user) async {
     try {
       final userJson = jsonEncode(user.toJson());
       final success = await sharedPreferences.setString(
@@ -62,28 +96,49 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
         userJson,
       );
       if (!success) {
-        throw const CacheException(message: 'Failed to save user data');
+        throw CacheException(message: 'Failed to save user data');
       }
+      Logger.info('💾 User data saved successfully');
     } catch (e) {
+      Logger.error('❌ Failed to save user data', e);
       throw CacheException(message: 'Failed to save user data: $e');
     }
   }
 
   @override
-  Future<UserModel?> getUser() async {
+  Future<UserModel?> getUserData() async {
     try {
       final userJson = sharedPreferences.getString(AppConfig.userDataKey);
       if (userJson != null) {
-        try {
-          final userMap = jsonDecode(userJson) as Map<String, dynamic>;
-          return UserModel.fromJson(userMap);
-        } catch (e) {
-          throw const CacheException(message: 'Failed to parse user data');
-        }
+        final userMap = jsonDecode(userJson) as Map<String, dynamic>;
+        final user = UserModel.fromJson(userMap);
+        Logger.info('👤 Retrieved user data: ${user.username}');
+        return user;
       }
+      Logger.info('👤 No user data found');
       return null;
     } catch (e) {
-      throw CacheException(message: 'Failed to get user data: $e');
+      Logger.error('❌ Failed to get user data', e);
+      return null;
+    }
+  }
+
+  @override
+  Future<UserModel?> getCurrentUser() async {
+    // This method is the same as getUserData - it gets the currently logged-in user
+    try {
+      final userJson = sharedPreferences.getString(AppConfig.userDataKey);
+      if (userJson != null) {
+        final userMap = jsonDecode(userJson) as Map<String, dynamic>;
+        final user = UserModel.fromJson(userMap);
+        Logger.info('👤 Retrieved current user: ${user.username}');
+        return user;
+      }
+      Logger.info('👤 No current user found');
+      return null;
+    } catch (e) {
+      Logger.error('❌ Failed to get current user', e);
+      return null;
     }
   }
 
@@ -92,42 +147,37 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     try {
       await Future.wait([
         sharedPreferences.remove(AppConfig.authTokenKey),
+        sharedPreferences.remove(AppConfig.refreshTokenKey),
         sharedPreferences.remove(AppConfig.userDataKey),
-        sharedPreferences.remove(AppConfig.onboardingCompletedKey),
-        // NOTE: Don't remove the "ever logged in" flag - we want to remember this
       ]);
+      Logger.info('🗑️ Auth data cleared successfully');
     } catch (e) {
+      Logger.error('❌ Failed to clear auth data', e);
       throw CacheException(message: 'Failed to clear auth data: $e');
-    }
-  }
-
-  @override
-  Future<bool> isLoggedIn() async {
-    try {
-      final token = await getToken();
-      return token != null && token.isNotEmpty;
-    } catch (e) {
-      return false;
     }
   }
 
   @override
   Future<bool> hasEverBeenLoggedIn() async {
     try {
-      return sharedPreferences.getBool(_hasEverBeenLoggedInKey) ?? false;
+      final hasBeenLoggedIn =
+          sharedPreferences.getBool(AppConfig.hasEverBeenLoggedInKey) ?? false;
+      Logger.info('📊 Has ever been logged in: $hasBeenLoggedIn');
+      return hasBeenLoggedIn;
     } catch (e) {
-      // If we can't read the preference, assume false (new user)
+      Logger.error('❌ Failed to check login history', e);
       return false;
     }
   }
 
   @override
-  Future<void> markAsLoggedInBefore() async {
+  Future<void> markAsLoggedIn() async {
     try {
-      await sharedPreferences.setBool(_hasEverBeenLoggedInKey, true);
+      await sharedPreferences.setBool(AppConfig.hasEverBeenLoggedInKey, true);
+      Logger.info('✅ Marked as logged in');
     } catch (e) {
-      // This is not critical, so we log but don't throw
-      print('Warning: Failed to mark user as logged in before: $e');
+      Logger.error('❌ Failed to mark as logged in', e);
+      // Don't throw - this is not critical
     }
   }
 }

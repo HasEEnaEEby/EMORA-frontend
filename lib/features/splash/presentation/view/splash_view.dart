@@ -249,7 +249,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
     );
   }
 
-  // FIXED: Enhanced navigation handling method
+  // ✅ Enhanced navigation handling with user-friendly feedback
   void _handleNavigationState(SplashState state) {
     // Add delay to ensure smooth animation completion
     Future.delayed(const Duration(milliseconds: 800), () {
@@ -257,6 +257,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
 
       if (state is SplashNavigateToAuth) {
         Logger.info('🔄 Navigating to auth choice...');
+        _showNavigationFeedback('Taking you to sign in options...');
         NavigationService.pushReplacementNamed(AppRouter.authChoice);
       } else if (state is SplashNavigateToAuthWithMessage) {
         Logger.info(
@@ -272,15 +273,21 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
           }
         }
 
-        // Navigate to auth choice
+        _showNavigationFeedback('Redirecting to sign in...');
         NavigationService.pushReplacementNamed(AppRouter.authChoice);
       } else if (state is SplashNavigateToOnboarding) {
         Logger.info(
           '🔄 Navigating to onboarding (first time: ${state.isFirstTime})...',
         );
+        if (state.isFirstTime) {
+          _showNavigationFeedback('Welcome! Let\'s set up your profile...');
+        } else {
+          _showNavigationFeedback('Completing your setup...');
+        }
         NavigationService.pushReplacementNamed(AppRouter.onboarding);
       } else if (state is SplashNavigateToHome) {
         Logger.info('🔄 Navigating to home with user data...');
+        _showNavigationFeedback('Welcome back! Loading your dashboard...');
         NavigationService.pushReplacementNamed(
           AppRouter.home,
           arguments: state.userData,
@@ -304,12 +311,53 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
           Future.delayed(const Duration(seconds: 2), () {
             if (mounted) {
               Logger.info('🔄 Error fallback - navigating to onboarding');
+              _showNavigationFeedback('Redirecting to setup...');
               NavigationService.pushReplacementNamed(AppRouter.onboarding);
             }
           });
         }
       }
     });
+  }
+
+  // ✅ Helper method to show user-friendly navigation feedback
+  void _showNavigationFeedback(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF8B5CF6),
+          duration: const Duration(milliseconds: 1500),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    }
   }
 
   Widget _buildEnhancedBackground() {

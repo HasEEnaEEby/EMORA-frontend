@@ -1,374 +1,388 @@
+// lib/features/auth/presentation/view_model/bloc/auth_bloc.dart
+import 'package:emora_mobile_app/core/config/app_config.dart';
+import 'package:emora_mobile_app/core/errors/failures.dart';
+import 'package:emora_mobile_app/core/use_case/use_case.dart';
+import 'package:emora_mobile_app/core/utils/logger.dart';
+import 'package:emora_mobile_app/features/auth/domain/use_case/check_auth_status.dart';
+import 'package:emora_mobile_app/features/auth/domain/use_case/check_username_availability.dart';
+import 'package:emora_mobile_app/features/auth/domain/use_case/get_current_user.dart';
+import 'package:emora_mobile_app/features/auth/domain/use_case/login_user.dart';
+import 'package:emora_mobile_app/features/auth/domain/use_case/logout_user.dart';
+import 'package:emora_mobile_app/features/auth/domain/use_case/register_user.dart';
+import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_event.dart';
+import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../../../core/errors/failures.dart';
-import '../../../../../core/navigation/app_router.dart';
-import '../../../../../core/navigation/navigation_service.dart';
-import '../../../../../core/use_case/use_case.dart';
-import '../../../../../core/utils/logger.dart';
-import '../../../data/repository/auth_repository_impl.dart';
-import '../../../domain/entity/user_entity.dart';
-import '../../../domain/use_case/check_username_availability.dart';
-import '../../../domain/use_case/get_current_user.dart';
-import '../../../domain/use_case/login_user.dart';
-import '../../../domain/use_case/logout_user.dart';
-import '../../../domain/use_case/register_user.dart';
-import 'auth_event.dart';
-import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final CheckUsernameAvailability checkUsernameAvailability;
   final RegisterUser registerUser;
   final LoginUser loginUser;
-  final GetCurrentUser getCurrentUser;
   final LogoutUser logoutUser;
-  final AuthRepositoryImpl authRepository;
+  final GetCurrentUser getCurrentUser;
+  final CheckAuthStatus checkAuthStatus;
 
   AuthBloc({
     required this.checkUsernameAvailability,
     required this.registerUser,
     required this.loginUser,
-    required this.getCurrentUser,
     required this.logoutUser,
-    required this.authRepository,
-  }) : super(AuthInitial()) {
-    on<CheckAuthStatus>(_onCheckAuthStatus);
-    on<CheckUsernameAvailabilityEvent>(_onCheckUsernameAvailability);
-    on<RegisterUserEvent>(_onRegisterUser);
-    on<LoginUserEvent>(_onLoginUser);
-    on<LogoutUserEvent>(_onLogoutUser);
-    on<ClearAuthError>(_onClearAuthError);
-  }
-
-  String _normalizeUsername(String username) {
-    return username.toLowerCase().trim();
-  }
-
-  Future<void> _onCheckAuthStatus(
-    CheckAuthStatus event,
-    Emitter<AuthState> emit,
-  ) async {
-    Logger.info('🔍 Checking authentication status...');
-    emit(AuthLoading());
+    required this.getCurrentUser,
+    required this.checkAuthStatus,
+  }) : super(const AuthInitial()) {
+    // CRITICAL: Register ALL event handlers properly
+    Logger.info('🔧 Initializing AuthBloc event handlers...');
 
     try {
-      final result = await getCurrentUser(NoParams());
+      // Register each event handler with proper error handling
+      on<AuthCheckStatus>(_onCheckStatus);
+      Logger.info('✅ AuthCheckStatus handler registered');
 
-      await result.fold(
-        (failure) async {
-          Logger.warning('⚠️ Auth check failed: ${failure.message}');
+      on<AuthCheckUsername>(_onCheckUsername);
+      Logger.info('✅ AuthCheckUsername handler registered');
 
-          // Check if user has ever been logged in to determine the appropriate state
-          if (failure is UnauthorizedFailure) {
-            final hasBeenLoggedInResult = await authRepository
-                .hasEverBeenLoggedIn();
+      on<AuthRegister>(_onRegister);
+      Logger.info('✅ AuthRegister handler registered');
 
-            hasBeenLoggedInResult.fold(
-              (error) {
-                Logger.error('❌ Error checking login history', error);
-                // If we can't check, assume new user to be safe
-                emit(AuthUnauthenticated());
-              },
-              (hasEverBeenLoggedIn) {
-                if (hasEverBeenLoggedIn) {
-                  Logger.info('📱 Returning user with expired session');
-                  emit(AuthSessionExpired());
-                } else {
-                  Logger.info('👋 New user detected');
-                  emit(AuthUnauthenticated());
-                }
-              },
-            );
-          } else {
-            // For network errors or other failures, treat as unauthenticated
-            Logger.info(
-              '🌐 Network or other error, treating as unauthenticated',
-            );
-            emit(AuthUnauthenticated());
-          }
-        },
-        (user) {
-          Logger.info('✅ User authenticated: ${user.username}');
-          emit(AuthAuthenticated(user));
-        },
-      );
-    } catch (e, stackTrace) {
-      Logger.error('❌ Unexpected error in auth check', e, stackTrace);
-      emit(AuthUnauthenticated());
+      on<AuthLogin>(_onLogin);
+      Logger.info('✅ AuthLogin handler registered');
+
+      // CRITICAL: This is the key handler for logout that was missing
+      on<AuthLogout>(_onLogout);
+      Logger.info('✅ AuthLogout handler registered');
+
+      on<AuthGetCurrentUser>(_onGetCurrentUser);
+      Logger.info('✅ AuthGetCurrentUser handler registered');
+
+      on<AuthClearError>(_onClearError);
+      Logger.info('✅ AuthClearError handler registered');
+
+      on<AuthTokenRefreshFailed>(_onTokenRefreshFailed);
+      Logger.info('✅ AuthTokenRefreshFailed handler registered');
+
+      Logger.info('🎯 AuthBloc initialization completed successfully');
+    } catch (e) {
+      Logger.error('❌ Failed to register AuthBloc event handlers: $e');
+      rethrow;
     }
   }
 
-  Future<void> _onCheckUsernameAvailability(
-    CheckUsernameAvailabilityEvent event,
-    Emitter<AuthState> emit,
-  ) async {
-    final normalizedUsername = _normalizeUsername(event.username);
-
-    // Skip check for empty usernames
-    if (normalizedUsername.isEmpty) {
-      return;
-    }
-
-    Logger.info(
-      '🔍 Checking availability for normalized username: "$normalizedUsername" (original: "${event.username}")',
-    );
-
-    // Don't emit checking state if already checking the same username
-    if (state is! AuthUsernameChecking ||
-        (state as AuthUsernameChecking).username != normalizedUsername) {
-      emit(AuthUsernameChecking(normalizedUsername));
-    }
-
+  // CRITICAL: This method handles the logout - FIXED VERSION
+  Future<void> _onLogout(AuthLogout event, Emitter<AuthState> emit) async {
     try {
-      final result = await checkUsernameAvailability(
-        CheckUsernameParams(username: normalizedUsername),
-      );
+      Logger.info('🚪 Processing logout request');
+      emit(const AuthLoading());
+
+      // Call the logout use case
+      final result = await logoutUser(NoParams());
 
       result.fold(
         (failure) {
-          Logger.error('❌ Username check failed', failure);
-          emit(
-            AuthUsernameCheckResult(
-              username: normalizedUsername,
-              isAvailable: false,
-              message: failure.message,
-            ),
-          );
+          Logger.error('❌ Logout failed on server: ${failure.message}');
+          // CRITICAL: Even if server logout fails, emit AuthUnauthenticated
+          // This ensures UI navigation works properly
+          emit(const AuthUnauthenticated());
         },
-        (isAvailable) {
-          Logger.info(
-            '✅ Username "$normalizedUsername" availability: $isAvailable',
-          );
-          emit(
-            AuthUsernameCheckResult(
-              username: normalizedUsername,
-              isAvailable: isAvailable,
-              message: isAvailable
-                  ? 'Username is available'
-                  : 'Username is already taken',
-            ),
-          );
+        (_) {
+          Logger.info('✅ Logout successful');
+          // CRITICAL: Emit AuthUnauthenticated for successful logout
+          emit(const AuthUnauthenticated());
         },
       );
-    } catch (e, stackTrace) {
-      Logger.error('❌ Username check error', e, stackTrace);
-      emit(
-        AuthUsernameCheckResult(
-          username: normalizedUsername,
-          isAvailable: false,
-          message: 'Failed to check username availability',
-        ),
-      );
+    } catch (e) {
+      Logger.error('❌ Logout error: $e');
+      // CRITICAL: Always emit AuthUnauthenticated on logout, even on error
+      // This ensures user gets logged out locally regardless of server issues
+      emit(const AuthUnauthenticated());
     }
   }
 
-  Future<void> _onRegisterUser(
-  RegisterUserEvent event,
-  Emitter<AuthState> emit,
-) async {
-  final normalizedUsername = _normalizeUsername(event.username);
+  Future<void> _onClearError(
+    AuthClearError event,
+    Emitter<AuthState> emit,
+  ) async {
+    Logger.info('🧹 Clearing auth error state');
+    emit(const AuthUnauthenticated());
+  }
 
-  Logger.info('📝 Starting registration for: "$normalizedUsername"');
-  emit(const AuthLoading());
+  Future<void> _onTokenRefreshFailed(
+    AuthTokenRefreshFailed event,
+    Emitter<AuthState> emit,
+  ) async {
+    Logger.warning('🔄 Token refresh failed, forcing logout: ${event.message}');
+    
+    // Clear all auth data
+    try {
+      await logoutUser(NoParams());
+    } catch (e) {
+      Logger.error('❌ Error during forced logout after token refresh failure', e);
+    }
+    
+    // Emit session expired state to trigger proper UI handling
+    emit(AuthSessionExpired(message: event.message));
+  }
 
-  try {
-    if (normalizedUsername.isEmpty || event.password.isEmpty) {
-      emit(AuthError('Username and password are required'));
+  Future<void> _onCheckStatus(
+    AuthCheckStatus event,
+    Emitter<AuthState> emit,
+  ) async {
+    Logger.info('🔍 Checking authentication status');
+    emit(const AuthLoading());
+
+    final result = await checkAuthStatus(NoParams());
+    result.fold(
+      (failure) {
+        Logger.error('❌ Auth status check failed: ${failure.message}');
+        
+        // ✅ Check if this is a token refresh failure
+        if (failure is AuthFailure && failure.statusCode == 401) {
+          // Token refresh failed - emit session expired
+          emit(AuthSessionExpired(message: failure.message));
+        } else {
+          emit(const AuthUnauthenticated());
+        }
+      },
+      (isAuthenticated) {
+        if (isAuthenticated) {
+          Logger.info('✅ User is authenticated');
+          add(const AuthGetCurrentUser());
+        } else {
+          Logger.info('❌ User is not authenticated');
+          emit(const AuthUnauthenticated());
+        }
+      },
+    );
+  }
+
+  Future<void> _onCheckUsername(
+    AuthCheckUsername event,
+    Emitter<AuthState> emit,
+  ) async {
+    if (event.username.isEmpty) return;
+
+    Logger.info('🔍 Checking username availability: ${event.username}');
+    emit(AuthCheckingUsername(event.username));
+
+    // Client-side validation first
+    final validationError = AppConfig.validateUsername(event.username);
+    if (validationError != null) {
+      emit(
+        AuthUsernameChecked(
+          username: event.username,
+          isAvailable: false,
+          suggestions: AppConfig.generateUsernamesSuggestions(),
+          message: validationError,
+        ),
+      );
+      return;
+    }
+
+    final result = await checkUsernameAvailability(
+      CheckUsernameParams(username: event.username),
+    );
+
+    result.fold(
+      (failure) {
+        Logger.error('❌ Username check failed: ${failure.message}');
+        emit(
+          AuthUsernameChecked(
+            username: event.username,
+            isAvailable: false,
+            suggestions: AppConfig.generateUsernamesSuggestions(),
+            message: AppConfig.getFriendlyErrorMessage(failure.toString()),
+          ),
+        );
+      },
+      (response) {
+        final isAvailable = response['isAvailable'] as bool? ?? false;
+        final suggestions = List<String>.from(response['suggestions'] ?? []);
+        final message =
+            response['message'] as String? ??
+            (isAvailable
+                ? AppConfig.usernameAvailableMessage
+                : AppConfig.usernameExistsMessage);
+
+        Logger.info('✅ Username check result: $isAvailable');
+        emit(
+          AuthUsernameChecked(
+            username: event.username,
+            isAvailable: isAvailable,
+            suggestions: suggestions,
+            message: message,
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _onRegister(AuthRegister event, Emitter<AuthState> emit) async {
+    Logger.info('📝 Starting user registration: ${event.username}');
+    emit(const AuthLoading());
+
+    // ✅ Password confirmation validation
+    if (event.password != event.confirmPassword) {
+      emit(
+        AuthError(
+          'Passwords do not match. Please make sure both passwords are identical.',
+          errorCode: 'PASSWORD_MISMATCH',
+          type: AuthErrorType.validation,
+        ),
+      );
+      return;
+    }
+
+    // Validate input
+    final usernameError = AppConfig.validateUsername(event.username);
+    if (usernameError != null) {
+      emit(
+        AuthError(
+          usernameError,
+          errorCode: 'VALIDATION_ERROR',
+          type: AuthErrorType.validation,
+        ),
+      );
+      return;
+    }
+
+    final emailError = AppConfig.validateEmail(event.email);
+    if (emailError != null) {
+      emit(
+        AuthError(
+          emailError,
+          errorCode: 'VALIDATION_ERROR',
+          type: AuthErrorType.validation,
+        ),
+      );
+      return;
+    }
+
+    final passwordError = AppConfig.validatePassword(event.password);
+    if (passwordError != null) {
+      emit(
+        AuthError(
+          passwordError,
+          errorCode: 'VALIDATION_ERROR',
+          type: AuthErrorType.validation,
+        ),
+      );
       return;
     }
 
     final result = await registerUser(
-      RegisterUserParams(
-        username: normalizedUsername,
+      RegisterParams(
+        username: event.username,
+        email: event.email,
         password: event.password,
+        confirmPassword: event.confirmPassword, // ✅ Added confirmPassword for backend validation
         pronouns: event.pronouns,
         ageGroup: event.ageGroup,
         selectedAvatar: event.selectedAvatar,
         location: event.location,
         latitude: event.latitude,
         longitude: event.longitude,
-        email: event.email,
+        termsAccepted: event.termsAccepted ?? true,
+        privacyAccepted: event.privacyAccepted ?? true,
       ),
     );
 
     result.fold(
       (failure) {
         Logger.error('❌ Registration failed: ${failure.message}');
-        emit(AuthError(failure.message));
+
+        final failureMessage = failure.toString().toLowerCase();
+
+        if (failureMessage.contains('email') &&
+            failureMessage.contains('exist')) {
+          emit(const AuthError.emailExists());
+        } else if (failureMessage.contains('username') &&
+            failureMessage.contains('exist')) {
+          emit(const AuthError.usernameExists());
+        } else if (failureMessage.contains('network') ||
+            failureMessage.contains('connection')) {
+          emit(const AuthError.networkError());
+        } else if (failureMessage.contains('server') ||
+            failureMessage.contains('500')) {
+          emit(const AuthError.serverError());
+        } else {
+          emit(
+            AuthError(
+              AppConfig.getFriendlyErrorMessage(failure.toString()),
+              errorCode: 'REGISTRATION_ERROR',
+              type: AuthErrorType.registration,
+            ),
+          );
+        }
       },
       (authResponse) {
-        Logger.info('✅ Registration successful for: ${authResponse.user.username}');
-        emit(AuthAuthenticated(authResponse.user));
+        Logger.info('✅ Registration successful: ${authResponse.user.username}');
+        emit(
+          AuthRegistrationSuccess(
+            user: authResponse.user,
+            message: AppConfig.registrationSuccessMessage,
+          ),
+        );
       },
     );
-  } catch (e, stackTrace) {
-    Logger.error('❌ Registration error', e, stackTrace);
-    emit(AuthError('Registration failed: ${e.toString()}'));
   }
-}
 
-  Future<void> _onLoginUser(
-  LoginUserEvent event,
-  Emitter<AuthState> emit,
-) async {
-  final normalizedUsername = _normalizeUsername(event.username);
-
-  Logger.info('🔐 Starting login for: "$normalizedUsername"');
-  emit(const AuthLoading());
-
-  try {
-    if (normalizedUsername.isEmpty || event.password.isEmpty) {
-      emit(AuthError('Username and password are required'));
-      return;
-    }
+  Future<void> _onLogin(AuthLogin event, Emitter<AuthState> emit) async {
+    Logger.info('🔑 Starting user login: ${event.username}');
+    emit(const AuthLoading());
 
     final result = await loginUser(
-      LoginUserParams(
-        username: normalizedUsername,
-        password: event.password,
-      ),
+      LoginParams(username: event.username, password: event.password),
     );
 
     result.fold(
       (failure) {
         Logger.error('❌ Login failed: ${failure.message}');
-        emit(AuthError(failure.message));
+
+        final failureMessage = failure.toString().toLowerCase();
+
+        if (failureMessage.contains('invalid') ||
+            failureMessage.contains('credentials')) {
+          emit(const AuthError.invalidCredentials());
+        } else if (failureMessage.contains('network') ||
+            failureMessage.contains('connection')) {
+          emit(const AuthError.networkError());
+        } else {
+          emit(
+            AuthError(
+              AppConfig.getFriendlyErrorMessage(failure.toString()),
+              errorCode: 'LOGIN_ERROR',
+              type: AuthErrorType.login,
+            ),
+          );
+        }
       },
       (authResponse) {
-        Logger.info('✅ Login successful for: ${authResponse.user.username}');
-        emit(AuthAuthenticated(authResponse.user));
+        Logger.info('✅ Login successful: ${authResponse.user.username}');
+        emit(
+          AuthLoginSuccess(
+            user: authResponse.user,
+            message: AppConfig.loginSuccessMessage,
+          ),
+        );
       },
     );
-  } catch (e, stackTrace) {
-    Logger.error('❌ Login error', e, stackTrace);
-    emit(AuthError('Login failed: ${e.toString()}'));
   }
-}
-  Future<void> _onLogoutUser(
-    LogoutUserEvent event,
+
+  Future<void> _onGetCurrentUser(
+    AuthGetCurrentUser event,
     Emitter<AuthState> emit,
   ) async {
-    Logger.info('🚪 Starting logout process...');
-    emit(AuthLoading());
+    Logger.info('👤 Getting current user');
 
-    try {
-      await logoutUser(NoParams());
-      Logger.info('✅ Logout successful');
-      emit(AuthUnauthenticated());
+    final result = await getCurrentUser(NoParams());
 
-      // Navigate to auth choice after logout
-      await _navigateToAuthChoice();
-    } catch (e, stackTrace) {
-      Logger.error('❌ Logout error', e, stackTrace);
-      emit(AuthError('Logout failed: ${e.toString()}'));
-
-      // Even if logout API fails, clear local session
-      emit(AuthUnauthenticated());
-      await _navigateToAuthChoice();
-    }
-  }
-
-  void _onClearAuthError(ClearAuthError event, Emitter<AuthState> emit) {
-    if (state is AuthError) {
-      emit(AuthUnauthenticated());
-    }
-  }
-
-  // Navigation Methods
-
-  Future<void> _navigateToHomeAfterAuth({
-    required UserEntity user,
-    required String message,
-    required bool isFirstTime,
-  }) async {
-    Logger.info('🏠 Navigating to home after authentication...');
-
-    try {
-      // Small delay to ensure UI is ready
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      if (NavigationService.currentState != null) {
-        await NavigationService.pushNamedAndClearStack(
-          AppRouter.home,
-          arguments: {
-            'isAuthenticated': true,
-            'isGuest': false,
-            'isFirstTime': isFirstTime,
-            'userData': _userToMap(user),
-            'user': user, // Pass the actual user entity as well
-          },
-        );
-
-        Logger.info('✅ Successfully navigated to home');
-
-        // Show success message after navigation
-        Future.delayed(const Duration(milliseconds: 500), () {
-          NavigationService.showSuccessSnackBar(message);
-        });
-      } else {
-        Logger.error('❌ NavigationService not ready', 'AuthBloc');
-        throw Exception('Navigation service not initialized');
-      }
-    } catch (e, stackTrace) {
-      Logger.error('❌ Navigation to home failed', e, stackTrace);
-      NavigationService.showErrorSnackBar('Failed to navigate to home');
-    }
-  }
-
-  Future<void> _navigateToAuthChoice() async {
-    Logger.info('🔄 Navigating to auth choice...');
-
-    try {
-      // Small delay to ensure UI is ready
-      await Future.delayed(const Duration(milliseconds: 200));
-
-      if (NavigationService.currentState != null) {
-        await NavigationService.pushNamedAndClearStack(AppRouter.authChoice);
-        Logger.info('✅ Navigated to auth choice after logout');
-      } else {
-        Logger.error(
-          '❌ NavigationService not ready for logout navigation',
-          'AuthBloc',
-        );
-      }
-    } catch (e, stackTrace) {
-      Logger.error('❌ Navigation to auth choice failed', e, stackTrace);
-    }
-  }
-
-  // Helper method to convert user entity to map for passing through navigation
-  Map<String, dynamic> _userToMap(UserEntity user) {
-    try {
-      return {
-        'id': user.id,
-        'username': user.username,
-        'pronouns': user.pronouns ?? '',
-        'ageGroup': user.ageGroup ?? '',
-        'selectedAvatar': user.selectedAvatar ?? '',
-        'createdAt': user.createdAt.toIso8601String(),
-        // Add any other user properties you need that actually exist in UserEntity
-      };
-    } catch (e, stackTrace) {
-      Logger.error('❌ Error converting user to map', e, stackTrace);
-      return {
-        'id': user.id,
-        'username': user.username,
-        'pronouns': '',
-        'ageGroup': '',
-        'selectedAvatar': '',
-        'createdAt': '',
-      };
-    }
-  }
-
-  // Helper method to validate authentication state
-  bool get isAuthenticated => state is AuthAuthenticated;
-
-  // Helper method to get current user
-  UserEntity? get currentUser {
-    final currentState = state;
-    if (currentState is AuthAuthenticated) {
-      return currentState.user;
-    }
-    return null;
+    result.fold(
+      (failure) {
+        Logger.error('❌ Get current user failed: ${failure.message}');
+        emit(const AuthUnauthenticated());
+      },
+      (user) {
+        Logger.info('✅ Current user retrieved: ${user.username}');
+        emit(AuthAuthenticated(user));
+      },
+    );
   }
 }

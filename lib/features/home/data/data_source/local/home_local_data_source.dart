@@ -60,7 +60,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         return homeData;
       } else {
         Logger.warning('⚠️ No cached home data found');
-        throw const CacheException(message: 'No cached home data found');
+        throw CacheException(message: 'No cached home data found');
       }
     } catch (e) {
       if (e is CacheException) rethrow;
@@ -147,7 +147,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         return userStats;
       } else {
         Logger.warning('⚠️ No cached user stats found');
-        throw const CacheException(message: 'No cached user stats found');
+        throw CacheException(message: 'No cached user stats found');
       }
     } catch (e) {
       if (e is CacheException) rethrow;

@@ -2,6 +2,7 @@
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_bloc.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/view_model/bloc/emotion_bloc.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_bloc.dart';
+import 'package:emora_mobile_app/features/profile/presentation/view_model/profile_bloc.dart';
 import 'package:emora_mobile_app/features/splash/presentation/view_model/cubit/splash_cubit.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
@@ -12,22 +13,28 @@ import 'modules/core_module.dart';
 import 'modules/emotion_module.dart';
 import 'modules/home_module.dart';
 import 'modules/onboarding_module.dart';
+import 'modules/profile_module.dart';
 import 'modules/splash_module.dart';
 
 final sl = GetIt.instance;
 
-// Feature Flag Service
+// UPDATED: Feature Flag Service with profile and automated usernames support
 class FeatureFlagService {
   final bool isMoodEnabled;
   final bool isAnalyticsEnabled;
   final bool isSocialEnabled;
   final bool isEmotionEnabled;
+  final bool isProfileEnabled; // NEW: Added profile feature
+  final bool isAutomatedUsernamesEnabled; // Added automated usernames feature
 
   const FeatureFlagService({
     this.isMoodEnabled = true, // Enable mood feature
     this.isAnalyticsEnabled = false,
     this.isSocialEnabled = false,
     this.isEmotionEnabled = true, // Enable emotion feature by default
+    this.isProfileEnabled = true, // Enable profile feature by default
+    this.isAutomatedUsernamesEnabled =
+        true, // Enable automated usernames by default
   });
 
   // Helper methods for checking feature availability
@@ -35,13 +42,17 @@ class FeatureFlagService {
       isMoodEnabled ||
       isAnalyticsEnabled ||
       isSocialEnabled ||
-      isEmotionEnabled;
+      isEmotionEnabled ||
+      isProfileEnabled ||
+      isAutomatedUsernamesEnabled;
 
   Map<String, bool> get allFeatures => {
     'mood': isMoodEnabled,
     'analytics': isAnalyticsEnabled,
     'social': isSocialEnabled,
     'emotion': isEmotionEnabled,
+    'profile': isProfileEnabled,
+    'automated_usernames': isAutomatedUsernamesEnabled,
   };
 
   List<String> get enabledFeatures => allFeatures.entries
@@ -63,6 +74,7 @@ Future<void> init() async {
     await AuthModule.init(sl);
     await OnboardingModule.init(sl);
     await EmotionModule.init(sl);
+    await ProfileModule.init(sl); // NEW: Initialize profile module
     await HomeModule.init(sl);
     await SplashModule.init(sl);
 
@@ -85,6 +97,7 @@ void _verifyRegistrations() {
     AuthModule.verify(sl),
     OnboardingModule.verify(sl),
     EmotionModule.verify(sl),
+    ProfileModule.verify(sl), // NEW: Verify profile module
     HomeModule.verify(sl),
     SplashModule.verify(sl),
   ];
@@ -140,6 +153,10 @@ void _verifyCriticalServices() {
     criticalServices.add('EmotionBloc');
   }
 
+  if (featureFlags.isProfileEnabled) {
+    criticalServices.add('ProfileBloc'); // NEW: Add ProfileBloc verification
+  }
+
   // Verify each service is registered using correct GetIt syntax
   for (final serviceName in criticalServices) {
     try {
@@ -158,6 +175,9 @@ void _verifyCriticalServices() {
           break;
         case 'EmotionBloc':
           isRegistered = sl.isRegistered<EmotionBloc>();
+          break;
+        case 'ProfileBloc': // NEW: ProfileBloc verification
+          isRegistered = sl.isRegistered<ProfileBloc>();
           break;
       }
 
@@ -193,7 +213,13 @@ void _logInitializationSummary() {
       '   🎭 Emotion Services: ${featureFlags.isEmotionEnabled ? '✅ Available' : '⏭️ Disabled'}',
     );
     Logger.info(
+      '   👤 Profile Services: ${featureFlags.isProfileEnabled ? '✅ Available' : '⏭️ Disabled'}', // NEW: Profile services log
+    );
+    Logger.info(
       '   🎯 Mood Services: ${featureFlags.isMoodEnabled ? '✅ Available' : '⏭️ Disabled'}',
+    );
+    Logger.info(
+      '   🤖 Automated Usernames: ${featureFlags.isAutomatedUsernamesEnabled ? '✅ Available' : '⏭️ Disabled'}',
     );
     Logger.info('   💫 Splash Services: ✅ Available');
 
@@ -217,8 +243,16 @@ int _getTotalServiceCount() {
       count += 7; // Emotion services
     }
 
+    if (featureFlags.isProfileEnabled) {
+      count += 9; // NEW: Profile services (from ProfileModule.verify)
+    }
+
     if (featureFlags.isMoodEnabled) {
       count += 11; // Mood services
+    }
+
+    if (featureFlags.isAutomatedUsernamesEnabled) {
+      count += 1; // Username service with automation
     }
 
     return count;
@@ -272,6 +306,8 @@ FeatureFlagService getFeatureFlags() {
       isAnalyticsEnabled: false,
       isSocialEnabled: false,
       isEmotionEnabled: false,
+      isProfileEnabled: false, // NEW: Default profile feature flag
+      isAutomatedUsernamesEnabled: false,
     );
   }
 }
@@ -305,6 +341,10 @@ T getBlocSafely<T extends Object>() {
     }
     if (bloc is EmotionBloc && bloc.isClosed) {
       throw Exception('EmotionBloc is already closed');
+    }
+    if (bloc is ProfileBloc && bloc.isClosed) {
+      // NEW: ProfileBloc safety check
+      throw Exception('ProfileBloc is already closed');
     }
     if (bloc is SplashCubit && bloc.isClosed) {
       throw Exception('SplashCubit is already closed');
@@ -367,6 +407,22 @@ void _closeExistingBlocs() {
         }
       }
     },
+    'ProfileBloc': () {
+      // NEW: ProfileBloc cleanup
+      if (sl.isRegistered<ProfileBloc>()) {
+        try {
+          final bloc = sl<ProfileBloc>();
+          if (!bloc.isClosed) {
+            bloc.close();
+            Logger.info('✅ ProfileBloc closed successfully');
+          } else {
+            Logger.info('ℹ️ ProfileBloc was already closed');
+          }
+        } catch (e) {
+          Logger.warning('⚠️ Error closing ProfileBloc: $e');
+        }
+      }
+    },
     'SplashCubit': () {
       if (sl.isRegistered<SplashCubit>()) {
         try {
@@ -410,6 +466,11 @@ void debugPrintRegistrations() {
 
       if (featureFlags.isEmotionEnabled) {
         services['EmotionBloc'] = EmotionBloc;
+      }
+
+      if (featureFlags.isProfileEnabled) {
+        // NEW: ProfileBloc debug print
+        services['ProfileBloc'] = ProfileBloc;
       }
 
       if (featureFlags.isMoodEnabled) {
@@ -490,6 +551,11 @@ Map<String, dynamic> healthCheck() {
       servicesToCheck['EmotionBloc'] = EmotionBloc;
     }
 
+    if (featureFlags.isProfileEnabled) {
+      // NEW: ProfileBloc health check
+      servicesToCheck['ProfileBloc'] = ProfileBloc;
+    }
+
     if (featureFlags.isMoodEnabled) {
       // servicesToCheck['MoodBloc'] = MoodBloc; // Add when available
     }
@@ -537,6 +603,9 @@ Map<String, dynamic> healthCheck() {
           : 0,
       'enabled_features': featureFlags.enabledFeatures.length,
       'total_features': featureFlags.allFeatures.length,
+      'automated_usernames_enabled': featureFlags.isAutomatedUsernamesEnabled,
+      'profile_enabled':
+          featureFlags.isProfileEnabled, // NEW: Profile feature status
     };
   } catch (e) {
     health['status'] = 'unhealthy';
@@ -554,6 +623,7 @@ Map<String, dynamic> getServiceDetails() {
     'registered_services': <String, dynamic>{},
     'feature_flags': <String, dynamic>{},
     'statistics': <String, dynamic>{},
+    'automation_status': <String, dynamic>{},
   };
 
   try {
@@ -563,7 +633,21 @@ Map<String, dynamic> getServiceDetails() {
       'enabled_features': featureFlags.enabledFeatures,
       'all_features': featureFlags.allFeatures,
       'has_any_enabled': featureFlags.hasAnyFeatureEnabled,
+      'automated_usernames_enabled': featureFlags.isAutomatedUsernamesEnabled,
+      'profile_enabled':
+          featureFlags.isProfileEnabled, // NEW: Profile feature flag detail
     };
+
+    // Get automation status if automated usernames are enabled
+    if (featureFlags.isAutomatedUsernamesEnabled) {
+      try {
+        details['automation_status'] = CoreModule.getAutomationStatus(sl);
+      } catch (e) {
+        details['automation_status'] = {
+          'error': 'Failed to get automation status: ${e.toString()}',
+        };
+      }
+    }
 
     // Count registered services by type
     final serviceTypes = <String, Type>{
@@ -571,6 +655,7 @@ Map<String, dynamic> getServiceDetails() {
       'HomeBloc': HomeBloc,
       'SplashCubit': SplashCubit,
       'EmotionBloc': EmotionBloc,
+      'ProfileBloc': ProfileBloc, // NEW: ProfileBloc service detail
       'FeatureFlagService': FeatureFlagService,
     };
 
@@ -629,5 +714,56 @@ Future<bool> reinitializeService<T extends Object>() async {
   } catch (e) {
     Logger.error('❌ Failed to reinitialize ${T.toString()}', e);
     return false;
+  }
+}
+
+/// Get username automation insights (convenience method)
+Future<Map<String, dynamic>> getUsernameAutomationInsights() async {
+  try {
+    final featureFlags = getFeatureFlags();
+
+    if (!featureFlags.isAutomatedUsernamesEnabled) {
+      return {
+        'enabled': false,
+        'message': 'Automated usernames feature is disabled',
+      };
+    }
+
+    final automationStatus = await CoreModule.getAutomationStatus(sl);
+    return {
+      'enabled': true,
+      'automation_details': automationStatus,
+      'recommendations': automationStatus['recommendations'] ?? [],
+    };
+  } catch (e) {
+    return {
+      'enabled': false,
+      'error': e.toString(),
+      'message': 'Failed to get automation insights',
+    };
+  }
+}
+
+/// Get profile module insights (convenience method)
+Future<Map<String, dynamic>> getProfileInsights() async {
+  try {
+    final featureFlags = getFeatureFlags();
+
+    if (!featureFlags.isProfileEnabled) {
+      return {'enabled': false, 'message': 'Profile feature is disabled'};
+    }
+
+    final healthStatus = ProfileModule.getHealthStatus(sl);
+    return {
+      'enabled': true,
+      'health_status': healthStatus,
+      'module_info': ProfileModule.getModuleInfo(),
+    };
+  } catch (e) {
+    return {
+      'enabled': false,
+      'error': e.toString(),
+      'message': 'Failed to get profile insights',
+    };
   }
 }

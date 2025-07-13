@@ -5,6 +5,7 @@ class QuickActionsGrid extends StatelessWidget {
   final VoidCallback onJournalTapped;
   final VoidCallback onInsightsTapped;
   final VoidCallback onAtlasTapped;
+  final VoidCallback? onDashboardTapped; // NEW: Optional dashboard navigation
 
   const QuickActionsGrid({
     super.key,
@@ -12,6 +13,7 @@ class QuickActionsGrid extends StatelessWidget {
     required this.onJournalTapped,
     required this.onInsightsTapped,
     required this.onAtlasTapped,
+    this.onDashboardTapped, // NEW: Optional parameter
   });
 
   @override
@@ -71,6 +73,18 @@ class QuickActionsGrid extends StatelessWidget {
                 ),
                 onTap: onInsightsTapped,
               ),
+              if (onDashboardTapped != null)
+                _buildQuickActionCard(
+                  icon: Icons.dashboard_rounded,
+                  title: 'Full Dashboard',
+                  subtitle: 'Complete view',
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF6B6B), Color(0xFFFFB74D)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  onTap: onDashboardTapped!,
+                ),
               _buildQuickActionCard(
                 icon: Icons.public_rounded,
                 title: 'Mood Atlas',

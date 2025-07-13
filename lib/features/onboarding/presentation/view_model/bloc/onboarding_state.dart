@@ -1,3 +1,4 @@
+// lib/features/onboarding/presentation/view_model/bloc/onboarding_state.dart
 import 'package:equatable/equatable.dart';
 
 import '../../../domain/entity/onboarding_entity.dart';

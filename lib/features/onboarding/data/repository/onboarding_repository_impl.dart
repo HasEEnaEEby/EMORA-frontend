@@ -1,3 +1,4 @@
+// lib/features/onboarding/data/repository/onboarding_repository_impl.dart
 import 'dart:developer' as developer;
 
 import 'package:dartz/dartz.dart';
@@ -345,4 +346,14 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
       return Left(UnexpectedFailure(message: e.toString()));
     }
   }
+}
+
+// FIXED: Add the missing UnexpectedFailure class
+class UnexpectedFailure extends Failure {
+  const UnexpectedFailure({required super.message});
+}
+
+// FIXED: Add the missing ValidationFailure class
+class ValidationFailure extends Failure {
+  const ValidationFailure({required super.message});
 }
