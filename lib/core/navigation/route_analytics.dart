@@ -33,8 +33,8 @@ class RouteAnalytics {
 
     // Log in debug mode
     if (kDebugMode) {
-      debugPrint('📊 RouteAnalytics: Navigated to $routeName');
-      debugPrint('📊 Visit count: ${_routeVisitCounts[routeName]}');
+      debugPrint('. RouteAnalytics: Navigated to $routeName');
+      debugPrint('. Visit count: ${_routeVisitCounts[routeName]}');
     }
 
     // Keep history manageable (last 100 events)
@@ -55,7 +55,7 @@ class RouteAnalytics {
     _navigationHistory.add(event);
 
     if (kDebugMode) {
-      debugPrint('📊 RouteAnalytics: Error on $routeName - $error');
+      debugPrint('. RouteAnalytics: Error on $routeName - $error');
     }
   }
 
@@ -90,7 +90,7 @@ class RouteAnalytics {
     _lastNavigationTime = null;
 
     if (kDebugMode) {
-      debugPrint('📊 RouteAnalytics: Data cleared');
+      debugPrint('. RouteAnalytics: Data cleared');
     }
   }
 

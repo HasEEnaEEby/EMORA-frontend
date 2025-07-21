@@ -1,4 +1,6 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:emora_mobile_app/features/friends/domain/entity/friend_mood_data.dart';
 
 class FriendEntity extends Equatable {
   final String id;
@@ -11,6 +13,7 @@ class FriendEntity extends Equatable {
   final DateTime friendshipDate;
   final String status; // 'pending', 'accepted', 'blocked'
   final int mutualFriends;
+  final FriendMoodData? recentMood; // Real mood data from backend
 
   const FriendEntity({
     required this.id,
@@ -23,7 +26,65 @@ class FriendEntity extends Equatable {
     required this.friendshipDate,
     required this.status,
     this.mutualFriends = 0,
+    this.recentMood,
   });
+
+  factory FriendEntity.fromJson(Map<String, dynamic> json) {
+    return FriendEntity(
+      id: json['id']?.toString() ?? '',
+      username: json['username']?.toString() ?? '',
+      displayName: json['displayName']?.toString() ?? json['username']?.toString() ?? '',
+      selectedAvatar: json['selectedAvatar']?.toString() ?? json['avatar']?.toString() ?? 'panda',
+      location: _parseLocation(json['location']),
+      isOnline: json['isOnline'] ?? false,
+      lastActiveAt: json['lastActiveAt'] != null 
+          ? DateTime.parse(json['lastActiveAt'])
+          : null,
+      friendshipDate: json['friendshipDate'] != null 
+          ? DateTime.parse(json['friendshipDate'])
+          : DateTime.now(),
+      status: json['status']?.toString() ?? 'accepted',
+      mutualFriends: _safeIntCast(json['mutualFriends']),
+      recentMood: json['recentMood'] != null 
+          ? FriendMoodData.fromJson(json['recentMood'])
+          : null,
+    );
+  }
+
+  // Helper methods for safe parsing
+  static String? _parseLocation(dynamic location) {
+    if (location == null) return null;
+    if (location is String) return location;
+    if (location is Map<String, dynamic>) {
+      return location['name']?.toString() ?? 
+             location['city']?.toString() ?? 
+             location['country']?.toString();
+    }
+    return null;
+  }
+
+  static int _safeIntCast(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'username': username,
+      'displayName': displayName,
+      'selectedAvatar': selectedAvatar,
+      'location': location,
+      'isOnline': isOnline,
+      'lastActiveAt': lastActiveAt?.toIso8601String(),
+      'friendshipDate': friendshipDate.toIso8601String(),
+      'status': status,
+      'mutualFriends': mutualFriends,
+      'recentMood': recentMood?.toJson(),
+    };
+  }
 
   FriendEntity copyWith({
     String? id,
@@ -36,6 +97,7 @@ class FriendEntity extends Equatable {
     DateTime? friendshipDate,
     String? status,
     int? mutualFriends,
+    FriendMoodData? recentMood,
   }) {
     return FriendEntity(
       id: id ?? this.id,
@@ -48,6 +110,7 @@ class FriendEntity extends Equatable {
       friendshipDate: friendshipDate ?? this.friendshipDate,
       status: status ?? this.status,
       mutualFriends: mutualFriends ?? this.mutualFriends,
+      recentMood: recentMood ?? this.recentMood,
     );
   }
 
@@ -63,6 +126,7 @@ class FriendEntity extends Equatable {
         friendshipDate,
         status,
         mutualFriends,
+        recentMood,
       ];
 }
 
@@ -147,6 +211,59 @@ class FriendSuggestionEntity extends Equatable {
     required this.commonInterests,
     required this.isRequested,
   });
+
+  factory FriendSuggestionEntity.fromJson(Map<String, dynamic> json) {
+    return FriendSuggestionEntity(
+      id: json['id']?.toString() ?? '',
+      username: json['username']?.toString() ?? '',
+      displayName: json['displayName']?.toString() ?? json['username']?.toString() ?? '',
+      selectedAvatar: json['selectedAvatar']?.toString() ?? 'panda',
+      location: _parseLocation(json['location']),
+      mutualFriends: _safeIntCast(json['mutualFriends']),
+      commonInterests: _safeListCast(json['commonInterests']),
+      isRequested: json['isRequested'] ?? false,
+    );
+  }
+
+  // Helper methods for safe parsing
+  static String? _parseLocation(dynamic location) {
+    if (location == null) return null;
+    if (location is String) return location;
+    if (location is Map<String, dynamic>) {
+      return location['name']?.toString() ?? 
+             location['city']?.toString() ?? 
+             location['country']?.toString();
+    }
+    return null;
+  }
+
+  static int _safeIntCast(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value) ?? 0;
+    return 0;
+  }
+
+  static List<String> _safeListCast(dynamic value) {
+    if (value == null) return [];
+    if (value is List) {
+      return value.map((e) => e?.toString() ?? '').toList();
+    }
+    return [];
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'username': username,
+      'displayName': displayName,
+      'selectedAvatar': selectedAvatar,
+      'location': location,
+      'mutualFriends': mutualFriends,
+      'commonInterests': commonInterests,
+      'isRequested': isRequested,
+    };
+  }
 
   FriendSuggestionEntity copyWith({
     String? id,

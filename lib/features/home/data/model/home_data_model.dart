@@ -24,20 +24,114 @@ class HomeDataModel extends Equatable {
     required this.lastUpdated,
   });
 
-  // Enhanced factory constructor with safe type handling
+  // ✅ ENHANCED: Computed properties for better state management
+  bool get isNewUser {
+    // Extract total emotions from the nested dashboard data structure
+    final data = dashboardData['data'];
+    if (data == null) return true;
+    
+    final dashboard = data['dashboard'];
+    if (dashboard == null) return true;
+    
+    final totalEmotions = dashboard['totalEmotions'] ?? 0;
+    
+    // User is new if they have 0 total emotions
+    final isNew = totalEmotions == 0;
+    
+    print('🔍 DEBUG: HomeDataModel.isNewUser computed: $isNew (totalEmotions: $totalEmotions)');
+    
+    return isNew;
+  }
+
+  int get totalEmotions {
+    final data = dashboardData['data'];
+    final dashboard = data?['dashboard'];
+    return dashboard?['totalEmotions'] ?? 0;
+  }
+
+  int get todayEmotions {
+    final data = dashboardData['data'];
+    final dashboard = data?['dashboard'];
+    return dashboard?['todayEmotions'] ?? 0;
+  }
+
+  int get averageMoodScore {
+    final data = dashboardData['data'];
+    final dashboard = data?['dashboard'];
+    return dashboard?['averageMoodScore'] ?? 50;
+  }
+
+  List<Map<String, dynamic>> get recentEmotions {
+    final data = dashboardData['data'];
+    final dashboard = data?['dashboard'];
+    final emotions = dashboard?['recentEmotions'];
+    
+    if (emotions is List) {
+      return emotions.cast<Map<String, dynamic>>();
+    }
+    
+    return [];
+  }
+
+  // ✅ FIXED: Enhanced factory constructor to parse the correct API structure
   factory HomeDataModel.fromJson(Map<String, dynamic> json) {
     try {
+      print('🔍 HomeDataModel.fromJson input: ${json.toString().substring(0, 200)}...');
+      
+      // Extract the actual data from the API response structure
+      // API returns: { "success": true, "data": { "user": { "username": "haseenakc" }, "dashboard": {...}, "insights": {...} } }
+      final responseData = json['data'] ?? json;
+      print('🔍 responseData found: ${responseData != null}');
+      
+      final userData = responseData['user'] ?? {};
+      final dashboardData = responseData['dashboard'] ?? {};
+      final insightsData = responseData['insights'] ?? {};
+      
+      print('🔍 userData keys: ${userData.keys.toList()}');
+      print('🔍 dashboardData keys: ${dashboardData.keys.toList()}');
+      
+      // Extract username from the correct path: data.user.username
+      final username = _safeString(userData['username']) ?? 'Unknown';
+      print('🔍 Extracted username: "$username"');
+      
+      // Extract emotions count for debugging
+      final totalEmotions = _safeInt(dashboardData['totalEmotions']);
+      print('🔍 Total emotions from API: $totalEmotions');
+      
       return HomeDataModel(
-        username: _safeString(json['username']) ?? 'Unknown',
-        currentMood: _safeString(json['currentMood']),
-        streak: _safeInt(json['streak']) ?? 0,
-        isFirstTimeLogin: _safeBool(json['isFirstTimeLogin']) ?? true,
-        userStats: _parseUserStats(json['userStats']),
-        selectedAvatar: _safeString(json['selectedAvatar']),
-        dashboardData: _parseDashboardData(json['dashboardData']),
-        lastUpdated: _parseDateTime(json['lastUpdated']) ?? DateTime.now(),
+        username: username, // ✅ Now gets "haseenakc" instead of "User"
+        currentMood: _safeString(userData['currentMood']),
+        streak: _safeInt(userData['currentStreak']) ?? _safeInt(userData['streak']) ?? 0,
+        isFirstTimeLogin: _safeBool(dashboardData['isFirstTimeLogin']) ?? (totalEmotions == 0),
+        userStats: _parseUserStats({
+          'moodCheckins': totalEmotions,
+          'streakDays': _safeInt(userData['currentStreak']) ?? 0,
+          'totalMoodEntries': totalEmotions,
+          'longestStreak': _safeInt(userData['longestStreak']) ?? 0,
+          'averageMoodScore': _safeInt(dashboardData['averageMoodScore']) ?? 50,
+          'totalSessions': totalEmotions,
+          'mostFrequentMood': _safeString(userData['currentMood']) ?? 'neutral',
+          'lastMoodLog': DateTime.now(),
+          'weeklyStats': {},
+          'monthlyStats': {},
+          'totalFriends': 0,
+          'helpedFriends': 0,
+          'badgesEarned': 0,
+          'userLevel': 'New Explorer',
+          'favoriteEmotion': _safeString(userData['currentMood']) ?? '',
+          'daysSinceJoined': 0,
+          'lastActivity': DateTime.now(),
+          'comprehensiveStats': {},
+          'achievements': {},
+        }),
+        selectedAvatar: _safeString(userData['selectedAvatar']),
+        dashboardData: json, // Store the entire API response for computed properties
+        lastUpdated: _parseDateTime(responseData['timestamp']) ?? DateTime.now(),
       );
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ Error parsing HomeDataModel: $e');
+      print('❌ Stack trace: $stackTrace');
+      
       // Return safe defaults if parsing fails
       return HomeDataModel(
         username: 'Unknown',
@@ -46,22 +140,43 @@ class HomeDataModel extends Equatable {
         isFirstTimeLogin: true,
         userStats: UserStatsModel.empty(),
         selectedAvatar: 'default',
-        dashboardData: {},
+        dashboardData: json,
         lastUpdated: DateTime.now(),
       );
     }
   }
 
-  // CRITICAL: Mock factory method that was missing
-  factory HomeDataModel.mock({String? username, String? avatar}) {
+  // ✅ ENHANCED: Mock factory method for testing
+  factory HomeDataModel.mock({
+    String? username, 
+    String? avatar,
+    int? totalEmotions,
+    bool? isNew,
+  }) {
+    final mockTotalEmotions = totalEmotions ?? (isNew == true ? 0 : 5);
+    
     return HomeDataModel(
       username: username ?? 'testuser',
       currentMood: 'neutral',
       streak: 0,
-      isFirstTimeLogin: false,
+      isFirstTimeLogin: isNew ?? false,
       userStats: UserStatsModel.empty(),
       selectedAvatar: avatar ?? 'elephant',
-      dashboardData: {},
+      dashboardData: {
+        'success': true,
+        'data': {
+          'user': {
+            'username': username ?? 'testuser',
+            'selectedAvatar': avatar ?? 'elephant',
+          },
+          'dashboard': {
+            'totalEmotions': mockTotalEmotions,
+            'todayEmotions': 0,
+            'averageMoodScore': 50,
+            'recentEmotions': [],
+          },
+        },
+      },
       lastUpdated: DateTime.now(),
     );
   }
@@ -80,17 +195,22 @@ class HomeDataModel extends Equatable {
     );
   }
 
-  // Safe type conversion methods
+  // ✅ ENHANCED: Safe type conversion methods with better error handling
   static String? _safeString(dynamic value) {
     if (value == null) return null;
-    return value.toString();
+    if (value is String) return value.trim().isEmpty ? null : value.trim();
+    return value.toString().trim().isEmpty ? null : value.toString().trim();
   }
 
   static int _safeInt(dynamic value) {
     if (value == null) return 0;
     if (value is int) return value;
     if (value is double) return value.toInt();
-    if (value is String) return int.tryParse(value) ?? 0;
+    if (value is String) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return 0;
+      return int.tryParse(trimmed) ?? 0;
+    }
     return 0;
   }
 
@@ -98,10 +218,14 @@ class HomeDataModel extends Equatable {
     if (value == null) return false;
     if (value is bool) return value;
     if (value is String) {
-      return value.toLowerCase() == 'true' || value == '1';
+      final trimmed = value.trim().toLowerCase();
+      return trimmed == 'true' || trimmed == '1' || trimmed == 'yes';
     }
     if (value is int) {
       return value == 1;
+    }
+    if (value is double) {
+      return value == 1.0;
     }
     return false;
   }
@@ -123,6 +247,7 @@ class HomeDataModel extends Equatable {
 
       return UserStatsModel.empty();
     } catch (e) {
+      print('❌ Error parsing UserStats: $e');
       return UserStatsModel.empty();
     }
   }
@@ -141,6 +266,7 @@ class HomeDataModel extends Equatable {
 
       return {};
     } catch (e) {
+      print('❌ Error parsing dashboard data: $e');
       return {};
     }
   }
@@ -161,10 +287,12 @@ class HomeDataModel extends Equatable {
 
       return DateTime.now();
     } catch (e) {
+      print('❌ Error parsing DateTime: $e');
       return DateTime.now();
     }
   }
 
+  // ✅ ENHANCED: Better JSON serialization
   Map<String, dynamic> toJson() {
     return {
       'username': username,
@@ -175,6 +303,13 @@ class HomeDataModel extends Equatable {
       'selectedAvatar': selectedAvatar,
       'dashboardData': dashboardData,
       'lastUpdated': lastUpdated.toIso8601String(),
+      // Include computed properties for debugging
+      'computedValues': {
+        'isNewUser': isNewUser,
+        'totalEmotions': totalEmotions,
+        'todayEmotions': todayEmotions,
+        'averageMoodScore': averageMoodScore,
+      },
     };
   }
 
@@ -217,6 +352,35 @@ class HomeDataModel extends Equatable {
     );
   }
 
+  // ✅ ENHANCED: Debug method for troubleshooting
+  void debugPrint() {
+    print('🔍 ===== HomeDataModel Debug =====');
+    print('🔍 Username: "$username"');
+    print('🔍 Current Mood: "$currentMood"');
+    print('🔍 Streak: $streak');
+    print('🔍 Is First Time Login: $isFirstTimeLogin');
+    print('🔍 Selected Avatar: "$selectedAvatar"');
+    print('🔍 Last Updated: $lastUpdated');
+    print('🔍 ----- Computed Properties -----');
+    print('🔍 Is New User: $isNewUser');
+    print('🔍 Total Emotions: $totalEmotions');
+    print('🔍 Today Emotions: $todayEmotions');
+    print('🔍 Average Mood Score: $averageMoodScore');
+    print('🔍 Recent Emotions Count: ${recentEmotions.length}');
+    print('🔍 ----- User Stats -----');
+    print('🔍 Mood Checkins: ${userStats.moodCheckins}');
+    print('🔍 Streak Days: ${userStats.streakDays}');
+    print('🔍 Total Mood Entries: ${userStats.totalMoodEntries}');
+    print('🔍 ===============================');
+  }
+
+  // ✅ ENHANCED: Validation method
+  bool get isValid {
+    return username.isNotEmpty && 
+           username != 'Unknown' && 
+           lastUpdated.isBefore(DateTime.now().add(const Duration(hours: 1)));
+  }
+
   @override
   List<Object?> get props => [
     username,
@@ -228,4 +392,9 @@ class HomeDataModel extends Equatable {
     dashboardData,
     lastUpdated,
   ];
+
+  @override
+  String toString() {
+    return 'HomeDataModel(username: $username, isNewUser: $isNewUser, totalEmotions: $totalEmotions, streak: $streak)';
+  }
 }

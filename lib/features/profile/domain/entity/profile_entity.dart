@@ -1,4 +1,4 @@
-// lib/features/profile/domain/entity/profile_entity.dart - COMPLETE VERSION
+// lib/features/profile/domain/entity/profile_entity.dart - ENHANCED VERSION WITH FIXES
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
@@ -22,13 +22,13 @@ class ProfileEntity extends Equatable {
   final DateTime? lastActive;
   final bool isPrivate;
   
-  // ✅ CRITICAL: Added missing properties that were causing errors
-  final String pronouns;        // This was missing and causing NoSuchMethodError
-  final String ageGroup;        // This was missing and causing NoSuchMethodError  
-  final String themeColor;      // This was missing and causing NoSuchMethodError
+  // Required properties that were causing errors
+  final String pronouns;
+  final String ageGroup;
+  final String themeColor;
   
-  // ✅ Additional properties from your API structure
-  final String? displayName;    // From nested profile object
+  // Additional properties from API structure
+  final String? displayName;
   final bool? isOnboardingCompleted;
   final bool? isActive;
   final bool? isOnline;
@@ -57,10 +57,9 @@ class ProfileEntity extends Equatable {
     this.badgesEarned = 0,
     this.lastActive,
     this.isPrivate = false,
-    // ✅ CRITICAL: Default values for missing properties
-    this.pronouns = '',
-    this.ageGroup = '',
-    this.themeColor = '',
+    this.pronouns = 'They / Them',
+    this.ageGroup = '18-24',
+    this.themeColor = '#8B5CF6',
     this.displayName,
     this.isOnboardingCompleted,
     this.isActive,
@@ -72,12 +71,23 @@ class ProfileEntity extends Equatable {
     this.updatedAt,
   });
 
-  // ✅ ENHANCED: Factory constructor to handle your complete API response
+  // 🔧 ENHANCED: Factory constructor to properly handle your API response
   factory ProfileEntity.fromBackendResponse(Map<String, dynamic> data) {
-    // Handle nested user object if present
-    final userData = data['user'] as Map<String, dynamic>? ?? data;
+    print('[DEBUG] ProfileEntity.fromBackendResponse - Input data: $data');
+    
+    // Handle the backend response structure: { status: 'success', data: { ... } }
+    final responseData = data['data'] as Map<String, dynamic>? ?? data;
+    
+    // Extract user data and stats
+    final userData = responseData;
     final stats = userData['stats'] as Map<String, dynamic>? ?? {};
     final profileData = userData['profile'] as Map<String, dynamic>? ?? {};
+    final preferencesData = userData['preferences'] as Map<String, dynamic>? ?? {};
+    
+    print('[DEBUG] ProfileEntity.fromBackendResponse - responseData: $responseData');
+    print('[DEBUG] ProfileEntity.fromBackendResponse - userData: $userData');
+    print('[DEBUG] ProfileEntity.fromBackendResponse - stats: $stats');
+    print('[DEBUG] ProfileEntity.fromBackendResponse - profileData: $profileData');
     
     // Helper function to safely parse dates
     DateTime? parseDate(dynamic dateValue) {
@@ -88,43 +98,105 @@ class ProfileEntity extends Equatable {
         }
         return null;
       } catch (e) {
-        print('Error parsing date: $dateValue - $e');
+        print('[DEBUG] Error parsing date: $dateValue - $e');
         return null;
       }
     }
 
-    // Helper function to get effective avatar
-    String? getEffectiveAvatar() {
-      return userData['selectedAvatar'] as String? ?? 
-             userData['avatar'] as String? ??
-             profileData['avatar'] as String?;
+    // 🔧 FIX: Get effective avatar - prioritize selectedAvatar
+    String getEffectiveAvatar() {
+      final selected = userData['selectedAvatar'] as String?;
+      final fallback = userData['avatar'] as String?;
+      final result = selected ?? fallback ?? 'fox';
+      print('[DEBUG] Avatar selection - selectedAvatar: $selected, fallback: $fallback, result: $result');
+      return result;
     }
 
-    // Helper function to get effective display name
+    // 🔧 FIX: Get effective display name with proper hierarchy
     String getEffectiveName() {
-      return profileData['displayName'] as String? ?? 
-             userData['displayName'] as String? ??
-             userData['name'] as String? ??
-             userData['username'] as String? ??
-             'Unknown User';
+      final profileDisplayName = profileData['displayName'] as String?;
+      final userDisplayName = userData['displayName'] as String?;
+      final userName = userData['name'] as String?;
+      final username = userData['username'] as String?;
+      
+      final result = profileDisplayName ?? userDisplayName ?? userName ?? username ?? 'Unknown User';
+      
+      print('[DEBUG] Name selection:');
+      print('  - profileDisplayName: $profileDisplayName');
+      print('  - userDisplayName: $userDisplayName');
+      print('  - userName: $userName');
+      print('  - username: $username');
+      print('  - result: $result');
+      
+      return result;
     }
 
-    return ProfileEntity(
+    // 🔧 FIX: Get effective bio
+    String? getEffectiveBio() {
+      final profileBio = profileData['bio'] as String?;
+      final userBio = userData['bio'] as String?;
+      final result = profileBio ?? userBio;
+      
+      // Return null if empty string
+      if (result != null && result.trim().isEmpty) {
+        return null;
+      }
+      
+      print('[DEBUG] Bio selection - profileBio: "$profileBio", userBio: "$userBio", result: "$result"');
+      return result;
+    }
+
+    // 🔧 FIX: Get effective email
+    String getEffectiveEmail() {
+      final email = userData['email'] as String?;
+      final result = email ?? 'No email available';
+      print('[DEBUG] Email selection - email: $email, result: $result');
+      return result;
+    }
+
+    // 🔧 FIX: Get effective theme color
+    String getEffectiveThemeColor() {
+      final profileTheme = profileData['themeColor'] as String?;
+      final userTheme = userData['themeColor'] as String?;
+      final result = profileTheme ?? userTheme ?? '#8B5CF6';
+      print('[DEBUG] Theme color selection - profileTheme: $profileTheme, userTheme: $userTheme, result: $result');
+      return result;
+    }
+
+    // 🔧 FIX: Get stats with proper debugging
+    final totalEntries = stats['totalEntries'] as int? ?? 0;
+    final currentStreak = stats['currentStreak'] as int? ?? 0;
+    final longestStreak = stats['longestStreak'] as int? ?? 0;
+    final favoriteEmotion = stats['favoriteEmotion'] as String?;
+    final totalFriends = stats['totalFriends'] as int? ?? 0;
+    final helpedFriends = stats['helpedFriends'] as int? ?? 0;
+    final level = stats['level'] as String? ?? 'New Explorer';
+    final badgesEarned = stats['badgesEarned'] as int? ?? 0;
+
+    print('[DEBUG] Stats extraction:');
+    print('  - totalEntries: $totalEntries');
+    print('  - currentStreak: $currentStreak');
+    print('  - longestStreak: $longestStreak');
+    print('  - favoriteEmotion: $favoriteEmotion');
+    print('  - totalFriends: $totalFriends');
+    print('  - helpedFriends: $helpedFriends');
+    print('  - level: $level');
+    print('  - badgesEarned: $badgesEarned');
+
+    final entity = ProfileEntity(
       id: userData['id'] as String? ?? '',
       name: getEffectiveName(),
       displayName: profileData['displayName'] as String?,
       username: userData['username'] as String? ?? '',
-      email: userData['email'] as String? ?? '',
-      bio: profileData['bio'] as String? ?? userData['bio'] as String?,
+      email: getEffectiveEmail(),
+      bio: getEffectiveBio(),
       avatar: getEffectiveAvatar(),
       selectedAvatar: userData['selectedAvatar'] as String?,
       
-      // ✅ CRITICAL: Handle the missing properties from API
+      // Handle the missing properties from API
       pronouns: userData['pronouns'] as String? ?? 'They / Them',
       ageGroup: userData['ageGroup'] as String? ?? '18-24',
-      themeColor: profileData['themeColor'] as String? ?? 
-                  userData['themeColor'] as String? ?? 
-                  '#8B5CF6',
+      themeColor: getEffectiveThemeColor(),
       
       // Date handling with fallbacks
       joinDate: parseDate(userData['joinDate']) ?? 
@@ -134,20 +206,20 @@ class ProfileEntity extends Equatable {
       updatedAt: parseDate(userData['updatedAt']),
       lastActive: parseDate(userData['lastActive']),
       
-      // Stats with safe defaults
-      totalEntries: stats['totalEntries'] as int? ?? 0,
-      currentStreak: stats['currentStreak'] as int? ?? 0,
-      longestStreak: stats['longestStreak'] as int? ?? 0,
-      favoriteEmotion: stats['favoriteEmotion'] as String? ?? userData['favoriteEmotion'] as String?,
-      totalFriends: stats['totalFriends'] as int? ?? 0,
-      helpedFriends: stats['helpedFriends'] as int? ?? 0,
-      level: stats['level'] as String? ?? 'New Explorer',
-      badgesEarned: stats['badgesEarned'] as int? ?? 0,
+      // 🔧 FIX: Use stats from the stats object
+      totalEntries: totalEntries,
+      currentStreak: currentStreak,
+      longestStreak: longestStreak,
+      favoriteEmotion: favoriteEmotion,
+      totalFriends: totalFriends,
+      helpedFriends: helpedFriends,
+      level: level,
+      badgesEarned: badgesEarned,
       
       // Boolean flags with safe defaults
-      isPrivate: profileData['isPrivate'] as bool? ?? 
-                userData['isPrivate'] as bool? ?? 
-                false,
+      isPrivate: preferencesData['moodPrivacy'] == 'private' || 
+                profileData['isPrivate'] == true ||
+                userData['isPrivate'] == true,
       isOnboardingCompleted: userData['isOnboardingCompleted'] as bool?,
       isActive: userData['isActive'] as bool?,
       isOnline: userData['isOnline'] as bool?,
@@ -157,9 +229,12 @@ class ProfileEntity extends Equatable {
       preferences: userData['preferences'] as Map<String, dynamic>?,
       daysSinceJoined: userData['daysSinceJoined'] as int?,
     );
+
+    print('[DEBUG] ProfileEntity.fromBackendResponse - Final entity: $entity');
+    return entity;
   }
 
-  // ✅ ENHANCED: Copy method with all properties
+  // Enhanced copy method with all properties
   ProfileEntity copyWith({
     String? id,
     String? name,
@@ -180,9 +255,9 @@ class ProfileEntity extends Equatable {
     int? badgesEarned,
     DateTime? lastActive,
     bool? isPrivate,
-    String? pronouns,        // ✅ Added missing properties
-    String? ageGroup,        // ✅ Added missing properties
-    String? themeColor,      // ✅ Added missing properties
+    String? pronouns,
+    String? ageGroup,
+    String? themeColor,
     bool? isOnboardingCompleted,
     bool? isActive,
     bool? isOnline,
@@ -212,9 +287,9 @@ class ProfileEntity extends Equatable {
       badgesEarned: badgesEarned ?? this.badgesEarned,
       lastActive: lastActive ?? this.lastActive,
       isPrivate: isPrivate ?? this.isPrivate,
-      pronouns: pronouns ?? this.pronouns,           // ✅ Added
-      ageGroup: ageGroup ?? this.ageGroup,           // ✅ Added
-      themeColor: themeColor ?? this.themeColor,     // ✅ Added
+      pronouns: pronouns ?? this.pronouns,
+      ageGroup: ageGroup ?? this.ageGroup,
+      themeColor: themeColor ?? this.themeColor,
       isOnboardingCompleted: isOnboardingCompleted ?? this.isOnboardingCompleted,
       isActive: isActive ?? this.isActive,
       isOnline: isOnline ?? this.isOnline,
@@ -226,21 +301,21 @@ class ProfileEntity extends Equatable {
     );
   }
 
-  // ✅ ENHANCED: Convert to map for API calls (matching your backend structure)
+  // Convert to map for API calls (matching your backend structure)
   Map<String, dynamic> toBackendMap() {
     return {
-      'displayName': displayName ?? name,
-      'bio': bio ?? '',
       'pronouns': pronouns,
       'ageGroup': ageGroup,
       'selectedAvatar': selectedAvatar ?? avatar,
-      'themeColor': themeColor,
-      'isPrivate': isPrivate,
-      'favoriteEmotion': favoriteEmotion,
+      'profile': {
+        'displayName': displayName ?? name,
+        'bio': bio ?? '',
+        'themeColor': themeColor,
+      },
     };
   }
 
-  // ✅ NEW: Convert to full map for complete serialization
+  // Convert to full map for complete serialization
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -276,7 +351,7 @@ class ProfileEntity extends Equatable {
     };
   }
 
-  // ✅ ENHANCED: Equatable props with all properties
+  // Equatable props with all properties
   @override
   List<Object?> get props => [
         id,
@@ -298,9 +373,9 @@ class ProfileEntity extends Equatable {
         badgesEarned,
         lastActive,
         isPrivate,
-        pronouns,        // ✅ Added missing properties
-        ageGroup,        // ✅ Added missing properties
-        themeColor,      // ✅ Added missing properties
+        pronouns,
+        ageGroup,
+        themeColor,
         isOnboardingCompleted,
         isActive,
         isOnline,
@@ -313,10 +388,10 @@ class ProfileEntity extends Equatable {
 
   @override
   String toString() {
-    return 'ProfileEntity(id: $id, name: $name, username: $username, level: $level, pronouns: $pronouns, ageGroup: $ageGroup, themeColor: $themeColor)';
+    return 'ProfileEntity(id: $id, name: $name, displayName: $displayName, username: $username, level: $level, pronouns: $pronouns, ageGroup: $ageGroup, themeColor: $themeColor)';
   }
 
-  // ✅ HELPER METHODS for common operations
+  // HELPER METHODS for common operations
   
   /// Get the effective display name (displayName or fallback to name)
   String get effectiveDisplayName {
@@ -327,7 +402,11 @@ class ProfileEntity extends Equatable {
   }
 
   /// Get the effective avatar (selectedAvatar or fallback to avatar)
-  String get effectiveAvatar => selectedAvatar?.isNotEmpty == true ? selectedAvatar! : (avatar ?? 'fox');
+  String get effectiveAvatar {
+    final result = selectedAvatar?.isNotEmpty == true ? selectedAvatar! : (avatar ?? 'fox');
+    print('[DEBUG] ProfileEntity.effectiveAvatar - selectedAvatar: \'$selectedAvatar\', avatar: \'$avatar\', result: \'$result\'');
+    return result;
+  }
 
   /// Check if profile is complete
   bool get isComplete {

@@ -123,7 +123,7 @@ class TodaysJourneyWidget extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  DateFormat('HH:mm').format(emotion.timestamp),
+                  DateFormat('HH:mm').format(emotion.createdAt),
                   style: TextStyle(
                     color: Colors.grey[400],
                     fontSize: 12,
@@ -153,14 +153,13 @@ class TodaysJourneyWidget extends StatelessWidget {
                       fontSize: 12,
                     ),
                   ),
-                  if (emotion.context != null && emotion.context!.isNotEmpty) ...[
+                  if (emotion.note.isNotEmpty) ...[
                     const SizedBox(height: 4),
                     Text(
-                      emotion.context!,
+                      emotion.note.isNotEmpty ? emotion.note : 'No note',
                       style: TextStyle(
                         color: Colors.grey[300],
                         fontSize: 12,
-                        fontStyle: FontStyle.italic,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

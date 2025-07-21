@@ -55,7 +55,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
 
     try {
-      Logger.info('🔍 Checking username availability: $username');
+      Logger.info('. Checking username availability: $username');
 
       final response = await apiService.get(
         '/onboarding/check-username/$username',
@@ -75,7 +75,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
                 ? 'Username is available'
                 : 'Username is already taken');
 
-        Logger.info('✅ Username $username availability: $isAvailable');
+        Logger.info('. Username $username availability: $isAvailable');
 
         return {
           'isAvailable': isAvailable,
@@ -89,7 +89,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
     } catch (e) {
-      Logger.error('❌ Username check error', e);
+      Logger.error('. Username check error', e);
 
       // Return mock data on error for development
       if (AppConfig.isDevelopmentMode) {
@@ -114,7 +114,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String username,
     required String email,
     required String password,
-    required String confirmPassword, // ✅ Added confirmPassword parameter
+    required String confirmPassword, // . Added confirmPassword parameter
     String? pronouns,
     String? ageGroup,
     String? selectedAvatar,
@@ -133,7 +133,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'username': username,
         'email': email,
         'password': password,
-        'confirmPassword': confirmPassword, // ✅ Added confirmPassword to request
+        'confirmPassword': confirmPassword, // . Added confirmPassword to request
         'termsAccepted': termsAccepted ?? true,
         'privacyAccepted': privacyAccepted ?? true,
       };
@@ -162,24 +162,24 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       Logger.info('📤 Registration data: ${requestData.keys.toList()}');
 
       final response = await apiService.post(
-        '/api/auth/register', // ✅ Clean auth endpoint
+        '/api/auth/register', // . Clean auth endpoint
         data: requestData,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = response.data;
 
-        // ✅ CRITICAL FIX: Handle both 'success' and 'true' status formats
+        // . CRITICAL FIX: Handle both 'success' and 'true' status formats
         final isSuccess = responseData?['success'] == true || 
                          responseData?['status'] == 'success';
 
         if (isSuccess) {
           final authData = responseData?['data'];
-          final userData = authData?['user']; // ✅ Add null safety
+          final userData = authData?['user']; // . Add null safety
 
-          Logger.info('✅ Registration successful');
+          Logger.info('. Registration successful');
 
-          // ✅ Create entities from response with proper null safety
+          // . Create entities from response with proper null safety
           final userEntity = UserEntity(
             id: userData?['id']?.toString() ?? 
                 DateTime.now().millisecondsSinceEpoch.toString(),
@@ -221,8 +221,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
     } catch (e) {
-      Logger.error('❌ Registration error', e);
-      // ✅ Removed mock data fallback - always propagate real errors
+      Logger.error('. Registration error', e);
+      // . Removed mock data fallback - always propagate real errors
       rethrow;
     }
   }
@@ -241,31 +241,31 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       Logger.info('🔐 Login request for username: $username');
       
-      // 🔍 ADD THIS DEBUG LINE:
-      print('🔍 DEBUG: About to call apiService.post with: $requestData');
+      // . ADD THIS DEBUG LINE:
+      print('. DEBUG: About to call apiService.post with: $requestData');
 
       final response = await apiService.post(
-        '/api/auth/login', // ✅ Clean auth endpoint
+        '/api/auth/login', // . Clean auth endpoint
         data: requestData,
       );
 
-      // 🔍 ADD THIS DEBUG LINE:
-      print('🔍 DEBUG: Got response: ${response.statusCode} - ${response.data}');
+      // . ADD THIS DEBUG LINE:
+      print('. DEBUG: Got response: ${response.statusCode} - ${response.data}');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        // ✅ CRITICAL FIX: Handle both 'success' and 'true' status formats
+        // . CRITICAL FIX: Handle both 'success' and 'true' status formats
         final isSuccess = responseData?['success'] == true || 
                          responseData?['status'] == 'success';
 
         if (isSuccess) {
           final authData = responseData?['data'];
-          final userData = authData?['user']; // ✅ Add null safety
+          final userData = authData?['user']; // . Add null safety
 
-          Logger.info('✅ Login successful');
+          Logger.info('. Login successful');
 
-          // ✅ Create entities from response with proper null safety
+          // . Create entities from response with proper null safety
           final userEntity = UserEntity(
             id: userData?['id']?.toString() ?? 
                 DateTime.now().millisecondsSinceEpoch.toString(),
@@ -307,10 +307,10 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
     } catch (e) {
-      // 🔍 ADD THIS DEBUG LINE:
-      print('🔍 DEBUG: Login error caught: $e');
-      Logger.error('❌ Login error', e);
-      // ✅ Removed mock data fallback - always propagate real errors  
+      // . ADD THIS DEBUG LINE:
+      print('. DEBUG: Login error caught: $e');
+      Logger.error('. Login error', e);
+      // . Removed mock data fallback - always propagate real errors  
       rethrow;
     }
   }
@@ -322,7 +322,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
 
     try {
-      Logger.info('👤 Getting current user...');
+      Logger.info('. Getting current user...');
 
       final response = await apiService.get('/user/profile');
 
@@ -330,7 +330,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         final responseData = response.data;
         final userData = responseData['data'] ?? responseData;
 
-        Logger.info('✅ Current user retrieved successfully');
+        Logger.info('. Current user retrieved successfully');
 
         return UserEntity(
           id:
@@ -361,7 +361,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
     } catch (e) {
-      Logger.error('❌ Get current user error', e);
+      Logger.error('. Get current user error', e);
       rethrow;
     }
   }
@@ -375,16 +375,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         try {
           // Send empty JSON object to satisfy the backend's JSON validation
           await apiService.post('/api/auth/logout', data: {});
-          Logger.info('✅ Server logout successful');
+          Logger.info('. Server logout successful');
         } catch (e) {
-          Logger.warning('⚠️ Server logout failed: $e');
+          Logger.warning('. Server logout failed: $e');
           // Don't throw - we still want to clear local data
         }
       }
 
       Logger.info('🔑 Logout completed');
     } catch (e) {
-      Logger.error('❌ Logout error', e);
+      Logger.error('. Logout error', e);
       // Don't throw - logout should always succeed locally
     }
   }
@@ -409,7 +409,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
             responseData['data']?['token'] ?? responseData['token'];
 
         if (newToken != null) {
-          Logger.info('✅ Token refreshed successfully');
+          Logger.info('. Token refreshed successfully');
           return newToken;
         } else {
           throw ServerException(message: 'No token in refresh response');
@@ -421,7 +421,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
     } catch (e) {
-      Logger.error('❌ Token refresh error', e);
+      Logger.error('. Token refresh error', e);
       rethrow;
     }
   }

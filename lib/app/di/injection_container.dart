@@ -81,16 +81,16 @@ Future<void> init() async {
     _verifyRegistrations();
     _logInitializationSummary();
 
-    Logger.info('✅ Dependency injection completed successfully');
+    Logger.info('. Dependency injection completed successfully');
   } catch (e, stackTrace) {
-    Logger.error('❌ Dependency injection failed', e, stackTrace);
+    Logger.error('. Dependency injection failed', e, stackTrace);
     rethrow;
   }
 }
 
 /// Verify that all required services are registered
 void _verifyRegistrations() {
-  Logger.info('🔍 Verifying service registrations...');
+  Logger.info('. Verifying service registrations...');
 
   final moduleChecks = [
     CoreModule.verify(sl),
@@ -121,11 +121,11 @@ void _verifyRegistrations() {
     }
 
     final status = skipped ? 'SKIPPED' : (success ? 'SUCCESS' : 'FAILED');
-    Logger.info('📊 $moduleName Module: $registered/$total services - $status');
+    Logger.info('. $moduleName Module: $registered/$total services - $status');
   }
 
   Logger.info(
-    '📊 Overall Registration Summary: $totalRegistered/$totalServices services registered',
+    '. Overall Registration Summary: $totalRegistered/$totalServices services registered',
   );
 
   if (failedModules.isNotEmpty) {
@@ -140,10 +140,10 @@ void _verifyRegistrations() {
 /// Verify that critical services can be retrieved successfully
 /// FIXED: Lightweight verification without creating or closing bloc instances
 void _verifyCriticalServices() {
-  Logger.info('🔧 Testing critical service registrations...');
+  Logger.info('. Testing critical service registrations...');
 
   final featureFlags = sl<FeatureFlagService>();
-  Logger.info('✅ FeatureFlagService retrieved and tested successfully');
+  Logger.info('. FeatureFlagService retrieved and tested successfully');
 
   // Define critical services to verify based on feature flags
   final List<String> criticalServices = ['AuthBloc', 'HomeBloc', 'SplashCubit'];
@@ -182,12 +182,12 @@ void _verifyCriticalServices() {
       }
 
       if (isRegistered) {
-        Logger.info('✅ $serviceName is registered and available');
+        Logger.info('. $serviceName is registered and available');
       } else {
         throw Exception('$serviceName is not registered');
       }
     } catch (e) {
-      Logger.error('❌ Failed to verify $serviceName registration', e);
+      Logger.error('. Failed to verify $serviceName registration', e);
       throw Exception(
         'Critical service verification failed for $serviceName: $e',
       );
@@ -205,29 +205,29 @@ void _logInitializationSummary() {
     Logger.info('🎯 Initialization Summary:');
     Logger.info('   📦 Total Services: ${_getTotalServiceCount()}');
     Logger.info('   🚩 Enabled Features: ${featureFlags.enabledFeatures}');
-    Logger.info('   🔧 Core Services: ✅ Available');
-    Logger.info('   🔐 Auth Services: ✅ Available');
-    Logger.info('   🏠 Home Services: ✅ Available');
-    Logger.info('   📋 Onboarding Services: ✅ Available');
+    Logger.info('   . Core Services: . Available');
+    Logger.info('   🔐 Auth Services: . Available');
+    Logger.info('   🏠 Home Services: . Available');
+    Logger.info('   . Onboarding Services: . Available');
     Logger.info(
-      '   🎭 Emotion Services: ${featureFlags.isEmotionEnabled ? '✅ Available' : '⏭️ Disabled'}',
+      '   🎭 Emotion Services: ${featureFlags.isEmotionEnabled ? '. Available' : '⏭️ Disabled'}',
     );
     Logger.info(
-      '   👤 Profile Services: ${featureFlags.isProfileEnabled ? '✅ Available' : '⏭️ Disabled'}', // NEW: Profile services log
+      '   . Profile Services: ${featureFlags.isProfileEnabled ? '. Available' : '⏭️ Disabled'}', // NEW: Profile services log
     );
     Logger.info(
-      '   🎯 Mood Services: ${featureFlags.isMoodEnabled ? '✅ Available' : '⏭️ Disabled'}',
+      '   🎯 Mood Services: ${featureFlags.isMoodEnabled ? '. Available' : '⏭️ Disabled'}',
     );
     Logger.info(
-      '   🤖 Automated Usernames: ${featureFlags.isAutomatedUsernamesEnabled ? '✅ Available' : '⏭️ Disabled'}',
+      '   🤖 Automated Usernames: ${featureFlags.isAutomatedUsernamesEnabled ? '. Available' : '⏭️ Disabled'}',
     );
-    Logger.info('   💫 Splash Services: ✅ Available');
+    Logger.info('   💫 Splash Services: . Available');
 
     if (kDebugMode) {
       Logger.info('🐛 Debug mode: Additional logging enabled');
     }
   } catch (e) {
-    Logger.warning('⚠️ Could not generate initialization summary: $e');
+    Logger.warning('. Could not generate initialization summary: $e');
   }
 }
 
@@ -269,9 +269,9 @@ void resetForTesting() {
     // First, attempt to close any open blocs before resetting
     _closeExistingBlocs();
     sl.reset();
-    Logger.info('✅ GetIt reset completed for testing');
+    Logger.info('. GetIt reset completed for testing');
   } catch (e) {
-    Logger.error('❌ Error during testing reset', e);
+    Logger.error('. Error during testing reset', e);
     // Force reset even if cleanup fails
     sl.reset();
   }
@@ -279,14 +279,14 @@ void resetForTesting() {
 
 /// Validate the entire injection container
 void validateInjectionContainer() {
-  Logger.info('🔍 Validating injection container...');
+  Logger.info('. Validating injection container...');
 
   try {
     _verifyRegistrations();
-    Logger.info('✅ Injection container validation passed');
+    Logger.info('. Injection container validation passed');
   } catch (e) {
     Logger.error(
-      '❌ Injection container validation failed',
+      '. Injection container validation failed',
       e,
       StackTrace.current,
     );
@@ -299,7 +299,7 @@ FeatureFlagService getFeatureFlags() {
   try {
     return sl<FeatureFlagService>();
   } catch (e) {
-    Logger.error('❌ Failed to get feature flags', e);
+    Logger.error('. Failed to get feature flags', e);
     // Return default feature flags as fallback
     return const FeatureFlagService(
       isMoodEnabled: false,
@@ -322,7 +322,7 @@ T? getServiceSafely<T extends Object>() {
   try {
     return sl<T>();
   } catch (e) {
-    Logger.error('❌ Failed to get service ${T.toString()}', e);
+    Logger.error('. Failed to get service ${T.toString()}', e);
     return null;
   }
 }
@@ -333,11 +333,9 @@ T getBlocSafely<T extends Object>() {
     final bloc = sl<T>();
 
     // Additional safety check for blocs that have isClosed property
+    // ✅ CRITICAL FIX: Remove HomeBloc check since it's now a factory
     if (bloc is AuthBloc && bloc.isClosed) {
       throw Exception('AuthBloc is already closed');
-    }
-    if (bloc is HomeBloc && bloc.isClosed) {
-      throw Exception('HomeBloc is already closed');
     }
     if (bloc is EmotionBloc && bloc.isClosed) {
       throw Exception('EmotionBloc is already closed');
@@ -352,7 +350,7 @@ T getBlocSafely<T extends Object>() {
 
     return bloc;
   } catch (e) {
-    Logger.error('❌ Failed to get bloc ${T.toString()} safely', e);
+    Logger.error('. Failed to get bloc ${T.toString()} safely', e);
     rethrow;
   }
 }
@@ -368,42 +366,28 @@ void _closeExistingBlocs() {
           final bloc = sl<AuthBloc>();
           if (!bloc.isClosed) {
             bloc.close();
-            Logger.info('✅ AuthBloc closed successfully');
+            Logger.info('. AuthBloc closed successfully');
           } else {
             Logger.info('ℹ️ AuthBloc was already closed');
           }
         } catch (e) {
-          Logger.warning('⚠️ Error closing AuthBloc: $e');
+          Logger.warning('. Error closing AuthBloc: $e');
         }
       }
     },
-    'HomeBloc': () {
-      if (sl.isRegistered<HomeBloc>()) {
-        try {
-          final bloc = sl<HomeBloc>();
-          if (!bloc.isClosed) {
-            bloc.close();
-            Logger.info('✅ HomeBloc closed successfully');
-          } else {
-            Logger.info('ℹ️ HomeBloc was already closed');
-          }
-        } catch (e) {
-          Logger.warning('⚠️ Error closing HomeBloc: $e');
-        }
-      }
-    },
+    // ✅ CRITICAL FIX: Remove HomeBloc cleanup since it's now a factory
     'EmotionBloc': () {
       if (sl.isRegistered<EmotionBloc>()) {
         try {
           final bloc = sl<EmotionBloc>();
           if (!bloc.isClosed) {
             bloc.close();
-            Logger.info('✅ EmotionBloc closed successfully');
+            Logger.info('. EmotionBloc closed successfully');
           } else {
             Logger.info('ℹ️ EmotionBloc was already closed');
           }
         } catch (e) {
-          Logger.warning('⚠️ Error closing EmotionBloc: $e');
+          Logger.warning('. Error closing EmotionBloc: $e');
         }
       }
     },
@@ -414,12 +398,12 @@ void _closeExistingBlocs() {
           final bloc = sl<ProfileBloc>();
           if (!bloc.isClosed) {
             bloc.close();
-            Logger.info('✅ ProfileBloc closed successfully');
+            Logger.info('. ProfileBloc closed successfully');
           } else {
             Logger.info('ℹ️ ProfileBloc was already closed');
           }
         } catch (e) {
-          Logger.warning('⚠️ Error closing ProfileBloc: $e');
+          Logger.warning('. Error closing ProfileBloc: $e');
         }
       }
     },
@@ -429,12 +413,12 @@ void _closeExistingBlocs() {
           final cubit = sl<SplashCubit>();
           if (!cubit.isClosed) {
             cubit.close();
-            Logger.info('✅ SplashCubit closed successfully');
+            Logger.info('. SplashCubit closed successfully');
           } else {
             Logger.info('ℹ️ SplashCubit was already closed');
           }
         } catch (e) {
-          Logger.warning('⚠️ Error closing SplashCubit: $e');
+          Logger.warning('. Error closing SplashCubit: $e');
         }
       }
     },
@@ -444,7 +428,7 @@ void _closeExistingBlocs() {
     try {
       entry.value();
     } catch (e) {
-      Logger.warning('⚠️ Error in ${entry.key} cleanup: $e');
+      Logger.warning('. Error in ${entry.key} cleanup: $e');
     }
   }
 }
@@ -460,7 +444,7 @@ void debugPrintRegistrations() {
 
       final services = <String, Type>{
         'AuthBloc': AuthBloc,
-        'HomeBloc': HomeBloc,
+        'HomeBloc': HomeBloc, // ✅ CRITICAL FIX: HomeBloc is now a factory
         'SplashCubit': SplashCubit,
       };
 
@@ -485,14 +469,14 @@ void debugPrintRegistrations() {
         try {
           final isRegistered = sl.isRegistered(instance: serviceType);
           Logger.info(
-            '🔍 $serviceName: ${isRegistered ? 'Registered' : 'Not Registered'}',
+            '. $serviceName: ${isRegistered ? 'Registered' : 'Not Registered'}',
           );
         } catch (e) {
-          Logger.info('🔍 $serviceName: Error checking registration - $e');
+          Logger.info('. $serviceName: Error checking registration - $e');
         }
       }
     } catch (e) {
-      Logger.warning('⚠️ Could not print debug registrations: $e');
+      Logger.warning('. Could not print debug registrations: $e');
     }
   }
 }
@@ -511,15 +495,15 @@ Future<void> cleanup() async {
     // Reset the service locator
     sl.reset();
 
-    Logger.info('✅ Dependency injection cleanup completed');
+    Logger.info('. Dependency injection cleanup completed');
   } catch (e) {
-    Logger.error('❌ Error during cleanup', e);
+    Logger.error('. Error during cleanup', e);
     // Force reset even if cleanup fails
     try {
       sl.reset();
-      Logger.info('✅ Forced cleanup completed');
+      Logger.info('. Forced cleanup completed');
     } catch (resetError) {
-      Logger.error('❌ Failed to force reset GetIt', resetError);
+      Logger.error('. Failed to force reset GetIt', resetError);
     }
   }
 }
@@ -543,7 +527,7 @@ Map<String, dynamic> healthCheck() {
     // Define services to check based on features
     final Map<String, Type> servicesToCheck = {
       'AuthBloc': AuthBloc,
-      'HomeBloc': HomeBloc,
+      'HomeBloc': HomeBloc, // ✅ CRITICAL FIX: HomeBloc is now a factory
       'SplashCubit': SplashCubit,
     };
 
@@ -610,7 +594,7 @@ Map<String, dynamic> healthCheck() {
   } catch (e) {
     health['status'] = 'unhealthy';
     health['errors'].add('Health check failed: ${e.toString()}');
-    Logger.error('❌ Health check failed', e);
+    Logger.error('. Health check failed', e);
   }
 
   return health;
@@ -691,7 +675,7 @@ Map<String, dynamic> getServiceDetails() {
     };
   } catch (e) {
     details['error'] = e.toString();
-    Logger.error('❌ Failed to get service details', e);
+    Logger.error('. Failed to get service details', e);
   }
 
   return details;
@@ -709,10 +693,10 @@ Future<bool> reinitializeService<T extends Object>() async {
 
     // Note: This would require module-specific reinitialization logic
     // For now, we'll just report the attempt
-    Logger.info('⚠️ Service reinitialization requires module-specific logic');
+    Logger.info('. Service reinitialization requires module-specific logic');
     return false;
   } catch (e) {
-    Logger.error('❌ Failed to reinitialize ${T.toString()}', e);
+    Logger.error('. Failed to reinitialize ${T.toString()}', e);
     return false;
   }
 }

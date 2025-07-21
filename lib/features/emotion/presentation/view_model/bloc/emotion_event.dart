@@ -95,6 +95,36 @@ class LoadUserEmotionHistoryEvent extends EmotionEvent {
   List<Object?> get props => [userId, limit, offset, forceRefresh];
 }
 
+class LoadUserInsightsEvent extends EmotionEvent {
+  final String userId;
+  final String timeframe;
+  final bool forceRefresh;
+
+  const LoadUserInsightsEvent({
+    required this.userId,
+    this.timeframe = '30d',
+    this.forceRefresh = false,
+  });
+
+  @override
+  List<Object?> get props => [userId, timeframe, forceRefresh];
+}
+
+class LoadUserAnalyticsEvent extends EmotionEvent {
+  final String userId;
+  final String timeframe;
+  final bool forceRefresh;
+
+  const LoadUserAnalyticsEvent({
+    required this.userId,
+    this.timeframe = '7d',
+    this.forceRefresh = false,
+  });
+
+  @override
+  List<Object?> get props => [userId, timeframe, forceRefresh];
+}
+
 class ClearEmotionCacheEvent extends EmotionEvent {
   const ClearEmotionCacheEvent();
 }

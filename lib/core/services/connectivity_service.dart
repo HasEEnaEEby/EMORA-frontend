@@ -65,7 +65,7 @@ class ConnectivityService {
         showOfflineBanner();
       }
 
-      Logger.info('✅ Connectivity service initialized successfully');
+      Logger.info('. Connectivity service initialized successfully');
     } catch (e) {
       Logger.error('Failed to initialize connectivity service', e);
     }
@@ -269,7 +269,7 @@ class ConnectivityService {
     if (_isSyncBannerShowing) return;
 
     _isSyncBannerShowing = true;
-    Logger.info('✅ Showing sync success banner');
+    Logger.info('. Showing sync success banner');
 
     _syncBannerEntry = OverlayEntry(
       builder: (context) => Positioned(
@@ -445,7 +445,7 @@ class ConnectivityService {
     if (_isSyncBannerShowing) return;
 
     _isSyncBannerShowing = true;
-    Logger.info('❌ Showing sync error banner');
+    Logger.info('. Showing sync error banner');
 
     _syncBannerEntry = OverlayEntry(
       builder: (context) => Positioned(
@@ -650,7 +650,7 @@ class ConnectivityService {
     _isInitialized = false;
     _networkInfo = null;
 
-    Logger.info('✅ Connectivity service disposed');
+    Logger.info('. Connectivity service disposed');
   }
 
   /// Reset the singleton instance (useful for testing)

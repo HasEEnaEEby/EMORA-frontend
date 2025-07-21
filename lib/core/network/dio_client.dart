@@ -36,23 +36,23 @@ class DioClient {
 
   Dio get dio => _dio;
 
-  // ✅ FIXED: Ensure proper async initialization
+  // . FIXED: Ensure proper async initialization
   Future<void> _initializeAsync() async {
     try {
       await _initPrefs();
       _setupDio();
       _isInitialized = true;
       if (kDebugMode) {
-        print('🔧 DioClient initialized successfully');
+        print('. DioClient initialized successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ DioClient initialization failed: $e');
+        print('. DioClient initialization failed: $e');
       }
     }
   }
 
-  // ✅ FIXED: Wait for initialization before any operations
+  // . FIXED: Wait for initialization before any operations
   Future<void> _ensureInitialized() async {
     if (!_isInitialized) {
       await _initializeAsync();
@@ -88,11 +88,17 @@ class DioClient {
   Interceptor _createAuthInterceptor() {
     return InterceptorsWrapper(
       onRequest: (options, handler) async {
-        // ✅ FIXED: Ensure initialization before token operations
+        // . FIXED: Ensure initialization before token operations
         await _ensureInitialized();
         
         // Add auth token if available
         final token = _getStoredToken();
+        if (kDebugMode) {
+          print('🔑 Auth interceptor - Token available: ${token != null}');
+          if (token != null) {
+            print('🔑 Token: ${token.substring(0, 20)}...');
+          }
+        }
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
         }
@@ -121,7 +127,7 @@ class DioClient {
             print('📤 DATA: ${options.data}');
           }
           if (options.queryParameters.isNotEmpty) {
-            print('🔍 QUERY: ${options.queryParameters}');
+            print('. QUERY: ${options.queryParameters}');
           }
         }
         handler.next(options);
@@ -129,7 +135,7 @@ class DioClient {
       onResponse: (response, handler) {
         if (kDebugMode) {
           print(
-            '✅ RESPONSE: ${response.statusCode} ${response.requestOptions.uri}',
+            '. RESPONSE: ${response.statusCode} ${response.requestOptions.uri}',
           );
           print('📥 DATA: ${response.data}');
         }
@@ -138,7 +144,7 @@ class DioClient {
       onError: (error, handler) {
         if (kDebugMode) {
           print(
-            '❌ ERROR: ${error.response?.statusCode} ${error.requestOptions.uri}',
+            '. ERROR: ${error.response?.statusCode} ${error.requestOptions.uri}',
           );
           print('💥 MESSAGE: ${error.message}');
           if (error.response?.data != null) {
@@ -198,7 +204,7 @@ class DioClient {
           } catch (e) {
             // If retry fails, continue with original error
             if (kDebugMode) {
-              print('❌ Retry failed: $e');
+              print('. Retry failed: $e');
             }
           }
         }
@@ -419,6 +425,60 @@ class DioClient {
       '/api/emotions/users/$userId/insights',
       queryParameters: {'timeframe': timeframe},
       cacheDuration: const Duration(minutes: 5),
+    );
+  }
+
+  Future<Response> getUserInsights({
+    required String userId,
+    String timeframe = '30d',
+  }) async {
+    return await _makeRequest(
+      'GET',
+      '/api/emotions/users/$userId/insights',
+      queryParameters: {'timeframe': timeframe},
+      cacheDuration: const Duration(minutes: 5),
+    );
+  }
+
+  Future<Response> getUserAnalytics({
+    required String userId,
+    String timeframe = '7d',
+  }) async {
+    return await _makeRequest(
+      'GET',
+      '/api/emotions/users/$userId/analytics',
+      queryParameters: {'timeframe': timeframe},
+      cacheDuration: const Duration(minutes: 5),
+    );
+  }
+
+  Future<Response> getUserEmotionAnalytics({
+    required String userId,
+    String timeframe = '30d',
+  }) async {
+    return await _makeRequest(
+      'GET',
+      '/api/emotions/users/$userId/analytics',
+      queryParameters: {'timeframe': timeframe},
+      cacheDuration: const Duration(minutes: 5),
+    );
+  }
+
+  Future<Response> getUserMusicRecommendations({
+    required String userId,
+    String? mood,
+    String? time,
+    String? weather,
+  }) async {
+    final queryParameters = <String, dynamic>{};
+    if (mood != null) queryParameters['mood'] = mood;
+    if (time != null) queryParameters['time'] = time;
+    if (weather != null) queryParameters['weather'] = weather;
+    return await _makeRequest(
+      'GET',
+      '/api/recommendations/users/$userId/music',
+      queryParameters: queryParameters,
+      cacheDuration: const Duration(minutes: 3),
     );
   }
 
@@ -649,7 +709,7 @@ class DioClient {
   }
 
   // Token management
-  // ✅ FIXED: Make token operations async and wait for initialization
+  // . FIXED: Make token operations async and wait for initialization
   String? _getStoredToken() {
     try {
       return _prefs?.getString(AppConfig.authTokenKey);
@@ -734,7 +794,7 @@ class DioClient {
       return response.statusCode == 200;
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Connection test failed: $e');
+        print('. Connection test failed: $e');
       }
       return false;
     }
@@ -773,7 +833,7 @@ class DioClient {
   void updateBaseUrl(String newBaseUrl) {
     _dio.options.baseUrl = newBaseUrl;
     if (kDebugMode) {
-      print('🔧 Base URL updated to: $newBaseUrl');
+      print('. Base URL updated to: $newBaseUrl');
     }
   }
 
@@ -792,21 +852,21 @@ class DioClient {
       _dio.options.sendTimeout = sendTimeout;
     }
     if (kDebugMode) {
-      print('🔧 Timeout settings updated');
+      print('. Timeout settings updated');
     }
   }
 
   void addCustomHeader(String key, String value) {
     _dio.options.headers[key] = value;
     if (kDebugMode) {
-      print('🔧 Custom header added: $key');
+      print('. Custom header added: $key');
     }
   }
 
   void removeCustomHeader(String key) {
     _dio.options.headers.remove(key);
     if (kDebugMode) {
-      print('🔧 Custom header removed: $key');
+      print('. Custom header removed: $key');
     }
   }
 
@@ -826,7 +886,7 @@ class DioClient {
   void logClientInfo() {
     if (kDebugMode) {
       final info = getClientInfo();
-      print('📊 DioClient Info: $info');
+      print('. DioClient Info: $info');
     }
   }
 

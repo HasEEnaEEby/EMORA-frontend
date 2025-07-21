@@ -12,9 +12,9 @@ class SplashModule {
     try {
       _initCubit(sl);
 
-      Logger.info('✅ Splash module initialized successfully');
+      Logger.info('. Splash module initialized successfully');
     } catch (e) {
-      Logger.error('❌ Splash module initialization failed', e);
+      Logger.error('. Splash module initialization failed', e);
       rethrow;
     }
   }
@@ -32,7 +32,7 @@ class SplashModule {
   }
 
   static Map<String, dynamic> verify(GetIt sl) {
-    Logger.info('🔍 Verifying splash module registrations...');
+    Logger.info('. Verifying splash module registrations...');
 
     final serviceChecks = <String, bool Function()>{
       'SplashCubit': () => sl.isRegistered<SplashCubit>(),
@@ -46,15 +46,15 @@ class SplashModule {
       final isRegistered = entry.value();
 
       if (isRegistered) {
-        Logger.info('✅ Splash: $serviceName is registered');
+        Logger.info('. Splash: $serviceName is registered');
         registeredCount++;
       } else {
-        Logger.warning('⚠️ Splash: $serviceName is NOT registered');
+        Logger.warning('. Splash: $serviceName is NOT registered');
       }
     }
 
     Logger.info(
-      '📊 Splash Module: $registeredCount/$totalCount services registered',
+      '. Splash Module: $registeredCount/$totalCount services registered',
     );
 
     return {

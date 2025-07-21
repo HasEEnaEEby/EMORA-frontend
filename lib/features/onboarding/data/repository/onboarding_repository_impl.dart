@@ -29,7 +29,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   Future<Either<Failure, List<OnboardingStepEntity>>>
   getOnboardingSteps() async {
     try {
-      Logger.info('📋 Getting onboarding steps with offline-first strategy...');
+      Logger.info('. Getting onboarding steps with offline-first strategy...');
 
       // **OFFLINE-FIRST STRATEGY**
       // 1. Always get local data first for immediate response
@@ -39,7 +39,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
       final isConnected = await networkInfo.isConnected;
       final isCacheFresh = localDataSource.isCacheFresh();
 
-      Logger.info('🔍 Network: $isConnected, Cache fresh: $isCacheFresh');
+      Logger.info('. Network: $isConnected, Cache fresh: $isCacheFresh');
 
       // 3. If online and cache is stale, try to get fresh data
       if (isConnected && !isCacheFresh) {
@@ -50,7 +50,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
           // 4. Cache the fresh data
           if (remoteSteps.isNotEmpty) {
             await localDataSource.cacheOnboardingSteps(remoteSteps);
-            Logger.info('✅ Using fresh onboarding steps from server');
+            Logger.info('. Using fresh onboarding steps from server');
             return Right(remoteSteps.map((step) => step.toEntity()).toList());
           }
         } on NotFoundException catch (e) {
@@ -68,11 +68,11 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
               name: 'OnboardingRepository',
             );
           } else {
-            Logger.warning('⚠️ Failed to fetch fresh steps, using cached: $e');
+            Logger.warning('. Failed to fetch fresh steps, using cached: $e');
           }
           // Continue to use cached data
         } catch (e) {
-          Logger.warning('⚠️ Failed to fetch fresh steps, using cached: $e');
+          Logger.warning('. Failed to fetch fresh steps, using cached: $e');
           // Continue to use cached data
         }
       }
@@ -95,9 +95,9 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   @override
   Future<Either<Failure, UserOnboardingEntity>> getUserOnboardingData() async {
     try {
-      Logger.info('👤 Getting user onboarding data...');
+      Logger.info('. Getting user onboarding data...');
       final userData = await localDataSource.getUserOnboardingData();
-      Logger.info('✅ Retrieved user onboarding data');
+      Logger.info('. Retrieved user onboarding data');
       return Right(userData.toEntity());
     } on CacheException catch (e) {
       Logger.error('Cache error getting user data', e);
@@ -114,7 +114,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   ) async {
     try {
       Logger.info(
-        '💾 Saving user onboarding data with offline-first approach...',
+        '. Saving user onboarding data with offline-first approach...',
       );
 
       final userDataModel = UserOnboardingModel.fromEntity(userData);
@@ -129,7 +129,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
         return const Left(CacheFailure(message: 'Failed to save data locally'));
       }
 
-      Logger.info('✅ Saved user onboarding data locally');
+      Logger.info('. Saved user onboarding data locally');
 
       // 2. Try to sync with remote if connected (don't block user flow)
       if (await networkInfo.isConnected) {
@@ -140,9 +140,9 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
           );
 
           if (syncSuccess) {
-            Logger.info('✅ User data synced with server successfully');
+            Logger.info('. User data synced with server successfully');
           } else {
-            Logger.info('⚠️ Server sync returned false, will retry later');
+            Logger.info('. Server sync returned false, will retry later');
           }
         } on NotFoundException catch (e) {
           // FIXED: Handle 404 gracefully for development
@@ -158,10 +158,10 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
               name: 'OnboardingRepository',
             );
           } else {
-            Logger.warning('⚠️ Remote sync failed (data saved locally): $e');
+            Logger.warning('. Remote sync failed (data saved locally): $e');
           }
         } catch (e) {
-          Logger.warning('⚠️ Remote sync failed (data saved locally): $e');
+          Logger.warning('. Remote sync failed (data saved locally): $e');
           // TODO: Add to sync queue for later retry
         }
       } else {
@@ -195,7 +195,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
         );
       }
 
-      Logger.info('✅ Onboarding marked as completed locally');
+      Logger.info('. Onboarding marked as completed locally');
 
       // 2. Get the completed user data for remote sync
       final userData = await localDataSource.getUserOnboardingData();
@@ -209,10 +209,10 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
           );
 
           if (syncSuccess) {
-            Logger.info('✅ Onboarding completed on server successfully');
+            Logger.info('. Onboarding completed on server successfully');
           } else {
             Logger.info(
-              '⚠️ Server completion returned false, will retry later',
+              '. Server completion returned false, will retry later',
             );
           }
         } on NotFoundException catch (e) {
@@ -241,11 +241,11 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
             );
           } else {
             Logger.warning(
-              '⚠️ Remote completion failed (completed locally): $e',
+              '. Remote completion failed (completed locally): $e',
             );
           }
         } catch (e) {
-          Logger.warning('⚠️ Remote completion failed (completed locally): $e');
+          Logger.warning('. Remote completion failed (completed locally): $e');
           // TODO: Add to sync queue for later retry
         }
       } else {
@@ -267,7 +267,7 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   @override
   Future<Either<Failure, bool>> isOnboardingCompleted() async {
     try {
-      Logger.info('🔍 Checking if onboarding is completed...');
+      Logger.info('. Checking if onboarding is completed...');
       final isCompleted = await localDataSource.isOnboardingCompleted();
       Logger.info('ℹ️ Onboarding completed: $isCompleted');
       return Right(isCompleted);

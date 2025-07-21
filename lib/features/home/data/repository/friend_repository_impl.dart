@@ -7,6 +7,7 @@ import '../../../../core/utils/logger.dart';
 import '../../domain/entity/friend_entity.dart';
 import '../../domain/repository/friend_repository.dart';
 import '../data_source/remote/friend_remote_data_source.dart';
+import '../model/friend_model.dart';
 
 class FriendRepositoryImpl implements FriendRepository {
   final FriendRemoteDataSource remoteDataSource;
@@ -18,26 +19,31 @@ class FriendRepositoryImpl implements FriendRepository {
   });
 
   @override
-  Future<Either<Failure, List<FriendSuggestionEntity>>> searchUsers({
+  Future<Either<Failure, Map<String, dynamic>>> searchUsers({
     required String query,
     int page = 1,
     int limit = 10,
   }) async {
     try {
-      Logger.info('🔍 Searching users: $query');
+      Logger.info('. Searching users: $query');
 
       if (await networkInfo.isConnected) {
-        final users = await remoteDataSource.searchUsers(
+        final result = await remoteDataSource.searchUsers(
           query: query,
           page: page,
           limit: limit,
         );
-
-        final entities = users.map((user) => user.toEntity()).toList();
-        Logger.info('✅ Found ${entities.length} users');
-        return Right(entities);
+        final suggestions = (result['suggestions'] as List)
+            .map((userModel) => (userModel as FriendSuggestionModel).toEntity())
+            .toList();
+        final total = result['total'] as int? ?? suggestions.length;
+        Logger.info('. Found ${suggestions.length} users, total: $total');
+        return Right({
+          'suggestions': suggestions,
+          'total': total,
+        });
       } else {
-        Logger.warning('⚠️ No network connection for user search');
+        Logger.warning('. No network connection for user search');
         return Left(
           NetworkFailure(
             message: 'No internet connection. Please check your network.',
@@ -45,16 +51,63 @@ class FriendRepositoryImpl implements FriendRepository {
         );
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error searching users', e);
+      Logger.error('. Server error searching users', e);
       return Left(ServerFailure(message: e.message));
     } on NotFoundException catch (e) {
-      Logger.error('❌ Endpoint not found', e);
+      Logger.error('. Endpoint not found', e);
       return Left(ServerFailure(message: e.message));
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Unauthorized request', e);
+      Logger.error('. Unauthorized request', e);
       return Left(AuthFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error searching users', e);
+      Logger.error('. Unexpected error searching users', e);
+      return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> searchAllUsers({
+    required String query,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      Logger.info('. Searching all users globally: $query');
+
+      if (await networkInfo.isConnected) {
+        final result = await remoteDataSource.searchAllUsers(
+          query: query,
+          page: page,
+          limit: limit,
+        );
+        final users = (result['suggestions'] as List?)
+            ?.map((userModel) => (userModel as FriendSuggestionModel).toEntity())
+            .toList() ?? [];
+        final total = result['total'] as int? ?? users.length;
+        Logger.info('. Found ${users.length} users globally, total: $total');
+        return Right({
+          'suggestions': users,
+          'total': total,
+        });
+      } else {
+        Logger.warning('. No network connection for global user search');
+        return Left(
+          NetworkFailure(
+            message: 'No internet connection. Please check your network.',
+          ),
+        );
+      }
+    } on ServerException catch (e) {
+      Logger.error('. Server error searching all users', e);
+      return Left(ServerFailure(message: e.message));
+    } on NotFoundException catch (e) {
+      Logger.error('. Endpoint not found', e);
+      return Left(ServerFailure(message: e.message));
+    } on UnauthorizedException catch (e) {
+      Logger.error('. Unauthorized request', e);
+      return Left(AuthFailure(message: e.message));
+    } catch (e) {
+      Logger.error('. Unexpected error searching all users', e);
       return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
     }
   }
@@ -71,10 +124,10 @@ class FriendRepositoryImpl implements FriendRepository {
           userId: userId,
         );
 
-        Logger.info('✅ Friend request result: $success');
+        Logger.info('. Friend request result: $success');
         return Right(success);
       } else {
-        Logger.warning('⚠️ No network connection for sending friend request');
+        Logger.warning('. No network connection for sending friend request');
         return Left(
           NetworkFailure(
             message: 'No internet connection. Please check your network.',
@@ -82,16 +135,16 @@ class FriendRepositoryImpl implements FriendRepository {
         );
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error sending friend request', e);
+      Logger.error('. Server error sending friend request', e);
       return Left(ServerFailure(message: e.message));
     } on NotFoundException catch (e) {
-      Logger.error('❌ Endpoint not found', e);
+      Logger.error('. Endpoint not found', e);
       return Left(ServerFailure(message: e.message));
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Unauthorized request', e);
+      Logger.error('. Unauthorized request', e);
       return Left(AuthFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error sending friend request', e);
+      Logger.error('. Unexpected error sending friend request', e);
       return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
     }
   }
@@ -110,10 +163,10 @@ class FriendRepositoryImpl implements FriendRepository {
           action: action,
         );
 
-        Logger.info('✅ Friend request response result: $success');
+        Logger.info('. Friend request response result: $success');
         return Right(success);
       } else {
-        Logger.warning('⚠️ No network connection for responding to friend request');
+        Logger.warning('. No network connection for responding to friend request');
         return Left(
           NetworkFailure(
             message: 'No internet connection. Please check your network.',
@@ -121,16 +174,16 @@ class FriendRepositoryImpl implements FriendRepository {
         );
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error responding to friend request', e);
+      Logger.error('. Server error responding to friend request', e);
       return Left(ServerFailure(message: e.message));
     } on NotFoundException catch (e) {
-      Logger.error('❌ Endpoint not found', e);
+      Logger.error('. Endpoint not found', e);
       return Left(ServerFailure(message: e.message));
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Unauthorized request', e);
+      Logger.error('. Unauthorized request', e);
       return Left(AuthFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error responding to friend request', e);
+      Logger.error('. Unexpected error responding to friend request', e);
       return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
     }
   }
@@ -150,10 +203,10 @@ class FriendRepositoryImpl implements FriendRepository {
         );
 
         final entities = friends.map((friend) => friend.toEntity()).toList();
-        Logger.info('✅ Found ${entities.length} friends');
+        Logger.info('. Found ${entities.length} friends');
         return Right(entities);
       } else {
-        Logger.warning('⚠️ No network connection for fetching friends');
+        Logger.warning('. No network connection for fetching friends');
         return Left(
           NetworkFailure(
             message: 'No internet connection. Please check your network.',
@@ -161,16 +214,16 @@ class FriendRepositoryImpl implements FriendRepository {
         );
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error fetching friends', e);
+      Logger.error('. Server error fetching friends', e);
       return Left(ServerFailure(message: e.message));
     } on NotFoundException catch (e) {
-      Logger.error('❌ Endpoint not found', e);
+      Logger.error('. Endpoint not found', e);
       return Left(ServerFailure(message: e.message));
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Unauthorized request', e);
+      Logger.error('. Unauthorized request', e);
       return Left(AuthFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error fetching friends', e);
+      Logger.error('. Unexpected error fetching friends', e);
       return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
     }
   }
@@ -178,7 +231,7 @@ class FriendRepositoryImpl implements FriendRepository {
   @override
   Future<Either<Failure, Map<String, List<FriendRequestEntity>>>> getPendingRequests() async {
     try {
-      Logger.info('📋 Fetching pending friend requests');
+      Logger.info('. Fetching pending friend requests');
 
       if (await networkInfo.isConnected) {
         final requests = await remoteDataSource.getPendingRequests();
@@ -195,10 +248,10 @@ class FriendRepositoryImpl implements FriendRepository {
             if (entity.userId.isNotEmpty) {
               validSentRequests.add(entity);
             } else {
-              Logger.warning('⚠️ Filtered out sent request with empty userId: ${req.id}');
+              Logger.warning('. Filtered out sent request with empty userId: ${req.id}');
             }
           } catch (e) {
-            Logger.warning('⚠️ Filtered out invalid sent request: ${req.id}, error: $e');
+            Logger.warning('. Filtered out invalid sent request: ${req.id}, error: $e');
           }
         }
         
@@ -208,20 +261,20 @@ class FriendRepositoryImpl implements FriendRepository {
             if (entity.userId.isNotEmpty) {
               validReceivedRequests.add(entity);
             } else {
-              Logger.warning('⚠️ Filtered out received request with empty userId: ${req.id}');
+              Logger.warning('. Filtered out received request with empty userId: ${req.id}');
             }
           } catch (e) {
-            Logger.warning('⚠️ Filtered out invalid received request: ${req.id}, error: $e');
+            Logger.warning('. Filtered out invalid received request: ${req.id}, error: $e');
           }
         }
         
         result['sent'] = validSentRequests;
         result['received'] = validReceivedRequests;
 
-        Logger.info('✅ Found ${result['sent']!.length} sent, ${result['received']!.length} received requests');
+        Logger.info('. Found ${result['sent']!.length} sent, ${result['received']!.length} received requests');
         return Right(result);
       } else {
-        Logger.warning('⚠️ No network connection for fetching pending requests');
+        Logger.warning('. No network connection for fetching pending requests');
         return Left(
           NetworkFailure(
             message: 'No internet connection. Please check your network.',
@@ -229,16 +282,16 @@ class FriendRepositoryImpl implements FriendRepository {
         );
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error fetching pending requests', e);
+      Logger.error('. Server error fetching pending requests', e);
       return Left(ServerFailure(message: e.message));
     } on NotFoundException catch (e) {
-      Logger.error('❌ Endpoint not found', e);
+      Logger.error('. Endpoint not found', e);
       return Left(ServerFailure(message: e.message));
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Unauthorized request', e);
+      Logger.error('. Unauthorized request', e);
       return Left(AuthFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error fetching pending requests', e);
+      Logger.error('. Unexpected error fetching pending requests', e);
       return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
     }
   }
@@ -248,17 +301,17 @@ class FriendRepositoryImpl implements FriendRepository {
     required String userId,
   }) async {
     try {
-      Logger.info('❌ Cancelling friend request to: $userId');
+      Logger.info('. Cancelling friend request to: $userId');
 
       if (await networkInfo.isConnected) {
         final success = await remoteDataSource.cancelFriendRequest(
           userId: userId,
         );
 
-        Logger.info('✅ Friend request cancellation result: $success');
+        Logger.info('. Friend request cancellation result: $success');
         return Right(success);
       } else {
-        Logger.warning('⚠️ No network connection for cancelling friend request');
+        Logger.warning('. No network connection for cancelling friend request');
         return Left(
           NetworkFailure(
             message: 'No internet connection. Please check your network.',
@@ -266,16 +319,16 @@ class FriendRepositoryImpl implements FriendRepository {
         );
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error cancelling friend request', e);
+      Logger.error('. Server error cancelling friend request', e);
       return Left(ServerFailure(message: e.message));
     } on NotFoundException catch (e) {
-      Logger.error('❌ Endpoint not found', e);
+      Logger.error('. Endpoint not found', e);
       return Left(ServerFailure(message: e.message));
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Unauthorized request', e);
+      Logger.error('. Unauthorized request', e);
       return Left(AuthFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error cancelling friend request', e);
+      Logger.error('. Unexpected error cancelling friend request', e);
       return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
     }
   }
@@ -292,10 +345,10 @@ class FriendRepositoryImpl implements FriendRepository {
           friendUserId: friendUserId,
         );
 
-        Logger.info('✅ Friend removal result: $success');
+        Logger.info('. Friend removal result: $success');
         return Right(success);
       } else {
-        Logger.warning('⚠️ No network connection for removing friend');
+        Logger.warning('. No network connection for removing friend');
         return Left(
           NetworkFailure(
             message: 'No internet connection. Please check your network.',
@@ -303,16 +356,16 @@ class FriendRepositoryImpl implements FriendRepository {
         );
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error removing friend', e);
+      Logger.error('. Server error removing friend', e);
       return Left(ServerFailure(message: e.message));
     } on NotFoundException catch (e) {
-      Logger.error('❌ Endpoint not found', e);
+      Logger.error('. Endpoint not found', e);
       return Left(ServerFailure(message: e.message));
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Unauthorized request', e);
+      Logger.error('. Unauthorized request', e);
       return Left(AuthFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error removing friend', e);
+      Logger.error('. Unexpected error removing friend', e);
       return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
     }
   }
@@ -330,10 +383,10 @@ class FriendRepositoryImpl implements FriendRepository {
         );
 
         final entities = suggestions.map((suggestion) => suggestion.toEntity()).toList();
-        Logger.info('✅ Found ${entities.length} friend suggestions');
+        Logger.info('. Found ${entities.length} friend suggestions');
         return Right(entities);
       } else {
-        Logger.warning('⚠️ No network connection for fetching friend suggestions');
+        Logger.warning('. No network connection for fetching friend suggestions');
         return Left(
           NetworkFailure(
             message: 'No internet connection. Please check your network.',
@@ -341,16 +394,16 @@ class FriendRepositoryImpl implements FriendRepository {
         );
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error fetching friend suggestions', e);
+      Logger.error('. Server error fetching friend suggestions', e);
       return Left(ServerFailure(message: e.message));
     } on NotFoundException catch (e) {
-      Logger.error('❌ Endpoint not found', e);
+      Logger.error('. Endpoint not found', e);
       return Left(ServerFailure(message: e.message));
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Unauthorized request', e);
+      Logger.error('. Unauthorized request', e);
       return Left(AuthFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error fetching friend suggestions', e);
+      Logger.error('. Unexpected error fetching friend suggestions', e);
       return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
     }
   }

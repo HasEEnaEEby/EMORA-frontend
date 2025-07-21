@@ -33,7 +33,7 @@ class _EnhancedStatsWidgetState extends State<EnhancedStatsWidget> {
 
   Future<void> _loadStatsData() async {
     if (widget.emotionEntries.isEmpty) {
-      Logger.info('📊 No emotion entries provided for enhanced stats');
+      Logger.info('. No emotion entries provided for enhanced stats');
       return;
     }
 
@@ -43,7 +43,7 @@ class _EnhancedStatsWidgetState extends State<EnhancedStatsWidget> {
     });
 
     try {
-      Logger.info('📊 Loading enhanced stats data');
+      Logger.info('. Loading enhanced stats data');
       
       final emotionApiService = GetIt.instance<EmotionApiService>();
       final stats = await emotionApiService.getEmotionStats(period: '7d');
@@ -53,9 +53,9 @@ class _EnhancedStatsWidgetState extends State<EnhancedStatsWidget> {
         _isLoading = false;
       });
       
-      Logger.info('✅ Enhanced stats loaded successfully');
+      Logger.info('. Enhanced stats loaded successfully');
     } catch (e) {
-      Logger.error('❌ Failed to load enhanced stats: $e');
+      Logger.error('. Failed to load enhanced stats: $e');
       setState(() {
         _errorMessage = 'Failed to load statistics';
         _isLoading = false;
@@ -142,8 +142,8 @@ class _EnhancedStatsWidgetState extends State<EnhancedStatsWidget> {
     final currentStreak = _statsData?['currentStreak'] ?? _calculateCurrentStreak();
     final averageMood = _statsData?['averageIntensity']?.toStringAsFixed(1) ?? _calculateAverageMood().toStringAsFixed(1);
 
-    Logger.info('📊 Stats Data: $_statsData');
-    Logger.info('📊 Total Logs: $totalLogs, Current Streak: $currentStreak, Average Mood: $averageMood');
+    Logger.info('. Stats Data: $_statsData');
+    Logger.info('. Total Logs: $totalLogs, Current Streak: $currentStreak, Average Mood: $averageMood');
 
     // Ensure we have valid data to display
     if (totalLogs == 0 && widget.emotionEntries.isEmpty) {
@@ -287,24 +287,22 @@ class _EnhancedStatsWidgetState extends State<EnhancedStatsWidget> {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final sortedEntries = List<EmotionEntryModel>.from(widget.emotionEntries)
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp)); // Sort descending
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt)); // Sort descending
     
     int streak = 0;
     DateTime currentDate = today;
-    
+
     for (final entry in sortedEntries) {
-      final entryDate = DateTime(entry.timestamp.year, entry.timestamp.month, entry.timestamp.day);
+      final entryDate = DateTime(entry.createdAt.year, entry.createdAt.month, entry.createdAt.day);
       final daysDiff = currentDate.difference(entryDate).inDays;
       
       if (daysDiff == 0) {
-        // Same day, continue streak
-        continue;
-      } else if (daysDiff == 1) {
-        // Consecutive day
         streak++;
-        currentDate = entryDate;
+        currentDate = currentDate.subtract(const Duration(days: 1));
+      } else if (daysDiff == 1) {
+        streak++;
+        currentDate = currentDate.subtract(const Duration(days: 1));
       } else {
-        // Streak broken
         break;
       }
     }

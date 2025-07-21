@@ -12,8 +12,20 @@ class UserStatsModel extends Equatable {
   final DateTime lastMoodLog;
   final Map<String, dynamic> weeklyStats;
   final Map<String, dynamic> monthlyStats;
+  
+  // Enhanced fields for journey analytics
+  final int longestStreak;
+  final int totalFriends;
+  final int helpedFriends;
+  final int badgesEarned;
+  final String userLevel;
+  final String favoriteEmotion;
+  final int daysSinceJoined;
+  final DateTime lastActivity;
+  final Map<String, dynamic> comprehensiveStats;
+  final Map<String, dynamic> achievements;
 
-  const UserStatsModel({
+  UserStatsModel({
     required this.totalMoodEntries,
     required this.streakDays,
     required this.totalSessions,
@@ -23,7 +35,23 @@ class UserStatsModel extends Equatable {
     required this.lastMoodLog,
     required this.weeklyStats,
     required this.monthlyStats,
-  });
+    this.longestStreak = 0,
+    this.totalFriends = 0,
+    this.helpedFriends = 0,
+    this.badgesEarned = 0,
+    this.userLevel = 'New Explorer',
+    this.favoriteEmotion = '',
+    this.daysSinceJoined = 0,
+    required this.lastActivity,
+    this.comprehensiveStats = const {},
+    this.achievements = const {},
+  }) {
+    // Add runtime validation
+    assert(longestStreak != null, 'longestStreak cannot be null');
+    assert(totalFriends != null, 'totalFriends cannot be null');
+    assert(helpedFriends != null, 'helpedFriends cannot be null');
+    assert(badgesEarned != null, 'badgesEarned cannot be null');
+  }
 
   // Enhanced factory constructor with safe type handling
   factory UserStatsModel.fromJson(Map<String, dynamic> json) {
@@ -38,8 +66,20 @@ class UserStatsModel extends Equatable {
         lastMoodLog: _parseDateTime(json['lastMoodLog']),
         weeklyStats: _parseMap(json['weeklyStats']),
         monthlyStats: _parseMap(json['monthlyStats']),
+        longestStreak: _safeInt(json['longestStreak']),
+        totalFriends: _safeInt(json['totalFriends']),
+        helpedFriends: _safeInt(json['helpedFriends']),
+        badgesEarned: _safeInt(json['badgesEarned']),
+        userLevel: _safeString(json['userLevel']),
+        favoriteEmotion: _safeString(json['favoriteEmotion']),
+        daysSinceJoined: _safeInt(json['daysSinceJoined']),
+        lastActivity: _parseDateTime(json['lastActivity']),
+        comprehensiveStats: _parseMap(json['comprehensiveStats']),
+        achievements: _parseMap(json['achievements']),
       );
     } catch (e) {
+      print('❌ Error creating UserStatsModel from JSON: $e');
+      print('❌ JSON data: $json');
       return UserStatsModel.empty();
     }
   }
@@ -56,6 +96,16 @@ class UserStatsModel extends Equatable {
       lastMoodLog: DateTime.now(),
       weeklyStats: {},
       monthlyStats: {},
+      longestStreak: 0,
+      totalFriends: 0,
+      helpedFriends: 0,
+      badgesEarned: 0,
+      userLevel: 'New Explorer',
+      favoriteEmotion: '',
+      daysSinceJoined: 0,
+      lastActivity: DateTime.now(),
+      comprehensiveStats: {},
+      achievements: {},
     );
   }
 
@@ -65,6 +115,7 @@ class UserStatsModel extends Equatable {
     if (value is int) return value;
     if (value is double) return value.toInt();
     if (value is String) return int.tryParse(value) ?? 0;
+    print('⚠️ _safeInt received unexpected type: ${value.runtimeType} for value: $value');
     return 0;
   }
 
@@ -109,17 +160,33 @@ class UserStatsModel extends Equatable {
   }
 
   factory UserStatsModel.fromEntity(UserStatsEntity entity) {
-    return UserStatsModel(
-      totalMoodEntries: entity.totalMoodEntries,
-      streakDays: entity.streakDays,
-      totalSessions: entity.totalSessions,
-      moodCheckins: entity.moodCheckins,
-      averageMoodScore: entity.averageMoodScore,
-      mostFrequentMood: entity.mostFrequentMood,
-      lastMoodLog: entity.lastMoodLog,
-      weeklyStats: entity.weeklyStats,
-      monthlyStats: entity.monthlyStats,
-    );
+    try {
+      return UserStatsModel(
+        totalMoodEntries: entity.totalMoodEntries,
+        streakDays: entity.streakDays,
+        totalSessions: entity.totalSessions,
+        moodCheckins: entity.moodCheckins,
+        averageMoodScore: entity.averageMoodScore,
+        mostFrequentMood: entity.mostFrequentMood,
+        lastMoodLog: entity.lastMoodLog,
+        weeklyStats: entity.weeklyStats,
+        monthlyStats: entity.monthlyStats,
+        longestStreak: entity.longestStreak,
+        totalFriends: entity.totalFriends,
+        helpedFriends: entity.helpedFriends,
+        badgesEarned: entity.badgesEarned,
+        userLevel: entity.userLevel,
+        favoriteEmotion: entity.favoriteEmotion,
+        daysSinceJoined: entity.daysSinceJoined,
+        lastActivity: entity.lastActivity,
+        comprehensiveStats: entity.comprehensiveStats,
+        achievements: entity.achievements,
+      );
+    } catch (e) {
+      print('❌ Error creating UserStatsModel from Entity: $e');
+      print('❌ Entity longestStreak: ${entity.longestStreak}');
+      return UserStatsModel.empty();
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -133,6 +200,16 @@ class UserStatsModel extends Equatable {
       'lastMoodLog': lastMoodLog.toIso8601String(),
       'weeklyStats': weeklyStats,
       'monthlyStats': monthlyStats,
+      'longestStreak': longestStreak,
+      'totalFriends': totalFriends,
+      'helpedFriends': helpedFriends,
+      'badgesEarned': badgesEarned,
+      'userLevel': userLevel,
+      'favoriteEmotion': favoriteEmotion,
+      'daysSinceJoined': daysSinceJoined,
+      'lastActivity': lastActivity.toIso8601String(),
+      'comprehensiveStats': comprehensiveStats,
+      'achievements': achievements,
     };
   }
 
@@ -149,6 +226,16 @@ class UserStatsModel extends Equatable {
       lastMoodLog: lastMoodLog,
       weeklyStats: weeklyStats,
       monthlyStats: monthlyStats,
+      longestStreak: longestStreak,
+      totalFriends: totalFriends,
+      helpedFriends: helpedFriends,
+      badgesEarned: badgesEarned,
+      userLevel: userLevel,
+      favoriteEmotion: favoriteEmotion,
+      daysSinceJoined: daysSinceJoined,
+      lastActivity: lastActivity,
+      comprehensiveStats: comprehensiveStats,
+      achievements: achievements,
     );
   }
 
@@ -162,6 +249,16 @@ class UserStatsModel extends Equatable {
     DateTime? lastMoodLog,
     Map<String, dynamic>? weeklyStats,
     Map<String, dynamic>? monthlyStats,
+    int? longestStreak,
+    int? totalFriends,
+    int? helpedFriends,
+    int? badgesEarned,
+    String? userLevel,
+    String? favoriteEmotion,
+    int? daysSinceJoined,
+    DateTime? lastActivity,
+    Map<String, dynamic>? comprehensiveStats,
+    Map<String, dynamic>? achievements,
   }) {
     return UserStatsModel(
       totalMoodEntries: totalMoodEntries ?? this.totalMoodEntries,
@@ -173,6 +270,16 @@ class UserStatsModel extends Equatable {
       lastMoodLog: lastMoodLog ?? this.lastMoodLog,
       weeklyStats: weeklyStats ?? this.weeklyStats,
       monthlyStats: monthlyStats ?? this.monthlyStats,
+      longestStreak: longestStreak ?? this.longestStreak,
+      totalFriends: totalFriends ?? this.totalFriends,
+      helpedFriends: helpedFriends ?? this.helpedFriends,
+      badgesEarned: badgesEarned ?? this.badgesEarned,
+      userLevel: userLevel ?? this.userLevel,
+      favoriteEmotion: favoriteEmotion ?? this.favoriteEmotion,
+      daysSinceJoined: daysSinceJoined ?? this.daysSinceJoined,
+      lastActivity: lastActivity ?? this.lastActivity,
+      comprehensiveStats: comprehensiveStats ?? this.comprehensiveStats,
+      achievements: achievements ?? this.achievements,
     );
   }
 
@@ -187,5 +294,15 @@ class UserStatsModel extends Equatable {
     lastMoodLog,
     weeklyStats,
     monthlyStats,
+    longestStreak,
+    totalFriends,
+    helpedFriends,
+    badgesEarned,
+    userLevel,
+    favoriteEmotion,
+    daysSinceJoined,
+    lastActivity,
+    comprehensiveStats,
+    achievements,
   ];
 }

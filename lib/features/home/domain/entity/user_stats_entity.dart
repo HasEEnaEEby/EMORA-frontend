@@ -10,6 +10,18 @@ class UserStatsEntity extends Equatable {
   final DateTime lastMoodLog;
   final Map<String, dynamic> weeklyStats;
   final Map<String, dynamic> monthlyStats;
+  
+  // Enhanced fields for journey analytics
+  final int longestStreak;
+  final int totalFriends;
+  final int helpedFriends;
+  final int badgesEarned;
+  final String userLevel;
+  final String favoriteEmotion;
+  final int daysSinceJoined;
+  final DateTime lastActivity;
+  final Map<String, dynamic> comprehensiveStats;
+  final Map<String, dynamic> achievements;
 
   const UserStatsEntity({
     required this.totalMoodEntries,
@@ -21,6 +33,16 @@ class UserStatsEntity extends Equatable {
     required this.lastMoodLog,
     required this.weeklyStats,
     required this.monthlyStats,
+    this.longestStreak = 0,
+    this.totalFriends = 0,
+    this.helpedFriends = 0,
+    this.badgesEarned = 0,
+    this.userLevel = 'New Explorer',
+    this.favoriteEmotion = '',
+    this.daysSinceJoined = 0,
+    required this.lastActivity,
+    this.comprehensiveStats = const {},
+    this.achievements = const {},
   });
 
   UserStatsEntity copyWith({
@@ -33,6 +55,16 @@ class UserStatsEntity extends Equatable {
     DateTime? lastMoodLog,
     Map<String, dynamic>? weeklyStats,
     Map<String, dynamic>? monthlyStats,
+    int? longestStreak,
+    int? totalFriends,
+    int? helpedFriends,
+    int? badgesEarned,
+    String? userLevel,
+    String? favoriteEmotion,
+    int? daysSinceJoined,
+    DateTime? lastActivity,
+    Map<String, dynamic>? comprehensiveStats,
+    Map<String, dynamic>? achievements,
   }) {
     return UserStatsEntity(
       totalMoodEntries: totalMoodEntries ?? this.totalMoodEntries,
@@ -44,6 +76,16 @@ class UserStatsEntity extends Equatable {
       lastMoodLog: lastMoodLog ?? this.lastMoodLog,
       weeklyStats: weeklyStats ?? this.weeklyStats,
       monthlyStats: monthlyStats ?? this.monthlyStats,
+      longestStreak: longestStreak ?? this.longestStreak,
+      totalFriends: totalFriends ?? this.totalFriends,
+      helpedFriends: helpedFriends ?? this.helpedFriends,
+      badgesEarned: badgesEarned ?? this.badgesEarned,
+      userLevel: userLevel ?? this.userLevel,
+      favoriteEmotion: favoriteEmotion ?? this.favoriteEmotion,
+      daysSinceJoined: daysSinceJoined ?? this.daysSinceJoined,
+      lastActivity: lastActivity ?? this.lastActivity,
+      comprehensiveStats: comprehensiveStats ?? this.comprehensiveStats,
+      achievements: achievements ?? this.achievements,
     );
   }
 
@@ -58,5 +100,15 @@ class UserStatsEntity extends Equatable {
     lastMoodLog,
     weeklyStats,
     monthlyStats,
+    longestStreak,
+    totalFriends,
+    helpedFriends,
+    badgesEarned,
+    userLevel,
+    favoriteEmotion,
+    daysSinceJoined,
+    lastActivity,
+    comprehensiveStats,
+    achievements,
   ];
 }

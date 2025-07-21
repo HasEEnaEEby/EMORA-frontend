@@ -47,21 +47,30 @@ class UserProfileModel {
 
   // Factory constructor from JSON
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
+    print('[DEBUG] UserProfileModel.fromJson input: $json');
+    
     // Handle nested user object if present
     final userData = json['user'] as Map<String, dynamic>? ?? json;
     final profileData = userData['profile'] as Map<String, dynamic>? ?? {};
+    
+    print('[DEBUG] userData keys: ${userData.keys.toList()}');
+    print('[DEBUG] profileData keys: ${profileData.keys.toList()}');
+    
+    // Extract username properly
+    final username = userData['username']?.toString() ?? '';
+    print('[DEBUG] Extracted username: "$username"');
     
     // DEBUG LOGGING
     print('[DEBUG] profileData["displayName"]: \'${profileData['displayName']}\'');
     final computedName = profileData['displayName']?.toString() ?? 
           userData['name']?.toString() ?? 
-          userData['username']?.toString() ?? '';
+          username; // Use username as fallback instead of empty string
     print('[DEBUG] Computed name for UserProfileModel: \'$computedName\'');
 
     return UserProfileModel(
       id: userData['id']?.toString() ?? '',
       name: computedName,
-      username: userData['username']?.toString() ?? '',
+      username: username, // Use the properly extracted username
       email: userData['email']?.toString() ?? '',
       avatar: userData['selectedAvatar']?.toString() ?? 
               userData['avatar']?.toString(),
@@ -73,7 +82,9 @@ class UserProfileModel {
                   '#8B5CF6',
       joinDate: userData['joinDate'] != null
           ? DateTime.parse(userData['joinDate'])
-          : DateTime.now(),
+          : userData['createdAt'] != null
+              ? DateTime.parse(userData['createdAt'])
+              : DateTime.now(),
       totalEntries: userData['totalEntries'] ?? 0,
       currentStreak: userData['currentStreak'] ?? 0,
       longestStreak: userData['longestStreak'] ?? 0,

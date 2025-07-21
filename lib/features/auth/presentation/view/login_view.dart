@@ -23,6 +23,7 @@ class _LoginViewState extends State<LoginView>
 
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
+  bool _isLoading = false; // LOCAL loading state
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -67,33 +68,61 @@ class _LoginViewState extends State<LoginView>
   }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) {
+    // CRITICAL FIX: Check if form is valid and not already loading
+    if (!_formKey.currentState!.validate() || _isLoading) {
       return;
     }
 
+    // CRITICAL FIX: Check if widget is still mounted and BLoC is available
     if (!mounted) return;
 
-    Logger.info('🔐 Starting login process...');
-    Logger.info('  Username: ${_usernameController.text.trim()}');
+    try {
+      final authBloc = context.read<AuthBloc>();
+      
+      // CRITICAL FIX: Check if BLoC is closed before adding events
+      if (authBloc.isClosed) {
+        Logger.error('❌ AuthBloc is closed, cannot process login');
+        _showErrorSnackBar('Session expired. Please try again.');
+        return;
+      }
 
-    // Store bloc reference before async operation
-    final authBloc = context.read<AuthBloc>();
+      setState(() {
+        _isLoading = true;
+      });
 
-    // Fixed: Using correct AuthLogin event instead of LoginUserEvent
-    authBloc.add(
-      AuthLogin(
-        username: _usernameController.text.trim(),
-        password: _passwordController.text,
-      ),
-    );
+      Logger.info('🔐 Starting login process...');
+      Logger.info('  Username: ${_usernameController.text.trim()}');
+
+      // SAFE: Add event only if BLoC is not closed
+      authBloc.add(
+        AuthLogin(
+          username: _usernameController.text.trim(),
+          password: _passwordController.text,
+        ),
+      );
+
+    } catch (e, stackTrace) {
+      Logger.error('❌ Error during login process: $e', e, stackTrace);
+      
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        _showErrorSnackBar('Login failed. Please try again.');
+      }
+    }
   }
 
   void _navigateToRegister() {
+    if (_isLoading) return; // Prevent navigation during loading
+    
     Logger.info('📝 Navigating to registration');
     Navigator.pushReplacementNamed(context, AppRouter.register);
   }
 
   void _navigateToForgotPassword() {
+    if (_isLoading) return; // Prevent navigation during loading
+    
     Logger.info('🔑 Navigating to forgot password');
     // Implement forgot password navigation
     ScaffoldMessenger.of(context).showSnackBar(
@@ -111,26 +140,35 @@ class _LoginViewState extends State<LoginView>
       body: SafeArea(
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            // Fixed: Using correct state types
+            // CRITICAL FIX: Reset loading state for all state changes
+            if (mounted && _isLoading) {
+              setState(() {
+                _isLoading = false;
+              });
+            }
+
             if (state is AuthLoginSuccess) {
               Logger.info('✅ Login successful, navigating to home');
-              Navigator.of(
-                context,
-                rootNavigator: true,
-              ).pushReplacementNamed(AppRouter.home);
+              if (mounted) {
+                Navigator.of(context, rootNavigator: true)
+                    .pushReplacementNamed(AppRouter.home);
+              }
             } else if (state is AuthAuthenticated) {
               Logger.info('✅ User authenticated, navigating to home');
-              Navigator.of(
-                context,
-                rootNavigator: true,
-              ).pushReplacementNamed(AppRouter.home);
+              if (mounted) {
+                Navigator.of(context, rootNavigator: true)
+                    .pushReplacementNamed(AppRouter.home);
+              }
             } else if (state is AuthError) {
               Logger.error('❌ Login error:', state.message);
-              _showErrorSnackBar(state.message);
+              if (mounted) {
+                _showErrorSnackBar(state.message);
+              }
             }
           },
           builder: (context, state) {
-            final isLoading = state is AuthLoading;
+            // Use local loading state instead of BLoC state to avoid disposed BLoC issues
+            final isLoading = _isLoading || state is AuthLoading;
 
             return SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -195,7 +233,7 @@ class _LoginViewState extends State<LoginView>
 
   Widget _buildBackButton() {
     return IconButton(
-      onPressed: () => Navigator.pop(context),
+      onPressed: _isLoading ? null : () => Navigator.pop(context),
       icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
@@ -357,7 +395,7 @@ class _LoginViewState extends State<LoginView>
             _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
             color: Colors.grey[400],
           ),
-          onPressed: () {
+          onPressed: isLoading ? null : () {
             setState(() {
               _isPasswordVisible = !_isPasswordVisible;
             });
@@ -405,7 +443,7 @@ class _LoginViewState extends State<LoginView>
               scale: 0.8,
               child: Checkbox(
                 value: _rememberMe,
-                onChanged: (value) {
+                onChanged: _isLoading ? null : (value) {
                   setState(() {
                     _rememberMe = value ?? false;
                   });
@@ -424,7 +462,7 @@ class _LoginViewState extends State<LoginView>
 
         // Forgot password link
         TextButton(
-          onPressed: _navigateToForgotPassword,
+          onPressed: _isLoading ? null : _navigateToForgotPassword,
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           ),
@@ -542,36 +580,6 @@ class _LoginViewState extends State<LoginView>
             ),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: OutlinedButton(
-            onPressed: !isLoading
-                ? () {
-                    Logger.info('👤 Continuing as guest');
-                    Navigator.pushReplacementNamed(context, AppRouter.home);
-                  }
-                : null,
-            style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.person_outline, color: Colors.grey[400], size: 20),
-                const SizedBox(width: 12),
-                Text(
-                  'Continue as Guest',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ],
     );
@@ -580,7 +588,7 @@ class _LoginViewState extends State<LoginView>
   Widget _buildSignUpLink() {
     return Center(
       child: TextButton(
-        onPressed: _navigateToRegister,
+        onPressed: _isLoading ? null : _navigateToRegister,
         child: RichText(
           text: TextSpan(
             style: TextStyle(color: Colors.grey[400], fontSize: 14),

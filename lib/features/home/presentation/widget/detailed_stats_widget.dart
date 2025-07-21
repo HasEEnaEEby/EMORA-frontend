@@ -33,7 +33,7 @@ class _DetailedStatsWidgetState extends State<DetailedStatsWidget> {
 
   Future<void> _loadStatsData() async {
     if (widget.emotionEntries.isEmpty) {
-      Logger.info('📊 No emotion entries provided, using demo data');
+      Logger.info('. No emotion entries provided, using demo data');
       return;
     }
 
@@ -43,7 +43,7 @@ class _DetailedStatsWidgetState extends State<DetailedStatsWidget> {
     });
 
     try {
-      Logger.info('📊 Loading detailed stats for period: ${widget.period}');
+      Logger.info('. Loading detailed stats for period: ${widget.period}');
       
       final emotionApiService = GetIt.instance<EmotionApiService>();
       final stats = await emotionApiService.getEmotionStats(period: widget.period);
@@ -53,9 +53,9 @@ class _DetailedStatsWidgetState extends State<DetailedStatsWidget> {
         _isLoading = false;
       });
       
-      Logger.info('✅ Detailed stats loaded successfully');
+      Logger.info('. Detailed stats loaded successfully');
     } catch (e) {
-      Logger.error('❌ Failed to load detailed stats: $e');
+      Logger.error('. Failed to load detailed stats: $e');
       setState(() {
         _errorMessage = 'Failed to load statistics';
         _isLoading = false;
@@ -299,13 +299,13 @@ class _DetailedStatsWidgetState extends State<DetailedStatsWidget> {
     if (widget.emotionEntries.isEmpty) return 0;
     
     final sortedEntries = List<EmotionEntryModel>.from(widget.emotionEntries)
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     
     int currentStreak = 1;
     int bestStreak = 1;
     
     for (int i = 1; i < sortedEntries.length; i++) {
-      final daysDiff = sortedEntries[i].timestamp.difference(sortedEntries[i - 1].timestamp).inDays;
+      final daysDiff = sortedEntries[i].createdAt.difference(sortedEntries[i - 1].createdAt).inDays;
       if (daysDiff == 1) {
         currentStreak++;
         bestStreak = bestStreak < currentStreak ? currentStreak : bestStreak;
@@ -333,7 +333,7 @@ class _DetailedStatsWidgetState extends State<DetailedStatsWidget> {
     if (widget.emotionEntries.isEmpty) return 0.0;
     
     final totalDays = widget.emotionEntries.length;
-    final uniqueDays = widget.emotionEntries.map((e) => DateTime(e.timestamp.year, e.timestamp.month, e.timestamp.day)).toSet().length;
+    final uniqueDays = widget.emotionEntries.map((e) => DateTime(e.createdAt.year, e.createdAt.month, e.createdAt.day)).toSet().length;
     
     return (uniqueDays / totalDays * 100).clamp(0.0, 100.0);
   }

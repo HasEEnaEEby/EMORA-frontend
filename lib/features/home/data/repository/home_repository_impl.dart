@@ -43,17 +43,17 @@ class HomeRepositoryImpl implements HomeRepository {
         // Cache the converted data
         await localDataSource.cacheHomeData(localHomeData);
 
-        Logger.info('✅ Fresh home data retrieved and cached');
+        Logger.info('. Fresh home data retrieved and cached');
         return Right(localHomeData.toEntity());
       } else {
         Logger.info('📱 No network - attempting to get cached data');
 
         try {
           final cachedHomeData = await localDataSource.getLastHomeData();
-          Logger.info('✅ Cached home data retrieved');
+          Logger.info('. Cached home data retrieved');
           return Right(cachedHomeData.toEntity());
         } catch (e) {
-          Logger.error('❌ No cached data available and no network', e);
+          Logger.error('. No cached data available and no network', e);
           return Left(
             CacheFailure(
               message: 'No cached data available and no network connection',
@@ -62,21 +62,21 @@ class HomeRepositoryImpl implements HomeRepository {
         }
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error getting home data', e);
+      Logger.error('. Server error getting home data', e);
 
       // Try to get cached data as fallback
       try {
         final cachedHomeData = await localDataSource.getLastHomeData();
-        Logger.info('✅ Using cached data as fallback');
+        Logger.info('. Using cached data as fallback');
         return Right(cachedHomeData.toEntity());
       } catch (_) {
         return Left(ServerFailure(message: e.message));
       }
     } on CacheException catch (e) {
-      Logger.error('❌ Cache error getting home data', e);
+      Logger.error('. Cache error getting home data', e);
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error getting home data', e);
+      Logger.error('. Unexpected error getting home data', e);
       return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
     }
   }
@@ -89,17 +89,17 @@ class HomeRepositoryImpl implements HomeRepository {
       if (await networkInfo.isConnected) {
         // Update on server first
         await remoteDataSource.markFirstTimeLoginComplete();
-        Logger.info('✅ First-time login marked complete on server');
+        Logger.info('. First-time login marked complete on server');
       }
 
       // Update local cache
       final updatedHomeData = await localDataSource
           .markFirstTimeLoginComplete();
 
-      Logger.info('✅ First-time login marked complete locally');
+      Logger.info('. First-time login marked complete locally');
       return Right(updatedHomeData.toEntity());
     } on ServerException catch (e) {
-      Logger.error('❌ Server error marking first-time login complete', e);
+      Logger.error('. Server error marking first-time login complete', e);
 
       // Still update locally even if server fails
       try {
@@ -110,10 +110,10 @@ class HomeRepositoryImpl implements HomeRepository {
         return Left(ServerFailure(message: e.message));
       }
     } on CacheException catch (e) {
-      Logger.error('❌ Cache error marking first-time login complete', e);
+      Logger.error('. Cache error marking first-time login complete', e);
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error marking first-time login complete', e);
+      Logger.error('. Unexpected error marking first-time login complete', e);
       return Left(ServerFailure(message: 'Unexpected error: ${e.toString()}'));
     }
   }
@@ -128,7 +128,7 @@ class HomeRepositoryImpl implements HomeRepository {
         final cachedHomeData = await localDataSource.getLastHomeData();
         final isFirstTime = cachedHomeData.isFirstTimeLogin;
 
-        Logger.info('✅ First-time login status from cache: $isFirstTime');
+        Logger.info('. First-time login status from cache: $isFirstTime');
         return Right(isFirstTime);
       }
 
@@ -142,10 +142,10 @@ class HomeRepositoryImpl implements HomeRepository {
       }
 
       // No cache and no network - assume first time
-      Logger.warning('⚠️ No cache and no network - assuming first time login');
+      Logger.warning('. No cache and no network - assuming first time login');
       return const Right(true);
     } catch (e) {
-      Logger.error('❌ Error checking first-time login status', e);
+      Logger.error('. Error checking first-time login status', e);
       return Left(
         ServerFailure(
           message: 'Error checking first-time login status: ${e.toString()}',
@@ -171,10 +171,10 @@ class HomeRepositoryImpl implements HomeRepository {
         lastUpdated: DateTime.now(),
       );
 
-      Logger.info('✅ Mock home data created');
+      Logger.info('. Mock home data created');
       return Right(mockData.toEntity());
     } catch (e) {
-      Logger.error('❌ Error creating mock home data', e);
+      Logger.error('. Error creating mock home data', e);
       return Left(
         ServerFailure(message: 'Error creating mock data: ${e.toString()}'),
       );
@@ -213,7 +213,7 @@ class HomeRepositoryImpl implements HomeRepository {
         lastUpdated: remoteModel.lastUpdated ?? DateTime.now(),
       );
     } catch (e) {
-      Logger.error('❌ Error converting remote model to local model', e);
+      Logger.error('. Error converting remote model to local model', e);
 
       // Return safe default
       return local_model.HomeDataModel(
@@ -253,7 +253,7 @@ class HomeRepositoryImpl implements HomeRepository {
       // Fallback
       return local_model.UserStatsModel.empty();
     } catch (e) {
-      Logger.error('❌ Error converting remote user stats', e);
+      Logger.error('. Error converting remote user stats', e);
       return local_model.UserStatsModel.empty();
     }
   }
@@ -274,10 +274,10 @@ class HomeRepositoryImpl implements HomeRepository {
 
       await localDataSource.cacheHomeData(localHomeData);
 
-      Logger.info('✅ Home data refreshed successfully');
+      Logger.info('. Home data refreshed successfully');
       return Right(localHomeData.toEntity());
     } catch (e) {
-      Logger.error('❌ Error refreshing home data', e);
+      Logger.error('. Error refreshing home data', e);
       return Left(
         ServerFailure(message: 'Failed to refresh home data: ${e.toString()}'),
       );
@@ -289,10 +289,10 @@ class HomeRepositoryImpl implements HomeRepository {
     try {
       Logger.info('🗑️ Clearing home data cache...');
       await localDataSource.clearHomeData();
-      Logger.info('✅ Cache cleared successfully');
+      Logger.info('. Cache cleared successfully');
       return const Right(null);
     } catch (e) {
-      Logger.error('❌ Error clearing cache', e);
+      Logger.error('. Error clearing cache', e);
       return Left(
         CacheFailure(message: 'Failed to clear cache: ${e.toString()}'),
       );
@@ -313,7 +313,7 @@ class HomeRepositoryImpl implements HomeRepository {
       final age = DateTime.now().difference(lastCacheTime);
       return age > maxAge;
     } catch (e) {
-      Logger.error('❌ Error checking cache staleness', e);
+      Logger.error('. Error checking cache staleness', e);
       return true; // Assume stale on error
     }
   }

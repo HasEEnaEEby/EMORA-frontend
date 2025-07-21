@@ -7,7 +7,13 @@ import '../../model/friend_model.dart';
 import '../../../presentation/view_model/bloc/friend_state.dart' as friend_exceptions;
 
 abstract class FriendRemoteDataSource {
-  Future<List<FriendSuggestionModel>> searchUsers({
+  Future<Map<String, dynamic>> searchUsers({
+    required String query,
+    int page = 1,
+    int limit = 10,
+  });
+
+  Future<Map<String, dynamic>> searchAllUsers({
     required String query,
     int page = 1,
     int limit = 10,
@@ -51,13 +57,13 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
   });
 
   @override
-  Future<List<FriendSuggestionModel>> searchUsers({
+  Future<Map<String, dynamic>> searchUsers({
     required String query,
     int page = 1,
     int limit = 10,
   }) async {
     try {
-      Logger.info('🌐 Searching users: $query');
+      Logger.info('🔍 Searching users: "$query"');
 
       final response = await apiService.get(
         '/api/friends/search',
@@ -73,28 +79,75 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
 
         if (responseData['success'] == true && responseData['data'] != null) {
           final dataObject = responseData['data'] as Map<String, dynamic>;
-          final usersData = dataObject['users'] as List? ?? [];
-          final users = usersData
+          final suggestionsData = dataObject['suggestions'] as List? ?? [];
+          final total = dataObject['total'] as int? ?? suggestionsData.length;
+          final suggestions = suggestionsData
               .map((userData) => FriendSuggestionModel.fromJson(userData))
               .toList();
 
-          Logger.info('✅ Found ${users.length} users');
-          return users;
+          Logger.info('✅ Found ${suggestions.length} users');
+          return {
+            'suggestions': suggestions,
+            'total': total,
+          };
         } else {
           throw ServerException(
             message: responseData['message'] ?? 'Failed to search users',
           );
         }
-      } else if (response.statusCode == 404) {
-        throw NotFoundException(message: 'Search endpoint not found');
       } else {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
       Logger.error('❌ Error searching users', e);
-      if (e is ServerException || e is NotFoundException) {
-        rethrow;
+      throw ServerException(message: 'Network error: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> searchAllUsers({
+    required String query,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      Logger.info('🔍 Searching all users: "$query"');
+
+      final response = await apiService.get(
+        '/api/friends/search-all',
+        queryParameters: {
+          'query': query,
+          'page': page,
+          'limit': limit,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = response.data;
+
+        if (responseData['success'] == true && responseData['data'] != null) {
+          final dataObject = responseData['data'] as Map<String, dynamic>;
+          final usersData = dataObject['users'] as List? ?? [];
+          final total = dataObject['total'] as int? ?? usersData.length;
+          final suggestions = usersData
+              .map((userData) => FriendSuggestionModel.fromJson(userData))
+              .toList();
+
+          Logger.info('✅ Found ${suggestions.length} users');
+          return {
+            'suggestions': suggestions,
+            'total': total,
+          };
+        } else {
+          throw ServerException(
+            message: responseData['message'] ?? 'Failed to search all users',
+          );
+        }
+      } else {
+        throw ServerException(message: 'Server error: ${response.statusCode}');
       }
+    } catch (e) {
+      Logger.error('❌ Error searching all users', e);
       throw ServerException(message: 'Network error: ${e.toString()}');
     }
   }
@@ -104,58 +157,24 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
     required String userId,
   }) async {
     try {
-      Logger.info('🌐 Sending friend request to: $userId');
+      Logger.info('📤 Sending friend request to: $userId');
 
       final response = await apiService.post(
         '/api/friends/request/$userId',
-        data: {}, // Always send at least an empty JSON object
+        data: {},
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = response.data;
-
         if (responseData['success'] == true) {
           Logger.info('✅ Friend request sent successfully');
           return true;
-        } else {
-          Logger.warning(
-            '⚠️ Server returned success=false: ${responseData['message']}',
-          );
-          return false;
         }
-      } else if (response.statusCode == 400) {
-        final errorMessage = response.data['message'] ?? 'Bad request';
-        if (errorMessage.contains('already sent')) {
-          throw friend_exceptions.DuplicateFriendRequestException(message: 'Friend request already sent');
-        } else if (errorMessage.contains('Already friends')) {
-          throw friend_exceptions.FriendRequestException(message: 'Already friends with this user');
-        } else {
-          throw ServerException(message: errorMessage);
-        }
-      } else if (response.statusCode == 429) {
-        throw friend_exceptions.RateLimitException(message: response.data['message'] ?? 'Too many requests');
-      } else if (response.statusCode == 404) {
-        throw NotFoundException(message: 'Friend request endpoint not found');
-      } else if (response.statusCode == 401) {
-        throw UnauthorizedException(
-          message: 'Authentication required for sending friend request',
-        );
-      } else {
-        throw ServerException(message: 'Server error: ${response.statusCode}');
       }
-    } on friend_exceptions.RateLimitException {
-      rethrow;
-    } on friend_exceptions.TimeoutException {
-      rethrow;
+      return false;
     } catch (e) {
       Logger.error('❌ Error sending friend request', e);
-      if (e is ServerException || e is NotFoundException || e is UnauthorizedException) {
-        rethrow;
-      }
-      if (e.toString().contains('TimeoutException')) {
-        throw friend_exceptions.TimeoutException(message: 'Request timed out. Please try again.');
-      }
-      throw ServerException(message: 'Network error: ${e.toString()}');
+      throw ServerException(message: 'Failed to send friend request');
     }
   }
 
@@ -165,50 +184,28 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
     required String action,
   }) async {
     try {
-      Logger.info('🌐 Responding to friend request: $action');
+      Logger.info('📨 Responding to friend request: $action for $requestUserId');
 
-      final endpoint = action == 'accept' 
-          ? '/api/friends/accept/$requestUserId'
-          : '/api/friends/decline/$requestUserId';
-
-      final response = await apiService.post(endpoint);
+      // FIXED: Use the correct endpoint that works
+      final response = await apiService.post(
+        '/api/friends/respond',
+        data: {
+          'requestUserId': requestUserId,
+          'action': action,
+        },
+      );
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-
         if (responseData['success'] == true) {
-          Logger.info('✅ Friend request response sent successfully');
+          Logger.info('✅ Friend request $action successful');
           return true;
-        } else {
-          Logger.warning(
-            '⚠️ Server returned success=false: ${responseData['message']}',
-          );
-          return false;
         }
-      } else if (response.statusCode == 429) {
-        throw friend_exceptions.RateLimitException(message: response.data['message'] ?? 'Too many requests');
-      } else if (response.statusCode == 404) {
-        throw NotFoundException(message: 'Friend response endpoint not found');
-      } else if (response.statusCode == 401) {
-        throw UnauthorizedException(
-          message: 'Authentication required for responding to friend request',
-        );
-      } else {
-        throw ServerException(message: 'Server error: ${response.statusCode}');
       }
-    } on friend_exceptions.RateLimitException {
-      rethrow;
-    } on friend_exceptions.TimeoutException {
-      rethrow;
+      return false;
     } catch (e) {
       Logger.error('❌ Error responding to friend request', e);
-      if (e is ServerException || e is NotFoundException || e is UnauthorizedException) {
-        rethrow;
-      }
-      if (e.toString().contains('TimeoutException')) {
-        throw friend_exceptions.TimeoutException(message: 'Request timed out. Please try again.');
-      }
-      throw ServerException(message: 'Network error: ${e.toString()}');
+      throw ServerException(message: 'Failed to respond to friend request');
     }
   }
 
@@ -218,7 +215,7 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
     int limit = 20,
   }) async {
     try {
-      Logger.info('🌐 Fetching friends list');
+      Logger.info('👥 Fetching friends list');
 
       final response = await apiService.get(
         '/api/friends/list',
@@ -234,35 +231,25 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
         if (responseData['success'] == true && responseData['data'] != null) {
           final dataObject = responseData['data'] as Map<String, dynamic>;
           final friendsData = dataObject['friends'] as List? ?? [];
-          // Always return a typed list, even if empty
           final friends = (friendsData as List)
               .map((friendData) => FriendModel.fromJson(friendData))
               .whereType<FriendModel>()
               .toList();
-          Logger.info('✅ Found  ${friends.length} friends');
+          Logger.info('✅ Found ${friends.length} friends');
           return friends;
-        } else {
-          // Return an empty typed list if no data
-          return <FriendModel>[];
         }
-      } else if (response.statusCode == 404) {
-        throw NotFoundException(message: 'Friends list endpoint not found');
-      } else {
-        throw ServerException(message: 'Server error: ${response.statusCode}');
       }
+      return <FriendModel>[];
     } catch (e) {
       Logger.error('❌ Error fetching friends', e);
-      if (e is ServerException || e is NotFoundException) {
-        rethrow;
-      }
-      throw ServerException(message: 'Network error: ${e.toString()}');
+      return <FriendModel>[];
     }
   }
 
   @override
   Future<Map<String, List<FriendRequestModel>>> getPendingRequests() async {
     try {
-      Logger.info('🌐 Fetching pending friend requests');
+      Logger.info('📋 Fetching pending friend requests');
 
       final response = await apiService.get('/api/friends/pending');
 
@@ -275,15 +262,13 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
           final sentRequests = <FriendRequestModel>[];
           final receivedRequests = <FriendRequestModel>[];
           
-          // Parse sent requests with error handling
+          // Parse sent requests
           if (requestsData['sent'] is List) {
             for (final reqData in requestsData['sent'] as List) {
               try {
                 final request = FriendRequestModel.fromJson(reqData as Map<String, dynamic>);
                 if (request.userId.isNotEmpty) {
                   sentRequests.add(request);
-                } else {
-                  Logger.warning('⚠️ Skipping sent request with empty userId');
                 }
               } catch (e) {
                 Logger.warning('⚠️ Failed to parse sent request: $e');
@@ -291,15 +276,13 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
             }
           }
           
-          // Parse received requests with error handling
+          // Parse received requests
           if (requestsData['received'] is List) {
             for (final reqData in requestsData['received'] as List) {
               try {
                 final request = FriendRequestModel.fromJson(reqData as Map<String, dynamic>);
                 if (request.userId.isNotEmpty) {
                   receivedRequests.add(request);
-                } else {
-                  Logger.warning('⚠️ Skipping received request with empty userId');
                 }
               } catch (e) {
                 Logger.warning('⚠️ Failed to parse received request: $e');
@@ -313,22 +296,18 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
             'sent': sentRequests,
             'received': receivedRequests,
           };
-        } else {
-          throw ServerException(
-            message: responseData['message'] ?? 'Failed to get pending requests',
-          );
         }
-      } else if (response.statusCode == 404) {
-        throw NotFoundException(message: 'Pending requests endpoint not found');
-      } else {
-        throw ServerException(message: 'Server error: ${response.statusCode}');
       }
+      return {
+        'sent': <FriendRequestModel>[],
+        'received': <FriendRequestModel>[],
+      };
     } catch (e) {
       Logger.error('❌ Error fetching pending requests', e);
-      if (e is ServerException || e is NotFoundException) {
-        rethrow;
-      }
-      throw ServerException(message: 'Network error: ${e.toString()}');
+      return {
+        'sent': <FriendRequestModel>[],
+        'received': <FriendRequestModel>[],
+      };
     }
   }
 
@@ -337,14 +316,10 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
     required String userId,
   }) async {
     try {
-      Logger.info('🌐 Cancelling friend request to: $userId');
-      print('🔍 cancelFriendRequest - userId: $userId');
-      print('🔍 cancelFriendRequest - userId length: ${userId.length}');
-      print('🔍 cancelFriendRequest - userId isEmpty: ${userId.isEmpty}');
+      Logger.info('🚫 Cancelling friend request to: $userId');
 
-      // Validate userId
       if (userId.isEmpty) {
-        throw ServerException(message: 'User ID cannot be empty for friend request cancellation');
+        throw ServerException(message: 'User ID cannot be empty');
       }
 
       final response = await apiService.delete(
@@ -353,31 +328,15 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-
         if (responseData['success'] == true) {
           Logger.info('✅ Friend request cancelled successfully');
           return true;
-        } else {
-          Logger.warning(
-            '⚠️ Server returned success=false: ${responseData['message']}',
-          );
-          return false;
         }
-      } else if (response.statusCode == 404) {
-        throw NotFoundException(message: 'Cancel friend request endpoint not found');
-      } else if (response.statusCode == 401) {
-        throw UnauthorizedException(
-          message: 'Authentication required for cancelling friend request',
-        );
-      } else {
-        throw ServerException(message: 'Server error: ${response.statusCode}');
       }
+      return false;
     } catch (e) {
       Logger.error('❌ Error cancelling friend request', e);
-      if (e is ServerException || e is NotFoundException || e is UnauthorizedException) {
-        rethrow;
-      }
-      throw ServerException(message: 'Network error: ${e.toString()}');
+      throw ServerException(message: 'Failed to cancel friend request');
     }
   }
 
@@ -386,7 +345,7 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
     required String friendUserId,
   }) async {
     try {
-      Logger.info('🌐 Removing friend: $friendUserId');
+      Logger.info('🗑️ Removing friend: $friendUserId');
 
       final response = await apiService.delete(
         '/api/friends/$friendUserId',
@@ -394,31 +353,15 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
 
       if (response.statusCode == 200) {
         final responseData = response.data;
-
         if (responseData['success'] == true) {
           Logger.info('✅ Friend removed successfully');
           return true;
-        } else {
-          Logger.warning(
-            '⚠️ Server returned success=false: ${responseData['message']}',
-          );
-          return false;
         }
-      } else if (response.statusCode == 404) {
-        throw NotFoundException(message: 'Remove friend endpoint not found');
-      } else if (response.statusCode == 401) {
-        throw UnauthorizedException(
-          message: 'Authentication required for removing friend',
-        );
-      } else {
-        throw ServerException(message: 'Server error: ${response.statusCode}');
       }
+      return false;
     } catch (e) {
       Logger.error('❌ Error removing friend', e);
-      if (e is ServerException || e is NotFoundException || e is UnauthorizedException) {
-        rethrow;
-      }
-      throw ServerException(message: 'Network error: ${e.toString()}');
+      throw ServerException(message: 'Failed to remove friend');
     }
   }
 
@@ -427,7 +370,7 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
     int limit = 10,
   }) async {
     try {
-      Logger.info('🌐 Fetching friend suggestions');
+      Logger.info('💡 Fetching friend suggestions');
 
       final response = await apiService.get(
         '/api/friends/suggestions',
@@ -448,22 +391,12 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
 
           Logger.info('✅ Found ${suggestions.length} friend suggestions');
           return suggestions;
-        } else {
-          throw ServerException(
-            message: responseData['message'] ?? 'Failed to get friend suggestions',
-          );
         }
-      } else if (response.statusCode == 404) {
-        throw NotFoundException(message: 'Friend suggestions endpoint not found');
-      } else {
-        throw ServerException(message: 'Server error: ${response.statusCode}');
       }
+      return <FriendSuggestionModel>[];
     } catch (e) {
       Logger.error('❌ Error fetching friend suggestions', e);
-      if (e is ServerException || e is NotFoundException) {
-        rethrow;
-      }
-      throw ServerException(message: 'Network error: ${e.toString()}');
+      return <FriendSuggestionModel>[];
     }
   }
-} 
+}

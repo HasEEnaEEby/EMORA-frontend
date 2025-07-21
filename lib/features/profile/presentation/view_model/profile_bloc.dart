@@ -1,7 +1,4 @@
-// ============================================================================
-// 2. FIXED PROFILE BLOC - lib/features/profile/presentation/view_model/profile_bloc.dart
-// ============================================================================
-
+// lib/features/profile/presentation/view_model/profile_bloc.dart - COMPLETE VERSION MATCHING YOUR ACHIEVEMENT ENTITY
 import 'package:emora_mobile_app/core/use_case/use_case.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/features/auth/domain/use_case/get_current_user.dart';
@@ -43,15 +40,18 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
        _exportUserData = exportUserData,
        _getCurrentUser = getCurrentUser,
        super(const ProfileInitial()) {
+    
     // Register all event handlers
     on<LoadProfile>(_onLoadProfile);
     on<RefreshProfile>(_onRefreshProfile);
     on<UpdateProfile>(_onUpdateProfile);
     on<UpdatePreferences>(_onUpdatePreferences);
-    on<UpdateSettings>(_onUpdateSettings); // CRITICAL: This was missing
+    on<UpdateSettings>(_onUpdateSettings);
+    on<UpdateAvatar>(_onUpdateAvatar);
     on<LoadAchievements>(_onLoadAchievements);
     on<ExportData>(_onExportData);
     on<ClearProfileError>(_onClearProfileError);
+    on<ClearProfileCache>(_onClearProfileCache);
 
     Logger.info('✅ ProfileBloc initialized with all event handlers');
   }
@@ -61,7 +61,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     Emitter<ProfileState> emit,
   ) async {
     try {
-      Logger.info('👤 Loading user profile...');
+      Logger.info('🔄 Loading user profile...');
       emit(const ProfileLoading());
 
       // Get current user first
@@ -88,6 +88,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
               },
               (profile) async {
                 Logger.info('✅ Profile loaded: ${profile.username}');
+                Logger.info('📊 Profile data: name="${profile.name}", email="${profile.email}", avatar="${profile.avatar}"');
 
                 // Load preferences and achievements in parallel
                 UserPreferencesEntity? preferences;
@@ -101,10 +102,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
                   preferencesResult.fold(
                     (failure) {
-                      Logger.warning(
-                        '⚠️ Failed to load preferences: ${failure.message}',
-                      );
-                      // Use default preferences
+                      Logger.warning('⚠️ Failed to load preferences: ${failure.message}');
                       preferences = const UserPreferencesEntity();
                     },
                     (prefs) {
@@ -125,19 +123,17 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
                   achievementsResult.fold(
                     (failure) {
-                      Logger.warning(
-                        '⚠️ Failed to load achievements: ${failure.message}',
-                      );
+                      Logger.warning('⚠️ Failed to load achievements: ${failure.message}');
+                      achievements = _createDefaultAchievements(profile);
                     },
                     (achs) {
-                      achievements = achs;
-                      Logger.info(
-                        '✅ ${achievements.length} achievements loaded',
-                      );
+                      achievements = achs.isNotEmpty ? achs : _createDefaultAchievements(profile);
+                      Logger.info('✅ ${achievements.length} achievements loaded');
                     },
                   );
                 } catch (e) {
                   Logger.error('💥 Achievements loading error: $e');
+                  achievements = _createDefaultAchievements(profile);
                 }
 
                 // Emit loaded state with all data
@@ -172,10 +168,29 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
     RefreshProfile event,
     Emitter<ProfileState> emit,
   ) async {
-    // For refresh, just reload the profile
+    try {
+      Logger.info('🔄 Refreshing profile...');
+      
+      if (state is ProfileLoaded) {
+        final currentState = state as ProfileLoaded;
+        
+        // Keep current data visible while refreshing
+        emit(
+          ProfileLoading(
+            profile: currentState.profile,
+            preferences: currentState.preferences,
+            achievements: currentState.achievements,
+          ),
+        );
+      }
+      
+      // Force reload the profile
     add(const LoadProfile());
+    } catch (e) {
+      Logger.error('💥 RefreshProfile error: $e');
+      emit(ProfileError(message: 'Failed to refresh profile'));
+    }
   }
-
 
 Future<void> _onUpdateProfile(
   UpdateProfile event,
@@ -184,6 +199,7 @@ Future<void> _onUpdateProfile(
   if (state is ProfileLoaded) {
     final currentState = state as ProfileLoaded;
 
+      // Show updating state
     emit(
       ProfileUpdating(
         profile: currentState.profile,
@@ -195,35 +211,27 @@ Future<void> _onUpdateProfile(
     try {
       Logger.info('🔄 Updating profile with data: ${event.profileData}');
 
-      // Create updated profile entity with proper field mapping
-      final updatedProfile = currentState.profile.copyWith(
-        // Map 'name' field to display name
-        name: event.profileData['name'] ?? 
-              event.profileData['displayName'] ?? 
-              currentState.profile.name,
-        username: event.profileData['username'] ?? currentState.profile.username,
-        email: event.profileData['email'] ?? currentState.profile.email,
-        avatar: event.profileData['avatar'] ?? 
-                event.profileData['selectedAvatar'] ?? 
-                currentState.profile.avatar,
-        isPrivate: event.profileData['isPrivate'] ?? currentState.profile.isPrivate,
-        favoriteEmotion: event.profileData['favoriteEmotion'] ?? 
-                        currentState.profile.favoriteEmotion,
-        // Add any other fields that might be updated
-        bio: event.profileData['bio'] ?? currentState.profile.bio,
-        pronouns: event.profileData['pronouns'] ?? currentState.profile.pronouns,
-        ageGroup: event.profileData['ageGroup'] ?? currentState.profile.ageGroup,
-        themeColor: event.profileData['themeColor'] ?? currentState.profile.themeColor,
+        // Create optimistic update first
+        final optimisticProfile = _createOptimisticUpdate(currentState.profile, event.profileData);
+        
+        // Show optimistic update immediately for better UX
+        emit(
+          ProfileLoaded(
+            profile: optimisticProfile,
+            preferences: currentState.preferences,
+            achievements: currentState.achievements,
+          ),
       );
 
-      Logger.info('📝 Updated profile entity: ${updatedProfile.toString()}');
-
-      final updateParams = UpdateUserProfileParams(profile: updatedProfile);
+        // Perform actual API update
+        final updateParams = UpdateUserProfileParams(profile: optimisticProfile);
       final result = await _updateUserProfile(updateParams);
 
       result.fold(
         (failure) {
-          Logger.error('❌ Profile update failed: ${failure.message}');
+            Logger.error('❌ Profile update failed: ${failure.message}');
+            
+            // Revert to original state
           emit(
             ProfileError(
               message: 'Failed to update profile. Please try again.',
@@ -234,10 +242,9 @@ Future<void> _onUpdateProfile(
           );
         },
         (updatedProfileFromServer) {
-          Logger.info('✅ Profile updated successfully: ${updatedProfileFromServer.name}');
+            Logger.info('✅ Profile updated successfully: ${updatedProfileFromServer.name}');
           
-          // Refresh the profile data to get the latest information from server
-          // This ensures we have all the updated fields including any server-side changes
+            // Use server response as the final state
           emit(
             ProfileLoaded(
               profile: updatedProfileFromServer,
@@ -246,8 +253,8 @@ Future<void> _onUpdateProfile(
             ),
           );
           
-          // Optionally reload the full profile to ensure we have the latest data
-          Future.delayed(const Duration(milliseconds: 500), () {
+            // Optionally refresh after a delay to ensure we have the latest server state
+            Future.delayed(const Duration(milliseconds: 1000), () {
             if (!isClosed) {
               add(const RefreshProfile());
             }
@@ -266,14 +273,59 @@ Future<void> _onUpdateProfile(
       );
     }
   } else {
-    Logger.error(
-      '❌ Cannot update profile: Invalid state ${state.runtimeType}',
-    );
+      Logger.error('❌ Cannot update profile: Invalid state ${state.runtimeType}');
     emit(
       const ProfileError(
         message: 'Please reload your profile and try again.',
       ),
     );
+  }
+}
+
+  Future<void> _onUpdateAvatar(
+    UpdateAvatar event,
+    Emitter<ProfileState> emit,
+  ) async {
+    try {
+      Logger.info('🎭 Updating avatar to ${event.avatarName}');
+
+      if (state is! ProfileLoaded) {
+        emit(ProfileError(message: 'No profile loaded to update avatar'));
+        return;
+      }
+
+      final currentState = state as ProfileLoaded;
+      
+      // Create optimistic update for avatar
+      final updatedProfile = currentState.profile.copyWith(
+        avatar: event.avatarName,
+      );
+
+      // Show optimistic update
+      emit(ProfileLoaded(
+        profile: updatedProfile,
+        preferences: currentState.preferences,
+        achievements: currentState.achievements,
+      ));
+
+      // Prepare update data for API
+      final updateData = {
+        'avatar': event.avatarName,
+        'selectedAvatar': event.avatarName,
+        'name': currentState.profile.name,
+        'email': currentState.profile.email,
+        'bio': currentState.profile.bio,
+        'pronouns': currentState.profile.pronouns,
+        'ageGroup': currentState.profile.ageGroup,
+        'themeColor': currentState.profile.themeColor,
+      };
+
+      // Trigger full profile update
+      add(UpdateProfile(profileData: updateData));
+      
+    } catch (error) {
+      Logger.error('❌ Error updating avatar: $error');
+      emit(ProfileError(message: 'Failed to update avatar: ${error.toString()}'));
   }
 }
 
@@ -293,14 +345,11 @@ Future<void> _onUpdateProfile(
       );
 
       try {
-        // Get current user ID
         final currentUserResult = await _getCurrentUser(NoParams());
 
         await currentUserResult.fold(
           (failure) async {
-            Logger.error(
-              '❌ Failed to get current user for preferences update: ${failure.message}',
-            );
+            Logger.error('❌ Failed to get current user for preferences update: ${failure.message}');
             emit(
               ProfileError(
                 message: 'Please log in to update preferences.',
@@ -312,10 +361,8 @@ Future<void> _onUpdateProfile(
           },
           (currentUser) async {
             try {
-              // Convert preferences map to UserPreferencesEntity
               final preferencesEntity = UserPreferencesEntity(
-                notificationsEnabled:
-                    event.preferences['notificationsEnabled'] ?? true,
+                notificationsEnabled: event.preferences['notificationsEnabled'] ?? true,
                 sharingEnabled: event.preferences['sharingEnabled'] ?? false,
                 language: event.preferences['language'] ?? 'English',
                 theme: event.preferences['theme'] ?? 'Cosmic Purple',
@@ -329,19 +376,14 @@ Future<void> _onUpdateProfile(
                 preferences: preferencesEntity,
               );
 
-              final result = await _updateUserPreferences(
-                updatePreferencesParams,
-              );
+              final result = await _updateUserPreferences(updatePreferencesParams);
 
               result.fold(
                 (failure) {
-                  Logger.error(
-                    '❌ Preferences update failed: ${failure.message}',
-                  );
+                  Logger.error('❌ Preferences update failed: ${failure.message}');
                   emit(
                     ProfileError(
-                      message:
-                          'Failed to update preferences. Please try again.',
+                      message: 'Failed to update preferences. Please try again.',
                       profile: currentState.profile,
                       preferences: currentState.preferences,
                       achievements: currentState.achievements,
@@ -383,19 +425,9 @@ Future<void> _onUpdateProfile(
           ),
         );
       }
-    } else {
-      Logger.error(
-        '❌ Cannot update preferences: Invalid state ${state.runtimeType}',
-      );
-      emit(
-        const ProfileError(
-          message: 'Please reload your profile and try again.',
-        ),
-      );
     }
   }
 
-  // CRITICAL: This is the missing UpdateSettings handler
   Future<void> _onUpdateSettings(
     UpdateSettings event,
     Emitter<ProfileState> emit,
@@ -414,7 +446,6 @@ Future<void> _onUpdateProfile(
         return;
       }
 
-      // Show updating state
       emit(
         ProfilePreferencesUpdating(
           profile: currentState.profile,
@@ -423,14 +454,11 @@ Future<void> _onUpdateProfile(
         ),
       );
 
-      // Get current user
       final currentUserResult = await _getCurrentUser(NoParams());
 
       await currentUserResult.fold(
         (failure) async {
-          Logger.error(
-            '❌ Failed to get current user for settings: ${failure.message}',
-          );
+          Logger.error('❌ Failed to get current user for settings: ${failure.message}');
           emit(
             ProfileError(
               message: 'Authentication error. Please log in again.',
@@ -442,42 +470,26 @@ Future<void> _onUpdateProfile(
         },
         (currentUser) async {
           try {
-            // Create new preferences from settings with safe defaults
             final currentPrefs = currentState.preferences;
 
             final newPreferences = UserPreferencesEntity(
-              notificationsEnabled:
-                  _getSafeBool(event.settings['notificationsEnabled']) ??
-                  currentPrefs?.notificationsEnabled ??
-                  true,
-              sharingEnabled:
-                  _getSafeBool(event.settings['dataSharingEnabled']) ??
+              notificationsEnabled: _getSafeBool(event.settings['notificationsEnabled']) ?? 
+                                  currentPrefs?.notificationsEnabled ?? true,
+              sharingEnabled: _getSafeBool(event.settings['dataSharingEnabled']) ?? 
                   _getSafeBool(event.settings['sharingEnabled']) ??
-                  currentPrefs?.sharingEnabled ??
-                  false,
-              language:
-                  _getSafeString(event.settings['language']) ??
-                  currentPrefs?.language ??
-                  'English',
-              theme:
-                  _getSafeString(event.settings['theme']) ??
-                  currentPrefs?.theme ??
-                  'Cosmic Purple',
-              darkModeEnabled:
-                  _getSafeBool(event.settings['darkModeEnabled']) ??
-                  currentPrefs?.darkModeEnabled ??
-                  true,
-              privacySettings:
-                  _getSafeMap(event.settings['privacySettings']) ??
-                  currentPrefs?.privacySettings ??
-                  {},
-              customSettings:
-                  _getSafeMap(event.settings['customSettings']) ??
-                  currentPrefs?.customSettings ??
-                  {},
+                            currentPrefs?.sharingEnabled ?? false,
+              language: _getSafeString(event.settings['language']) ?? 
+                       currentPrefs?.language ?? 'English',
+              theme: _getSafeString(event.settings['theme']) ?? 
+                    currentPrefs?.theme ?? 'Cosmic Purple',
+              darkModeEnabled: _getSafeBool(event.settings['darkModeEnabled']) ?? 
+                             currentPrefs?.darkModeEnabled ?? true,
+              privacySettings: _getSafeMap(event.settings['privacySettings']) ?? 
+                             currentPrefs?.privacySettings ?? {},
+              customSettings: _getSafeMap(event.settings['customSettings']) ?? 
+                            currentPrefs?.customSettings ?? {},
             );
 
-            // Update using the use case
             final updateParams = UpdateUserPreferencesParams(
               userId: currentUser.id,
               preferences: newPreferences,
@@ -509,7 +521,7 @@ Future<void> _onUpdateProfile(
               },
             );
           } catch (e) {
-            Logger.error('❌ Exception during settings update: $e');
+            Logger.error('💥 Exception during settings update: $e');
             emit(
               ProfileError(
                 message: 'Settings update failed. Please try again.',
@@ -522,9 +534,7 @@ Future<void> _onUpdateProfile(
         },
       );
     } catch (e) {
-      Logger.error('❌ UpdateSettings handler error: $e');
-
-      // Try to preserve current state
+      Logger.error('💥 UpdateSettings handler error: $e');
       final currentState = state;
       if (currentState is ProfileLoaded) {
         emit(
@@ -565,9 +575,7 @@ Future<void> _onUpdateProfile(
 
         await currentUserResult.fold(
           (failure) async {
-            Logger.error(
-              '❌ Failed to get current user for achievements: ${failure.message}',
-            );
+            Logger.error('❌ Failed to get current user for achievements: ${failure.message}');
             emit(
               ProfileError(
                 message: 'Please log in to view achievements.',
@@ -579,46 +587,43 @@ Future<void> _onUpdateProfile(
           },
           (currentUser) async {
             try {
-              final achievementsParams = GetAchievementsParams(
-                userId: currentUser.id,
-              );
+              final achievementsParams = GetAchievementsParams(userId: currentUser.id);
               final result = await _getAchievements(achievementsParams);
 
               result.fold(
                 (failure) {
-                  Logger.error(
-                    '❌ Achievements loading failed: ${failure.message}',
-                  );
-                  emit(
-                    ProfileError(
-                      message: 'Failed to load achievements. Please try again.',
-                      profile: currentState.profile,
-                      preferences: currentState.preferences,
-                      achievements: currentState.achievements,
-                    ),
-                  );
-                },
-                (achievements) {
-                  Logger.info(
-                    '✅ ${achievements.length} achievements loaded successfully',
-                  );
+                  Logger.error('❌ Achievements loading failed: ${failure.message}');
+                  // Use default achievements if loading fails
+                  final defaultAchievements = _createDefaultAchievements(currentState.profile);
                   emit(
                     ProfileLoaded(
                       profile: currentState.profile,
                       preferences: currentState.preferences,
-                      achievements: achievements,
+                      achievements: defaultAchievements,
+                    ),
+                  );
+                },
+                (achievements) {
+                  Logger.info('✅ ${achievements.length} achievements loaded successfully');
+                  // Merge with default achievements to ensure we have a complete set
+                  final mergedAchievements = _mergeWithDefaultAchievements(achievements, currentState.profile);
+                  emit(
+                    ProfileLoaded(
+                      profile: currentState.profile,
+                      preferences: currentState.preferences,
+                      achievements: mergedAchievements,
                     ),
                   );
                 },
               );
             } catch (error) {
               Logger.error('💥 Achievements loading error: $error');
+              final defaultAchievements = _createDefaultAchievements(currentState.profile);
               emit(
-                ProfileError(
-                  message: 'Failed to load achievements. Please try again.',
+                ProfileLoaded(
                   profile: currentState.profile,
                   preferences: currentState.preferences,
-                  achievements: currentState.achievements,
+                  achievements: defaultAchievements,
                 ),
               );
             }
@@ -626,24 +631,15 @@ Future<void> _onUpdateProfile(
         );
       } catch (error) {
         Logger.error('💥 LoadAchievements handler error: $error');
+        final defaultAchievements = _createDefaultAchievements(currentState.profile);
         emit(
-          ProfileError(
-            message: 'Failed to load achievements. Please try again.',
+          ProfileLoaded(
             profile: currentState.profile,
             preferences: currentState.preferences,
-            achievements: currentState.achievements,
+            achievements: defaultAchievements,
           ),
         );
       }
-    } else {
-      Logger.error(
-        '❌ Cannot load achievements: Invalid state ${state.runtimeType}',
-      );
-      emit(
-        const ProfileError(
-          message: 'Please reload your profile and try again.',
-        ),
-      );
     }
   }
 
@@ -667,9 +663,7 @@ Future<void> _onUpdateProfile(
 
         await currentUserResult.fold(
           (failure) async {
-            Logger.error(
-              '❌ Failed to get current user for data export: ${failure.message}',
-            );
+            Logger.error('❌ Failed to get current user for data export:  [33m${failure.message} [0m');
             emit(
               ProfileError(
                 message: 'Please log in to export data.',
@@ -732,13 +726,6 @@ Future<void> _onUpdateProfile(
           ),
         );
       }
-    } else {
-      Logger.error('❌ Cannot export data: Invalid state ${state.runtimeType}');
-      emit(
-        const ProfileError(
-          message: 'Please reload your profile and try again.',
-        ),
-      );
     }
   }
 
@@ -749,7 +736,6 @@ Future<void> _onUpdateProfile(
     if (state is ProfileError) {
       final errorState = state as ProfileError;
       if (errorState.profile != null) {
-        // Return to loaded state if we have profile data
         emit(
           ProfileLoaded(
             profile: errorState.profile!,
@@ -758,13 +744,268 @@ Future<void> _onUpdateProfile(
           ),
         );
       } else {
-        // Return to initial state
         emit(const ProfileInitial());
       }
     }
   }
 
-  // Helper methods for type-safe data extraction
+  Future<void> _onClearProfileCache(
+    ClearProfileCache event,
+    Emitter<ProfileState> emit,
+  ) async {
+    try {
+      Logger.info('🗑️ Clearing profile cache');
+      
+      if (state is ProfileLoaded) {
+        add(const LoadProfile());
+      }
+    } catch (error) {
+      Logger.error('❌ Error clearing cache: $error');
+    }
+  }
+
+  // 🔧 HELPER METHODS
+
+  /// Create optimistic profile update for immediate UI feedback
+  dynamic _createOptimisticUpdate(dynamic currentProfile, Map<String, dynamic> updateData) {
+    Logger.info('🔄 Creating optimistic profile update with data: $updateData');
+
+    return currentProfile.copyWith(
+      name: updateData['name'] ?? updateData['displayName'] ?? currentProfile.name,
+      email: updateData['email'] ?? currentProfile.email,
+      avatar: updateData['avatar'] ?? updateData['selectedAvatar'] ?? currentProfile.avatar,
+      bio: updateData['bio'] ?? currentProfile.bio,
+      pronouns: updateData['pronouns'] ?? currentProfile.pronouns,
+      ageGroup: updateData['ageGroup'] ?? currentProfile.ageGroup,
+      themeColor: updateData['themeColor'] ?? currentProfile.themeColor,
+      isPrivate: updateData['isPrivate'] ?? currentProfile.isPrivate,
+      favoriteEmotion: updateData['favoriteEmotion'] ?? currentProfile.favoriteEmotion,
+    );
+  }
+
+  /// Create default achievements matching your exact AchievementEntity structure
+  List<AchievementEntity> _createDefaultAchievements(dynamic profile) {
+    final now = DateTime.now().toIso8601String();
+    
+    return [
+      // Welcome achievements
+      AchievementEntity(
+        id: 'welcome_aboard',
+        title: 'Welcome Aboard! 🎉',
+        description: 'Welcome to your emotional wellness journey',
+        icon: 'star',
+        color: '#10B981',
+        category: 'milestone',
+        earned: true,
+        progress: 1,
+        requirement: 1,
+        rarity: 'common',
+        earnedDate: now,
+      ),
+      AchievementEntity(
+        id: 'first_steps',
+        title: 'First Steps',
+        description: 'Log your first emotion entry',
+        icon: 'emoji_emotions',
+        color: '#3B82F6',
+        category: 'milestone',
+        earned: profile.totalEntries > 0,
+        progress: profile.totalEntries > 0 ? 1 : 0,
+        requirement: 1,
+        rarity: 'common',
+        earnedDate: profile.totalEntries > 0 ? now : null,
+      ),
+      AchievementEntity(
+        id: 'profile_complete',
+        title: 'Profile Master',
+        description: 'Complete your profile with avatar and bio',
+        icon: 'account_circle',
+        color: '#8B5CF6',
+        category: 'milestone',
+        earned: _isProfileComplete(profile),
+        progress: _isProfileComplete(profile) ? 1 : 0,
+        requirement: 1,
+        rarity: 'common',
+        earnedDate: _isProfileComplete(profile) ? now : null,
+      ),
+      
+      // Streak achievements
+      AchievementEntity(
+        id: 'three_day_streak',
+        title: 'Three Day Streak 🔥',
+        description: 'Log emotions for 3 consecutive days',
+        icon: 'local_fire_department',
+        color: '#EF4444',
+        category: 'streak',
+        earned: profile.currentStreak >= 3,
+        progress: profile.currentStreak,
+        requirement: 3,
+        rarity: 'rare',
+        earnedDate: profile.currentStreak >= 3 ? now : null,
+      ),
+      AchievementEntity(
+        id: 'week_warrior',
+        title: 'Week Warrior ⚡',
+        description: 'Maintain a 7-day logging streak',
+        icon: 'military_tech',
+        color: '#F59E0B',
+        category: 'streak',
+        earned: profile.currentStreak >= 7,
+        progress: profile.currentStreak,
+        requirement: 7,
+        rarity: 'rare',
+        earnedDate: profile.currentStreak >= 7 ? now : null,
+      ),
+      AchievementEntity(
+        id: 'month_master',
+        title: 'Month Master 🏆',
+        description: 'Complete 30 consecutive days',
+        icon: 'emoji_events',
+        color: '#EF4444',
+        category: 'streak',
+        earned: profile.currentStreak >= 30,
+        progress: profile.currentStreak,
+        requirement: 30,
+        rarity: 'epic',
+        earnedDate: profile.currentStreak >= 30 ? now : null,
+      ),
+      
+      // Progress milestones
+      AchievementEntity(
+        id: 'getting_started',
+        title: 'Getting Started 📈',
+        description: 'Complete 5 emotion entries',
+        icon: 'trending_up',
+        color: '#10B981',
+        category: 'milestone',
+        earned: profile.totalEntries >= 5,
+        progress: profile.totalEntries,
+        requirement: 5,
+        rarity: 'common',
+        earnedDate: profile.totalEntries >= 5 ? now : null,
+      ),
+      AchievementEntity(
+        id: 'emotion_explorer',
+        title: 'Emotion Explorer 🧭',
+        description: 'Log 15 different emotions',
+        icon: 'explore',
+        color: '#6366F1',
+        category: 'exploration',
+        earned: profile.totalEntries >= 15,
+        progress: profile.totalEntries,
+        requirement: 15,
+        rarity: 'rare',
+        earnedDate: profile.totalEntries >= 15 ? now : null,
+      ),
+      AchievementEntity(
+        id: 'dedicated_tracker',
+        title: 'Dedicated Tracker 🎯',
+        description: 'Complete 30 emotion entries',
+        icon: 'psychology',
+        color: '#8B5CF6',
+        category: 'milestone',
+        earned: profile.totalEntries >= 30,
+        progress: profile.totalEntries,
+        requirement: 30,
+        rarity: 'epic',
+        earnedDate: profile.totalEntries >= 30 ? now : null,
+      ),
+      AchievementEntity(
+        id: 'mood_master',
+        title: 'Mood Master 👑',
+        description: 'Complete 100 emotion entries',
+        icon: 'psychology',
+        color: '#FFD700',
+        category: 'milestone',
+        earned: profile.totalEntries >= 100,
+        progress: profile.totalEntries,
+        requirement: 100,
+        rarity: 'legendary',
+        earnedDate: profile.totalEntries >= 100 ? now : null,
+      ),
+      
+      // Social achievements
+      AchievementEntity(
+        id: 'social_butterfly',
+        title: 'Social Butterfly 🦋',
+        description: 'Connect with your first friend',
+        icon: 'people',
+        color: '#3B82F6',
+        category: 'social',
+        earned: profile.totalFriends > 0,
+        progress: profile.totalFriends,
+        requirement: 1,
+        rarity: 'rare',
+        earnedDate: profile.totalFriends > 0 ? now : null,
+      ),
+      AchievementEntity(
+        id: 'support_hero',
+        title: 'Support Hero ❤️',
+        description: 'Help 5 friends with comfort reactions',
+        icon: 'favorite',
+        color: '#EF4444',
+        category: 'social',
+        earned: profile.helpedFriends >= 5,
+        progress: profile.helpedFriends,
+        requirement: 5,
+        rarity: 'rare',
+        earnedDate: profile.helpedFriends >= 5 ? now : null,
+      ),
+      
+      // Special achievements
+      AchievementEntity(
+        id: 'early_adopter',
+        title: 'Early Adopter 🚀',
+        description: 'One of the first to join our community',
+        icon: 'rocket_launch',
+        color: '#F59E0B',
+        category: 'special',
+        earned: true,
+        progress: 1,
+        requirement: 1,
+        rarity: 'legendary',
+        earnedDate: now,
+      ),
+      AchievementEntity(
+        id: 'consistency_king',
+        title: 'Consistency King 👑',
+        description: 'Maintain a 30-day streak',
+        icon: 'local_fire_department',
+        color: '#FF4500',
+        category: 'streak',
+        earned: profile.longestStreak >= 30,
+        progress: profile.longestStreak,
+        requirement: 30,
+        rarity: 'epic',
+        earnedDate: profile.longestStreak >= 30 ? now : null,
+      ),
+    ];
+  }
+
+  /// Merge API achievements with defaults to ensure complete set
+  List<AchievementEntity> _mergeWithDefaultAchievements(
+    List<AchievementEntity> apiAchievements, 
+    dynamic profile,
+  ) {
+    final defaultAchievements = _createDefaultAchievements(profile);
+    final apiAchievementIds = apiAchievements.map((a) => a.id).toSet();
+    
+    // Add default achievements that aren't in the API response
+    final missingDefaults = defaultAchievements
+        .where((defaultAch) => !apiAchievementIds.contains(defaultAch.id))
+        .toList();
+    
+    return [...apiAchievements, ...missingDefaults];
+  }
+
+  /// Check if profile is complete
+  bool _isProfileComplete(dynamic profile) {
+    return profile.name.isNotEmpty && 
+           profile.email.isNotEmpty && 
+           profile.avatar.isNotEmpty;
+  }
+
+  /// Type-safe helper methods
   bool? _getSafeBool(dynamic value) {
     if (value is bool) return value;
     if (value is String) {
@@ -782,5 +1023,17 @@ Future<void> _onUpdateProfile(
   Map<String, dynamic>? _getSafeMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
     return null;
+  }
+
+  @override
+  void onTransition(Transition<ProfileEvent, ProfileState> transition) {
+    super.onTransition(transition);
+    Logger.info('🔄 ProfileBloc Transition: ${transition.event.runtimeType} -> ${transition.nextState.runtimeType}');
+  }
+
+  @override
+  void onError(Object error, StackTrace stackTrace) {
+    super.onError(error, stackTrace);
+    Logger.error('❌ ProfileBloc Error: $error\n$stackTrace');
   }
 }

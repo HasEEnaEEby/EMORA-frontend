@@ -44,7 +44,7 @@ class _DebouncedButtonState extends State<DebouncedButton> {
     _lastTapTime = now;
     _isDebouncing = true;
 
-    Logger.info('✅ Button tap processed');
+    Logger.info('. Button tap processed');
     widget.onPressed!();
 
     // Reset debounce after delay

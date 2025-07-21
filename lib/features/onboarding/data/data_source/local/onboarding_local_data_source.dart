@@ -66,7 +66,7 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
         DateTime.now().millisecondsSinceEpoch,
       );
 
-      Logger.info('💾 Cached ${steps.length} onboarding steps');
+      Logger.info('. Cached ${steps.length} onboarding steps');
       return true;
     } catch (e) {
       Logger.error('Error caching onboarding steps', e);
@@ -101,7 +101,7 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
       final userDataJson = jsonEncode(userData.toJson());
       await sharedPreferences.setString(_userDataKey, userDataJson);
 
-      Logger.info('💾 Saved user onboarding data: ${userData.toString()}');
+      Logger.info('. Saved user onboarding data: ${userData.toString()}');
       return true;
     } catch (e) {
       Logger.error('Error saving user onboarding data', e);
@@ -118,7 +118,7 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
         DateTime.now().toIso8601String(),
       );
 
-      Logger.info('✅ Marked onboarding as completed locally');
+      Logger.info('. Marked onboarding as completed locally');
       return true;
     } catch (e) {
       Logger.error('Error completing onboarding', e);
@@ -130,7 +130,7 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
   Future<bool> isOnboardingCompleted() async {
     try {
       final isCompleted = sharedPreferences.getBool(_completionKey) ?? false;
-      Logger.info('🔍 Onboarding completion status: $isCompleted');
+      Logger.info('. Onboarding completion status: $isCompleted');
       return isCompleted;
     } catch (e) {
       Logger.error('Error checking onboarding completion', e);
@@ -165,7 +165,7 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
       final difference = now.difference(cacheDate);
 
       final isFresh = difference < AppConfig.cacheValidityDuration;
-      Logger.info('🔍 Cache freshness: $isFresh (age: ${difference.inHours}h)');
+      Logger.info('. Cache freshness: $isFresh (age: ${difference.inHours}h)');
 
       return isFresh;
     } catch (e) {

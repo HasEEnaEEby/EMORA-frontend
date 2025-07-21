@@ -35,9 +35,9 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       if (!success) {
         throw CacheException(message: 'Failed to save auth token');
       }
-      Logger.info('💾 Auth token saved successfully');
+      Logger.info('. Auth token saved successfully');
     } catch (e) {
-      Logger.error('❌ Failed to save auth token', e);
+      Logger.error('. Failed to save auth token', e);
       throw CacheException(message: 'Failed to save auth token: $e');
     }
   }
@@ -51,7 +51,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       );
       return token;
     } catch (e) {
-      Logger.error('❌ Failed to get auth token', e);
+      Logger.error('. Failed to get auth token', e);
       return null;
     }
   }
@@ -66,9 +66,9 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       if (!success) {
         throw CacheException(message: 'Failed to save refresh token');
       }
-      Logger.info('💾 Refresh token saved successfully');
+      Logger.info('. Refresh token saved successfully');
     } catch (e) {
-      Logger.error('❌ Failed to save refresh token', e);
+      Logger.error('. Failed to save refresh token', e);
       throw CacheException(message: 'Failed to save refresh token: $e');
     }
   }
@@ -82,7 +82,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       );
       return token;
     } catch (e) {
-      Logger.error('❌ Failed to get refresh token', e);
+      Logger.error('. Failed to get refresh token', e);
       return null;
     }
   }
@@ -98,9 +98,9 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       if (!success) {
         throw CacheException(message: 'Failed to save user data');
       }
-      Logger.info('💾 User data saved successfully');
+      Logger.info('. User data saved successfully');
     } catch (e) {
-      Logger.error('❌ Failed to save user data', e);
+      Logger.error('. Failed to save user data', e);
       throw CacheException(message: 'Failed to save user data: $e');
     }
   }
@@ -112,13 +112,13 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       if (userJson != null) {
         final userMap = jsonDecode(userJson) as Map<String, dynamic>;
         final user = UserModel.fromJson(userMap);
-        Logger.info('👤 Retrieved user data: ${user.username}');
+        Logger.info('. Retrieved user data: ${user.username}');
         return user;
       }
-      Logger.info('👤 No user data found');
+      Logger.info('. No user data found');
       return null;
     } catch (e) {
-      Logger.error('❌ Failed to get user data', e);
+      Logger.error('. Failed to get user data', e);
       return null;
     }
   }
@@ -131,13 +131,13 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       if (userJson != null) {
         final userMap = jsonDecode(userJson) as Map<String, dynamic>;
         final user = UserModel.fromJson(userMap);
-        Logger.info('👤 Retrieved current user: ${user.username}');
+        Logger.info('. Retrieved current user: ${user.username}');
         return user;
       }
-      Logger.info('👤 No current user found');
+      Logger.info('. No current user found');
       return null;
     } catch (e) {
-      Logger.error('❌ Failed to get current user', e);
+      Logger.error('. Failed to get current user', e);
       return null;
     }
   }
@@ -152,7 +152,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       ]);
       Logger.info('🗑️ Auth data cleared successfully');
     } catch (e) {
-      Logger.error('❌ Failed to clear auth data', e);
+      Logger.error('. Failed to clear auth data', e);
       throw CacheException(message: 'Failed to clear auth data: $e');
     }
   }
@@ -162,10 +162,10 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     try {
       final hasBeenLoggedIn =
           sharedPreferences.getBool(AppConfig.hasEverBeenLoggedInKey) ?? false;
-      Logger.info('📊 Has ever been logged in: $hasBeenLoggedIn');
+      Logger.info('. Has ever been logged in: $hasBeenLoggedIn');
       return hasBeenLoggedIn;
     } catch (e) {
-      Logger.error('❌ Failed to check login history', e);
+      Logger.error('. Failed to check login history', e);
       return false;
     }
   }
@@ -174,9 +174,9 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   Future<void> markAsLoggedIn() async {
     try {
       await sharedPreferences.setBool(AppConfig.hasEverBeenLoggedInKey, true);
-      Logger.info('✅ Marked as logged in');
+      Logger.info('. Marked as logged in');
     } catch (e) {
-      Logger.error('❌ Failed to mark as logged in', e);
+      Logger.error('. Failed to mark as logged in', e);
       // Don't throw - this is not critical
     }
   }

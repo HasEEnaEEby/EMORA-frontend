@@ -84,12 +84,12 @@ class EmotionRepositoryImpl implements EmotionRepository {
           );
 
           Logger.info(
-            '✅ Repository: Emotion logged successfully to remote and local',
+            '. Repository: Emotion logged successfully to remote and local',
           );
           return Right(emotionEntity);
         } catch (e) {
           Logger.warning(
-            '⚠️ Repository: Failed to sync emotion to remote, saved locally: $e',
+            '. Repository: Failed to sync emotion to remote, saved locally: $e',
           );
 
           // Create emotion entity for local storage
@@ -132,7 +132,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Repository: Failed to log emotion', e);
+      Logger.error('. Repository: Failed to log emotion', e);
       return Left(
         ServerFailure(message: 'Failed to log emotion: ${e.toString()}'),
       );
@@ -152,7 +152,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
       if (!forceRefresh) {
         final cachedFeed = await localDataSource.getCachedEmotionFeed();
         if (cachedFeed.isNotEmpty) {
-          Logger.info('✅ Repository: Returning cached emotion feed');
+          Logger.info('. Repository: Returning cached emotion feed');
           final entities = cachedFeed
               .map((data) => EmotionEntity.fromJson(data))
               .toList();
@@ -172,7 +172,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
           await localDataSource.cacheEmotionFeed(remoteFeed);
 
           Logger.info(
-            '✅ Repository: Emotion feed fetched from remote and cached',
+            '. Repository: Emotion feed fetched from remote and cached',
           );
           final entities = remoteFeed
               .map((data) => EmotionEntity.fromJson(data))
@@ -180,7 +180,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
           return Right(entities);
         } catch (e) {
           Logger.warning(
-            '⚠️ Repository: Failed to fetch emotion feed from remote: $e',
+            '. Repository: Failed to fetch emotion feed from remote: $e',
           );
 
           // Fall back to cache
@@ -199,7 +199,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
 
       // No cache and no network
       Logger.warning(
-        '⚠️ Repository: No emotion feed available (no cache, no network)',
+        '. Repository: No emotion feed available (no cache, no network)',
       );
       return const Right([]);
     } on ServerException catch (e) {
@@ -207,7 +207,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Repository: Failed to get emotion feed', e);
+      Logger.error('. Repository: Failed to get emotion feed', e);
       return Left(
         ServerFailure(message: 'Failed to get emotion feed: ${e.toString()}'),
       );
@@ -226,7 +226,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
       if (!forceRefresh) {
         final cachedStats = await localDataSource.getCachedGlobalStats();
         if (cachedStats != null) {
-          Logger.info('✅ Repository: Returning cached global emotion stats');
+          Logger.info('. Repository: Returning cached global emotion stats');
           return Right(cachedStats);
         }
       }
@@ -242,12 +242,12 @@ class EmotionRepositoryImpl implements EmotionRepository {
           await localDataSource.cacheGlobalStats(remoteStats);
 
           Logger.info(
-            '✅ Repository: Global emotion stats fetched from remote and cached',
+            '. Repository: Global emotion stats fetched from remote and cached',
           );
           return Right(remoteStats);
         } catch (e) {
           Logger.warning(
-            '⚠️ Repository: Failed to fetch global stats from remote: $e',
+            '. Repository: Failed to fetch global stats from remote: $e',
           );
 
           // Fall back to cache
@@ -263,7 +263,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
 
       // No cache and no network - return default stats
       Logger.warning(
-        '⚠️ Repository: No global stats available, returning defaults',
+        '. Repository: No global stats available, returning defaults',
       );
       final defaultStats = {
         'totalUsers': 0,
@@ -280,7 +280,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Repository: Failed to get global emotion stats', e);
+      Logger.error('. Repository: Failed to get global emotion stats', e);
       return Left(
         ServerFailure(
           message: 'Failed to get global emotion stats: ${e.toString()}',
@@ -300,7 +300,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
       if (!forceRefresh) {
         final cachedHeatmap = await localDataSource.getCachedHeatmapData();
         if (cachedHeatmap != null) {
-          Logger.info('✅ Repository: Returning cached global heatmap');
+          Logger.info('. Repository: Returning cached global heatmap');
           return Right(cachedHeatmap);
         }
       }
@@ -314,12 +314,12 @@ class EmotionRepositoryImpl implements EmotionRepository {
           await localDataSource.cacheHeatmapData(remoteHeatmap);
 
           Logger.info(
-            '✅ Repository: Global heatmap fetched from remote and cached',
+            '. Repository: Global heatmap fetched from remote and cached',
           );
           return Right(remoteHeatmap);
         } catch (e) {
           Logger.warning(
-            '⚠️ Repository: Failed to fetch heatmap from remote: $e',
+            '. Repository: Failed to fetch heatmap from remote: $e',
           );
 
           // Fall back to cache
@@ -333,7 +333,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
 
       // No cache and no network - return empty heatmap
       Logger.warning(
-        '⚠️ Repository: No heatmap data available, returning empty',
+        '. Repository: No heatmap data available, returning empty',
       );
       final emptyHeatmap = {
         'locations': <Map<String, dynamic>>[],
@@ -348,7 +348,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Repository: Failed to get global heatmap', e);
+      Logger.error('. Repository: Failed to get global heatmap', e);
       return Left(
         ServerFailure(message: 'Failed to get global heatmap: ${e.toString()}'),
       );
@@ -363,14 +363,14 @@ class EmotionRepositoryImpl implements EmotionRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      Logger.info('👤 Repository: Getting user emotion history...');
+      Logger.info('. Repository: Getting user emotion history...');
 
       // Always get local history first
       final localHistory = await localDataSource.getUserEmotionHistory();
 
       // If not forcing refresh and we have local data, return it
       if (!forceRefresh && localHistory.isNotEmpty) {
-        Logger.info('✅ Repository: Returning local emotion history');
+        Logger.info('. Repository: Returning local emotion history');
         final entities = localHistory
             .map((data) => EmotionEntity.fromJson(data))
             .toList();
@@ -386,14 +386,14 @@ class EmotionRepositoryImpl implements EmotionRepository {
             offset: offset,
           );
 
-          Logger.info('✅ Repository: User emotion history fetched from remote');
+          Logger.info('. Repository: User emotion history fetched from remote');
           final entities = remoteHistory
               .map((data) => EmotionEntity.fromJson(data))
               .toList();
           return Right(entities);
         } catch (e) {
           Logger.warning(
-            '⚠️ Repository: Failed to fetch user emotions from remote: $e',
+            '. Repository: Failed to fetch user emotions from remote: $e',
           );
         }
       }
@@ -409,7 +409,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Repository: Failed to get user emotion history', e);
+      Logger.error('. Repository: Failed to get user emotion history', e);
       return Left(
         ServerFailure(
           message: 'Failed to get user emotion history: ${e.toString()}',
@@ -426,40 +426,178 @@ class EmotionRepositoryImpl implements EmotionRepository {
     bool forceRefresh = false,
   }) async {
     try {
-      Logger.info('📊 Repository: Getting user emotion stats for $userId');
+      Logger.info('📊 Repository: Getting user emotion stats...');
 
-      if (await networkInfo.isConnected) {
-        try {
-          final remoteStats = await remoteDataSource.getUserEmotionStats(
-            userId,
-          );
-          Logger.info('✅ Repository: User emotion stats fetched from remote');
-          return Right(remoteStats);
-        } catch (e) {
-          Logger.warning(
-            '⚠️ Repository: Failed to fetch user stats from remote: $e',
-          );
+      // Try to get from cache first if not forcing refresh
+      if (!forceRefresh) {
+        final cachedStats = await localDataSource.getCachedUserStats(userId);
+        if (cachedStats.isNotEmpty) {
+          Logger.info('. Repository: Returning cached user stats');
+          return Right(cachedStats);
         }
       }
 
-      // Return default stats if remote fails
-      final defaultStats = {
-        'userId': userId,
-        'totalEmotions': 0,
-        'averageIntensity': 0.0,
-        'emotionDistribution': <String, double>{},
-        'mostCommonEmotion': null,
-        'lastUpdated': DateTime.now().toIso8601String(),
-      };
-      return Right(defaultStats);
+      // Try to get from remote if network is available
+      if (await networkInfo.isConnected) {
+        try {
+          final remoteStats = await remoteDataSource.getUserEmotionStats(userId);
+
+          // Cache the result
+          await localDataSource.cacheUserStats(userId, remoteStats);
+
+          Logger.info('. Repository: User stats fetched from remote and cached');
+          return Right(remoteStats);
+        } catch (e) {
+          Logger.warning(
+            '. Repository: Failed to fetch user stats from remote: $e',
+          );
+
+          // Fall back to cache
+          final cachedStats = await localDataSource.getCachedUserStats(userId);
+          if (cachedStats.isNotEmpty) {
+            Logger.info(
+              '📱 Repository: Returning cached user stats as fallback',
+            );
+            return Right(cachedStats);
+          }
+        }
+      }
+
+      // No cache and no network
+      Logger.warning('. Repository: No cached user stats available');
+      return Left(CacheFailure(message: 'No user stats available'));
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Repository: Failed to get user emotion stats', e);
+      Logger.error('. Repository: Failed to get user emotion stats', e);
       return Left(
-        ServerFailure(
-          message: 'Failed to get user emotion stats: ${e.toString()}',
-        ),
+        ServerFailure(message: 'Failed to get user emotion stats: ${e.toString()}'),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> getUserInsights({
+    required String userId,
+    String timeframe = '30d',
+    bool forceRefresh = false,
+  }) async {
+    try {
+      Logger.info('📊 Repository: Getting user insights...');
+
+      // Try to get from cache first if not forcing refresh
+      if (!forceRefresh) {
+        final cachedInsights = await localDataSource.getCachedUserInsights(userId);
+        if (cachedInsights.isNotEmpty) {
+          Logger.info('. Repository: Returning cached user insights');
+          return Right(cachedInsights);
+        }
+      }
+
+      // Try to get from remote if network is available
+      if (await networkInfo.isConnected) {
+        try {
+          final remoteInsights = await remoteDataSource.getUserInsights(
+            userId: userId,
+            timeframe: timeframe,
+          );
+
+          // Cache the result
+          await localDataSource.cacheUserInsights(userId, remoteInsights);
+
+          Logger.info('. Repository: User insights fetched from remote and cached');
+          return Right(remoteInsights);
+        } catch (e) {
+          Logger.warning(
+            '. Repository: Failed to fetch user insights from remote: $e',
+          );
+
+          // Fall back to cache
+          final cachedInsights = await localDataSource.getCachedUserInsights(userId);
+          if (cachedInsights.isNotEmpty) {
+            Logger.info(
+              '📱 Repository: Returning cached user insights as fallback',
+            );
+            return Right(cachedInsights);
+          }
+        }
+      }
+
+      // No cache and no network
+      Logger.warning('. Repository: No cached user insights available');
+      return Left(CacheFailure(message: 'No user insights available'));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
+    } catch (e) {
+      Logger.error('. Repository: Failed to get user insights', e);
+      return Left(
+        ServerFailure(message: 'Failed to get user insights: ${e.toString()}'),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> getUserAnalytics({
+    required String userId,
+    String timeframe = '7d',
+    bool forceRefresh = false,
+  }) async {
+    try {
+      Logger.info('📈 Repository: Getting user analytics...');
+
+      // Try to get from cache first if not forcing refresh
+      if (!forceRefresh) {
+        final cachedAnalytics = await localDataSource.getCachedUserAnalytics(userId);
+        if (cachedAnalytics.isNotEmpty) {
+          Logger.info('. Repository: Returning cached user analytics');
+          return Right(cachedAnalytics);
+        }
+      }
+
+      // Try to get from remote if network is available
+      if (await networkInfo.isConnected) {
+        try {
+          final remoteAnalytics = await remoteDataSource.getUserAnalytics(
+            userId: userId,
+            timeframe: timeframe,
+          );
+
+          // Cache the result
+          await localDataSource.cacheUserAnalytics(userId, remoteAnalytics);
+
+          Logger.info('. Repository: User analytics fetched from remote and cached');
+          return Right(remoteAnalytics);
+        } catch (e) {
+          Logger.warning(
+            '. Repository: Failed to fetch user analytics from remote: $e',
+          );
+
+          // Fall back to cache
+          final cachedAnalytics = await localDataSource.getCachedUserAnalytics(userId);
+          if (cachedAnalytics.isNotEmpty) {
+            Logger.info(
+              '📱 Repository: Returning cached user analytics as fallback',
+            );
+            return Right(cachedAnalytics);
+          }
+        }
+      }
+
+      // No cache and no network
+      Logger.warning('. Repository: No cached user analytics available');
+      return Left(CacheFailure(message: 'No user analytics available'));
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } on CacheException catch (e) {
+      return Left(CacheFailure(message: e.message));
+    } catch (e) {
+      Logger.error('. Repository: Failed to get user analytics', e);
+      return Left(
+        ServerFailure(message: 'Failed to get user analytics: ${e.toString()}'),
       );
     }
   }
@@ -469,12 +607,12 @@ class EmotionRepositoryImpl implements EmotionRepository {
     try {
       Logger.info('🧹 Repository: Clearing emotion cache...');
       await localDataSource.clearEmotionCache();
-      Logger.info('✅ Repository: Emotion cache cleared successfully');
+      Logger.info('. Repository: Emotion cache cleared successfully');
       return const Right(null);
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Repository: Failed to clear emotion cache', e);
+      Logger.error('. Repository: Failed to clear emotion cache', e);
       return Left(
         CacheFailure(message: 'Failed to clear emotion cache: ${e.toString()}'),
       );
@@ -488,12 +626,12 @@ class EmotionRepositoryImpl implements EmotionRepository {
     try {
       Logger.info('🕐 Repository: Checking cache staleness...');
       final isStale = await localDataSource.isCacheStale(maxAge: maxAge);
-      Logger.info('✅ Repository: Cache staleness checked - isStale: $isStale');
+      Logger.info('. Repository: Cache staleness checked - isStale: $isStale');
       return Right(isStale);
     } on CacheException catch (e) {
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Repository: Failed to check cache staleness', e);
+      Logger.error('. Repository: Failed to check cache staleness', e);
       return Left(
         CacheFailure(
           message: 'Failed to check cache staleness: ${e.toString()}',
@@ -514,7 +652,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
       final localEmotions = await localDataSource.getUserEmotionHistory();
 
       if (localEmotions.isEmpty) {
-        Logger.info('✅ Repository: No local emotions to sync');
+        Logger.info('. Repository: No local emotions to sync');
         return const Right(0);
       }
 
@@ -523,14 +661,14 @@ class EmotionRepositoryImpl implements EmotionRepository {
       );
       final syncedCount = syncResult['syncedCount'] ?? 0;
 
-      Logger.info('✅ Repository: Synced $syncedCount emotions');
+      Logger.info('. Repository: Synced $syncedCount emotions');
       return Right(syncedCount);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on NetworkException catch (e) {
       return Left(NetworkFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Repository: Failed to sync local emotions', e);
+      Logger.error('. Repository: Failed to sync local emotions', e);
       return Left(
         ServerFailure(
           message: 'Failed to sync local emotions: ${e.toString()}',
@@ -554,11 +692,11 @@ class EmotionRepositoryImpl implements EmotionRepository {
             userId: userId,
             period: period,
           );
-          Logger.info('✅ Repository: Emotion analytics fetched from remote');
+          Logger.info('. Repository: Emotion analytics fetched from remote');
           return Right(analytics);
         } catch (e) {
           Logger.warning(
-            '⚠️ Repository: Failed to fetch analytics from remote: $e',
+            '. Repository: Failed to fetch analytics from remote: $e',
           );
         }
       }
@@ -577,7 +715,7 @@ class EmotionRepositoryImpl implements EmotionRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Repository: Failed to get emotion analytics', e);
+      Logger.error('. Repository: Failed to get emotion analytics', e);
       return Left(
         ServerFailure(
           message: 'Failed to get emotion analytics: ${e.toString()}',

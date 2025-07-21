@@ -55,17 +55,17 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         final homeData = HomeDataModel.fromJson(homeDataMap);
 
         Logger.info(
-          '✅ Cached home data retrieved for user: ${homeData.username}',
+          '. Cached home data retrieved for user: ${homeData.username}',
         );
         return homeData;
       } else {
-        Logger.warning('⚠️ No cached home data found');
+        Logger.warning('. No cached home data found');
         throw CacheException(message: 'No cached home data found');
       }
     } catch (e) {
       if (e is CacheException) rethrow;
 
-      Logger.error('❌ Error retrieving cached home data', e);
+      Logger.error('. Error retrieving cached home data', e);
       throw CacheException(
         message: 'Failed to retrieve cached home data: ${e.toString()}',
       );
@@ -96,9 +96,9 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       // Cache first-time login status
       await prefs.setBool(_firstTimeLoginKey, homeData.isFirstTimeLogin);
 
-      Logger.info('✅ Home data cached successfully');
+      Logger.info('. Home data cached successfully');
     } catch (e) {
-      Logger.error('❌ Error caching home data', e);
+      Logger.error('. Error caching home data', e);
       throw CacheException(
         message: 'Failed to cache home data: ${e.toString()}',
       );
@@ -119,10 +119,10 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       // Cache the updated data
       await cacheHomeData(updatedHomeData);
 
-      Logger.info('✅ First-time login marked complete locally');
+      Logger.info('. First-time login marked complete locally');
       return updatedHomeData;
     } catch (e) {
-      Logger.error('❌ Error updating first-time login status locally', e);
+      Logger.error('. Error updating first-time login status locally', e);
       throw CacheException(
         message: 'Failed to update first-time login status: ${e.toString()}',
       );
@@ -142,17 +142,17 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         final userStats = UserStatsModel.fromJson(userStatsMap);
 
         Logger.info(
-          '✅ Cached user stats retrieved: ${userStats.totalMoodEntries} entries',
+          '. Cached user stats retrieved: ${userStats.totalMoodEntries} entries',
         );
         return userStats;
       } else {
-        Logger.warning('⚠️ No cached user stats found');
+        Logger.warning('. No cached user stats found');
         throw CacheException(message: 'No cached user stats found');
       }
     } catch (e) {
       if (e is CacheException) rethrow;
 
-      Logger.error('❌ Error retrieving cached user stats', e);
+      Logger.error('. Error retrieving cached user stats', e);
       throw CacheException(
         message: 'Failed to retrieve cached user stats: ${e.toString()}',
       );
@@ -175,9 +175,9 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         DateTime.now().toIso8601String(),
       );
 
-      Logger.info('✅ User stats cached successfully');
+      Logger.info('. User stats cached successfully');
     } catch (e) {
-      Logger.error('❌ Error caching user stats', e);
+      Logger.error('. Error caching user stats', e);
       throw CacheException(
         message: 'Failed to cache user stats: ${e.toString()}',
       );
@@ -208,9 +208,9 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         await prefs.remove(key);
       }
 
-      Logger.info('✅ All cached home data cleared');
+      Logger.info('. All cached home data cleared');
     } catch (e) {
-      Logger.error('❌ Error clearing cached home data', e);
+      Logger.error('. Error clearing cached home data', e);
       throw CacheException(
         message: 'Failed to clear cached home data: ${e.toString()}',
       );
@@ -228,7 +228,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       );
       return hasData;
     } catch (e) {
-      Logger.error('❌ Error checking for cached home data', e);
+      Logger.error('. Error checking for cached home data', e);
       return false;
     }
   }
@@ -248,7 +248,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         return null;
       }
     } catch (e) {
-      Logger.error('❌ Error retrieving cache timestamp', e);
+      Logger.error('. Error retrieving cache timestamp', e);
       return null;
     }
   }
@@ -273,9 +273,9 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         DateTime.now().toIso8601String(),
       );
 
-      Logger.info('✅ Emotion feed cached successfully');
+      Logger.info('. Emotion feed cached successfully');
     } catch (e) {
-      Logger.error('❌ Error caching emotion feed', e);
+      Logger.error('. Error caching emotion feed', e);
       throw CacheException(
         message: 'Failed to cache emotion feed: ${e.toString()}',
       );
@@ -297,15 +297,15 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
             .toList();
 
         Logger.info(
-          '✅ Cached emotion feed retrieved: ${emotionFeed.length} entries',
+          '. Cached emotion feed retrieved: ${emotionFeed.length} entries',
         );
         return emotionFeed;
       } else {
-        Logger.warning('⚠️ No cached emotion feed found');
+        Logger.warning('. No cached emotion feed found');
         return [];
       }
     } catch (e) {
-      Logger.error('❌ Error retrieving cached emotion feed', e);
+      Logger.error('. Error retrieving cached emotion feed', e);
       return [];
     }
   }
@@ -324,9 +324,9 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         DateTime.now().toIso8601String(),
       );
 
-      Logger.info('✅ Global stats cached successfully');
+      Logger.info('. Global stats cached successfully');
     } catch (e) {
-      Logger.error('❌ Error caching global stats', e);
+      Logger.error('. Error caching global stats', e);
       throw CacheException(
         message: 'Failed to cache global stats: ${e.toString()}',
       );
@@ -345,14 +345,14 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         final globalStats = Map<String, dynamic>.from(
           json.decode(globalStatsJson),
         );
-        Logger.info('✅ Cached global stats retrieved');
+        Logger.info('. Cached global stats retrieved');
         return globalStats;
       } else {
-        Logger.warning('⚠️ No cached global stats found');
+        Logger.warning('. No cached global stats found');
         return null;
       }
     } catch (e) {
-      Logger.error('❌ Error retrieving cached global stats', e);
+      Logger.error('. Error retrieving cached global stats', e);
       return null;
     }
   }
@@ -371,9 +371,9 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         DateTime.now().toIso8601String(),
       );
 
-      Logger.info('✅ Heatmap data cached successfully');
+      Logger.info('. Heatmap data cached successfully');
     } catch (e) {
-      Logger.error('❌ Error caching heatmap data', e);
+      Logger.error('. Error caching heatmap data', e);
       throw CacheException(
         message: 'Failed to cache heatmap data: ${e.toString()}',
       );
@@ -390,14 +390,14 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
 
       if (heatmapJson != null) {
         final heatmapData = Map<String, dynamic>.from(json.decode(heatmapJson));
-        Logger.info('✅ Cached heatmap data retrieved');
+        Logger.info('. Cached heatmap data retrieved');
         return heatmapData;
       } else {
-        Logger.warning('⚠️ No cached heatmap data found');
+        Logger.warning('. No cached heatmap data found');
         return null;
       }
     } catch (e) {
-      Logger.error('❌ Error retrieving cached heatmap data', e);
+      Logger.error('. Error retrieving cached heatmap data', e);
       return null;
     }
   }
@@ -416,9 +416,9 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         DateTime.now().toIso8601String(),
       );
 
-      Logger.info('✅ Last emotion log updated successfully');
+      Logger.info('. Last emotion log updated successfully');
     } catch (e) {
-      Logger.error('❌ Error updating last emotion log', e);
+      Logger.error('. Error updating last emotion log', e);
       throw CacheException(
         message: 'Failed to update last emotion log: ${e.toString()}',
       );
@@ -435,14 +435,14 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
 
       if (emotionJson != null) {
         final emotion = Map<String, dynamic>.from(json.decode(emotionJson));
-        Logger.info('✅ Last emotion log retrieved: ${emotion['emotion']}');
+        Logger.info('. Last emotion log retrieved: ${emotion['emotion']}');
         return emotion;
       } else {
         Logger.info('📱 No last emotion log found');
         return null;
       }
     } catch (e) {
-      Logger.error('❌ Error retrieving last emotion log', e);
+      Logger.error('. Error retrieving last emotion log', e);
       return null;
     }
   }
@@ -468,7 +468,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       Logger.info('📱 Cache age: ${age.inMinutes} minutes, stale: $isStale');
       return isStale;
     } catch (e) {
-      Logger.error('❌ Error checking cache staleness', e);
+      Logger.error('. Error checking cache staleness', e);
       return true; // Assume stale on error
     }
   }
@@ -494,7 +494,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       );
       return isStale;
     } catch (e) {
-      Logger.error('❌ Error checking emotion cache staleness', e);
+      Logger.error('. Error checking emotion cache staleness', e);
       return true; // Assume stale on error
     }
   }
@@ -508,7 +508,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       Logger.info('📱 First-time login status from cache: $isFirstTime');
       return isFirstTime;
     } catch (e) {
-      Logger.error('❌ Error getting first-time login status', e);
+      Logger.error('. Error getting first-time login status', e);
       return true; // Default to first-time on error
     }
   }
@@ -521,9 +521,9 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_firstTimeLoginKey, isFirstTime);
 
-      Logger.info('✅ First-time login status updated');
+      Logger.info('. First-time login status updated');
     } catch (e) {
-      Logger.error('❌ Error setting first-time login status', e);
+      Logger.error('. Error setting first-time login status', e);
       throw CacheException(
         message: 'Failed to update first-time login status: ${e.toString()}',
       );
@@ -569,7 +569,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       Logger.info('📱 Cache info: $info');
       return info;
     } catch (e) {
-      Logger.error('❌ Error getting cache info', e);
+      Logger.error('. Error getting cache info', e);
       return {'error': e.toString()};
     }
   }
@@ -593,9 +593,9 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         await prefs.remove(key);
       }
 
-      Logger.info('✅ Emotion cache cleared successfully');
+      Logger.info('. Emotion cache cleared successfully');
     } catch (e) {
-      Logger.error('❌ Error clearing emotion cache', e);
+      Logger.error('. Error clearing emotion cache', e);
       throw CacheException(
         message: 'Failed to clear emotion cache: ${e.toString()}',
       );
@@ -644,7 +644,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       Logger.info('🎭 Emotion cache stats: $stats');
       return stats;
     } catch (e) {
-      Logger.error('❌ Error getting emotion cache stats', e);
+      Logger.error('. Error getting emotion cache stats', e);
       return {'error': e.toString()};
     }
   }

@@ -28,9 +28,9 @@ class AuthModule {
       _initUseCases(sl);
       _initBloc(sl);
 
-      Logger.info('✅ Auth module initialized successfully');
+      Logger.info('. Auth module initialized successfully');
     } catch (e) {
-      Logger.error('❌ Auth module initialization failed', e);
+      Logger.error('. Auth module initialization failed', e);
       rethrow;
     }
   }
@@ -60,8 +60,8 @@ class AuthModule {
         remoteDataSource: sl<AuthRemoteDataSource>(),
         localDataSource: sl<AuthLocalDataSource>(),
         networkInfo: sl<NetworkInfo>(),
-        apiService: sl<ApiService>(), // ✅ Added ApiService injection
-        dioClient: sl<DioClient>(), // ✅ Added DioClient injection
+        apiService: sl<ApiService>(), // . Added ApiService injection
+        dioClient: sl<DioClient>(), // . Added DioClient injection
       ),
     );
   }
@@ -108,7 +108,7 @@ class AuthModule {
   }
 
   static Map<String, dynamic> verify(GetIt sl) {
-    Logger.info('🔍 Verifying auth module registrations...');
+    Logger.info('. Verifying auth module registrations...');
 
     final serviceChecks = <String, bool Function()>{
       'AuthLocalDataSource': () => sl.isRegistered<AuthLocalDataSource>(),
@@ -132,15 +132,15 @@ class AuthModule {
       final isRegistered = entry.value();
 
       if (isRegistered) {
-        Logger.info('✅ Auth: $serviceName is registered');
+        Logger.info('. Auth: $serviceName is registered');
         registeredCount++;
       } else {
-        Logger.warning('⚠️ Auth: $serviceName is NOT registered');
+        Logger.warning('. Auth: $serviceName is NOT registered');
       }
     }
 
     Logger.info(
-      '📊 Auth Module: $registeredCount/$totalCount services registered',
+      '. Auth Module: $registeredCount/$totalCount services registered',
     );
 
     return {

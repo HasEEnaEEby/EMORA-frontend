@@ -125,6 +125,7 @@ class AchievementModel {
       requirement: requirement,
       progress: progress,
       category: category,
+      rarity: rarity,
     );
   }
 

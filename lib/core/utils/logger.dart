@@ -88,7 +88,7 @@ class Logger {
       level: LogLevel.warning,
       message: message,
       data: data,
-      emoji: '⚠️',
+      emoji: '.',
       color: _yellow,
     );
   }
@@ -102,7 +102,7 @@ class Logger {
       message: message,
       data: error,
       stackTrace: stackTrace,
-      emoji: '❌',
+      emoji: '.',
       color: _red,
     );
   }
@@ -171,14 +171,14 @@ class Logger {
   static void userAction(String action, [Map<String, dynamic>? data]) {
     if (!_shouldLog(LogLevel.info)) return;
     
-    info('👤 User: $action', data);
+    info('. User: $action', data);
   }
 
   /// Log database operations
   static void database(String operation, [Map<String, dynamic>? data]) {
     if (!_shouldLog(LogLevel.debug)) return;
     
-    debug('💾 DB: $operation', data);
+    debug('. DB: $operation', data);
   }
 
   /// Log cache operations
@@ -244,7 +244,7 @@ class Logger {
         // Log data separately for better formatting
         if (data is! Exception) {
           developer.log(
-            '   📋 Data: ${_formatData(data)}',
+            '   . Data: ${_formatData(data)}',
             name: 'EMORA_DATA',
             level: priority,
           );
@@ -375,7 +375,7 @@ class Logger {
   /// Set log level
   static void setLevel(LogLevel level) {
     _currentLevel = level;
-    info('📊 Log level changed to: ${level.name}');
+    info('. Log level changed to: ${level.name}');
   }
 
   /// Get log history
@@ -450,7 +450,7 @@ class Logger {
   /// Print logger statistics
   static void printStats() {
     final stats = getStats();
-    info('📊 Logger Statistics:');
+    info('. Logger Statistics:');
     stats.forEach((key, value) {
       info('   $key: $value');
     });

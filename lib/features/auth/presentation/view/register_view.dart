@@ -50,13 +50,13 @@ class _RegisterViewState extends State<RegisterView>
   late Animation<Offset> _errorSlideAnimation;
   late Animation<double> _errorFadeAnimation;
 
-  // ✅ Error handling state
+  // . Error handling state
   String? _currentError;
   String? _errorCode;
   bool _showError = false;
   Timer? _errorTimer;
 
-  // ✅ Onboarding data extraction
+  // . Onboarding data extraction
   String? _pronouns;
   String? _ageGroup;
   String? _selectedAvatar;
@@ -112,7 +112,7 @@ void didChangeDependencies() {
       vsync: this,
     );
 
-    // ✅ Error animation controller
+    // . Error animation controller
     _errorController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -128,7 +128,7 @@ void didChangeDependencies() {
       end: 1.0,
     ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
-    // ✅ Error animations
+    // . Error animations
     _errorSlideAnimation =
         Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero).animate(
           CurvedAnimation(parent: _errorController, curve: Curves.easeOutBack),
@@ -140,7 +140,7 @@ void didChangeDependencies() {
     ).animate(CurvedAnimation(parent: _errorController, curve: Curves.easeOut));
   }
 
-  // ✅ Show error with animation
+  // . Show error with animation
   void _showErrorMessage(String message, String? errorCode) {
     // Cancel any existing error timer
     _errorTimer?.cancel();
@@ -161,7 +161,7 @@ void didChangeDependencies() {
     });
   }
 
-  // ✅ Hide error with animation
+  // . Hide error with animation
   void _hideErrorMessage() {
     _errorTimer?.cancel();
     _errorController.reverse().then((_) {
@@ -175,7 +175,7 @@ void didChangeDependencies() {
     });
   }
 
-  // ✅ Get user-friendly error message
+  // . Get user-friendly error message
   String _getUserFriendlyErrorMessage(String message, String? errorCode) {
     switch (errorCode) {
       case 'EMAIL_EXISTS':
@@ -201,7 +201,7 @@ void didChangeDependencies() {
     }
   }
 
-  // ✅ Get action button text based on error
+  // . Get action button text based on error
   String _getErrorActionText(String? errorCode) {
     switch (errorCode) {
       case 'EMAIL_EXISTS':
@@ -215,7 +215,7 @@ void didChangeDependencies() {
     }
   }
 
-  // ✅ Handle error action
+  // . Handle error action
   void _handleErrorAction(String? errorCode) {
     switch (errorCode) {
       case 'EMAIL_EXISTS':
@@ -238,7 +238,7 @@ void didChangeDependencies() {
     }
   }
 
-  // ✅ Error banner widget
+  // . Error banner widget
   Widget _buildErrorBanner() {
     if (!_showError || _currentError == null) {
       return const SizedBox.shrink();
@@ -399,7 +399,7 @@ void _extractOnboardingData() {
         data = routeArgs;
       }
     } catch (e) {
-      Logger.warning('⚠️ Could not access route arguments: $e');
+      Logger.warning('. Could not access route arguments: $e');
       data = null;
     }
   }
@@ -426,7 +426,7 @@ void _extractOnboardingData() {
 }
 
   void _logOnboardingData() {
-    Logger.info('🔍 RegisterView onboarding data:');
+    Logger.info('. RegisterView onboarding data:');
     Logger.info('  Has completed: $_hasCompletedOnboarding');
     Logger.info(
       '  Pronouns: $_pronouns | Age: $_ageGroup | Avatar: $_selectedAvatar',
@@ -437,7 +437,7 @@ void _extractOnboardingData() {
     }
   }
 
-  // ✅ Get final onboarding values
+  // . Get final onboarding values
   Map<String, String?> _getFinalOnboardingValues() {
     if (!_hasCompletedOnboarding) {
       Logger.info('📝 User did not complete onboarding - using null values');
@@ -637,7 +637,7 @@ void _extractOnboardingData() {
     return null;
   }
 
-  // ✅ Registration handler with proper data extraction
+  // . Registration handler with proper data extraction
   void _handleRegistration() async {
     // Hide any existing errors
     if (_showError) {
@@ -664,7 +664,7 @@ void _extractOnboardingData() {
       AuthRegister(
         username: normalizedUsername,
         password: _passwordController.text,
-        confirmPassword: _confirmPasswordController.text, // ✅ Added confirmPassword
+        confirmPassword: _confirmPasswordController.text, // . Added confirmPassword
         email: _emailController.text.trim(),
         pronouns: finalValues['pronouns'],
         ageGroup: finalValues['ageGroup'],
@@ -695,10 +695,10 @@ void _extractOnboardingData() {
                 _isCheckingUsername = true;
               });
             } else if (state is AuthRegistrationSuccess) {
-              Logger.info('✅ Registration successful, navigating to home');
+              Logger.info('. Registration successful, navigating to home');
               Navigator.pushReplacementNamed(context, AppRouter.home);
             } else if (state is AuthError) {
-              // ✅ Enhanced error handling
+              // . Enhanced error handling
               _showErrorMessage(state.message, state.errorCode);
             }
           },
@@ -719,7 +719,7 @@ void _extractOnboardingData() {
                       const SizedBox(height: 40),
                       _buildHeader(),
                       const SizedBox(height: 32),
-                      // ✅ Error banner at the top
+                      // . Error banner at the top
                       _buildErrorBanner(),
                       _buildLocationCard(),
                       const SizedBox(height: 24),

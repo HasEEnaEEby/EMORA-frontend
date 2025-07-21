@@ -47,10 +47,10 @@ class CommunityPostModel extends Equatable {
   factory CommunityPostModel.fromJson(Map<String, dynamic> json) {
     try {
       // Debug logging
-      print('🔍 DEBUG: Raw JSON data: $json');
-      print('🔍 DEBUG: ID field: ${json['id']} (type: ${json['id'].runtimeType})');
-      print('🔍 DEBUG: Message field: ${json['message']} (type: ${json['message']?.runtimeType})');
-      print('🔍 DEBUG: Name field: ${json['name']} (type: ${json['name']?.runtimeType})');
+      print('. DEBUG: Raw JSON data: $json');
+      print('. DEBUG: ID field: ${json['id']} (type: ${json['id'].runtimeType})');
+      print('. DEBUG: Message field: ${json['message']} (type: ${json['message']?.runtimeType})');
+      print('. DEBUG: Name field: ${json['name']} (type: ${json['name']?.runtimeType})');
       
       // Handle reactions and comments - they might be integers or arrays
       List<dynamic> reactionsData = [];
@@ -108,10 +108,10 @@ class CommunityPostModel extends Equatable {
         isAnonymous: _safeBool(json['isAnonymous']),
       );
       
-      print('🔍 DEBUG: Parsed result - ID: "${result.id}", Message: "${result.message}"');
+      print('. DEBUG: Parsed result - ID: "${result.id}", Message: "${result.message}"');
       return result;
     } catch (e) {
-      print('❌ DEBUG: Error parsing JSON: $e');
+      print('. DEBUG: Error parsing JSON: $e');
       return CommunityPostModel.empty();
     }
   }

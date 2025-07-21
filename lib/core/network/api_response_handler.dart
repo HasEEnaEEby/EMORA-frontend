@@ -9,7 +9,7 @@ class ApiResponseHandler {
   static Map<String, dynamic> handleResponse(Response response) {
     try {
       Logger.info(
-        '✅ API Response: ${response.statusCode} ${response.requestOptions.path}',
+        '. API Response: ${response.statusCode} ${response.requestOptions.path}',
       );
 
       // CRITICAL FIX: Handle response.data type conversion properly
@@ -30,10 +30,10 @@ class ApiResponseHandler {
         // Convert Map<dynamic, dynamic> to Map<String, dynamic>
         data = Map<String, dynamic>.from(rawData);
         Logger.info(
-          '🔧 Converted Map<dynamic, dynamic> to Map<String, dynamic>',
+          '. Converted Map<dynamic, dynamic> to Map<String, dynamic>',
         );
       } else {
-        Logger.error('❌ Invalid response type: ${rawData.runtimeType}');
+        Logger.error('. Invalid response type: ${rawData.runtimeType}');
         throw ServerException(
           message: 'Invalid response format: ${rawData.runtimeType}',
           statusCode: response.statusCode,
@@ -70,7 +70,7 @@ class ApiResponseHandler {
       });
 
       if (isHttpSuccess && (isDataSuccess || !isDataError)) {
-        Logger.info('✅ Successful API response: $message');
+        Logger.info('. Successful API response: $message');
 
         // FIXED: Properly handle nested data with type conversion
         final responseData = data['data'];
@@ -91,13 +91,13 @@ class ApiResponseHandler {
 
       // Handle error responses
       if (isDataError || !isHttpSuccess) {
-        Logger.error('❌ API Error Response: $message');
+        Logger.error('. API Error Response: $message');
 
         // Handle validation errors specifically
         if (data['errors'] != null) {
           final errors = data['errors'] as List<dynamic>?;
           if (errors != null && errors.isNotEmpty) {
-            Logger.error('❌ Validation Errors:');
+            Logger.error('. Validation Errors:');
             for (final error in errors) {
               if (error is Map<String, dynamic>) {
                 final field = error['field']?.toString() ?? 'unknown';
@@ -143,7 +143,7 @@ class ApiResponseHandler {
 
       // If we get here, treat as successful but log a warning
       Logger.warning(
-        '⚠️ Ambiguous API response, treating as success: $message',
+        '. Ambiguous API response, treating as success: $message',
       );
 
       // FIXED: Ensure we return properly typed Map
@@ -164,7 +164,7 @@ class ApiResponseHandler {
         rethrow;
       }
 
-      Logger.error('❌ Failed to handle API response: $e');
+      Logger.error('. Failed to handle API response: $e');
       throw ServerException(
         message: 'Failed to process server response: $e',
         statusCode: response.statusCode,
@@ -174,7 +174,7 @@ class ApiResponseHandler {
 
   /// Handle DioException and convert to appropriate exception
   static Exception handleDioException(DioException error) {
-    Logger.error('❌ DioException: ${error.type}', error);
+    Logger.error('. DioException: ${error.type}', error);
 
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
@@ -204,7 +204,7 @@ class ApiResponseHandler {
 
           // Log validation errors for debugging
           if (processedData['errors'] != null) {
-            Logger.error('❌ Validation Errors from server:');
+            Logger.error('. Validation Errors from server:');
             final errors = processedData['errors'] as List<dynamic>?;
             if (errors != null) {
               for (final error in errors) {

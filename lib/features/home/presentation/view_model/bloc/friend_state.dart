@@ -30,32 +30,35 @@ class FriendLoading extends FriendState {
 /// Search loading state
 class FriendSearchLoading extends FriendState {
   const FriendSearchLoading();
+
+  @override
+  List<Object?> get props => [];
 }
 
 /// Search results state
 class FriendSearchLoaded extends FriendState {
   final List<FriendSuggestionEntity> searchResults;
-  final String query;
-  final bool hasMore;
+  final int totalResults;
+  final int currentPage;
 
   const FriendSearchLoaded({
     required this.searchResults,
-    required this.query,
-    this.hasMore = false,
+    required this.totalResults,
+    required this.currentPage,
   });
 
   @override
-  List<Object?> get props => [searchResults, query, hasMore];
+  List<Object?> get props => [searchResults, totalResults, currentPage];
 
   FriendSearchLoaded copyWith({
     List<FriendSuggestionEntity>? searchResults,
-    String? query,
-    bool? hasMore,
+    int? totalResults,
+    int? currentPage,
   }) {
     return FriendSearchLoaded(
       searchResults: searchResults ?? this.searchResults,
-      query: query ?? this.query,
-      hasMore: hasMore ?? this.hasMore,
+      totalResults: totalResults ?? this.totalResults,
+      currentPage: currentPage ?? this.currentPage,
     );
   }
 }

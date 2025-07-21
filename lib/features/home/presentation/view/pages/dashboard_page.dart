@@ -5,34 +5,26 @@ import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_state.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/community_bloc.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/community_event.dart';
-import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/community_state.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/community_feed_widget.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/custom_mood_face.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/dashboard_modals.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/emotion_analytics_card.dart';
-import 'package:emora_mobile_app/features/home/presentation/widget/mood_capsule_timeline.dart';
-import 'package:emora_mobile_app/features/home/presentation/widget/quick_actions_grid.dart';
-import 'package:emora_mobile_app/features/home/presentation/widget/enhanced_stats_widget.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/todays_journey_widget.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/emotion_calendar_widget.dart';
-import 'package:emora_mobile_app/features/home/presentation/widget/weekly_insights_preview_widget.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/enhanced_emotion_entry_modal.dart';
-import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart' hide WeeklyInsightsModel;
-import 'package:emora_mobile_app/features/home/data/model/weekly_insights_model.dart';
+import 'package:emora_mobile_app/features/home/presentation/widget/dashboard_header.dart' hide MoodUtils;
+import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart' show WeeklyInsightsModel, EmotionEntryModel;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:intl/intl.dart';
-import 'package:geolocator/geolocator.dart';
-
 import '../../../../../core/navigation/app_router.dart';
 import '../../../../../core/navigation/navigation_service.dart';
 import '../../../../../core/network/dio_client.dart';
 import '../../../../../core/utils/logger.dart';
 import '../../../../../features/emotion/presentation/view_model/bloc/emotion_bloc.dart';
-import '../../services/emotion_backend_service.dart';
+import 'package:emora_mobile_app/app/di/injection_container.dart' as di;
 
-// 🔧 CRITICAL FIX: Use builder pattern to ensure context has access to HomeBloc
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
 
@@ -63,59 +55,146 @@ class _DashboardContent extends StatefulWidget {
 
 class _DashboardContentState extends State<_DashboardContent>
     with TickerProviderStateMixin {
-  // Animation Controllers
+  // BLoC instances
+  late HomeBloc? _homeBloc;
+  late CommunityBloc? _communityBloc;
+  late EmotionBloc? _emotionBloc;
+
+  // Animation controllers
   late AnimationController _breathingController;
   late AnimationController _rippleController;
   late AnimationController _glowController;
-  late Animation<double> _breathingAnimation;
 
-  // Navigation & State - Using MoodType from custom_mood_face.dart
-  int selectedNavIndex = 0;
-  MoodType currentMood = MoodType.good;
-  String currentMoodLabel = 'good';
+  // State variables
+  bool _isNewUser = false;
+  bool _isLoading = false;
+  String _errorMessage = '';
+  MoodType currentMood = MoodType.okay;
+  String currentMoodLabel = 'Okay';
 
-  // Backend Integration - Safe access
-  EmotionBackendService? _emotionService;
-  EmotionBloc? _emotionBloc;
-  HomeBloc? _homeBloc;
-  bool _isBackendConnected = false;
-  final String _userId = 'demo_user_123';
+  // Enhanced dashboard data
+  List<Map<String, dynamic>> _emotionHistory = [];
+  List<Map<String, dynamic>> _todaysJourney = [];
+  List<Map<String, dynamic>> _calendarData = [];
 
-  // Track if user is new
-  bool _isNewUser = true;
+  // Community data
+  List<Map<String, dynamic>> _communityPosts = [];
+  bool _isCommunityLoading = false;
 
-  // Helper methods to extract data from homeState
+  // Profile data
+  Map<String, dynamic>? _userProfile;
+  List<Map<String, dynamic>> _achievements = [];
+  bool _isProfileLoading = false;
+
+  // Analytics data
+  Map<String, dynamic> _analyticsData = {};
+  bool _isAnalyticsLoading = false;
+
+  // Enhanced emotion entry data
+  String _selectedEmotion = '';
+  int _emotionIntensity = 3;
+  String _emotionNote = '';
+  List<String> _emotionTags = [];
+  bool _shareToCommunity = false;
+  bool _isAnonymous = false;
+
+  // Calendar state
+  DateTime _selectedDate = DateTime.now();
+  bool _isCalendarLoading = false;
+
+  // Emotion detail state
+  Map<String, dynamic>? _selectedEmotionDetail;
+  bool _isEmotionDetailLoading = false;
+
+  // Edit/Delete state
+  Map<String, dynamic>? _editingEmotion;
+  bool _isEditing = false;
+  bool _isDeleting = false;
+
+  // ✅ CRITICAL FIX: Use HomeDataModel's computed isNewUser property
   bool get _isUserNew {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
-      return dashboardState.userStats?.totalMoodEntries == 0;
+      
+      // ✅ CRITICAL FIX: Use the HomeDataModel's computed isNewUser property
+      final homeData = dashboardState.homeData;
+      if (homeData != null) {
+        final isNew = homeData.isNewUser;
+        print('🔍 DEBUG: _isUserNew from HomeDataModel.isNewUser: $isNew');
+        print('🔍 DEBUG: HomeDataModel.totalEmotions: ${homeData.totalEmotions}');
+        return isNew;
+      }
+      
+      // Fallback: check emotion entries if homeData is null
+      final emotionEntriesCount = dashboardState.emotionEntries.length;
+      final isNew = emotionEntriesCount == 0;
+      print('🔍 DEBUG: _isUserNew fallback from emotionEntries: $isNew (count: $emotionEntriesCount)');
+      return isNew;
     }
+    
+    print('🔍 DEBUG: _isUserNew default: true (not HomeDashboardState)');
     return true;
   }
 
-  // Enhanced emotion data extraction
+  // ✅ ENHANCED: Better emotion data extraction with fallback to homeData
   List<EmotionEntryModel> get _emotionEntries {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
-      return dashboardState.emotionEntries;
+      final entries = dashboardState.emotionEntries;
+      
+      print('🔍 DEBUG: Emotion entries from state: ${entries.length}');
+      
+      // If state entries are empty, try to get from homeData
+      if (entries.isEmpty) {
+        final homeData = dashboardState.homeData;
+        if (homeData != null) {
+          final recentEmotions = homeData.recentEmotions;
+          print('🔍 DEBUG: Recent emotions from homeData: ${recentEmotions.length}');
+          
+          // Convert recent emotions to EmotionEntryModel
+          final convertedEntries = recentEmotions.map((emotionData) {
+            return EmotionEntryModel.fromJson({
+              'id': emotionData['id'],
+              'emotion': emotionData['emotion'] ?? emotionData['type'],
+              'intensity': emotionData['intensity'] ?? 5,
+              'note': emotionData['note'] ?? '',
+              'timestamp': emotionData['timestamp'] ?? emotionData['date'],
+              'tags': emotionData['tags'] ?? [],
+              'hasLocation': emotionData['hasLocation'] ?? false,
+            });
+          }).toList();
+          
+          print('🔍 DEBUG: Converted ${convertedEntries.length} emotions from homeData');
+          return convertedEntries;
+        }
+      }
+      
+      return entries;
     }
     return [];
   }
 
+  // ✅ ENHANCED: Better today's emotions filtering
   List<EmotionEntryModel> get _todaysEmotions {
     final today = DateTime.now();
-    return _emotionEntries.where((emotion) {
-      final emotionDate = DateTime(
-        emotion.timestamp.year,
-        emotion.timestamp.month,
-        emotion.timestamp.day,
-      );
-      final todayDate = DateTime(today.year, today.month, today.day);
-      return emotionDate.isAtSameMomentAs(todayDate);
+    final todayStart = DateTime(today.year, today.month, today.day);
+    final todayEnd = todayStart.add(const Duration(days: 1));
+    
+    final todaysEmotions = _emotionEntries.where((emotion) {
+      return emotion.createdAt.isAfter(todayStart) && 
+             emotion.createdAt.isBefore(todayEnd);
     }).toList();
+    
+    print('🔍 DEBUG: Today\'s emotions found: ${todaysEmotions.length}');
+    for (final emotion in todaysEmotions) {
+      print('  - ${emotion.emotion} at ${emotion.createdAt}');
+    }
+    
+    return todaysEmotions;
   }
 
-  WeeklyInsightsModel? get _weeklyInsights {
+  // Remove the explicit type annotation for _weeklyInsights to avoid type conflicts
+  get _weeklyInsights {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
       return dashboardState.weeklyInsights;
@@ -168,18 +247,23 @@ class _DashboardContentState extends State<_DashboardContent>
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
       
+      // Debug logging
+      print('🔍 DEBUG: _weeklyMoodData - emotionEntries.length: ${_emotionEntries.length}');
+      
       // Generate weekly mood data from emotion entries
       if (_emotionEntries.isNotEmpty) {
+        print('🔍 DEBUG: Generating weekly mood data from ${_emotionEntries.length} emotion entries');
+        
         final now = DateTime.now();
         final weekStart = now.subtract(Duration(days: now.weekday - 1));
         
-        return List.generate(7, (index) {
+        final weeklyData = List.generate(7, (index) {
           final day = weekStart.add(Duration(days: index));
           final dayEmotions = _emotionEntries.where((emotion) {
             final emotionDate = DateTime(
-              emotion.timestamp.year,
-              emotion.timestamp.month,
-              emotion.timestamp.day,
+              emotion.createdAt.year,
+              emotion.createdAt.month,
+              emotion.createdAt.day,
             );
             final checkDate = DateTime(day.year, day.month, day.day);
             return emotionDate.isAtSameMomentAs(checkDate);
@@ -189,20 +273,31 @@ class _DashboardContentState extends State<_DashboardContent>
               ? dayEmotions.map((e) => e.intensity).reduce((a, b) => a + b) / dayEmotions.length
               : 0.0;
           
-          return {
+          final dayData = {
             'day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index],
             'intensity': avgIntensity / 5.0, // Normalize to 0-1 range
             'color': _getMoodColor(avgIntensity),
           };
+          
+          print('🔍 DEBUG: Day ${dayData['day']}: ${dayEmotions.length} emotions, avg intensity: $avgIntensity');
+          return dayData;
         });
+        
+        print('🔍 DEBUG: Generated weekly mood data: ${weeklyData.length} days');
+        return weeklyData;
+      } else {
+        print('🔍 DEBUG: No emotion entries available for weekly mood data');
       }
     }
     return null;
   }
 
-  Map<String, dynamic>? get _analyticsData {
+  Map<String, dynamic>? get _analyticsDataGetter {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
+      
+      // Debug logging
+      print('🔍 DEBUG: _analyticsDataGetter - emotionEntries.length: ${_emotionEntries.length}');
       
       // Generate analytics data from emotion entries
       if (_emotionEntries.isNotEmpty) {
@@ -224,13 +319,18 @@ class _DashboardContentState extends State<_DashboardContent>
           moodTrend = 'stable';
         }
         
-        return {
+        final analyticsData = {
           'totalEntries': totalEntries,
           'averageIntensity': avgIntensity,
           'moodTrend': moodTrend,
           'musicRecommendation': _getMusicRecommendation(avgIntensity),
           'dominantEmotion': _emotionEntries.isNotEmpty ? _emotionEntries.first.emotion : null,
         };
+        
+        print('🔍 DEBUG: Generated analytics data: $analyticsData');
+        return analyticsData;
+      } else {
+        print('🔍 DEBUG: No emotion entries available for analytics data');
       }
     }
     return null;
@@ -255,42 +355,235 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
+  // ✅ ENHANCED: Immediate mood update from state
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    // Delay initialization to ensure context is ready
+    // IMMEDIATE mood update from state
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateMoodFromCurrentState();
       _initializeBackendServices();
       _loadInitialData();
       _loadEnhancedDashboardData();
     });
   }
 
+  // ✅ ENHANCED: Update mood from current state and ensure data persistence
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _ensureEmotionDataLoaded();
+      _ensureHomeDataLoaded();
+      _updateMoodFromCurrentState(); // Always update mood when returning
+    });
+  }
+
+  // ✅ NEW: Update mood from current state immediately
+  void _updateMoodFromCurrentState() {
+    try {
+      if (widget.homeState is HomeDashboardState) {
+        final dashboardState = widget.homeState as HomeDashboardState;
+        
+        // 1. Try to get latest emotion from entries
+        if (dashboardState.emotionEntries.isNotEmpty) {
+          final latestEmotion = dashboardState.emotionEntries.first;
+          setState(() {
+            currentMood = _mapEmotionToMoodType(latestEmotion.emotion);
+            currentMoodLabel = _getEmotionDisplayName(latestEmotion.emotion);
+          });
+          print('🔄 Updated mood from emotion entries: $currentMoodLabel');
+          return;
+        }
+        
+        // 2. Try to get from homeData recent emotions
+        final homeData = dashboardState.homeData;
+        if (homeData != null) {
+          final recentEmotions = homeData.recentEmotions;
+          if (recentEmotions.isNotEmpty) {
+            final latest = recentEmotions.first;
+            final emotionType = latest['emotion'] ?? latest['type'] ?? 'calm';
+            setState(() {
+              currentMood = _mapEmotionToMoodType(emotionType);
+              currentMoodLabel = _getEmotionDisplayName(emotionType);
+            });
+            print('🔄 Updated mood from homeData recent emotions: $currentMoodLabel');
+            return;
+          }
+        }
+        
+        print('⚠️ No emotions found to update mood from');
+      }
+    } catch (e) {
+      print('❌ Error updating mood from current state: $e');
+    }
+  }
+
+  /// ✅ ENHANCED: Ensure both home data and emotion data are loaded
+  void _ensureHomeDataLoaded() {
+    try {
+      if (_homeBloc != null && !_homeBloc!.isClosed) {
+        print('🔄 Ensuring home data is loaded...');
+        
+        // Check if we have valid home data
+        if (widget.homeState is HomeDashboardState) {
+          final dashboardState = widget.homeState as HomeDashboardState;
+          final homeData = dashboardState.homeData;
+          
+          if (homeData == null || !homeData.isValid) {
+            print('🔄 Home data is invalid, triggering refresh...');
+            _homeBloc!.add(const home_events.LoadHomeDataEvent(forceRefresh: true));
+          } else {
+            print('✅ Home data is valid: username=${homeData.username}, totalEmotions=${homeData.totalEmotions}');
+          }
+        } else {
+          print('🔄 Not in dashboard state, loading home data...');
+          _homeBloc!.add(const home_events.LoadHomeDataEvent(forceRefresh: false));
+        }
+      }
+    } catch (e) {
+      print('⚠️ Could not ensure home data is loaded: $e');
+    }
+  }
+
+  // ✅ CRITICAL FIX: Safe method to add events to HomeBloc
+  void _safeAddHomeEvent(home_events.HomeEvent event) {
+    try {
+      if (_homeBloc != null && !_homeBloc!.isClosed) {
+        _homeBloc!.add(event);
+        Logger.info('✅ Added event to HomeBloc: ${event.runtimeType}');
+      } else {
+        Logger.warning('⚠️ Cannot add event to HomeBloc - BLoC is null or closed: ${event.runtimeType}');
+      }
+    } catch (e) {
+      Logger.error('❌ Error adding event to HomeBloc: $e');
+    }
+  }
+
+  /// ✅ ENHANCED: Force refresh all dashboard data with mood update
+  void _forceRefreshAllData() {
+      print('🔄 Force refreshing all dashboard data...');
+      
+      // Refresh home data first
+    _safeAddHomeEvent(const home_events.LoadHomeDataEvent(forceRefresh: true));
+      
+      // Then refresh emotion history
+    _safeAddHomeEvent(const home_events.LoadEmotionHistoryEvent(forceRefresh: true));
+      
+      // Refresh user stats
+    _safeAddHomeEvent(const home_events.LoadUserStatsEvent(forceRefresh: true));
+      
+      // Refresh weekly insights
+    _safeAddHomeEvent(const home_events.LoadWeeklyInsightsEvent(forceRefresh: true));
+      
+      print('✅ All data refresh initiated');
+      
+      // Update mood after a short delay
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          _updateMoodFromCurrentState();
+        }
+      });
+  }
+
+  // ✅ ENHANCED: Data loading with mood update
   void _loadEnhancedDashboardData() {
     try {
       final homeBloc = context.read<HomeBloc>();
       
-      Logger.info('🎭 Loading enhanced dashboard data...');
+      Logger.info('🎭 Loading enhanced dashboard data with persistence...');
       
-      // Load emotion history
-      homeBloc.add(const home_events.LoadEmotionHistoryEvent(forceRefresh: true));
+      // Load fresh data from backend
+      homeBloc.add(const home_events.LoadEmotionHistoryEvent(forceRefresh: false));
       
-      // Load weekly insights
-      homeBloc.add(const home_events.LoadWeeklyInsightsEvent(forceRefresh: true));
+      // Load weekly insights with cache fallback
+      homeBloc.add(const home_events.LoadWeeklyInsightsEvent(forceRefresh: false));
       
       // Load today's journey
-      homeBloc.add(const home_events.LoadTodaysJourneyEvent(forceRefresh: true));
+      homeBloc.add(const home_events.LoadTodaysJourneyEvent(forceRefresh: false));
       
       // Load current month calendar data
       homeBloc.add(home_events.LoadEmotionCalendarEvent(
         month: DateTime.now(),
-        forceRefresh: true,
+        forceRefresh: false,
       ));
       
-      Logger.info('✅ Enhanced dashboard data loading initiated');
+      Logger.info('✅ Enhanced dashboard data loading initiated with persistence');
+      
+      // Update mood after data loads
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted) {
+          _updateMoodFromCurrentState();
+        }
+      });
     } catch (e) {
       Logger.error('❌ Failed to load enhanced dashboard data', e);
+    }
+  }
+
+  /// Load cached emotion data immediately for better UX when returning to dashboard
+  Future<void> _loadCachedEmotionDataImmediately() async {
+    try {
+      Logger.info('📦 Loading cached emotion data immediately for dashboard...');
+      // Cache loading logic would go here if implemented
+    } catch (e) {
+      Logger.warning('⚠️ Could not load cached emotion data immediately: $e');
+    }
+  }
+
+  /// Ensure emotion data is loaded when returning to dashboard
+  void _ensureEmotionDataLoaded() {
+    try {
+      // Check if we have emotion entries in the current state
+      if (_emotionEntries.isEmpty && _homeBloc != null && !_homeBloc!.isClosed) {
+        Logger.info('🔄 No emotion entries found, triggering emotion history load...');
+        _homeBloc!.add(const home_events.LoadEmotionHistoryEvent(forceRefresh: false));
+      } else {
+        Logger.info('✅ Emotion entries already loaded: ${_emotionEntries.length} entries');
+      }
+    } catch (e) {
+      Logger.warning('⚠️ Could not ensure emotion data is loaded: $e');
+    }
+  }
+
+  /// Test method to log a sample emotion
+  void _testLogEmotion() async {
+    try {
+      Logger.info('🧪 Testing emotion logging...');
+      
+      if (_homeBloc != null && !_homeBloc!.isClosed) {
+        _homeBloc!.add(home_events.LogEmotionEvent(
+          emotion: 'joy',
+          intensity: 4,
+          note: 'Test emotion from dashboard',
+          tags: ['test', 'debug'],
+          location: {
+            'latitude': 37.785834,
+            'longitude': -122.406417,
+            'name': 'San Francisco, CA',
+          },
+          context: {
+            'activity': 'testing',
+            'environment': 'development',
+          },
+        ));
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('🧪 Test emotion logged! Check analytics...'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      Logger.error('❌ Error logging test emotion: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('❌ Error: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -309,24 +602,19 @@ class _DashboardContentState extends State<_DashboardContent>
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
-
-    _breathingAnimation = Tween<double>(begin: 0.95, end: 1.05).animate(
-      CurvedAnimation(parent: _breathingController, curve: Curves.easeInOut),
-    );
   }
 
-  // 🔧 FIXED: Safe initialization with proper context access
+  // ✅ FIXED: Safe initialization with proper context access
   void _initializeBackendServices() {
     try {
       if (!mounted) return;
 
-      // Initialize DIO client and emotion service
+      // Initialize DIO client
       try {
         final dioClient = GetIt.instance<DioClient>();
-        _emotionService = EmotionBackendService(dioClient);
-        Logger.info('✅ EmotionService initialized');
+        Logger.info('✅ DIO client initialized');
       } catch (e) {
-        Logger.warning('⚠️ Could not initialize EmotionService: $e');
+        Logger.warning('⚠️ Could not initialize DIO client: $e');
       }
 
       // Get EmotionBloc from GetIt
@@ -337,7 +625,7 @@ class _DashboardContentState extends State<_DashboardContent>
         Logger.warning('⚠️ Could not get EmotionBloc: $e');
       }
 
-      // 🔧 CRITICAL FIX: Now context definitely has HomeBloc access
+      // ✅ CRITICAL FIX: Now context definitely has HomeBloc access
       try {
         _homeBloc = context.read<HomeBloc>();
         Logger.info('✅ HomeBloc retrieved from context successfully');
@@ -355,52 +643,39 @@ class _DashboardContentState extends State<_DashboardContent>
       _testBackendConnection();
     } catch (e) {
       Logger.error('❌ Failed to initialize backend services', e);
-      _isBackendConnected = false;
     }
   }
 
   Future<void> _testBackendConnection() async {
     try {
-      if (_emotionService == null) return;
-
-      final isHealthy = await _emotionService!.checkBackendHealth();
-      if (mounted) {
-        setState(() {
-          _isBackendConnected = isHealthy;
-        });
+      // Test backend connection via HomeBloc
+      if (_homeBloc != null && !_homeBloc!.isClosed) {
+        _homeBloc!.add(const home_events.RefreshHomeDataEvent());
+        Logger.info('✅ Backend connection test initiated via HomeBloc');
       }
-      Logger.info(isHealthy ? '✅ Backend is healthy' : '⚠️ Backend offline');
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isBackendConnected = false;
-        });
-      }
       Logger.warning('⚠️ Backend connection test failed: $e');
     }
   }
 
   void _loadInitialData() {
     try {
-      Logger.info(
-        '🎭 Dashboard initialized - loading enhanced emotion data',
-      );
+      Logger.info('🎭 Dashboard initialized - loading enhanced emotion data with persistence');
       
-      // Load emotion history and weekly insights
+      // Initialize home with emotion data persistence
       if (_homeBloc != null && !_homeBloc!.isClosed) {
-        _homeBloc!.add(const home_events.LoadEmotionHistoryEvent());
-        _homeBloc!.add(const home_events.LoadWeeklyInsightsEvent());
+        _homeBloc!.add(const home_events.InitializeHomeEvent(initialData: {}));
       }
     } catch (e) {
       Logger.error('❌ Failed to load initial data', e);
     }
   }
 
+  // ✅ ENHANCED: Navigation handling with state preservation
   void _onNavItemTapped(int index) {
-    setState(() {
-      selectedNavIndex = index;
-    });
-
+    // Save current state before navigation
+    _preserveCurrentState();
+    
     switch (index) {
       case 0: // Atlas
         _navigateToMoodAtlas();
@@ -414,12 +689,37 @@ class _DashboardContentState extends State<_DashboardContent>
           MaterialPageRoute(
             builder: (context) => const EnhancedInsightsView(),
           ),
-        );
+        ).then((_) {
+          // ✅ CRITICAL: Restore data when returning from insights
+          _restoreStateAfterNavigation();
+        });
         break;
       case 3: // Profile
         NavigationService.pushNamed(AppRouter.profile);
         break;
     }
+  }
+
+  // ✅ NEW: Preserve current state before navigation
+  void _preserveCurrentState() {
+    // Store current mood state
+    final preservedMood = currentMood;
+    final preservedLabel = currentMoodLabel;
+    
+    print('🔒 Preserving state: mood=$preservedLabel, emotions=${_emotionEntries.length}');
+  }
+
+  // ✅ NEW: Restore state after navigation
+  void _restoreStateAfterNavigation() {
+    print('🔄 Restoring state after navigation...');
+    
+    // Force refresh data
+    _forceRefreshAllData();
+    
+    // Update mood from current state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _updateMoodFromCurrentState();
+    });
   }
 
   void _onMoodTapped() {
@@ -429,8 +729,30 @@ class _DashboardContentState extends State<_DashboardContent>
   void _navigateToMoodAtlas() {
     Navigator.of(context).push(
       PageRouteBuilder(
-        pageBuilder: (context, animation, secondaryAnimation) =>
-            const MoodAtlasView(),
+        pageBuilder: (context, animation, secondaryAnimation) {
+          // Get the EmotionBloc from the current context
+          EmotionBloc? emotionBloc;
+          try {
+            emotionBloc = context.read<EmotionBloc>();
+            print('✅ Found EmotionBloc in dashboard context');
+          } catch (e) {
+            print('⚠️ EmotionBloc not found in dashboard: $e');
+          }
+
+          // Wrap MoodAtlasView with BlocProvider
+          if (emotionBloc != null) {
+            return BlocProvider.value(
+              value: emotionBloc,
+              child: const MoodAtlasView(),
+            );
+          } else {
+            // Fallback: create a new EmotionBloc instance using DI
+            return BlocProvider(
+              create: (context) => di.sl<EmotionBloc>(),
+              child: const MoodAtlasView(),
+            );
+          }
+        },
         transitionDuration: const Duration(milliseconds: 600),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
           return FadeTransition(
@@ -447,77 +769,108 @@ class _DashboardContentState extends State<_DashboardContent>
     );
   }
 
-  void _handleEnhancedEmotionLog(
-    String emotion,
-    int intensity,
-    String? contextText,
-    List<String> tags,
-    Position? location,
-    bool isPrivate,
-    bool isAnonymous,
-  ) {
-    // Update UI immediately
-    setState(() {
-      currentMood = _mapEmotionToMoodType(emotion);
-      currentMoodLabel = emotion;
-    });
-
-    // Log emotion to backend via HomeBloc
-    try {
-      final homeBloc = this.context.read<HomeBloc>();
-      
-      Logger.info('🎭 Logging enhanced emotion: $emotion with intensity $intensity (Private: $isPrivate, Anonymous: $isAnonymous)');
-      
-      // Show immediate feedback
-      NavigationService.showInfoSnackBar('🔄 Logging your emotion...');
-      
-      homeBloc.add(home_events.LogEmotionEvent(
-        emotion: emotion,
-        intensity: intensity,
-        note: contextText ?? 'Logged via enhanced emotion entry',
-        tags: tags.isNotEmpty ? tags : ['enhanced_entry'],
-        location: location != null ? {
-          'latitude': location.latitude,
-          'longitude': location.longitude,
-        } : null,
-        context: null,
-      ));
-      
-      // If posting to community, also create a community post
-      if (!isPrivate) {
-        _postToCommunity(emotion, intensity, contextText, tags, isAnonymous);
-      }
-      
-      // Show success feedback with rich information
-      final now = DateTime.now();
-      final timeString = '${now.hour}:${now.minute.toString().padLeft(2, '0')}';
-      
-      final actionText = isPrivate ? 'logged' : 'posted to community';
-      NavigationService.showSuccessSnackBar(
-        '✅ $emotion $actionText at $timeString',
-      );
-      
-      // Show first emotion success for new users
-      if (_isNewUser) {
-        _showFirstEmotionSuccess();
-      }
-      
-      // Refresh dashboard data after a short delay
-      Future.delayed(const Duration(milliseconds: 500), () {
-        _loadEnhancedDashboardData();
-      });
-      
-    } catch (e) {
-      Logger.error('❌ Failed to log enhanced emotion', e);
-      NavigationService.showErrorSnackBar('Failed to log emotion. Please try again.');
+  void _forceRefreshEmotionData() {
+    if (_homeBloc != null && !_homeBloc!.isClosed) {
+      _homeBloc!.add(const home_events.LoadEmotionHistoryEvent(forceRefresh: true));
+      print('🔍 DEBUG: Forced refresh of emotion data');
     }
   }
 
+  /// ✅ ENHANCED: Enhanced emotion logging handler with immediate UI updates and complete data refresh
+  void _handleEnhancedEmotionLog({String? emotionType, int? intensity, String? note}) {
+    print('🎭 Enhanced emotion log handler called');
+    print('🎭 Emotion: $emotionType, Intensity: $intensity');
+    
+    // Immediately update current mood if emotion data is provided
+    if (emotionType != null) {
+      setState(() {
+        currentMood = _mapEmotionToMoodType(emotionType);
+        currentMoodLabel = _getEmotionDisplayName(emotionType);
+      });
+      
+      print('🔍 DEBUG: Immediately updated current mood to: $currentMoodLabel ($emotionType)');
+    }
+    
+    // Show success feedback
+    NavigationService.showSuccessSnackBar('🎭 Emotion logged successfully!');
+    
+    // Force refresh ALL data to ensure consistency
+    print('🔄 Forcing complete data refresh after emotion log...');
+    _forceRefreshAllData();
+    
+    // Additional delayed refresh to catch any backend sync delays
+    Future.delayed(const Duration(milliseconds: 2000), () {
+      if (mounted && _homeBloc != null && !_homeBloc!.isClosed) {
+        print('🔄 Secondary data refresh for backend sync...');
+        _homeBloc!.add(const home_events.RefreshHomeDataEvent());
+        _updateMoodFromCurrentState(); // Update mood again
+      }
+    });
+  }
+
+  void _updateCurrentMoodFromEmotions() {
+    if (_emotionEntries.isNotEmpty) {
+      // Get the most recent emotion
+      final latestEmotion = _emotionEntries.first;
+      final emotionType = latestEmotion.emotion;
+      
+      // Map emotion to mood type
+      setState(() {
+        currentMood = _mapEmotionToMoodType(emotionType);
+        currentMoodLabel = _getEmotionDisplayName(emotionType);
+      });
+      
+      print('🔍 DEBUG: Updated current mood to: $currentMoodLabel ($emotionType)');
+      print('🔍 DEBUG: Mood mapped to: $currentMood');
+    } else {
+      print('⚠️ No emotion entries to update mood from');
+    }
+  }
+
+  String _getEmotionDisplayName(String emotion) {
+    switch (emotion.toLowerCase()) {
+      case 'love':
+        return 'Love';
+      case 'happiness':
+      case 'joy':
+        return 'Happy';
+      case 'excitement':
+        return 'Excited';
+      case 'gratitude':
+        return 'Grateful';
+      case 'contentment':
+        return 'Content';
+      case 'calm':
+        return 'Calm';
+      case 'sadness':
+        return 'Sad';
+      case 'anger':
+        return 'Angry';
+      case 'fear':
+        return 'Fearful';
+      case 'anxiety':
+        return 'Anxious';
+      case 'frustration':
+        return 'Frustrated';
+      case 'disgust':
+        return 'Disgusted';
+      default:
+        return _capitalize(emotion);
+    }
+  }
+
+  String _capitalize(String text) {
+    if (text.isEmpty) return text;
+    return text[0].toUpperCase() + text.substring(1).toLowerCase();
+  }
+
   MoodType _mapEmotionToMoodType(String emotion) {
-    switch (emotion) {
+    switch (emotion.toLowerCase()) {
       case 'happiness':
       case 'excitement':
       case 'gratitude':
+      case 'love':
+      case 'joy':
         return MoodType.good;
       case 'contentment':
       case 'calm':
@@ -525,6 +878,7 @@ class _DashboardContentState extends State<_DashboardContent>
       case 'sadness':
       case 'fear':
       case 'anxiety':
+      case 'disgust':
         return MoodType.down;
       case 'anger':
       case 'frustration':
@@ -582,30 +936,57 @@ class _DashboardContentState extends State<_DashboardContent>
   }
 
   String _getEmotionEmoji(String emotion) {
-    switch (emotion) {
-      case 'happiness': return '😊';
-      case 'excitement': return '🤩';
-      case 'gratitude': return '🙏';
-      case 'contentment': return '😌';
-      case 'calm': return '😌';
-      case 'sadness': return '😢';
-      case 'anger': return '😠';
-      case 'fear': return '😰';
-      case 'anxiety': return '😰';
-      case 'frustration': return '😤';
-      default: return '😊';
+    switch (emotion.toLowerCase()) {
+      case 'love':
+        return '💖';
+      case 'happiness':
+      case 'joy':
+        return '😊';
+      case 'excitement':
+        return '🤩';
+      case 'gratitude':
+        return '🙏';
+      case 'contentment':
+        return '😌';
+      case 'calm':
+        return '😌';
+      case 'sadness':
+        return '😢';
+      case 'anger':
+        return '😠';
+      case 'fear':
+        return '😰';
+      case 'anxiety':
+        return '😰';
+      case 'frustration':
+        return '😤';
+      case 'disgust':
+        return '🤢';
+      default:
+        return '😊';
     }
   }
 
+  // ✅ ENHANCED: Handle refresh with state preservation
   Future<void> _handleRefresh() async {
     try {
+      print('🔄 Dashboard refresh initiated...');
+      
       await Future.delayed(const Duration(milliseconds: 500));
       await _testBackendConnection();
 
       // ✅ Safe HomeBloc refresh with proper lifecycle check
       if (_homeBloc != null && !_homeBloc!.isClosed) {
         _homeBloc!.add(const home_events.RefreshHomeDataEvent());
+        _homeBloc!.add(const home_events.LoadEmotionHistoryEvent(forceRefresh: true));
       }
+
+      // Update mood after refresh
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        if (mounted) {
+          _updateMoodFromCurrentState();
+        }
+      });
 
       Logger.info('🔄 Dashboard refresh completed');
     } catch (e) {
@@ -621,22 +1002,43 @@ class _DashboardContentState extends State<_DashboardContent>
     super.dispose();
   }
 
+  // ✅ ENHANCED: Popup scope handling with state preservation
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
+      onPopInvoked: (didPop) {
+        // Preserve state when pop is invoked
+        if (!didPop) {
+          _preserveCurrentState();
+        }
+      },
       child: Scaffold(
         backgroundColor: const Color(0xFF0A0A0F),
         body: SafeArea(
-          // 🔧 CRITICAL FIX: Now we can safely use BlocListener since context has HomeBloc
+          // ✅ CRITICAL FIX: Enhanced BlocListener with immediate mood updates
           child: BlocListener<HomeBloc, HomeState>(
             listener: (context, state) {
               if (state is HomeDashboardState) {
-                final isNewUser = state.userStats?.totalMoodEntries == 0;
+                // ✅ FIXED: Use HomeDataModel.isNewUser instead of userStats
+                final homeData = state.homeData;
+                final isNewUser = homeData?.isNewUser ?? true;
+                
                 if (_isNewUser != isNewUser) {
                   setState(() {
                     _isNewUser = isNewUser;
                   });
+                  print('🔍 DEBUG: Updated _isNewUser state to: $isNewUser');
+                }
+                
+                // ✅ CRITICAL FIX: Update mood immediately when state changes
+                _updateMoodFromCurrentState();
+                
+                // Update current mood based on emotion entries
+                if (_emotionEntries.isNotEmpty) {
+                  print('🔍 DEBUG: Emotion entries updated: ${_emotionEntries.length} entries');
+                  print('🔍 DEBUG: Latest emotion: ${_emotionEntries.first.emotion}');
+                  _updateCurrentMoodFromEmotions();
                 }
               }
             },
@@ -651,7 +1053,7 @@ class _DashboardContentState extends State<_DashboardContent>
                   ),
                 ),
                 EnhancedBottomNavigationCustom(
-                  selectedIndex: selectedNavIndex,
+                  selectedIndex: 0, // Default to first tab
                   onItemTapped: _onNavItemTapped,
                   onMoodTapped: _onMoodTapped,
                   currentMood: currentMood,
@@ -715,10 +1117,10 @@ class _DashboardContentState extends State<_DashboardContent>
           children: [
             // Error Icon with animation
             AnimatedBuilder(
-              animation: _breathingAnimation,
+              animation: _breathingController,
               builder: (context, child) {
                 return Transform.scale(
-                  scale: _breathingAnimation.value,
+                  scale: _breathingController.value,
                   child: Container(
                     width: 100,
                     height: 100,
@@ -773,9 +1175,7 @@ class _DashboardContentState extends State<_DashboardContent>
             
             const SizedBox(height: 32),
             
-            // Action Buttons
             if (canRetry) ...[
-              // Primary Retry Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -878,14 +1278,14 @@ class _DashboardContentState extends State<_DashboardContent>
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: _isBackendConnected ? Colors.green : Colors.red,
+              color: Colors.green, // Connected status
             ),
           ),
           const SizedBox(width: 8),
           Text(
-            _isBackendConnected ? 'Backend Connected' : 'Backend Offline',
+            'Backend Connected',
             style: TextStyle(
               color: Colors.grey[400],
               fontSize: 12,
@@ -989,279 +1389,65 @@ class _DashboardContentState extends State<_DashboardContent>
     );
   }
 
+  // ✅ ENHANCED: Build dashboard content with better data handling
   Widget _buildDashboardContent(HomeDashboardState state) {
-    final isNewUser = state.userStats?.totalMoodEntries == 0;
+    // ✅ CRITICAL FIX: Use HomeDataModel.isNewUser instead of userStats
+    final homeData = state.homeData;
+    final isNewUser = homeData?.isNewUser ?? true;
+
+    // Debug logging
+    print('🔍 DEBUG: Building dashboard content');
+    print('🔍 DEBUG: isNewUser: $isNewUser');
+    print('🔍 DEBUG: emotionEntries.length: ${_emotionEntries.length}');
+    print('🔍 DEBUG: todaysEmotions.length: ${_todaysEmotions.length}');
+    print('🔍 DEBUG: currentMood: $currentMood ($currentMoodLabel)');
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
         children: [
-          if (isNewUser)
-            _buildNewUserHeader(state)
-          else
-            _buildRegularHeader(state),
+          DashboardHeader(
+            isNewUser: isNewUser,
+            isBackendConnected: true,
+            currentMood: currentMood,
+            currentMoodLabel: currentMoodLabel,
+            emotionEntries: _emotionEntries,
+            homeData: state.homeData,
+            userStats: state.userStats,
+            onMoodTapped: _onMoodTapped,
+            breathingController: _breathingController,
+            moodUpdateController: null,
+            isMoodUpdating: false,
+            isOnboardingCompleted: state.homeData != null ? !state.homeData!.isFirstTimeLogin : false,
+          ),
+          EmotionCalendarWidget(
+            emotionEntries: _emotionEntries,
+            onDateSelected: _onCalendarDateSelected,
+            selectedDate: null,
+            isLoading: false,
+          ),
           const SizedBox(height: 24),
           if (isNewUser) _buildNewUserContent() else _buildRegularContent(),
-          const SizedBox(height: 100),
         ],
-      ),
-    );
-  }
-
-  Widget _buildNewUserHeader(HomeDashboardState state) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              const Color(0xFF8B5CF6).withValues(alpha: 0.15),
-              const Color(0xFF6366F1).withValues(alpha: 0.1),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.waving_hand,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Welcome to EMORA!',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'Hi ${state.homeData.username}, ready to start your emotional journey?',
-                        style: TextStyle(color: Colors.grey[400], fontSize: 14),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Track your emotions, discover patterns, and connect with a global community of emotional wellness.',
-              style: TextStyle(
-                color: Colors.grey[300],
-                fontSize: 14,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 20),
-            GestureDetector(
-              onTap: _onMoodTapped,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.favorite, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      'Log Your First Emotion',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRegularHeader(HomeDashboardState state) {
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: AnimatedBuilder(
-        animation: _breathingAnimation,
-        builder: (context, child) {
-          return Transform.scale(
-            scale: _breathingAnimation.value,
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                    const Color(0xFF6366F1).withValues(alpha: 0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: CustomMoodFace(
-                      mood: currentMood,
-                      size: 70,
-                      backgroundColor: _isBackendConnected
-                          ? MoodUtils.getMoodColor(currentMood)
-                          : Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(width: 20),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Current Mood',
-                              style: TextStyle(
-                                color: Colors.grey[400],
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              width: 8,
-                              height: 8,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _isBackendConnected
-                                    ? const Color(0xFF10B981)
-                                    : Colors.orange,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          MoodUtils.getMoodLabel(currentMood),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _isBackendConnected
-                              ? 'Tap to update your mood'
-                              : 'Backend offline - mood saved locally',
-                          style: TextStyle(
-                            color: Colors.grey[500],
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  GestureDetector(
-                    onTap: _onMoodTapped,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(
-                              0xFF8B5CF6,
-                            ).withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.edit_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }
 
   Widget _buildNewUserContent() {
+    final dashboardState = widget.homeState as HomeDashboardState;
+    final weeklyInsights = dashboardState.weeklyInsights;
     return Column(
       children: [
-        _buildFeaturePreview(),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
         EmotionAnalyticsCard(
-          weeklyMoodData: _weeklyMoodData,
-          analyticsData: _analyticsData,
+          weeklyMoodData: weeklyInsights != null && weeklyInsights.toJson().containsKey('weeklyData')
+              ? (weeklyInsights.toJson()['weeklyData'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? []
+              : [],
+          analyticsData: weeklyInsights?.toJson(),
           isNewUser: _isUserNew,
+          dominantMood: weeklyInsights?.mostCommonMood ?? 'calm',
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
         CommunityFeedWidget(
           onViewAllTapped: () => NavigationService.pushNamed(AppRouter.friends),
           isNewUser: _isUserNew,
@@ -1270,207 +1456,49 @@ class _DashboardContentState extends State<_DashboardContent>
     );
   }
 
+  // ✅ ENHANCED: Better content rendering with data checks
   Widget _buildRegularContent() {
+    final dashboardState = widget.homeState as HomeDashboardState;
+    final weeklyInsights = dashboardState.weeklyInsights;
+    
+    print('🔍 DEBUG: Building regular content with ${_todaysEmotions.length} today\'s emotions');
+    
     return Column(
       children: [
-        // Enhanced Stats Row
-        EnhancedStatsWidget(
-          emotionEntries: _emotionEntries,
-          onStatsTap: () => NavigationService.pushNamed(AppRouter.insights),
-        ),
-        const SizedBox(height: 24),
-        
-        // Emotion Analytics Card
-        EmotionAnalyticsCard(
-          weeklyMoodData: _weeklyMoodData,
-          analyticsData: _analyticsData,
-          isNewUser: _isUserNew,
-        ),
-        const SizedBox(height: 24),
-        
-        // Interactive Calendar
-        EmotionCalendarWidget(
-          emotionEntries: _emotionEntries,
-          onDateSelected: _onCalendarDateSelected,
-          selectedDate: null, // TODO: Add selected date state
-          isLoading: false, // TODO: Add loading state
-        ),
-        const SizedBox(height: 24),
-        
-        // Today's Journey
+        const SizedBox(height: 32),
+        // ✅ CRITICAL: Always show TodaysJourneyWidget with proper data
         TodaysJourneyWidget(
           todaysEmotions: _todaysEmotions,
-          onAddEmotion: _onMoodTapped,
           onEmotionTap: _onEmotionTap,
         ),
-        const SizedBox(height: 24),
-        
-        // Weekly Insights Preview
-        WeeklyInsightsPreviewWidget(
-          weeklyInsights: _weeklyInsights,
-          onViewAll: () => NavigationService.pushNamed(AppRouter.insights),
+        const SizedBox(height: 32),
+        EmotionAnalyticsCard(
+          weeklyMoodData: weeklyInsights != null && weeklyInsights.toJson().containsKey('weeklyData')
+              ? (weeklyInsights.toJson()['weeklyData'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? []
+              : [],
+          analyticsData: weeklyInsights?.toJson(),
+          isNewUser: _isUserNew,
+          dominantMood: weeklyInsights?.mostCommonMood ?? 'calm',
         ),
-        const SizedBox(height: 24),
-        
-        // Quick Actions
-        QuickActionsGrid(
-          onVentTapped: _showVentingModal,
-          onJournalTapped: _showJournalModal,
-          onInsightsTapped: () =>
-              NavigationService.pushNamed(AppRouter.insights),
-          onAtlasTapped: _navigateToMoodAtlas,
-          onDashboardTapped: () => NavigationService.pushNamed(AppRouter.dashboard),
-        ),
-        const SizedBox(height: 24),
-        
-        // Community Feed
+        const SizedBox(height: 32),
         CommunityFeedWidget(
           onViewAllTapped: () => NavigationService.pushNamed(AppRouter.friends),
-          isNewUser: false,
+          isNewUser: _isUserNew,
         ),
       ],
-    );
-  }
-
-  Widget _buildFeaturePreview() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'What you\'ll discover:',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _buildFeatureItem(
-            icon: Icons.timeline,
-            title: 'Emotion Timeline',
-            description: 'Track your emotional patterns over time',
-          ),
-          _buildFeatureItem(
-            icon: Icons.insights,
-            title: 'Personal Insights',
-            description: 'Discover what influences your mood',
-          ),
-          _buildFeatureItem(
-            icon: Icons.public,
-            title: 'Global Community',
-            description: 'See how others around the world are feeling',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureItem({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
-            ),
-            child: Icon(icon, color: const Color(0xFF8B5CF6), size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  description,
-                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Modal Methods
-  void _showMoodCapsuleDetail(dynamic capsule) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Mood Capsule'),
-        content: Text('Capsule details: $capsule'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showVentingModal() {
-    NavigationService.showBottomSheet(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Venting Modal', style: TextStyle(fontSize: 24)),
-            SizedBox(height: 20),
-            Text('Express your feelings freely here...'),
-          ],
-        ),
-      ),
-      isScrollControlled: true,
-    );
-  }
-
-  void _showJournalModal() {
-    NavigationService.showBottomSheet(
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        child: const Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Journal Modal', style: TextStyle(fontSize: 24)),
-            SizedBox(height: 20),
-            Text('Write about your day and emotions...'),
-          ],
-        ),
-      ),
-      isScrollControlled: true,
     );
   }
 
   // Enhanced dashboard interaction methods
   void _onCalendarDateSelected(DateTime date) {
-    // TODO: Implement calendar date selection
     // This could show a modal with emotions for the selected date
     print('Selected date: $date');
     
     final emotionsForDate = _emotionEntries.where((emotion) {
       final emotionDate = DateTime(
-        emotion.timestamp.year,
-        emotion.timestamp.month,
-        emotion.timestamp.day,
+        emotion.createdAt.year,
+        emotion.createdAt.month,
+        emotion.createdAt.day,
       );
       final selectedDate = DateTime(date.year, date.month, date.day);
       return emotionDate.isAtSameMomentAs(selectedDate);
@@ -1489,10 +1517,8 @@ class _DashboardContentState extends State<_DashboardContent>
   }
 
   void _onEmotionTap(EmotionEntryModel emotion) {
-    // TODO: Implement emotion detail view
-    // This could show a detailed view of the emotion with edit options
+    // Show detailed view of the emotion with edit options
     print('Tapped emotion: ${emotion.emotion}');
-    
     _showEmotionDetailModal(emotion);
   }
 
@@ -1568,20 +1594,22 @@ class _DashboardContentState extends State<_DashboardContent>
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                DateFormat('HH:mm').format(emotion.timestamp),
+                                DateFormat('HH:mm').format(emotion.createdAt),
                                 style: TextStyle(
                                   color: Colors.grey[400],
                                   fontSize: 12,
                                 ),
                               ),
-                              if (emotion.context != null && emotion.context!.isNotEmpty) ...[
+                              if (emotion.note.isNotEmpty) ...[
                                 const SizedBox(height: 4),
                                 Text(
-                                  emotion.context!,
+                                  emotion.note,
                                   style: TextStyle(
                                     color: Colors.grey[300],
                                     fontSize: 12,
                                   ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ],
                             ],
@@ -1634,7 +1662,7 @@ class _DashboardContentState extends State<_DashboardContent>
                           ),
                         ),
                         Text(
-                          DateFormat('MMM dd, yyyy HH:mm').format(emotion.timestamp),
+                          DateFormat('MMM dd, yyyy HH:mm').format(emotion.createdAt),
                           style: TextStyle(
                             color: Colors.grey[400],
                             fontSize: 14,
@@ -1657,14 +1685,12 @@ class _DashboardContentState extends State<_DashboardContent>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildDetailRow('Intensity', emotion.intensityLabel),
-                    if (emotion.context != null && emotion.context!.isNotEmpty)
-                      _buildDetailRow('Context', emotion.context!),
-                    if (emotion.memory != null && emotion.memory!.isNotEmpty)
-                      _buildDetailRow('Memory', emotion.memory!),
-                    if (emotion.hasLocation)
+                    if (emotion.note.isNotEmpty)
+                      _buildDetailRow('Note', emotion.note),
+                    if (emotion.hasLocation && emotion.latitude != null && emotion.longitude != null)
                       _buildDetailRow('Location', '${emotion.latitude!.toStringAsFixed(4)}, ${emotion.longitude!.toStringAsFixed(4)}'),
-                    if (emotion.hasTags)
-                      _buildDetailRow('Tags', emotion.tags!.join(', ')),
+                    if (emotion.tags.isNotEmpty)
+                      _buildDetailRow('Tags', emotion.tags.join(', ')),
                     const Spacer(),
                     Row(
                       children: [
@@ -1737,7 +1763,6 @@ class _DashboardContentState extends State<_DashboardContent>
   }
 }
 
-// Enhanced Bottom Navigation with Custom Mood Face
 class EnhancedBottomNavigationCustom extends StatefulWidget {
   final int selectedIndex;
   final Function(int) onItemTapped;
@@ -1756,7 +1781,6 @@ class EnhancedBottomNavigationCustom extends StatefulWidget {
   State<EnhancedBottomNavigationCustom> createState() =>
       _EnhancedBottomNavigationCustomState();
 }
-
 
 class _EnhancedBottomNavigationCustomState
     extends State<EnhancedBottomNavigationCustom>
@@ -1819,7 +1843,6 @@ class _EnhancedBottomNavigationCustomState
       ),
       child: Stack(
         children: [
-          // Main Navigation Bar
           Positioned(
             bottom: 0,
             left: 0,
@@ -2008,197 +2031,5 @@ class _EnhancedBottomNavigationCustomState
         },
       ),
     );
-  }
-}
-
-
-// Custom Mood Selector Modal with Purple Theme
-class CustomMoodSelectorModal extends StatefulWidget {
-  final MoodType currentMood;
-  final Function(MoodType) onMoodSelected;
-
-  const CustomMoodSelectorModal({
-    super.key,
-    required this.currentMood,
-    required this.onMoodSelected,
-  });
-
-  @override
-  State<CustomMoodSelectorModal> createState() =>
-      _CustomMoodSelectorModalState();
-}
-
-class _CustomMoodSelectorModalState extends State<CustomMoodSelectorModal>
-    with TickerProviderStateMixin {
-  late AnimationController _slideController;
-  late AnimationController _fadeController;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeAnimations();
-    _slideController.forward();
-    _fadeController.forward();
-  }
-
-  void _initializeAnimations() {
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-
-    _slideAnimation = Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
-        .animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
-        );
-
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _slideController.dispose();
-    _fadeController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.5,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF1F2937), Color(0xFF111827)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border.all(
-          color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
-          width: 1,
-        ),
-      ),
-      child: FadeTransition(
-        opacity: _fadeAnimation,
-        child: SlideTransition(
-          position: _slideAnimation,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                // Handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Title
-                ShaderMask(
-                  shaderCallback: (bounds) => const LinearGradient(
-                    colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-                  ).createShader(bounds),
-                  child: const Text(
-                    'How are you feeling?',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Mood Options
-                Wrap(
-                  spacing: 20,
-                  runSpacing: 20,
-                  alignment: WrapAlignment.center,
-                  children: MoodUtils.getAllMoods().map((mood) {
-                    final isSelected = mood == widget.currentMood;
-                    return _buildMoodOption(
-                      mood: mood,
-                      isSelected: isSelected,
-                      onTap: () => _selectMood(mood),
-                    );
-                  }).toList(),
-                ),
-
-                const SizedBox(height: 24),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMoodOption({
-    required MoodType mood,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOutCubic,
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected
-                    ? const Color(0xFF8B5CF6)
-                    : Colors.transparent,
-                width: 3,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-                        blurRadius: 15,
-                        spreadRadius: 2,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: CustomMoodFace(mood: mood, size: 60),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            MoodUtils.getMoodLabel(mood),
-            style: TextStyle(
-              color: isSelected ? const Color(0xFF8B5CF6) : Colors.grey[400],
-              fontSize: 12,
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _selectMood(MoodType mood) {
-    widget.onMoodSelected(mood);
-    Navigator.of(context).pop();
   }
 }

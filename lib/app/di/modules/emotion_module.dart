@@ -31,9 +31,9 @@ class EmotionModule {
       _initUseCases(sl);
       _initBloc(sl);
 
-      Logger.info('✅ Emotion module initialized successfully');
+      Logger.info('. Emotion module initialized successfully');
     } catch (e) {
-      Logger.error('❌ Emotion module initialization failed', e);
+      Logger.error('. Emotion module initialization failed', e);
       rethrow;
     }
   }
@@ -103,7 +103,7 @@ class EmotionModule {
   }
 
   static Map<String, dynamic> verify(GetIt sl) {
-    Logger.info('🔍 Verifying emotion module registrations...');
+    Logger.info('. Verifying emotion module registrations...');
 
     final featureFlags = sl<FeatureFlagService>();
 
@@ -139,15 +139,15 @@ class EmotionModule {
       final isRegistered = entry.value();
 
       if (isRegistered) {
-        Logger.info('✅ Emotion: $serviceName is registered');
+        Logger.info('. Emotion: $serviceName is registered');
         registeredCount++;
       } else {
-        Logger.warning('⚠️ Emotion: $serviceName is NOT registered');
+        Logger.warning('. Emotion: $serviceName is NOT registered');
       }
     }
 
     Logger.info(
-      '📊 Emotion Module: $registeredCount/$totalCount services registered',
+      '. Emotion Module: $registeredCount/$totalCount services registered',
     );
 
     return {

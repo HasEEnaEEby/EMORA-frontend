@@ -34,9 +34,9 @@ class HomeModule {
       _initUseCases(sl);
       _initBloc(sl);
 
-      Logger.info('✅ Home module initialized successfully');
+      Logger.info('. Home module initialized successfully');
     } catch (e) {
-      Logger.error('❌ Home module initialization failed', e);
+      Logger.error('. Home module initialization failed', e);
       rethrow;
     }
   }
@@ -168,6 +168,10 @@ class HomeModule {
       () => SearchUsers(sl<FriendRepository>()),
     );
 
+    sl.registerLazySingleton<SearchAllUsers>(
+      () => SearchAllUsers(sl<FriendRepository>()),
+    );
+
     sl.registerLazySingleton<SendFriendRequest>(
       () => SendFriendRequest(sl<FriendRepository>()),
     );
@@ -200,7 +204,8 @@ class HomeModule {
   static void _initBloc(GetIt sl) {
     Logger.info('🧩 Initializing home bloc...');
 
-    sl.registerLazySingleton<HomeBloc>(
+    // ✅ CRITICAL FIX: Change from lazySingleton to factory to prevent BLoC lifecycle issues
+    sl.registerFactory<HomeBloc>(
       () => HomeBloc(
         loadHomeData: sl<LoadHomeData>(),
         getUserStats: sl<GetUserStats>(),
@@ -224,6 +229,7 @@ class HomeModule {
     sl.registerLazySingleton<FriendBloc>(
       () => FriendBloc(
         searchUsers: sl<SearchUsers>(),
+        searchAllUsers: sl<SearchAllUsers>(),
         sendFriendRequest: sl<SendFriendRequest>(),
         cancelFriendRequest: sl<CancelFriendRequest>(),
         respondToFriendRequest: sl<RespondToFriendRequest>(),
@@ -236,7 +242,7 @@ class HomeModule {
   }
 
   static Map<String, dynamic> verify(GetIt sl) {
-    Logger.info('🔍 Verifying home module registrations...');
+    Logger.info('. Verifying home module registrations...');
 
     final serviceChecks = <String, bool Function()>{
       'HomeLocalDataSource': () => sl.isRegistered<HomeLocalDataSource>(),
@@ -263,6 +269,7 @@ class HomeModule {
       'FriendRepositoryImpl': () => sl.isRegistered<FriendRepositoryImpl>(),
       'FriendRepository': () => sl.isRegistered<FriendRepository>(),
       'SearchUsers': () => sl.isRegistered<SearchUsers>(),
+      'SearchAllUsers': () => sl.isRegistered<SearchAllUsers>(),
       'SendFriendRequest': () => sl.isRegistered<SendFriendRequest>(),
       'RespondToFriendRequest': () => sl.isRegistered<RespondToFriendRequest>(),
       'GetFriends': () => sl.isRegistered<GetFriends>(),
@@ -280,15 +287,15 @@ class HomeModule {
       final isRegistered = entry.value();
 
       if (isRegistered) {
-        Logger.info('✅ Home: $serviceName is registered');
+        Logger.info('. Home: $serviceName is registered');
         registeredCount++;
       } else {
-        Logger.warning('⚠️ Home: $serviceName is NOT registered');
+        Logger.warning('. Home: $serviceName is NOT registered');
       }
     }
 
     Logger.info(
-      '📊 Home Module: $registeredCount/$totalCount services registered',
+      '. Home Module: $registeredCount/$totalCount services registered',
     );
 
     return {

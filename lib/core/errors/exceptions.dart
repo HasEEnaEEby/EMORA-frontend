@@ -86,7 +86,7 @@ class PermissionException implements Exception {
   String toString() => 'PermissionException(message: $message, code: $code)';
 }
 
-// ✅ ADDED: Rate limit exception for friend requests
+// . ADDED: Rate limit exception for friend requests
 class RateLimitException implements Exception {
   final String message;
   final int retryAfter; // Seconds to wait before retrying
@@ -100,7 +100,7 @@ class RateLimitException implements Exception {
   String toString() => 'RateLimitException(message: $message, retryAfter: $retryAfter)';
 }
 
-// ✅ ADDED: Friend request specific exceptions
+// . ADDED: Friend request specific exceptions
 class FriendRequestException implements Exception {
   final String message;
   final String? code;

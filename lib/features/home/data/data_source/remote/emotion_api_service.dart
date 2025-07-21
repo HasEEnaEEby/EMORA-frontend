@@ -12,19 +12,19 @@ class EmotionApiService {
   // Get emotion constants from backend
   Future<Map<String, dynamic>> getEmotionConstants() async {
     try {
-      Logger.info('📊 Fetching emotion constants from backend...');
+      Logger.info('. Fetching emotion constants from backend...');
       
       final response = await _apiService.get('/emotions/constants');
       
       if (response.statusCode == 200) {
         final data = response.data['data'];
-        Logger.info('✅ Emotion constants retrieved successfully');
+        Logger.info('. Emotion constants retrieved successfully');
         return data;
       } else {
         throw Exception('Failed to get emotion constants: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error getting emotion constants: $e');
+      Logger.error('. Error getting emotion constants: $e');
       rethrow;
     }
   }
@@ -63,13 +63,13 @@ class EmotionApiService {
         final emotionData = response.data['data']['emotion'];
         final emotionEntry = EmotionEntryModel.fromJson(emotionData);
         
-        Logger.info('✅ Emotion logged successfully: ${emotionEntry.id}');
+        Logger.info('. Emotion logged successfully: ${emotionEntry.id}');
         return emotionEntry;
       } else {
         throw Exception('Failed to log emotion: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error logging emotion: $e');
+      Logger.error('. Error logging emotion: $e');
       rethrow;
     }
   }
@@ -85,7 +85,7 @@ class EmotionApiService {
     double? maxIntensity,
   }) async {
     try {
-      Logger.info('📊 Fetching emotion history...');
+      Logger.info('. Fetching emotion history...');
       
       final queryParams = <String, dynamic>{
         'limit': limit,
@@ -116,13 +116,13 @@ class EmotionApiService {
             .map((data) => EmotionEntryModel.fromJson(data))
             .toList();
         
-        Logger.info('✅ Retrieved ${emotions.length} emotions from history');
+        Logger.info('. Retrieved ${emotions.length} emotions from history');
         return emotions;
       } else {
         throw Exception('Failed to get emotion history: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error getting emotion history: $e');
+      Logger.error('. Error getting emotion history: $e');
       rethrow;
     }
   }
@@ -132,7 +132,7 @@ class EmotionApiService {
     String period = '7d',
   }) async {
     try {
-      Logger.info('📊 Fetching emotion statistics for period: $period');
+      Logger.info('. Fetching emotion statistics for period: $period');
       
       final response = await _apiService.get('/emotions/stats', queryParameters: {
         'period': period,
@@ -140,13 +140,13 @@ class EmotionApiService {
       
       if (response.statusCode == 200) {
         final stats = response.data['data'];
-        Logger.info('✅ Emotion statistics retrieved successfully');
+        Logger.info('. Emotion statistics retrieved successfully');
         return stats;
       } else {
         throw Exception('Failed to get emotion stats: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error getting emotion statistics: $e');
+      Logger.error('. Error getting emotion statistics: $e');
       rethrow;
     }
   }
@@ -164,13 +164,13 @@ class EmotionApiService {
       
       if (response.statusCode == 200) {
         final insights = response.data['data'];
-        Logger.info('✅ User insights retrieved successfully');
+        Logger.info('. User insights retrieved successfully');
         return insights;
       } else {
         throw Exception('Failed to get user insights: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error getting user insights: $e');
+      Logger.error('. Error getting user insights: $e');
       rethrow;
     }
   }
@@ -192,13 +192,13 @@ class EmotionApiService {
       
       if (response.statusCode == 200) {
         final timeline = response.data['data'];
-        Logger.info('✅ Emotion timeline retrieved successfully');
+        Logger.info('. Emotion timeline retrieved successfully');
         return timeline;
       } else {
         throw Exception('Failed to get emotion timeline: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error getting emotion timeline: $e');
+      Logger.error('. Error getting emotion timeline: $e');
       rethrow;
     }
   }
@@ -216,7 +216,7 @@ class EmotionApiService {
     int limit = 20,
   }) async {
     try {
-      Logger.info('🔍 Searching emotions...');
+      Logger.info('. Searching emotions...');
       
       final queryParams = <String, dynamic>{
         'page': page,
@@ -235,13 +235,13 @@ class EmotionApiService {
       
       if (response.statusCode == 200) {
         final searchResults = response.data['data'];
-        Logger.info('✅ Emotion search completed successfully');
+        Logger.info('. Emotion search completed successfully');
         return searchResults;
       } else {
         throw Exception('Failed to search emotions: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error searching emotions: $e');
+      Logger.error('. Error searching emotions: $e');
       rethrow;
     }
   }
@@ -276,13 +276,13 @@ class EmotionApiService {
         final emotionData = response.data['data'];
         final emotionEntry = EmotionEntryModel.fromJson(emotionData);
         
-        Logger.info('✅ Emotion updated successfully: ${emotionEntry.id}');
+        Logger.info('. Emotion updated successfully: ${emotionEntry.id}');
         return emotionEntry;
       } else {
         throw Exception('Failed to update emotion: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error updating emotion: $e');
+      Logger.error('. Error updating emotion: $e');
       rethrow;
     }
   }
@@ -295,12 +295,12 @@ class EmotionApiService {
       final response = await _apiService.delete('/emotions/$id');
       
       if (response.statusCode == 200) {
-        Logger.info('✅ Emotion deleted successfully: $id');
+        Logger.info('. Emotion deleted successfully: $id');
       } else {
         throw Exception('Failed to delete emotion: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error deleting emotion: $e');
+      Logger.error('. Error deleting emotion: $e');
       rethrow;
     }
   }
@@ -318,13 +318,13 @@ class EmotionApiService {
       
       if (response.statusCode == 200) {
         final stats = response.data['data'];
-        Logger.info('✅ Global emotion statistics retrieved successfully');
+        Logger.info('. Global emotion statistics retrieved successfully');
         return stats;
       } else {
         throw Exception('Failed to get global stats: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error getting global emotion statistics: $e');
+      Logger.error('. Error getting global emotion statistics: $e');
       rethrow;
     }
   }
@@ -346,13 +346,13 @@ class EmotionApiService {
       
       if (response.statusCode == 200) {
         final feed = response.data['data'];
-        Logger.info('✅ Public emotion feed retrieved successfully');
+        Logger.info('. Public emotion feed retrieved successfully');
         return feed;
       } else {
         throw Exception('Failed to get public emotion feed: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error getting public emotion feed: $e');
+      Logger.error('. Error getting public emotion feed: $e');
       rethrow;
     }
   }
@@ -378,13 +378,13 @@ class EmotionApiService {
       
       if (response.statusCode == 201) {
         final reaction = response.data['data'];
-        Logger.info('✅ Comfort reaction sent successfully');
+        Logger.info('. Comfort reaction sent successfully');
         return reaction;
       } else {
         throw Exception('Failed to send comfort reaction: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error sending comfort reaction: $e');
+      Logger.error('. Error sending comfort reaction: $e');
       rethrow;
     }
   }

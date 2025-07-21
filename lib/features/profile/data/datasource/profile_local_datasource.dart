@@ -45,7 +45,7 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       Logger.info('📱 No cached user profile found');
       return null;
     } catch (e) {
-      Logger.error('❌ Error getting cached profile: $e');
+      Logger.error('. Error getting cached profile: $e');
       return null;
     }
   }
@@ -64,10 +64,11 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       final currentUser = await getCurrentUser();
       if (currentUser != null) {
         Logger.info(
-          '📱 Creating profile from current user: ${currentUser.username}',
+          '📱 Creating basic profile from current user: ${currentUser.username}',
         );
 
-        // Convert UserModel to UserProfileModel
+        // Convert UserModel to UserProfileModel with minimal data
+        // Note: This should only be used as a fallback, real stats should come from API
         final profile = UserProfileModel(
           id: currentUser.id,
           name: currentUser.username,
@@ -75,19 +76,20 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
           email: currentUser.email,
           avatar: currentUser.selectedAvatar ?? 'fox',
           joinDate: currentUser.createdAt,
-          totalEntries: 0,
-          currentStreak: 0,
-          longestStreak: 0,
-          favoriteEmotion: null,
-          totalFriends: 0,
-          helpedFriends: 0,
-          level: 'New Explorer',
-          badgesEarned: 0,
+          // 🔧 FIX: Don't set zero stats here - let the API provide real data
+          totalEntries: 0, // Will be updated by API call
+          currentStreak: 0, // Will be updated by API call
+          longestStreak: 0, // Will be updated by API call
+          favoriteEmotion: null, // Will be updated by API call
+          totalFriends: 0, // Will be updated by API call
+          helpedFriends: 0, // Will be updated by API call
+          level: 'New Explorer', // Will be updated by API call
+          badgesEarned: 0, // Will be updated by API call
           lastActive: currentUser.updatedAt,
           isPrivate: false,
         );
 
-        // Cache this profile for future use
+        // Cache this basic profile for future use
         await cacheUserProfile(profile);
         return profile;
       }
@@ -95,7 +97,7 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       Logger.info('📱 No cached profile or current user found');
       return null;
     } catch (e) {
-      Logger.error('❌ Error getting last user profile: $e');
+      Logger.error('. Error getting last user profile: $e');
       throw CacheException(message: 'Failed to get cached profile: $e');
     }
   }
@@ -107,9 +109,9 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
         _userProfileKey,
         jsonEncode(profile.toJson()),
       );
-      Logger.info('💾 Cached user profile: ${profile.username}');
+      Logger.info('. Cached user profile: ${profile.username}');
     } catch (e) {
-      Logger.error('❌ Error caching profile: $e');
+      Logger.error('. Error caching profile: $e');
       // Don't throw - cache errors are not critical
     }
   }
@@ -127,7 +129,7 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       Logger.info('📱 No cached user preferences found');
       return null;
     } catch (e) {
-      Logger.error('❌ Error getting cached preferences: $e');
+      Logger.error('. Error getting cached preferences: $e');
       return null;
     }
   }
@@ -139,9 +141,9 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
         _userPreferencesKey,
         jsonEncode(preferences.toJson()),
       );
-      Logger.info('💾 Cached user preferences');
+      Logger.info('. Cached user preferences');
     } catch (e) {
-      Logger.error('❌ Error caching preferences: $e');
+      Logger.error('. Error caching preferences: $e');
       // Don't throw - cache errors are not critical
     }
   }
@@ -161,7 +163,7 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       Logger.info('📱 No cached achievements found');
       return null;
     } catch (e) {
-      Logger.error('❌ Error getting cached achievements: $e');
+      Logger.error('. Error getting cached achievements: $e');
       return null;
     }
   }
@@ -176,9 +178,9 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
         _achievementsKey,
         json.encode(jsonList),
       );
-      Logger.info('💾 Cached ${achievements.length} achievements');
+      Logger.info('. Cached ${achievements.length} achievements');
     } catch (e) {
-      Logger.error('❌ Error caching achievements: $e');
+      Logger.error('. Error caching achievements: $e');
       // Don't throw - cache errors are not critical
     }
   }
@@ -193,7 +195,7 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       ]);
       Logger.info('🗑️ Profile cache cleared successfully');
     } catch (e) {
-      Logger.error('❌ Error clearing cache: $e');
+      Logger.error('. Error clearing cache: $e');
       // Don't throw - cache errors are not critical
     }
   }
@@ -207,15 +209,15 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
 
       if (currentUser != null) {
         Logger.info(
-          '👤 Retrieved current user from auth: ${currentUser.username}',
+          '. Retrieved current user from auth: ${currentUser.username}',
         );
         return currentUser;
       }
 
-      Logger.info('👤 No current user found in auth storage');
+      Logger.info('. No current user found in auth storage');
       return null;
     } catch (e) {
-      Logger.error('❌ Error getting current user: $e');
+      Logger.error('. Error getting current user: $e');
       return null;
     }
   }

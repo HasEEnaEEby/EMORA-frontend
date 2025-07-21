@@ -36,7 +36,7 @@ class BackendValues {
     '65+': '50s and above', // Group 65+ also as "50s and above"
   };
 
-  // ✅ FIXED: Backend expects pronouns with spaces (from user.model.js)
+  // . FIXED: Backend expects pronouns with spaces (from user.model.js)
   static const Map<String, String> _pronounMapping = {
     'She / Her': 'She / Her',
     'He / Him': 'He / Him', 
@@ -188,22 +188,22 @@ class BackendValues {
 
   // Debug helper methods
   static void printAllMappings() {
-    print('🔧 Frontend to Backend Age Mappings:');
+    print('. Frontend to Backend Age Mappings:');
     _frontendToBackendAgeMapping.forEach((key, value) {
       print('  "$key" -> "$value"');
     });
 
-    print('\n🔧 Backend to Frontend Age Mappings:');
+    print('\n. Backend to Frontend Age Mappings:');
     _backendToFrontendAgeMapping.forEach((key, value) {
       print('  "$key" -> "$value"');
     });
 
-    print('\n🔧 Pronoun Mappings:');
+    print('\n. Pronoun Mappings:');
     _pronounMapping.forEach((key, value) {
       print('  "$key" -> "$value"');
     });
 
-    print('\n🔧 Avatar Mappings:');
+    print('\n. Avatar Mappings:');
     _avatarMapping.forEach((key, value) {
       print('  "$key" -> "$value"');
     });

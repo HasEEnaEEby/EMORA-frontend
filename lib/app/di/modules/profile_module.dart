@@ -22,7 +22,7 @@ import '../../../features/profile/domain/usecase/update_user_profile.dart';
 class ProfileModule {
   /// Initialize Profile module dependencies
   static Future<void> init(GetIt sl) async {
-    Logger.info('🔧 Initializing profile module...');
+    Logger.info('. Initializing profile module...');
 
     try {
       // Data Sources
@@ -37,9 +37,9 @@ class ProfileModule {
       // BLoC
       _initBloc(sl);
 
-      Logger.info('✅ Profile module initialized successfully');
+      Logger.info('. Profile module initialized successfully');
     } catch (e, stackTrace) {
-      Logger.error('❌ Profile module initialization failed', e, stackTrace);
+      Logger.error('. Profile module initialization failed', e, stackTrace);
       rethrow;
     }
   }
@@ -60,7 +60,7 @@ class ProfileModule {
       ),
     );
 
-    Logger.info('✅ Profile data sources registered successfully');
+    Logger.info('. Profile data sources registered successfully');
   }
 
   /// Initialize repository
@@ -77,7 +77,7 @@ class ProfileModule {
       ),
     );
 
-    Logger.info('✅ Profile repository registered successfully');
+    Logger.info('. Profile repository registered successfully');
   }
 
   /// Initialize use cases
@@ -112,7 +112,7 @@ class ProfileModule {
       () => ExportUserData(repository: sl<ProfileRepository>()),
     );
 
-    Logger.info('✅ Profile use cases registered successfully');
+    Logger.info('. Profile use cases registered successfully');
   }
 
   /// Initialize BLoC
@@ -131,12 +131,12 @@ class ProfileModule {
       ),
     );
 
-    Logger.info('✅ Profile bloc registered successfully');
+    Logger.info('. Profile bloc registered successfully');
   }
 
   /// Verify all profile dependencies are registered correctly
   static Map<String, dynamic> verify(GetIt sl) {
-    Logger.info('🔍 Verifying profile module registrations...');
+    Logger.info('. Verifying profile module registrations...');
 
     final serviceChecks = [
       _checkService<ProfileRemoteDataSource>(sl, 'ProfileRemoteDataSource'),
@@ -159,11 +159,11 @@ class ProfileModule {
 
     for (final check in serviceChecks) {
       if (check['isRegistered']) {
-        Logger.info('✅ Profile: ${check['name']} is registered');
+        Logger.info('. Profile: ${check['name']} is registered');
         registeredServices.add(check['name']);
         registeredCount++;
       } else {
-        Logger.warning('❌ Profile: ${check['name']} is NOT registered');
+        Logger.warning('. Profile: ${check['name']} is NOT registered');
         missingServices.add(check['name']);
       }
     }
@@ -180,7 +180,7 @@ class ProfileModule {
     };
 
     Logger.info(
-      '📊 Profile Module: $registeredCount/$totalCount services registered',
+      '. Profile Module: $registeredCount/$totalCount services registered',
     );
 
     return result;
@@ -195,7 +195,7 @@ class ProfileModule {
       final isRegistered = sl.isRegistered<T>();
       return {'name': name, 'isRegistered': isRegistered};
     } catch (e) {
-      Logger.error('🔍 Profile: Error checking $name registration', e);
+      Logger.error('. Profile: Error checking $name registration', e);
       return {'name': name, 'isRegistered': false};
     }
   }
@@ -258,10 +258,10 @@ class ProfileModule {
         await profileBloc.close();
       }
 
-      Logger.info('✅ Profile module registration test passed');
+      Logger.info('. Profile module registration test passed');
       return true;
     } catch (e) {
-      Logger.error('❌ Profile module registration test failed', e);
+      Logger.error('. Profile module registration test failed', e);
       return false;
     }
   }
@@ -277,10 +277,10 @@ class ProfileModule {
           final profileBloc = sl<ProfileBloc>();
           if (!profileBloc.isClosed) {
             await profileBloc.close();
-            Logger.info('✅ ProfileBloc closed successfully');
+            Logger.info('. ProfileBloc closed successfully');
           }
         } catch (e) {
-          Logger.warning('⚠️ Error closing ProfileBloc: $e');
+          Logger.warning('. Error closing ProfileBloc: $e');
         }
       }
 
@@ -306,14 +306,14 @@ class ProfileModule {
           }
         } catch (e) {
           Logger.warning(
-            '⚠️ Error unregistering ${serviceType.toString()}: $e',
+            '. Error unregistering ${serviceType.toString()}: $e',
           );
         }
       }
 
-      Logger.info('✅ Profile module cleanup completed');
+      Logger.info('. Profile module cleanup completed');
     } catch (e) {
-      Logger.error('❌ Profile module cleanup failed', e);
+      Logger.error('. Profile module cleanup failed', e);
     }
   }
 

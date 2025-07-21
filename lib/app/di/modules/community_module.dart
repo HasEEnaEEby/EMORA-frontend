@@ -73,20 +73,20 @@ class CommunityModule {
       // Data Sources (Remote Only) - FIXED: Added both required dependencies
       sl.registerLazySingleton<CommunityRemoteDataSource>(
         () => CommunityRemoteDataSourceImpl(
-          apiService: sl<ApiService>(), // ✅ FIXED: Added missing apiService
+          apiService: sl<ApiService>(), // . FIXED: Added missing apiService
           dioClient: sl<DioClient>(),
         ),
       );
 
-      Logger.info('✅ Community Module initialized successfully');
+      Logger.info('. Community Module initialized successfully');
     } catch (e, stackTrace) {
-      Logger.error('❌ Community Module initialization failed', e, stackTrace);
+      Logger.error('. Community Module initialization failed', e, stackTrace);
       rethrow;
     }
   }
 
   static Map<String, dynamic> verify(GetIt sl) {
-    Logger.info('🔍 Verifying Community Module registrations...');
+    Logger.info('. Verifying Community Module registrations...');
 
     const expectedServices = [
       'CommunityBloc',
@@ -152,17 +152,17 @@ class CommunityModule {
         }
       } catch (e) {
         failedServices.add(serviceName);
-        Logger.error('❌ Failed to verify $serviceName', e);
+        Logger.error('. Failed to verify $serviceName', e);
       }
     }
 
     final success = failedServices.isEmpty;
     if (!success) {
       Logger.error(
-        '❌ Community Module verification failed for: ${failedServices.join(', ')}',
+        '. Community Module verification failed for: ${failedServices.join(', ')}',
       );
     } else {
-      Logger.info('✅ Community Module verification completed successfully');
+      Logger.info('. Community Module verification completed successfully');
     }
 
     return {

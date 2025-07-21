@@ -249,9 +249,9 @@ class _EmotionCalendarWidgetState extends State<EmotionCalendarWidget> {
   List<EmotionEntryModel> _getEmotionsForDay(DateTime day) {
     return widget.emotionEntries.where((emotion) {
       final emotionDate = DateTime(
-        emotion.timestamp.year,
-        emotion.timestamp.month,
-        emotion.timestamp.day,
+        emotion.createdAt.year,
+        emotion.createdAt.month,
+        emotion.createdAt.day,
       );
       final dayDate = DateTime(day.year, day.month, day.day);
       return emotionDate.isAtSameMomentAs(dayDate);

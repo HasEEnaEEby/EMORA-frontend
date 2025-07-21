@@ -4,6 +4,9 @@ import 'package:emora_mobile_app/core/network/dio_client.dart';
 import '../../../../../core/errors/exceptions.dart';
 import '../../../../../core/network/api_service.dart';
 import '../../../../../core/utils/logger.dart';
+// ✅ IMPORT THE REAL MODELS FROM YOUR MODEL FILES
+import '../../model/home_data_model.dart';
+import '../../model/user_stats_model.dart';
 
 abstract class HomeRemoteDataSource {
   Future<HomeDataModel> getHomeData();
@@ -11,7 +14,6 @@ abstract class HomeRemoteDataSource {
   Future<List<GlobalEmotionModel>> getGlobalEmotions();
   Future<List<EmotionInsightModel>> getEmotionInsights();
   Future<bool> logEmotion(EmotionLogModel emotionLog);
-  // ADD THIS MISSING METHOD
   Future<void> markFirstTimeLoginComplete();
 }
 
@@ -32,10 +34,13 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
 
       if (response.statusCode == 200) {
         final responseData = response.data;
+        
+        print('🔍 Raw API Response in Remote Source: $responseData');
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          final homeData = HomeDataModel.fromJson(responseData['data']);
-          Logger.info('✅ Home data retrieved successfully');
+          // ✅ FIXED: Pass the FULL response to the real HomeDataModel
+          final homeData = HomeDataModel.fromJson(responseData);
+          Logger.info('. Home data retrieved successfully');
           return homeData;
         } else {
           throw ServerException(
@@ -48,7 +53,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error fetching home data', e);
+      Logger.error('. Error fetching home data', e);
       if (e is ServerException || e is NotFoundException) {
         rethrow;
       }
@@ -68,7 +73,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
 
         if (responseData['success'] == true && responseData['data'] != null) {
           final userStats = UserStatsModel.fromJson(responseData['data']);
-          Logger.info('✅ User stats retrieved successfully');
+          Logger.info('. User stats retrieved successfully');
           return userStats;
         } else {
           throw ServerException(
@@ -81,7 +86,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error fetching user stats', e);
+      Logger.error('. Error fetching user stats', e);
       if (e is ServerException || e is NotFoundException) {
         rethrow;
       }
@@ -105,7 +110,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
               .map((emotionData) => GlobalEmotionModel.fromJson(emotionData))
               .toList();
 
-          Logger.info('✅ Global emotions retrieved successfully');
+          Logger.info('. Global emotions retrieved successfully');
           return emotions;
         } else {
           throw ServerException(
@@ -118,7 +123,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error fetching global emotions', e);
+      Logger.error('. Error fetching global emotions', e);
       if (e is ServerException || e is NotFoundException) {
         rethrow;
       }
@@ -142,7 +147,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
               .map((insightData) => EmotionInsightModel.fromJson(insightData))
               .toList();
 
-          Logger.info('✅ Emotion insights retrieved successfully');
+          Logger.info('. Emotion insights retrieved successfully');
           return insights;
         } else {
           throw ServerException(
@@ -156,7 +161,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error fetching emotion insights', e);
+      Logger.error('. Error fetching emotion insights', e);
       if (e is ServerException || e is NotFoundException) {
         rethrow;
       }
@@ -178,11 +183,11 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         final responseData = response.data;
 
         if (responseData['success'] == true) {
-          Logger.info('✅ Emotion logged successfully');
+          Logger.info('. Emotion logged successfully');
           return true;
         } else {
           Logger.warning(
-            '⚠️ Server returned success=false: ${responseData['message']}',
+            '. Server returned success=false: ${responseData['message']}',
           );
           return false;
         }
@@ -196,7 +201,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error logging emotion', e);
+      Logger.error('. Error logging emotion', e);
       if (e is ServerException ||
           e is NotFoundException ||
           e is UnauthorizedException) {
@@ -206,7 +211,6 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     }
   }
 
-  // ADD THIS MISSING METHOD IMPLEMENTATION
   @override
   Future<void> markFirstTimeLoginComplete() async {
     try {
@@ -220,7 +224,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         final responseData = response.data;
 
         if (responseData == null || responseData['success'] == true) {
-          Logger.info('✅ First-time login marked complete on server');
+          Logger.info('. First-time login marked complete on server');
           return;
         } else {
           throw ServerException(
@@ -240,7 +244,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error marking first-time login complete', e);
+      Logger.error('. Error marking first-time login complete', e);
       if (e is ServerException ||
           e is NotFoundException ||
           e is UnauthorizedException) {
@@ -251,76 +255,8 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   }
 }
 
-// Mock Models for compilation (these should be defined properly in your models folder)
-class HomeDataModel {
-  final String username;
-  final String currentMood;
-  final bool todayMoodLogged;
-  final int streak;
-  final Map<String, dynamic> globalEmotions;
-
-  HomeDataModel({
-    required this.username,
-    required this.currentMood,
-    required this.todayMoodLogged,
-    required this.streak,
-    required this.globalEmotions,
-  });
-
-  factory HomeDataModel.fromJson(Map<String, dynamic> json) {
-    return HomeDataModel(
-      username: json['username'] ?? 'User',
-      currentMood: json['currentMood'] ?? 'neutral',
-      todayMoodLogged: json['todayMoodLogged'] ?? false,
-      streak: json['streak'] ?? 0,
-      globalEmotions: json['globalEmotions'] ?? {},
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'username': username,
-      'currentMood': currentMood,
-      'todayMoodLogged': todayMoodLogged,
-      'streak': streak,
-      'globalEmotions': globalEmotions,
-    };
-  }
-}
-
-class UserStatsModel {
-  final int moodCheckins;
-  final int streakDays;
-  final String averageMood;
-  final Map<String, double> moodDistribution;
-
-  UserStatsModel({
-    required this.moodCheckins,
-    required this.streakDays,
-    required this.averageMood,
-    required this.moodDistribution,
-  });
-
-  factory UserStatsModel.fromJson(Map<String, dynamic> json) {
-    return UserStatsModel(
-      moodCheckins: json['moodCheckins'] ?? 0,
-      streakDays: json['streakDays'] ?? 0,
-      averageMood: json['averageMood'] ?? 'neutral',
-      moodDistribution: Map<String, double>.from(
-        json['moodDistribution'] ?? {},
-      ),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'moodCheckins': moodCheckins,
-      'streakDays': streakDays,
-      'averageMood': averageMood,
-      'moodDistribution': moodDistribution,
-    };
-  }
-}
+// ✅ KEEP ONLY THE MODELS THAT YOU DON'T HAVE PROPER IMPLEMENTATIONS FOR
+// If you have proper model files for these, import them instead and remove these
 
 class GlobalEmotionModel {
   final String city;

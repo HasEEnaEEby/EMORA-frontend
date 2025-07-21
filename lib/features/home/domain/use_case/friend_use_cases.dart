@@ -20,14 +20,44 @@ class SearchUsersParams {
   });
 }
 
-class SearchUsers implements UseCase<List<FriendSuggestionEntity>, SearchUsersParams> {
+class SearchUsers implements UseCase<Map<String, dynamic>, SearchUsersParams> {
   final FriendRepository repository;
 
   SearchUsers(this.repository);
 
   @override
-  Future<Either<Failure, List<FriendSuggestionEntity>>> call(SearchUsersParams params) async {
+  Future<Either<Failure, Map<String, dynamic>>> call(SearchUsersParams params) async {
     return await repository.searchUsers(
+      query: params.query,
+      page: params.page,
+      limit: params.limit,
+    );
+  }
+}
+
+// ============================================================================
+// SEARCH ALL USERS USE CASE
+// ============================================================================
+class SearchAllUsersParams {
+  final String query;
+  final int page;
+  final int limit;
+
+  const SearchAllUsersParams({
+    required this.query,
+    this.page = 1,
+    this.limit = 10,
+  });
+}
+
+class SearchAllUsers implements UseCase<Map<String, dynamic>, SearchAllUsersParams> {
+  final FriendRepository repository;
+
+  SearchAllUsers(this.repository);
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> call(SearchAllUsersParams params) async {
+    return await repository.searchAllUsers(
       query: params.query,
       page: params.page,
       limit: params.limit,

@@ -688,7 +688,7 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
     }
   }
 
-  // ✅ FIXED: Built-in language selector (no external dependency)
+  // . FIXED: Built-in language selector (no external dependency)
   void _showLanguageSelector() {
     final languages = [
       {'name': 'English', 'flag': '🇺🇸'},
@@ -838,7 +838,7 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
     );
   }
 
-  // ✅ FIXED: Built-in theme selector (no external dependency)
+  // . FIXED: Built-in theme selector (no external dependency)
   void _showThemeSelector() {
     final themes = [
       {
@@ -1031,7 +1031,7 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
     );
   }
 
-  // ✅ FIXED: Proper ProfileBloc event dispatch
+  // . FIXED: Proper ProfileBloc event dispatch
   void _saveSettingsToDatabase() {
     final settingsData = {
       'notificationsEnabled': _notificationsEnabled,

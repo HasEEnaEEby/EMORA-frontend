@@ -31,7 +31,7 @@ class LogoutService {
       _handleSuccessfulLogout(context);
 
     } catch (e) {
-      Logger.error('❌ Logout error: $e');
+      Logger.error('. Logout error: $e');
       _handleLogoutError(context, 'Logout failed: ${e.toString()}');
     }
   }
@@ -73,10 +73,10 @@ class LogoutService {
         'Account deleted successfully. All your data has been permanently removed.',
       );
 
-      Logger.info('✅ Account deletion completed successfully');
+      Logger.info('. Account deletion completed successfully');
 
     } catch (e) {
-      Logger.error('❌ Account deletion error: $e');
+      Logger.error('. Account deletion error: $e');
       _handleDeletionError(context, 'Account deletion failed: ${e.toString()}');
     }
   }
@@ -240,7 +240,7 @@ class LogoutService {
               ),
               const SizedBox(height: 16),
               _buildDeletionItem('🔒 Profile information and settings'),
-              _buildDeletionItem('📊 All emotion logs and history'),
+              _buildDeletionItem('. All emotion logs and history'),
               _buildDeletionItem('🏆 Achievements and progress'),
               _buildDeletionItem('👥 Social connections and shared content'),
               _buildDeletionItem('📈 Analytics and insights data'),
@@ -445,7 +445,7 @@ class LogoutService {
     // Provide haptic feedback
     HapticFeedback.lightImpact();
 
-    Logger.info('✅ Logout completed successfully');
+    Logger.info('. Logout completed successfully');
   }
 
   static void _handleLogoutError(BuildContext context, String message) {
@@ -458,7 +458,7 @@ class LogoutService {
     // Provide haptic feedback
     HapticFeedback.heavyImpact();
 
-    Logger.error('❌ Logout failed: $message');
+    Logger.error('. Logout failed: $message');
   }
 
   static void _handleDeletionError(BuildContext context, String message) {
@@ -471,7 +471,7 @@ class LogoutService {
     // Provide haptic feedback
     HapticFeedback.heavyImpact();
 
-    Logger.error('❌ Account deletion failed: $message');
+    Logger.error('. Account deletion failed: $message');
   }
 
   static Future<void> _clearAllLocalData() async {
@@ -482,7 +482,7 @@ class LogoutService {
         // For now, we'll just clear local data
         Logger.info('🔐 Backend logout API call would go here');
       } catch (e) {
-        Logger.warning('⚠️ Backend logout failed, continuing with local cleanup: $e');
+        Logger.warning('. Backend logout failed, continuing with local cleanup: $e');
       }
 
       // Clear shared preferences
@@ -494,7 +494,7 @@ class LogoutService {
 
       Logger.info('🧹 All local data cleared successfully');
     } catch (e) {
-      Logger.error('❌ Error clearing local data: $e');
+      Logger.error('. Error clearing local data: $e');
     }
   }
 

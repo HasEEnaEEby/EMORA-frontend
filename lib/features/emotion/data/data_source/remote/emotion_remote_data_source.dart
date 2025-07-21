@@ -38,6 +38,18 @@ abstract class EmotionRemoteDataSource {
   /// Get emotion statistics for a specific user
   Future<Map<String, dynamic>> getUserEmotionStats(String userId);
 
+  /// Get user insights from remote server
+  Future<Map<String, dynamic>> getUserInsights({
+    required String userId,
+    String timeframe = '30d',
+  });
+
+  /// Get user analytics from remote server
+  Future<Map<String, dynamic>> getUserAnalytics({
+    required String userId,
+    String timeframe = '7d',
+  });
+
   /// Get emotion history for a specific user
   Future<List<Map<String, dynamic>>> getUserEmotions({
     required String userId,
@@ -111,7 +123,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
 
       // Check response status
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Logger.info('✅ Remote: Emotion logged successfully');
+        Logger.info('. Remote: Emotion logged successfully');
 
         // Return standardized response
         return {
@@ -130,7 +142,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         );
       }
     } on DioException catch (e) {
-      Logger.error('❌ Remote: Dio error logging emotion', e);
+      Logger.error('. Remote: Dio error logging emotion', e);
 
       // Handle different types of network errors
       if (e.type == DioExceptionType.connectionTimeout ||
@@ -143,7 +155,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         throw ServerException(message: 'Network error: ${e.message}');
       }
     } catch (e) {
-      Logger.error('❌ Remote: Unexpected error logging emotion', e);
+      Logger.error('. Remote: Unexpected error logging emotion', e);
       throw ServerException(message: 'Failed to log emotion: ${e.toString()}');
     }
   }
@@ -182,7 +194,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         }).toList();
 
         Logger.info(
-          '✅ Remote: Retrieved ${normalizedEmotions.length} emotions',
+          '. Remote: Retrieved ${normalizedEmotions.length} emotions',
         );
         return normalizedEmotions;
       } else {
@@ -191,10 +203,10 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         );
       }
     } on DioException catch (e) {
-      Logger.error('❌ Remote: Dio error fetching emotion feed', e);
+      Logger.error('. Remote: Dio error fetching emotion feed', e);
       _handleDioException(e, 'fetch emotion feed');
     } catch (e) {
-      Logger.error('❌ Remote: Unexpected error fetching emotion feed', e);
+      Logger.error('. Remote: Unexpected error fetching emotion feed', e);
       if (e is NetworkException || e is ServerException) rethrow;
       throw ServerException(
         message: 'Failed to fetch emotion feed: ${e.toString()}',
@@ -246,7 +258,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
               data['data']?['lastUpdated'] ?? DateTime.now().toIso8601String(),
         };
 
-        Logger.info('✅ Remote: Global emotion stats retrieved');
+        Logger.info('. Remote: Global emotion stats retrieved');
         return normalizedStats;
       } else {
         throw ServerException(
@@ -254,10 +266,10 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         );
       }
     } on DioException catch (e) {
-      Logger.error('❌ Remote: Dio error fetching global stats', e);
+      Logger.error('. Remote: Dio error fetching global stats', e);
       _handleDioException(e, 'fetch global emotion stats');
     } catch (e) {
-      Logger.error('❌ Remote: Unexpected error fetching global stats', e);
+      Logger.error('. Remote: Unexpected error fetching global stats', e);
       if (e is NetworkException || e is ServerException) rethrow;
       throw ServerException(
         message: 'Failed to fetch global stats: ${e.toString()}',
@@ -305,7 +317,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         };
 
         Logger.info(
-          '✅ Remote: Global heatmap retrieved with ${heatmapData.length} locations',
+          '. Remote: Global heatmap retrieved with ${heatmapData.length} locations',
         );
         return normalizedHeatmap;
       } else {
@@ -314,10 +326,10 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         );
       }
     } on DioException catch (e) {
-      Logger.error('❌ Remote: Dio error fetching heatmap', e);
+      Logger.error('. Remote: Dio error fetching heatmap', e);
       _handleDioException(e, 'fetch global heatmap');
     } catch (e) {
-      Logger.error('❌ Remote: Unexpected error fetching heatmap', e);
+      Logger.error('. Remote: Unexpected error fetching heatmap', e);
       if (e is NetworkException || e is ServerException) rethrow;
       throw ServerException(
         message: 'Failed to fetch heatmap: ${e.toString()}',
@@ -363,7 +375,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
               data['data']?['lastUpdated'] ?? DateTime.now().toIso8601String(),
         };
 
-        Logger.info('✅ Remote: User emotion stats retrieved');
+        Logger.info('. Remote: User emotion stats retrieved');
         return normalizedStats;
       } else {
         throw ServerException(
@@ -371,13 +383,107 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         );
       }
     } on DioException catch (e) {
-      Logger.error('❌ Remote: Dio error fetching user stats', e);
+      Logger.error('. Remote: Dio error fetching user stats', e);
       _handleDioException(e, 'fetch user emotion stats');
     } catch (e) {
-      Logger.error('❌ Remote: Unexpected error fetching user stats', e);
+      Logger.error('. Remote: Unexpected error fetching user stats', e);
       if (e is NetworkException || e is ServerException) rethrow;
       throw ServerException(
         message: 'Failed to fetch user stats: ${e.toString()}',
+      );
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getUserInsights({
+    required String userId,
+    String timeframe = '30d',
+  }) async {
+    try {
+      Logger.info('🌐 Remote: Fetching user insights for $userId');
+
+      if (!await networkInfo.isConnected) {
+        throw NetworkException(message: 'No internet connection');
+      }
+
+      final response = await dioClient.getUserInsights(
+        userId: userId,
+        timeframe: timeframe,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final insights = {
+          'userId': userId,
+          'timeframe': timeframe,
+          'summary': data['summary'] ?? {},
+          'trends': data['trends'] ?? {},
+          'insights': data['insights'] ?? {},
+          'generatedAt': DateTime.now().toIso8601String(),
+        };
+
+        Logger.info('. Remote: User insights retrieved');
+        return insights;
+      } else {
+        throw ServerException(
+          message: 'Failed to get user insights: HTTP ${response.statusCode}',
+        );
+      }
+    } on DioException catch (e) {
+      Logger.error('. Remote: Dio error fetching user insights', e);
+      _handleDioException(e, 'fetch user insights');
+    } catch (e) {
+      Logger.error('. Remote: Unexpected error fetching user insights', e);
+      if (e is NetworkException || e is ServerException) rethrow;
+      throw ServerException(
+        message: 'Failed to fetch user insights: ${e.toString()}',
+      );
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> getUserAnalytics({
+    required String userId,
+    String timeframe = '7d',
+  }) async {
+    try {
+      Logger.info('🌐 Remote: Fetching user analytics for $userId');
+
+      if (!await networkInfo.isConnected) {
+        throw NetworkException(message: 'No internet connection');
+      }
+
+      final response = await dioClient.getUserAnalytics(
+        userId: userId,
+        timeframe: timeframe,
+      );
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        final analytics = {
+          'userId': userId,
+          'timeframe': timeframe,
+          'summary': data['summary'] ?? {},
+          'trends': data['trends'] ?? {},
+          'insights': data['insights'] ?? {},
+          'generatedAt': DateTime.now().toIso8601String(),
+        };
+
+        Logger.info('. Remote: User analytics retrieved');
+        return analytics;
+      } else {
+        throw ServerException(
+          message: 'Failed to get user analytics: HTTP ${response.statusCode}',
+        );
+      }
+    } on DioException catch (e) {
+      Logger.error('. Remote: Dio error fetching user analytics', e);
+      _handleDioException(e, 'fetch user analytics');
+    } catch (e) {
+      Logger.error('. Remote: Unexpected error fetching user analytics', e);
+      if (e is NetworkException || e is ServerException) rethrow;
+      throw ServerException(
+        message: 'Failed to fetch user analytics: ${e.toString()}',
       );
     }
   }
@@ -424,7 +530,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
           }).toList();
 
           Logger.info(
-            '✅ Remote: Retrieved ${normalizedEmotions.length} user emotions',
+            '. Remote: Retrieved ${normalizedEmotions.length} user emotions',
           );
           return normalizedEmotions;
         } else {
@@ -435,15 +541,15 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       } catch (e) {
         // Fallback: Try alternative endpoint or return empty list
         Logger.warning(
-          '⚠️ Remote: Primary user emotions endpoint failed, trying fallback',
+          '. Remote: Primary user emotions endpoint failed, trying fallback',
         );
         return [];
       }
     } on DioException catch (e) {
-      Logger.error('❌ Remote: Dio error fetching user emotions', e);
+      Logger.error('. Remote: Dio error fetching user emotions', e);
       _handleDioException(e, 'fetch user emotions');
     } catch (e) {
-      Logger.error('❌ Remote: Unexpected error fetching user emotions', e);
+      Logger.error('. Remote: Unexpected error fetching user emotions', e);
       if (e is NetworkException || e is ServerException) rethrow;
       throw ServerException(
         message: 'Failed to fetch user emotions: ${e.toString()}',
@@ -484,10 +590,10 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         'generatedAt': DateTime.now().toIso8601String(),
       };
 
-      Logger.info('✅ Remote: User emotion analytics generated');
+      Logger.info('. Remote: User emotion analytics generated');
       return analytics;
     } catch (e) {
-      Logger.error('❌ Remote: Error fetching user emotion analytics', e);
+      Logger.error('. Remote: Error fetching user emotion analytics', e);
       if (e is NetworkException || e is ServerException) rethrow;
       throw ServerException(
         message: 'Failed to fetch user emotion analytics: ${e.toString()}',
@@ -512,12 +618,12 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       };
 
       Logger.info(
-        '${isHealthy ? '✅' : '❌'} Remote: Server health: ${isHealthy ? 'OK' : 'Failed'}',
+        '${isHealthy ? '.' : '.'} Remote: Server health: ${isHealthy ? 'OK' : 'Failed'}',
       );
 
       return healthData;
     } on DioException catch (e) {
-      Logger.error('❌ Remote: Health check failed', e);
+      Logger.error('. Remote: Health check failed', e);
       return {
         'status': 'unhealthy',
         'statusCode': e.response?.statusCode ?? 0,
@@ -525,7 +631,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         'error': e.message,
       };
     } catch (e) {
-      Logger.error('❌ Remote: Unexpected error in health check', e);
+      Logger.error('. Remote: Unexpected error in health check', e);
       return {
         'status': 'unhealthy',
         'statusCode': 0,
@@ -599,11 +705,11 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       };
 
       Logger.info(
-        '✅ Remote: Emotion sync completed - $syncedCount synced, $failedCount failed',
+        '. Remote: Emotion sync completed - $syncedCount synced, $failedCount failed',
       );
       return syncSummary;
     } catch (e) {
-      Logger.error('❌ Remote: Error syncing emotions', e);
+      Logger.error('. Remote: Error syncing emotions', e);
       if (e is NetworkException || e is ServerException) rethrow;
       throw ServerException(
         message: 'Failed to sync emotions: ${e.toString()}',
@@ -635,7 +741,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         }
       }
     } catch (e) {
-      Logger.warning('⚠️ Failed to parse location coordinates: $e');
+      Logger.warning('. Failed to parse location coordinates: $e');
     }
 
     return {
@@ -678,7 +784,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         }
       }
     } catch (e) {
-      Logger.warning('⚠️ Failed to parse location coordinates: $e');
+      Logger.warning('. Failed to parse location coordinates: $e');
     }
 
     return {
@@ -779,7 +885,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
 
   /// Handle DioException with appropriate error types
   Never _handleDioException(DioException e, String operation) {
-    Logger.error('❌ Remote: Dio error during $operation', e);
+    Logger.error('. Remote: Dio error during $operation', e);
 
     switch (e.type) {
       case DioExceptionType.connectionTimeout:

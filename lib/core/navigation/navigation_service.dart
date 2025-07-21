@@ -43,7 +43,7 @@ class NavigationService {
       }
 
       if (currentState == null) {
-        Logger.error('❌ NavigationService: Navigator state is null');
+        Logger.error('. NavigationService: Navigator state is null');
         return null;
       }
 
@@ -85,7 +85,7 @@ class NavigationService {
           result = await pushNamed<T>(routeName, arguments: arguments);
         }
 
-        Logger.info('✅ Navigation completed successfully to: $routeName');
+        Logger.info('. Navigation completed successfully to: $routeName');
         return result;
       } finally {
         // Reset navigation flag after a delay
@@ -95,7 +95,7 @@ class NavigationService {
       }
     } catch (e, stackTrace) {
       Logger.error(
-        '❌ NavigationService safeNavigate error for $routeName',
+        '. NavigationService safeNavigate error for $routeName',
         e,
         stackTrace,
       );
@@ -145,12 +145,12 @@ class NavigationService {
         );
       } else {
         Logger.error(
-          '❌ NavigationService: Navigator state is null for pushNamed',
+          '. NavigationService: Navigator state is null for pushNamed',
         );
         return null;
       }
     } catch (e) {
-      Logger.error('❌ NavigationService pushNamed error for $routeName', e);
+      Logger.error('. NavigationService pushNamed error for $routeName', e);
       return null;
     }
   }
@@ -170,13 +170,13 @@ class NavigationService {
         );
       } else {
         Logger.error(
-          '❌ NavigationService: Navigator state is null for pushNamedAndRemoveUntil',
+          '. NavigationService: Navigator state is null for pushNamedAndRemoveUntil',
         );
         return null;
       }
     } catch (e) {
       Logger.error(
-        '❌ NavigationService pushNamedAndRemoveUntil error for $routeName',
+        '. NavigationService pushNamedAndRemoveUntil error for $routeName',
         e,
       );
       return null;
@@ -211,13 +211,13 @@ class NavigationService {
         );
       } else {
         Logger.error(
-          '❌ NavigationService: Navigator state is null for pushReplacementNamed',
+          '. NavigationService: Navigator state is null for pushReplacementNamed',
         );
         return null;
       }
     } catch (e) {
       Logger.error(
-        '❌ NavigationService pushReplacementNamed error for $routeName',
+        '. NavigationService pushReplacementNamed error for $routeName',
         e,
       );
       return null;
@@ -232,11 +232,11 @@ class NavigationService {
         currentState!.pop<T>(result);
       } else {
         Logger.warning(
-          '⚠️ NavigationService: Cannot pop - no routes available or navigator state null',
+          '. NavigationService: Cannot pop - no routes available or navigator state null',
         );
       }
     } catch (e) {
-      Logger.error('❌ NavigationService pop error', e);
+      Logger.error('. NavigationService pop error', e);
     }
   }
 
@@ -248,11 +248,11 @@ class NavigationService {
         currentState!.popUntil(predicate);
       } else {
         Logger.error(
-          '❌ NavigationService: Navigator state is null for popUntil',
+          '. NavigationService: Navigator state is null for popUntil',
         );
       }
     } catch (e) {
-      Logger.error('❌ NavigationService popUntil error', e);
+      Logger.error('. NavigationService popUntil error', e);
     }
   }
 
@@ -289,11 +289,11 @@ class NavigationService {
         );
       } else {
         Logger.warning(
-          '⚠️ NavigationService: Context is null, cannot show snackbar: $message',
+          '. NavigationService: Context is null, cannot show snackbar: $message',
         );
       }
     } catch (e) {
-      Logger.error('❌ NavigationService showSnackBar error', e);
+      Logger.error('. NavigationService showSnackBar error', e);
     }
   }
 
@@ -348,12 +348,12 @@ class NavigationService {
         );
       } else {
         Logger.error(
-          '❌ NavigationService: Context is null, cannot show dialog',
+          '. NavigationService: Context is null, cannot show dialog',
         );
         return null;
       }
     } catch (e) {
-      Logger.error('❌ NavigationService showCustomDialog error', e);
+      Logger.error('. NavigationService showCustomDialog error', e);
       return null;
     }
   }
@@ -370,7 +370,7 @@ class NavigationService {
     try {
       if (currentContext == null) {
         Logger.error(
-          '❌ NavigationService: Context is null, cannot show confirmation dialog',
+          '. NavigationService: Context is null, cannot show confirmation dialog',
         );
         return null;
       }
@@ -440,7 +440,7 @@ class NavigationService {
         },
       );
     } catch (e) {
-      Logger.error('❌ NavigationService showConfirmationDialog error', e);
+      Logger.error('. NavigationService showConfirmationDialog error', e);
       return null;
     }
   }
@@ -455,7 +455,7 @@ class NavigationService {
     try {
       if (currentContext == null) {
         Logger.error(
-          '❌ NavigationService: Context is null, cannot show error dialog',
+          '. NavigationService: Context is null, cannot show error dialog',
         );
         return;
       }
@@ -517,7 +517,7 @@ class NavigationService {
         },
       );
     } catch (e) {
-      Logger.error('❌ NavigationService showErrorDialog error', e);
+      Logger.error('. NavigationService showErrorDialog error', e);
     }
   }
 
@@ -557,11 +557,11 @@ class NavigationService {
         );
       } else {
         Logger.error(
-          '❌ NavigationService: Context is null, cannot show loading dialog',
+          '. NavigationService: Context is null, cannot show loading dialog',
         );
       }
     } catch (e) {
-      Logger.error('❌ NavigationService showLoadingDialog error', e);
+      Logger.error('. NavigationService showLoadingDialog error', e);
     }
   }
 
@@ -572,11 +572,11 @@ class NavigationService {
         Navigator.of(currentContext!).pop();
       } else {
         Logger.warning(
-          '⚠️ NavigationService: Context is null, cannot hide dialog',
+          '. NavigationService: Context is null, cannot hide dialog',
         );
       }
     } catch (e) {
-      Logger.error('❌ NavigationService hideDialog error', e);
+      Logger.error('. NavigationService hideDialog error', e);
     }
   }
 
@@ -588,7 +588,7 @@ class NavigationService {
       }
       return null;
     } catch (e) {
-      Logger.error('❌ NavigationService getCurrentRouteName error', e);
+      Logger.error('. NavigationService getCurrentRouteName error', e);
       return null;
     }
   }
@@ -598,7 +598,7 @@ class NavigationService {
     try {
       return currentState?.canPop() ?? false;
     } catch (e) {
-      Logger.error('❌ NavigationService canPop error', e);
+      Logger.error('. NavigationService canPop error', e);
       return false;
     }
   }
@@ -629,7 +629,7 @@ class NavigationService {
         await safeNavigate(fallbackRoute, replacement: replacement);
       }
     } catch (e) {
-      Logger.error('❌ NavigationService navigateWithFallback error', e);
+      Logger.error('. NavigationService navigateWithFallback error', e);
       if (fallbackRoute != null) {
         await safeNavigate(fallbackRoute, replacement: replacement);
       }
@@ -647,7 +647,7 @@ class NavigationService {
       );
       await safeNavigate(routeName, arguments: arguments, clearStack: true);
     } catch (e) {
-      Logger.error('❌ NavigationService resetAndNavigateTo error', e);
+      Logger.error('. NavigationService resetAndNavigateTo error', e);
       showErrorSnackBar('Failed to reset navigation');
     }
   }
@@ -659,7 +659,7 @@ class NavigationService {
         ScaffoldMessenger.of(currentContext!).clearSnackBars();
       }
     } catch (e) {
-      Logger.error('❌ NavigationService clearSnackBars error', e);
+      Logger.error('. NavigationService clearSnackBars error', e);
     }
   }
 
@@ -673,7 +673,7 @@ class NavigationService {
     try {
       if (currentContext == null) {
         Logger.error(
-          '❌ NavigationService: Context is null, cannot show bottom sheet',
+          '. NavigationService: Context is null, cannot show bottom sheet',
         );
         return null;
       }
@@ -687,7 +687,7 @@ class NavigationService {
         builder: (context) => child,
       );
     } catch (e) {
-      Logger.error('❌ NavigationService showBottomSheet error', e);
+      Logger.error('. NavigationService showBottomSheet error', e);
       return null;
     }
   }
@@ -709,7 +709,7 @@ class NavigationService {
   /// Debug method to print navigation statistics
   static void debugPrintNavigationStats() {
     final stats = getNavigationStats();
-    Logger.info('📊 Navigation Statistics:');
+    Logger.info('. Navigation Statistics:');
     stats.forEach((key, value) {
       Logger.info('   $key: $value');
     });

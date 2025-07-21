@@ -33,7 +33,7 @@ class ErrorHandler {
     final errorInfo = _extractErrorInfo(error);
     
     Logger.error(
-      '❌ Error in $context: ${errorInfo.message}',
+      '. Error in $context: ${errorInfo.message}',
       {
         'context': context,
         'errorType': errorInfo.type,
@@ -330,7 +330,7 @@ class ErrorHandler {
       await prefs.remove('error_count');
       Logger.info('🧹 Error state cleared');
     } catch (e) {
-      Logger.error('❌ Failed to clear error state', e);
+      Logger.error('. Failed to clear error state', e);
     }
   }
 
@@ -347,7 +347,7 @@ class ErrorHandler {
       await prefs.setInt('error_count', errorCount + 1);
       
       Logger.info(
-        '📊 Error recorded: $errorType in $context (count: ${errorCount + 1})',
+        '. Error recorded: $errorType in $context (count: ${errorCount + 1})',
         {
           'errorType': errorType,
           'context': context,
@@ -357,7 +357,7 @@ class ErrorHandler {
         },
       );
     } catch (e) {
-      Logger.error('❌ Failed to record error', e);
+      Logger.error('. Failed to record error', e);
     }
   }
 }

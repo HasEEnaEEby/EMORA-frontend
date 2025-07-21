@@ -30,38 +30,38 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.checkAuthStatus,
   }) : super(const AuthInitial()) {
     // CRITICAL: Register ALL event handlers properly
-    Logger.info('🔧 Initializing AuthBloc event handlers...');
+    Logger.info('. Initializing AuthBloc event handlers...');
 
     try {
       // Register each event handler with proper error handling
       on<AuthCheckStatus>(_onCheckStatus);
-      Logger.info('✅ AuthCheckStatus handler registered');
+      Logger.info('. AuthCheckStatus handler registered');
 
       on<AuthCheckUsername>(_onCheckUsername);
-      Logger.info('✅ AuthCheckUsername handler registered');
+      Logger.info('. AuthCheckUsername handler registered');
 
       on<AuthRegister>(_onRegister);
-      Logger.info('✅ AuthRegister handler registered');
+      Logger.info('. AuthRegister handler registered');
 
       on<AuthLogin>(_onLogin);
-      Logger.info('✅ AuthLogin handler registered');
+      Logger.info('. AuthLogin handler registered');
 
       // CRITICAL: This is the key handler for logout that was missing
       on<AuthLogout>(_onLogout);
-      Logger.info('✅ AuthLogout handler registered');
+      Logger.info('. AuthLogout handler registered');
 
       on<AuthGetCurrentUser>(_onGetCurrentUser);
-      Logger.info('✅ AuthGetCurrentUser handler registered');
+      Logger.info('. AuthGetCurrentUser handler registered');
 
       on<AuthClearError>(_onClearError);
-      Logger.info('✅ AuthClearError handler registered');
+      Logger.info('. AuthClearError handler registered');
 
       on<AuthTokenRefreshFailed>(_onTokenRefreshFailed);
-      Logger.info('✅ AuthTokenRefreshFailed handler registered');
+      Logger.info('. AuthTokenRefreshFailed handler registered');
 
       Logger.info('🎯 AuthBloc initialization completed successfully');
     } catch (e) {
-      Logger.error('❌ Failed to register AuthBloc event handlers: $e');
+      Logger.error('. Failed to register AuthBloc event handlers: $e');
       rethrow;
     }
   }
@@ -77,19 +77,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Logout failed on server: ${failure.message}');
+          Logger.error('. Logout failed on server: ${failure.message}');
           // CRITICAL: Even if server logout fails, emit AuthUnauthenticated
           // This ensures UI navigation works properly
           emit(const AuthUnauthenticated());
         },
         (_) {
-          Logger.info('✅ Logout successful');
+          Logger.info('. Logout successful');
           // CRITICAL: Emit AuthUnauthenticated for successful logout
           emit(const AuthUnauthenticated());
         },
       );
     } catch (e) {
-      Logger.error('❌ Logout error: $e');
+      Logger.error('. Logout error: $e');
       // CRITICAL: Always emit AuthUnauthenticated on logout, even on error
       // This ensures user gets logged out locally regardless of server issues
       emit(const AuthUnauthenticated());
@@ -114,7 +114,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       await logoutUser(NoParams());
     } catch (e) {
-      Logger.error('❌ Error during forced logout after token refresh failure', e);
+      Logger.error('. Error during forced logout after token refresh failure', e);
     }
     
     // Emit session expired state to trigger proper UI handling
@@ -125,15 +125,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthCheckStatus event,
     Emitter<AuthState> emit,
   ) async {
-    Logger.info('🔍 Checking authentication status');
+    Logger.info('. Checking authentication status');
     emit(const AuthLoading());
 
     final result = await checkAuthStatus(NoParams());
     result.fold(
       (failure) {
-        Logger.error('❌ Auth status check failed: ${failure.message}');
+        Logger.error('. Auth status check failed: ${failure.message}');
         
-        // ✅ Check if this is a token refresh failure
+        // . Check if this is a token refresh failure
         if (failure is AuthFailure && failure.statusCode == 401) {
           // Token refresh failed - emit session expired
           emit(AuthSessionExpired(message: failure.message));
@@ -143,10 +143,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       },
       (isAuthenticated) {
         if (isAuthenticated) {
-          Logger.info('✅ User is authenticated');
+          Logger.info('. User is authenticated');
           add(const AuthGetCurrentUser());
         } else {
-          Logger.info('❌ User is not authenticated');
+          Logger.info('. User is not authenticated');
           emit(const AuthUnauthenticated());
         }
       },
@@ -159,7 +159,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     if (event.username.isEmpty) return;
 
-    Logger.info('🔍 Checking username availability: ${event.username}');
+    Logger.info('. Checking username availability: ${event.username}');
     emit(AuthCheckingUsername(event.username));
 
     // Client-side validation first
@@ -182,7 +182,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     result.fold(
       (failure) {
-        Logger.error('❌ Username check failed: ${failure.message}');
+        Logger.error('. Username check failed: ${failure.message}');
         emit(
           AuthUsernameChecked(
             username: event.username,
@@ -201,7 +201,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
                 ? AppConfig.usernameAvailableMessage
                 : AppConfig.usernameExistsMessage);
 
-        Logger.info('✅ Username check result: $isAvailable');
+        Logger.info('. Username check result: $isAvailable');
         emit(
           AuthUsernameChecked(
             username: event.username,
@@ -218,7 +218,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Logger.info('📝 Starting user registration: ${event.username}');
     emit(const AuthLoading());
 
-    // ✅ Password confirmation validation
+    // . Password confirmation validation
     if (event.password != event.confirmPassword) {
       emit(
         AuthError(
@@ -272,7 +272,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         username: event.username,
         email: event.email,
         password: event.password,
-        confirmPassword: event.confirmPassword, // ✅ Added confirmPassword for backend validation
+        confirmPassword: event.confirmPassword, // . Added confirmPassword for backend validation
         pronouns: event.pronouns,
         ageGroup: event.ageGroup,
         selectedAvatar: event.selectedAvatar,
@@ -286,7 +286,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     result.fold(
       (failure) {
-        Logger.error('❌ Registration failed: ${failure.message}');
+        Logger.error('. Registration failed: ${failure.message}');
 
         final failureMessage = failure.toString().toLowerCase();
 
@@ -313,7 +313,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
       },
       (authResponse) {
-        Logger.info('✅ Registration successful: ${authResponse.user.username}');
+        Logger.info('. Registration successful: ${authResponse.user.username}');
         emit(
           AuthRegistrationSuccess(
             user: authResponse.user,
@@ -334,7 +334,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
     result.fold(
       (failure) {
-        Logger.error('❌ Login failed: ${failure.message}');
+        Logger.error('. Login failed: ${failure.message}');
 
         final failureMessage = failure.toString().toLowerCase();
 
@@ -355,7 +355,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         }
       },
       (authResponse) {
-        Logger.info('✅ Login successful: ${authResponse.user.username}');
+        Logger.info('. Login successful: ${authResponse.user.username}');
         emit(
           AuthLoginSuccess(
             user: authResponse.user,
@@ -370,17 +370,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthGetCurrentUser event,
     Emitter<AuthState> emit,
   ) async {
-    Logger.info('👤 Getting current user');
+    Logger.info('. Getting current user');
 
     final result = await getCurrentUser(NoParams());
 
     result.fold(
       (failure) {
-        Logger.error('❌ Get current user failed: ${failure.message}');
+        Logger.error('. Get current user failed: ${failure.message}');
         emit(const AuthUnauthenticated());
       },
       (user) {
-        Logger.info('✅ Current user retrieved: ${user.username}');
+        Logger.info('. Current user retrieved: ${user.username}');
         emit(AuthAuthenticated(user));
       },
     );

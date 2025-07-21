@@ -82,7 +82,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
               .map((postData) => CommunityPostModel.fromJson(postData))
               .toList();
 
-          Logger.info('✅ Found ${posts.length} global posts');
+          Logger.info('. Found ${posts.length} global posts');
           return posts;
         } else {
           throw ServerException(
@@ -95,7 +95,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error fetching global feed', e);
+      Logger.error('. Error fetching global feed', e);
       if (e is ServerException || e is NotFoundException) {
         rethrow;
       }
@@ -129,7 +129,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
               .map((postData) => CommunityPostModel.fromJson(postData))
               .toList();
 
-          Logger.info('✅ Found ${posts.length} friends posts');
+          Logger.info('. Found ${posts.length} friends posts');
           return posts;
         } else {
           throw ServerException(
@@ -142,7 +142,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error fetching friends feed', e);
+      Logger.error('. Error fetching friends feed', e);
       if (e is ServerException || e is NotFoundException) {
         rethrow;
       }
@@ -172,11 +172,11 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         final responseData = response.data;
 
         if (responseData['success'] == true) {
-          Logger.info('✅ Reaction added successfully');
+          Logger.info('. Reaction added successfully');
           return true;
         } else {
           Logger.warning(
-            '⚠️ Server returned success=false: ${responseData['message']}',
+            '. Server returned success=false: ${responseData['message']}',
           );
           return false;
         }
@@ -190,7 +190,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error reacting to post', e);
+      Logger.error('. Error reacting to post', e);
       if (e is ServerException || e is NotFoundException || e is UnauthorizedException) {
         rethrow;
       }
@@ -216,11 +216,11 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         final responseData = response.data;
 
         if (responseData['success'] == true) {
-          Logger.info('✅ Reaction removed successfully');
+          Logger.info('. Reaction removed successfully');
           return true;
         } else {
           Logger.warning(
-            '⚠️ Server returned success=false: ${responseData['message']}',
+            '. Server returned success=false: ${responseData['message']}',
           );
           return false;
         }
@@ -234,7 +234,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error removing reaction', e);
+      Logger.error('. Error removing reaction', e);
       if (e is ServerException || e is NotFoundException || e is UnauthorizedException) {
         rethrow;
       }
@@ -264,11 +264,11 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         final responseData = response.data;
 
         if (responseData['success'] == true) {
-          Logger.info('✅ Comment added successfully');
+          Logger.info('. Comment added successfully');
           return true;
         } else {
           Logger.warning(
-            '⚠️ Server returned success=false: ${responseData['message']}',
+            '. Server returned success=false: ${responseData['message']}',
           );
           return false;
         }
@@ -282,7 +282,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error adding comment', e);
+      Logger.error('. Error adding comment', e);
       if (e is ServerException || e is NotFoundException || e is UnauthorizedException) {
         rethrow;
       }
@@ -318,7 +318,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
               .map((commentData) => CommentModel.fromJson(commentData))
               .toList();
 
-          Logger.info('✅ Found ${comments.length} comments');
+          Logger.info('. Found ${comments.length} comments');
           return comments;
         } else {
           throw ServerException(
@@ -331,7 +331,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error fetching comments', e);
+      Logger.error('. Error fetching comments', e);
       if (e is ServerException || e is NotFoundException) {
         rethrow;
       }
@@ -363,7 +363,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
               .map((statData) => GlobalMoodStatsModel.fromJson(statData))
               .toList();
 
-          Logger.info('✅ Found ${stats.length} mood stats');
+          Logger.info('. Found ${stats.length} mood stats');
           return stats;
         } else {
           throw ServerException(
@@ -376,7 +376,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error fetching global stats', e);
+      Logger.error('. Error fetching global stats', e);
       if (e is ServerException || e is NotFoundException) {
         rethrow;
       }
@@ -410,7 +410,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
               .map((postData) => CommunityPostModel.fromJson(postData))
               .toList();
 
-          Logger.info('✅ Found ${posts.length} trending posts');
+          Logger.info('. Found ${posts.length} trending posts');
           return posts;
         } else {
           throw ServerException(
@@ -423,7 +423,7 @@ class CommunityRemoteDataSourceImpl implements CommunityRemoteDataSource {
         throw ServerException(message: 'Server error: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Error fetching trending posts', e);
+      Logger.error('. Error fetching trending posts', e);
       if (e is ServerException || e is NotFoundException) {
         rethrow;
       }

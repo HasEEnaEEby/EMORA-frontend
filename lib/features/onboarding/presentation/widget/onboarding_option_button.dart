@@ -365,7 +365,7 @@ class _ResponsiveOnboardingOptionButtonState extends State<ResponsiveOnboardingO
     super.dispose();
   }
 
-  // ✅ Dynamic font size based on button height
+  // . Dynamic font size based on button height
   double get _fontSize {
     if (widget.height <= 40) return 13;
     if (widget.height <= 48) return 14;
@@ -373,21 +373,21 @@ class _ResponsiveOnboardingOptionButtonState extends State<ResponsiveOnboardingO
     return 16; // Default for height > 52
   }
 
-  // ✅ Dynamic icon size based on button height
+  // . Dynamic icon size based on button height
   double get _iconSize {
     if (widget.height <= 40) return 18;
     if (widget.height <= 48) return 20;
     return 22; // Default for height > 48
   }
 
-  // ✅ Dynamic padding based on button height
+  // . Dynamic padding based on button height
   double get _horizontalPadding {
     if (widget.height <= 40) return 14;
     if (widget.height <= 48) return 16;
     return 20; // Default for height > 48
   }
 
-  // ✅ Dynamic spacing based on button height
+  // . Dynamic spacing based on button height
   double get _spacing {
     if (widget.height <= 40) return 8;
     if (widget.height <= 48) return 10;

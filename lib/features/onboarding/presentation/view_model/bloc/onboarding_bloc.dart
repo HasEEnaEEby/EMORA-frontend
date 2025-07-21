@@ -93,7 +93,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     LoadOnboardingSteps event,
     Emitter<OnboardingState> emit,
   ) async {
-    Logger.info('📋 Loading onboarding steps...');
+    Logger.info('. Loading onboarding steps...');
     emit(OnboardingLoading());
 
     try {
@@ -112,7 +112,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           Logger.info('Using default steps due to: ${failure.message}');
 
           // DEBUG: Add logging to see what steps we have
-          print('🔍 DEBUG: Default steps count: ${defaultSteps.length}');
+          print('. DEBUG: Default steps count: ${defaultSteps.length}');
           for (int i = 0; i < defaultSteps.length; i++) {
             print(
               '  Default Step $i: ${defaultSteps[i].type} - "${defaultSteps[i].title}"',
@@ -134,12 +134,12 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           final initialUserData = const UserOnboardingEntity();
 
           // DEBUG: Add logging to see what steps we received
-          print('🔍 DEBUG: Received ${steps.length} steps from API');
+          print('. DEBUG: Received ${steps.length} steps from API');
           for (int i = 0; i < steps.length; i++) {
             print('  API Step $i: ${steps[i].type} - "${steps[i].title}"');
           }
 
-          print('🔍 DEBUG: Using ${stepsToUse.length} steps total');
+          print('. DEBUG: Using ${stepsToUse.length} steps total');
           for (int i = 0; i < stepsToUse.length; i++) {
             print(
               '  Final Step $i: ${stepsToUse[i].type} - "${stepsToUse[i].title}"',
@@ -237,7 +237,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
             ),
           );
 
-          Logger.info('✅ State updated - moved to step $newIndex');
+          Logger.info('. State updated - moved to step $newIndex');
         }
       } else {
         // Reached the actual end
@@ -267,7 +267,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           ),
         );
 
-        Logger.info('✅ State updated - moved back to step $newIndex');
+        Logger.info('. State updated - moved back to step $newIndex');
       } else {
         Logger.info('Cannot go back - already at first displayable step');
       }
@@ -278,7 +278,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     SavePronouns event,
     Emitter<OnboardingState> emit,
   ) async {
-    Logger.info('💾 Saving pronouns: ${event.pronouns}');
+    Logger.info('. Saving pronouns: ${event.pronouns}');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -293,7 +293,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
       emit(currentState.copyWith(userData: updatedUserData, canGoNext: true));
 
-      Logger.info('✅ Pronouns saved and state updated');
+      Logger.info('. Pronouns saved and state updated');
     }
   }
 
@@ -301,7 +301,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     SaveAgeGroup event,
     Emitter<OnboardingState> emit,
   ) async {
-    Logger.info('💾 Saving age group: ${event.ageGroup}');
+    Logger.info('. Saving age group: ${event.ageGroup}');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -313,7 +313,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
       emit(currentState.copyWith(userData: updatedUserData, canGoNext: true));
 
-      Logger.info('✅ Age group saved and state updated');
+      Logger.info('. Age group saved and state updated');
     }
   }
 
@@ -321,7 +321,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     SaveAvatar event,
     Emitter<OnboardingState> emit,
   ) async {
-    Logger.info('💾 Saving avatar: ${event.avatar}');
+    Logger.info('. Saving avatar: ${event.avatar}');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -333,7 +333,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
       emit(currentState.copyWith(userData: updatedUserData, canGoNext: true));
 
-      Logger.info('✅ Avatar saved and state updated');
+      Logger.info('. Avatar saved and state updated');
     }
   }
 
@@ -349,20 +349,20 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
             failure.message,
           )) {
             Logger.info(
-              '💾 Data saved locally (server not available in dev mode)',
+              '. Data saved locally (server not available in dev mode)',
             );
           } else {
             Logger.warning('Non-critical save error: ${failure.message}');
           }
         },
         (_) {
-          Logger.info('✅ User data saved successfully to server');
+          Logger.info('. User data saved successfully to server');
         },
       );
     } catch (e) {
       // Gracefully handle any save errors during development
       if (AppConfig.isDevelopmentMode) {
-        Logger.info('💾 Save handled gracefully in development: $e');
+        Logger.info('. Save handled gracefully in development: $e');
       } else {
         developer.log('Save error: $e', name: 'OnboardingBloc');
         rethrow;
@@ -374,7 +374,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     SaveUsername event,
     Emitter<OnboardingState> emit,
   ) async {
-    Logger.info('💾 Saving username: ${event.username}');
+    Logger.info('. Saving username: ${event.username}');
 
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -391,7 +391,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         currentState.copyWith(userData: updatedUserData, canGoNext: canGoNext),
       );
 
-      Logger.info('✅ Username saved and state updated');
+      Logger.info('. Username saved and state updated');
     }
   }
 
@@ -572,7 +572,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
             }
           },
           (success) {
-            Logger.info('✅ Onboarding completed on server');
+            Logger.info('. Onboarding completed on server');
             remoteSync = true;
           },
         );
@@ -651,7 +651,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           }
         },
         (success) {
-          Logger.info('✅ Onboarding skip completed on server');
+          Logger.info('. Onboarding skip completed on server');
           remoteSync = true;
         },
       );

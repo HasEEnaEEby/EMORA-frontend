@@ -30,6 +30,7 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
 
   bool _hasOnboardingData = false;
   bool _isFromLogout = false;
+  bool _isNavigating = false; // ADD: Prevent double navigation
 
   @override
   void initState() {
@@ -53,7 +54,7 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
 
     Logger.info('🔍 Auth Choice - Is from logout: $_isFromLogout');
     Logger.info('🔍 Auth Choice - Has onboarding data: $_hasOnboardingData');
-    Logger.info('📊 Onboarding data: ${widget.onboardingData}');
+    Logger.info('🔍 Onboarding data: ${widget.onboardingData}');
   }
 
   void _initializeAnimations() {
@@ -118,26 +119,105 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
     super.dispose();
   }
 
-  void _navigateToRegister() {
-    Logger.info('📝 Navigating to registration with onboarding data');
-    NavigationService.safeNavigate(
-      AppRouter.register,
-      arguments: widget.onboardingData,
-    );
+  // FIX: Enhanced navigation methods with better error handling
+  Future<void> _navigateToRegister() async {
+    if (_isNavigating) return;
+    
+    setState(() {
+      _isNavigating = true;
+    });
+
+    try {
+      Logger.info('📝 Navigating to registration with onboarding data');
+      Logger.info('📝 Data being passed: ${widget.onboardingData}');
+      
+      // Use Navigator.pushNamed instead of NavigationService for better reliability
+      await Navigator.of(context).pushNamed(
+        AppRouter.register,
+        arguments: widget.onboardingData,
+      );
+    } catch (e, stackTrace) {
+      Logger.error('❌ Failed to navigate to register: $e', e, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Navigation failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isNavigating = false;
+        });
+      }
+    }
   }
 
-  void _navigateToLogin() {
-    Logger.info('🔐 Navigating to login');
-    NavigationService.safeNavigate(AppRouter.login);
+  Future<void> _navigateToLogin() async {
+    if (_isNavigating) return;
+    
+    setState(() {
+      _isNavigating = true;
+    });
+
+    try {
+      Logger.info('🔐 Navigating to login');
+      
+      // Use Navigator.pushNamed instead of NavigationService for better reliability
+      await Navigator.of(context).pushNamed(AppRouter.login);
+    } catch (e, stackTrace) {
+      Logger.error('❌ Failed to navigate to login: $e', e, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Navigation failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isNavigating = false;
+        });
+      }
+    }
   }
 
-  void _continueAsGuest() {
-    Logger.info('👤 Continuing as guest');
-    NavigationService.safeNavigate(
-      AppRouter.home,
-      clearStack: true,
-      arguments: {'isGuest': true, 'isAuthenticated': false},
-    );
+  Future<void> _continueAsGuest() async {
+    if (_isNavigating) return;
+    
+    setState(() {
+      _isNavigating = true;
+    });
+
+    try {
+      Logger.info('👤 Continuing as guest');
+      
+      await Navigator.of(context).pushNamedAndRemoveUntil(
+        AppRouter.home,
+        (route) => false,
+        arguments: {'isGuest': true, 'isAuthenticated': false},
+      );
+    } catch (e, stackTrace) {
+      Logger.error('❌ Failed to continue as guest: $e', e, stackTrace);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Navigation failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isNavigating = false;
+        });
+      }
+    }
   }
 
   @override
@@ -146,7 +226,24 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
       backgroundColor: const Color(0xFF090110),
       body: SafeArea(
         child: Stack(
-          children: [_buildAnimatedBackground(), _buildMainContent()],
+          children: [
+            _buildAnimatedBackground(), 
+            _buildMainContent(),
+            // ADD: Loading overlay when navigating
+            if (_isNavigating) _buildLoadingOverlay(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ADD: Loading overlay to show navigation is happening
+  Widget _buildLoadingOverlay() {
+    return Container(
+      color: Colors.black.withOpacity(0.5),
+      child: const Center(
+        child: CircularProgressIndicator(
+          color: Color(0xFF8B5CF6),
         ),
       ),
     );
@@ -257,7 +354,9 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
         ),
         const SizedBox(height: 12),
         Text(
-          'Welcome to your emotional journey',
+          _isFromLogout 
+            ? 'Welcome back! Choose your next step'
+            : 'Welcome to your emotional journey',
           style: TextStyle(
             color: Colors.grey[400],
             fontSize: 16,
@@ -379,7 +478,7 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
   Widget _buildActionButtons() {
     return Column(
       children: [
-        // Register Button
+        // Register Button - FIXED: Added debug logging and better error handling
         Container(
           width: double.infinity,
           height: 56,
@@ -394,35 +493,51 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
             ],
           ),
           child: ElevatedButton(
-            onPressed: _navigateToRegister,
+            onPressed: _isNavigating ? null : () {
+              Logger.info('🔥 REGISTER BUTTON TAPPED');
+              _navigateToRegister();
+            },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B5CF6),
+              backgroundColor: _isNavigating 
+                ? Colors.grey[600] 
+                : const Color(0xFF8B5CF6),
               foregroundColor: Colors.white,
               shadowColor: Colors.transparent,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.rocket_launch, size: 20),
-                const SizedBox(width: 12),
-                Text(
-                  _isFromLogout ? 'Create New Account' : (_hasOnboardingData ? 'Create Account' : 'Get Started'),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+            child: _isNavigating
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.rocket_launch, size: 20),
+                    const SizedBox(width: 12),
+                    Text(
+                      _isFromLogout 
+                        ? 'Create New Account' 
+                        : (_hasOnboardingData ? 'Create Account' : 'Get Started'),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
           ),
         ),
 
         const SizedBox(height: 16),
 
-        // Login Button
+        // Login Button - FIXED: Added debug logging and better error handling
         Container(
           width: double.infinity,
           height: 56,
@@ -434,26 +549,42 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
             ),
           ),
           child: OutlinedButton(
-            onPressed: _navigateToLogin,
+            onPressed: _isNavigating ? null : () {
+              Logger.info('🔥 LOGIN BUTTON TAPPED');
+              _navigateToLogin();
+            },
             style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-              foregroundColor: const Color(0xFF8B5CF6),
+              backgroundColor: _isNavigating 
+                ? Colors.grey[800]
+                : const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+              foregroundColor: _isNavigating 
+                ? Colors.grey[400]
+                : const Color(0xFF8B5CF6),
               side: BorderSide.none,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.login, size: 20),
-                SizedBox(width: 12),
-                Text(
-                  'Sign In',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            child: _isNavigating
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+                  ),
+                )
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.login, size: 20),
+                    SizedBox(width: 12),
+                    Text(
+                      'Sign In',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
-              ],
-            ),
           ),
         ),
 
@@ -468,6 +599,13 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
                 color: Colors.grey.withValues(alpha: 0.3),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                'or',
+                style: TextStyle(color: Colors.grey[500], fontSize: 14),
+              ),
+            ),
             Expanded(
               child: Container(
                 height: 1,
@@ -479,6 +617,47 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
 
         const SizedBox(height: 24),
 
+        // Guest Button - FIXED: Added guest option
+        Container(
+          width: double.infinity,
+          height: 50,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.grey.withValues(alpha: 0.3),
+              width: 1,
+            ),
+          ),
+          child: OutlinedButton(
+            onPressed: _isNavigating ? null : () {
+              Logger.info('🔥 GUEST BUTTON TAPPED');
+              _continueAsGuest();
+            },
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.transparent,
+              foregroundColor: Colors.grey[400],
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.person_outline, color: Colors.grey[400], size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  'Continue as Guest',
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -513,13 +692,19 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
                 ),
               ),
               const SizedBox(width: 12),
-              Text(
-                _isFromLogout ? 'Welcome back to your emotional journey' : 'Your emotional journey awaits',
-                style: TextStyle(
-                  color: Colors.grey[400],
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  letterSpacing: 0.5,
+              Flexible(
+                child: Text(
+                  _isFromLogout 
+                    ? 'Welcome back to your emotional journey' 
+                    : 'Your emotional journey awaits',
+                  style: TextStyle(
+                    color: Colors.grey[400],
+                    fontSize: 13,
+                    fontWeight: FontWeight.w400,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 12),

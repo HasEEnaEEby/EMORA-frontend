@@ -94,6 +94,7 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
   final List<Map<String, String>> themeColorOptions = [
     {'name': 'Cosmic Purple', 'value': '#8B5CF6'},
     {'name': 'Ocean Blue', 'value': '#3B82F6'},
+    {'name': 'Indigo Blue', 'value': '#6366F1'},
     {'name': 'Emerald Green', 'value': '#10B981'},
     {'name': 'Sunset Orange', 'value': '#F59E0B'},
     {'name': 'Rose Pink', 'value': '#EC4899'},
@@ -160,7 +161,7 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
 
   @override
   Widget build(BuildContext context) {
-    return Material( // ✅ FIX 1: Wrap entire dialog with Material
+    return Material( // . FIX 1: Wrap entire dialog with Material
       color: Colors.transparent,
       child: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) {
@@ -348,7 +349,7 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
             ),
             const SizedBox(height: 24),
 
-            // ✅ FIX 2: Responsive header layout to prevent overflow
+            // . FIX 2: Responsive header layout to prevent overflow
             LayoutBuilder(
               builder: (context, constraints) {
                 final screenWidth = constraints.maxWidth;
@@ -637,14 +638,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
   Widget _buildFormFields() {
     return Column(
       children: [
-        _buildEnhancedTextField(
-          controller: nameController,
-          label: 'Display Name',
-          icon: CupertinoIcons.person_fill,
-          required: true,
-          helperText: 'This name will be shown to other users',
-        ),
-        const SizedBox(height: 24),
 
         _buildEnhancedTextField(
           controller: null,
@@ -1048,7 +1041,10 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        themeColorOptions.firstWhere((option) => option['value'] == selectedThemeColor)['name']!,
+                        themeColorOptions.firstWhere(
+                          (option) => option['value'] == selectedThemeColor,
+                          orElse: () => {'name': 'Cosmic Purple', 'value': '#8B5CF6'},
+                        )['name']!,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -1299,7 +1295,7 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
             ),
           ),
           const SizedBox(width: 16),
-          // ✅ FIX 3: Wrap Switch with Material - This was the main issue!
+          // . FIX 3: Wrap Switch with Material - This was the main issue!
           Material(
             color: Colors.transparent,
             child: Transform.scale(
@@ -1424,7 +1420,7 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
     DialogUtils.showErrorSnackBar(context, message);
   }
 
-  // ✅ FIX 4: Updated safe property access methods to handle API data structure
+  // . FIX 4: Updated safe property access methods to handle API data structure
   String _safeNameAccess(dynamic profile) {
     try {
       if (profile == null) return '';
@@ -1545,13 +1541,26 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
         if (profileObj is Map<String, dynamic>) {
           final themeColor = profileObj['themeColor'];
           if (themeColor != null && themeColor.toString().isNotEmpty) {
-            return themeColor.toString();
+            final colorValue = themeColor.toString();
+            // Validate that the color exists in our options
+            final isValidColor = themeColorOptions.any((option) => option['value'] == colorValue);
+            return isValidColor ? colorValue : '#8B5CF6';
           }
         }
         // Fall back to direct themeColor
-        return profile['themeColor']?.toString() ?? '#8B5CF6';
+        final directColor = profile['themeColor']?.toString();
+        if (directColor != null && directColor.isNotEmpty) {
+          final isValidColor = themeColorOptions.any((option) => option['value'] == directColor);
+          return isValidColor ? directColor : '#8B5CF6';
+        }
+        return '#8B5CF6';
       }
-      return profile.themeColor?.toString() ?? '#8B5CF6';
+      final themeColor = profile.themeColor?.toString();
+      if (themeColor != null && themeColor.isNotEmpty) {
+        final isValidColor = themeColorOptions.any((option) => option['value'] == themeColor);
+        return isValidColor ? themeColor : '#8B5CF6';
+      }
+      return '#8B5CF6';
     } catch (e) {
       print('Error accessing themeColor: $e');
       return '#8B5CF6';

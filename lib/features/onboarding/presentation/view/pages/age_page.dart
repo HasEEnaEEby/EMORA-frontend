@@ -53,9 +53,9 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
     // Try to parse API response if available
     final stepData = widget.step.data;
     if (stepData != null && stepData['options'] is List) {
-      final apiOptions = stepData['options'] as List<dynamic>;
+      final apiOptions = stepData['options'] as List<dynamic>? ?? [];
 
-      print('🔧 Raw API options received: $apiOptions');
+      print('. Raw API options received: $apiOptions');
 
       // Map API options to our standardized format
       final List<Map<String, String>> apiMappedOptions = [];
@@ -87,15 +87,15 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
 
       if (apiMappedOptions.isNotEmpty) {
         _ageOptions = apiMappedOptions;
-        print('🔧 Using API options mapped to backend values');
+        print('. Using API options mapped to backend values');
       } else {
-        print('🔧 API options invalid, using default options');
+        print('. API options invalid, using default options');
       }
     } else {
-      print('🔧 No API options found, using default options');
+      print('. No API options found, using default options');
     }
 
-    print('🔧 Final age options:');
+    print('. Final age options:');
     for (final option in _ageOptions) {
       print('  "${option['display']}" -> "${option['value']}"');
     }
@@ -107,11 +107,11 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
       );
       if (!isValidSelection) {
         print(
-          '⚠️ Current selection "$_selectedAgeGroup" not in available options, clearing selection',
+          '. Current selection "$_selectedAgeGroup" not in available options, clearing selection',
         );
         _selectedAgeGroup = null;
       } else {
-        print('✅ Current selection "$_selectedAgeGroup" is valid');
+        print('. Current selection "$_selectedAgeGroup" is valid');
       }
     }
   }
@@ -144,8 +144,8 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
 
     // Validate the value before sending
     if (!BackendValues.isValidBackendAgeGroup(backendAgeGroupValue)) {
-      print('❌ ERROR: Invalid backend age group: "$backendAgeGroupValue"');
-      print('✅ Valid options: ${BackendValues.validBackendAgeGroups}');
+      print('. ERROR: Invalid backend age group: "$backendAgeGroupValue"');
+      print('. Valid options: ${BackendValues.validBackendAgeGroups}');
       return;
     }
 
@@ -153,11 +153,11 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
       backendAgeGroupValue,
     );
 
-    print('💾 Age group selected:');
-    print('  👤 Display: "$displayValue"');
-    print('  🔧 Backend: "$backendAgeGroupValue"');
+    print('. Age group selected:');
+    print('  . Display: "$displayValue"');
+    print('  . Backend: "$backendAgeGroupValue"');
     print(
-      '  ✅ Valid: ${BackendValues.isValidBackendAgeGroup(backendAgeGroupValue)}',
+      '  . Valid: ${BackendValues.isValidBackendAgeGroup(backendAgeGroupValue)}',
     );
 
     // Send the backend value to the bloc
@@ -168,7 +168,7 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
   Widget build(BuildContext context) {
     super.build(context);
 
-    // ✅ CRITICAL FIX: Get screen height and calculate available space
+    // . CRITICAL FIX: Get screen height and calculate available space
     final screenHeight = MediaQuery.of(context).size.height;
     final safeAreaTop = MediaQuery.of(context).padding.top;
     final safeAreaBottom = MediaQuery.of(context).padding.bottom;
@@ -184,7 +184,7 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
     final optionHeight = (optionsAvailableSpace / _ageOptions.length) - 8; // 8px for spacing between items
     final finalOptionHeight = optionHeight.clamp(44.0, 56.0); // Ensure reasonable size
 
-    print('🔧 Layout calculations:');
+    print('. Layout calculations:');
     print('  Screen height: $screenHeight');
     print('  Available height: $availableHeight');
     print('  Options space: $optionsAvailableSpace');
@@ -198,7 +198,7 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ✅ FIXED: Constrained header section
+              // . FIXED: Constrained header section
               SizedBox(
                 height: headerSpace,
                 child: Column(
@@ -212,7 +212,7 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
               
               const SizedBox(height: 32),
               
-              // ✅ FIXED: Constrained description
+              // . FIXED: Constrained description
               SizedBox(
                 height: 48, // Fixed height for description
                 child: _buildDescriptionText(),
@@ -220,14 +220,14 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
               
               const SizedBox(height: 40),
               
-              // ✅ CRITICAL FIX: Flexible options with calculated height
+              // . CRITICAL FIX: Flexible options with calculated height
               Expanded(
                 child: _ageOptions.length > 5 
                     ? _buildScrollableOptions(finalOptionHeight)
                     : _buildFixedOptions(finalOptionHeight),
               ),
               
-              // ✅ FIXED: Fixed bottom section
+              // . FIXED: Fixed bottom section
               SizedBox(
                 height: buttonSpace,
                 child: Column(
@@ -308,7 +308,7 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
     );
   }
 
-  // ✅ NEW: Scrollable options for many items
+  // . NEW: Scrollable options for many items
   Widget _buildScrollableOptions(double optionHeight) {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -330,7 +330,7 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
               isSelected: isSelected,
               onTap: () => _onAgeGroupSelected(backendValue),
               icon: _getIconData(iconName),
-              height: optionHeight, // ✅ CRITICAL: Use calculated height
+              height: optionHeight, // . CRITICAL: Use calculated height
             ),
           );
         }).toList(),
@@ -338,7 +338,7 @@ class _AgePageState extends State<AgePage> with AutomaticKeepAliveClientMixin {
     );
   }
 
-  // ✅ NEW: Fixed options for few items
+  // . NEW: Fixed options for few items
   Widget _buildFixedOptions(double optionHeight) {
     return Column(
       children: _ageOptions.asMap().entries.map((entry) {

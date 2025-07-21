@@ -19,7 +19,7 @@ class RegisterUser extends UseCase<AuthResponseEntity, RegisterParams> {
       username: params.username,
       email: params.email,
       password: params.password,
-      confirmPassword: params.confirmPassword, // ✅ Added confirmPassword parameter
+      confirmPassword: params.confirmPassword, // . Added confirmPassword parameter
       pronouns: params.pronouns,
       ageGroup: params.ageGroup,
       selectedAvatar: params.selectedAvatar,
@@ -34,7 +34,7 @@ class RegisterParams extends Equatable {
   final String username;
   final String email;
   final String password;
-  final String confirmPassword; // ✅ Added confirmPassword field
+  final String confirmPassword; // . Added confirmPassword field
   final String? pronouns;
   final String? ageGroup;
   final String? selectedAvatar;
@@ -48,7 +48,7 @@ class RegisterParams extends Equatable {
     required this.username,
     required this.email,
     required this.password,
-    required this.confirmPassword, // ✅ Added confirmPassword to constructor
+    required this.confirmPassword, // . Added confirmPassword to constructor
     this.pronouns,
     this.ageGroup,
     this.selectedAvatar,
@@ -64,7 +64,7 @@ class RegisterParams extends Equatable {
     username,
     email,
     password,
-    confirmPassword, // ✅ Added confirmPassword to props
+    confirmPassword, // . Added confirmPassword to props
     pronouns,
     ageGroup,
     selectedAvatar,

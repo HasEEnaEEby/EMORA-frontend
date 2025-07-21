@@ -21,23 +21,49 @@ class SearchUsersEvent extends FriendEvent {
   final String query;
   final int page;
   final int limit;
+  final bool forceRefresh;
 
   const SearchUsersEvent({
     required this.query,
     this.page = 1,
     this.limit = 10,
+    this.forceRefresh = false,
   });
 
   @override
-  List<Object?> get props => [query, page, limit];
+  List<Object?> get props => [query, page, limit, forceRefresh];
 
   @override
   String toString() => 'SearchUsersEvent { query: $query, page: $page, limit: $limit }';
 }
 
+/// Search all users globally (including friends, excluding self)
+class SearchAllUsersEvent extends FriendEvent {
+  final String query;
+  final int page;
+  final int limit;
+  final bool forceRefresh;
+
+  const SearchAllUsersEvent({
+    required this.query,
+    this.page = 1,
+    this.limit = 10,
+    this.forceRefresh = false,
+  });
+
+  @override
+  List<Object?> get props => [query, page, limit, forceRefresh];
+
+  @override
+  String toString() => 'SearchAllUsersEvent { query: $query, page: $page, limit: $limit }';
+}
+
 /// Clear search results
 class ClearSearchEvent extends FriendEvent {
   const ClearSearchEvent();
+
+  @override
+  List<Object?> get props => [];
 
   @override
   String toString() => 'ClearSearchEvent';

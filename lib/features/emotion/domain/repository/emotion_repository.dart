@@ -42,6 +42,18 @@ abstract class EmotionRepository {
     bool forceRefresh = false,
   });
 
+  Future<Either<Failure, Map<String, dynamic>>> getUserInsights({
+    required String userId,
+    String timeframe = '30d',
+    bool forceRefresh = false,
+  });
+
+  Future<Either<Failure, Map<String, dynamic>>> getUserAnalytics({
+    required String userId,
+    String timeframe = '7d',
+    bool forceRefresh = false,
+  });
+
   Future<Either<Failure, void>> clearEmotionCache();
 
   Future<Either<Failure, bool>> isCacheStale({

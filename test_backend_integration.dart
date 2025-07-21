@@ -14,15 +14,15 @@ void main() async {
     final responseBody = await httpResponse.transform(utf8.decoder).join();
     
     if (httpResponse.statusCode == 200) {
-      print('✅ Health check passed');
+      print('. Health check passed');
       final data = json.decode(responseBody);
       print('   Status: ${data['data']['status']}');
       print('   Version: ${data['data']['version']}');
     } else {
-      print('❌ Health check failed: ${httpResponse.statusCode}');
+      print('. Health check failed: ${httpResponse.statusCode}');
     }
   } catch (e) {
-    print('❌ Health check error: $e');
+    print('. Health check error: $e');
   }
 
   // Test 2: Emotion Constants
@@ -35,15 +35,15 @@ void main() async {
     final responseBody = await httpResponse.transform(utf8.decoder).join();
     
     if (httpResponse.statusCode == 200) {
-      print('✅ Emotion constants retrieved');
+      print('. Emotion constants retrieved');
       final data = json.decode(responseBody);
       print('   Available emotions: ${data['data']['emotions'].length}');
       print('   Core emotions: ${data['data']['coreEmotions'].length}');
     } else {
-      print('❌ Emotion constants failed: ${httpResponse.statusCode}');
+      print('. Emotion constants failed: ${httpResponse.statusCode}');
     }
   } catch (e) {
-    print('❌ Emotion constants error: $e');
+    print('. Emotion constants error: $e');
   }
 
   // Test 3: Global Stats
@@ -56,15 +56,15 @@ void main() async {
     final responseBody = await httpResponse.transform(utf8.decoder).join();
     
     if (httpResponse.statusCode == 200) {
-      print('✅ Global stats retrieved');
+      print('. Global stats retrieved');
       final data = json.decode(responseBody);
       print('   Total emotions: ${data['data']['totalEmotions']}');
       print('   Active users: ${data['data']['activeUsers']}');
     } else {
-      print('❌ Global stats failed: ${httpResponse.statusCode}');
+      print('. Global stats failed: ${httpResponse.statusCode}');
     }
   } catch (e) {
-    print('❌ Global stats error: $e');
+    print('. Global stats error: $e');
   }
 
   // Test 4: Emotion Feed
@@ -77,14 +77,14 @@ void main() async {
     final responseBody = await httpResponse.transform(utf8.decoder).join();
     
     if (httpResponse.statusCode == 200) {
-      print('✅ Emotion feed retrieved');
+      print('. Emotion feed retrieved');
       final data = json.decode(responseBody);
       print('   Feed items: ${data['data'].length}');
     } else {
-      print('❌ Emotion feed failed: ${httpResponse.statusCode}');
+      print('. Emotion feed failed: ${httpResponse.statusCode}');
     }
   } catch (e) {
-    print('❌ Emotion feed error: $e');
+    print('. Emotion feed error: $e');
   }
 
   print('\n🎉 Backend integration test completed!');

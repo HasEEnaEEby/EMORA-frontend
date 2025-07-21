@@ -11,7 +11,7 @@ abstract class AuthRepository {
     required String username,
     required String email,
     required String password,
-    required String confirmPassword, // ✅ Added confirmPassword parameter
+    required String confirmPassword, // . Added confirmPassword parameter
     String? pronouns,
     String? ageGroup,
     String? selectedAvatar,

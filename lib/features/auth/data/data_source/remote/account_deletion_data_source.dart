@@ -60,12 +60,12 @@ class AccountDeletionDataSource {
         data: requestData,
       );
 
-      Logger.info('✅ Account deletion API call successful');
+      Logger.info('. Account deletion API call successful');
 
       return response;
 
     } catch (e) {
-      Logger.error('❌ Account deletion failed: $e');
+      Logger.error('. Account deletion failed: $e');
       
       if (e is NetworkException || e is ServerException || e is ValidationException) {
         rethrow;
@@ -108,7 +108,7 @@ class AccountDeletionDataSource {
       return true;
 
     } catch (e) {
-      Logger.error('❌ Error checking deletion allowance: $e');
+      Logger.error('. Error checking deletion allowance: $e');
       return false;
     }
   }
@@ -145,7 +145,7 @@ class AccountDeletionDataSource {
       };
 
     } catch (e) {
-      Logger.error('❌ Error getting deletion requirements: $e');
+      Logger.error('. Error getting deletion requirements: $e');
       throw ServerException(
         message: 'Failed to get deletion requirements: ${e.toString()}',
       );

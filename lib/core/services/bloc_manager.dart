@@ -65,9 +65,9 @@ class BlocManager {
         _homeBlocCreationCount++;
         _homeBlocCreatedAt = DateTime.now();
 
-        Logger.info('✅ HomeBloc created successfully');
+        Logger.info('. HomeBloc created successfully');
       } catch (e) {
-        Logger.error('❌ Failed to create HomeBloc', e);
+        Logger.error('. Failed to create HomeBloc', e);
         rethrow;
       }
     } else {
@@ -99,9 +99,9 @@ class BlocManager {
         _authBlocCreationCount++;
         _authBlocCreatedAt = DateTime.now();
 
-        Logger.info('✅ AuthBloc created successfully');
+        Logger.info('. AuthBloc created successfully');
       } catch (e) {
-        Logger.error('❌ Failed to create AuthBloc:', e);
+        Logger.error('. Failed to create AuthBloc:', e);
         rethrow;
       }
     } else {
@@ -137,9 +137,9 @@ class BlocManager {
         _emotionBlocCreationCount++;
         _emotionBlocCreatedAt = DateTime.now();
 
-        Logger.info('✅ EmotionBloc created successfully');
+        Logger.info('. EmotionBloc created successfully');
       } catch (e) {
-        Logger.error('❌ Failed to create EmotionBloc', e);
+        Logger.error('. Failed to create EmotionBloc', e);
         rethrow;
       }
     } else {
@@ -167,9 +167,9 @@ class BlocManager {
         _onboardingBlocCreationCount++;
         _onboardingBlocCreatedAt = DateTime.now();
 
-        Logger.info('✅ OnboardingBloc created successfully');
+        Logger.info('. OnboardingBloc created successfully');
       } catch (e) {
-        Logger.error('❌ Failed to create OnboardingBloc', e);
+        Logger.error('. Failed to create OnboardingBloc', e);
         rethrow;
       }
     } else {
@@ -202,9 +202,9 @@ class BlocManager {
         _splashCubitCreationCount++;
         _splashCubitCreatedAt = DateTime.now();
 
-        Logger.info('✅ SplashCubit created successfully');
+        Logger.info('. SplashCubit created successfully');
       } catch (e) {
-        Logger.error('❌ Failed to create SplashCubit:', e);
+        Logger.error('. Failed to create SplashCubit:', e);
         rethrow;
       }
     } else {
@@ -283,7 +283,7 @@ class BlocManager {
     disposeEmotionBloc();
     disposeOnboardingBloc();
     disposeSplashCubit();
-    Logger.info('✅ All BLoCs and Cubits disposed');
+    Logger.info('. All BLoCs and Cubits disposed');
   }
 
   /// Check if a specific BLoC is active
@@ -458,13 +458,13 @@ class BlocManager {
       cleanedCount++;
     }
 
-    Logger.info('✅ Cleaned up $cleanedCount inactive BLoCs');
+    Logger.info('. Cleaned up $cleanedCount inactive BLoCs');
   }
 
   /// Validate all BLoCs are properly configured
   static bool validateBloCs() {
     try {
-      Logger.info('🔍 Validating BLoC configurations...');
+      Logger.info('. Validating BLoC configurations...');
 
       // Test creation of each BLoC type
       final testResults = <String, bool>{};
@@ -473,7 +473,7 @@ class BlocManager {
         final homeBloc = getHomeBloc();
         testResults['homeBloc'] = !homeBloc.isClosed;
       } catch (e) {
-        Logger.error('❌ HomeBloc validation failed:', e);
+        Logger.error('. HomeBloc validation failed:', e);
         testResults['homeBloc'] = false;
       }
 
@@ -481,7 +481,7 @@ class BlocManager {
         final authBloc = getAuthBloc();
         testResults['authBloc'] = !authBloc.isClosed;
       } catch (e) {
-        Logger.error('❌ AuthBloc validation failed', e);
+        Logger.error('. AuthBloc validation failed', e);
         testResults['authBloc'] = false;
       }
 
@@ -489,7 +489,7 @@ class BlocManager {
         final emotionBloc = getEmotionBloc();
         testResults['emotionBloc'] = !emotionBloc.isClosed;
       } catch (e) {
-        Logger.error('❌ EmotionBloc validation failed:', e);
+        Logger.error('. EmotionBloc validation failed:', e);
         testResults['emotionBloc'] = false;
       }
 
@@ -497,7 +497,7 @@ class BlocManager {
         final onboardingBloc = getOnboardingBloc();
         testResults['onboardingBloc'] = !onboardingBloc.isClosed;
       } catch (e) {
-        Logger.error('❌ OnboardingBloc validation failed:', e);
+        Logger.error('. OnboardingBloc validation failed:', e);
         testResults['onboardingBloc'] = false;
       }
 
@@ -505,25 +505,25 @@ class BlocManager {
         final splashCubit = getSplashCubit();
         testResults['splashCubit'] = !splashCubit.isClosed;
       } catch (e) {
-        Logger.error('❌ SplashCubit validation failed', e);
+        Logger.error('. SplashCubit validation failed', e);
         testResults['splashCubit'] = false;
       }
 
       final allValid = testResults.values.every((isValid) => isValid);
 
       if (allValid) {
-        Logger.info('✅ All BLoCs validated successfully');
+        Logger.info('. All BLoCs validated successfully');
       } else {
         final failedBloCs = testResults.entries
             .where((entry) => !entry.value)
             .map((entry) => entry.key)
             .join(', ');
-        Logger.error('❌ BLoC validation failed for:', failedBloCs);
+        Logger.error('. BLoC validation failed for:', failedBloCs);
       }
 
       return allValid;
     } catch (e) {
-      Logger.error('❌ BLoC validation encountered an error', e);
+      Logger.error('. BLoC validation encountered an error', e);
       return false;
     }
   }
@@ -548,16 +548,16 @@ class BlocManager {
     final activeCount = getActiveBlocCount();
     final totalCreations = getTotalCreationCount();
 
-    Logger.info('📊 BLoC Manager Status:');
+    Logger.info('. BLoC Manager Status:');
     Logger.info('   Active BLoCs: $activeCount/5');
     Logger.info('   Total Creations: $totalCreations');
-    Logger.info('   HomeBloc: ${status['homeBloc'] == true ? '✅' : '❌'}');
-    Logger.info('   AuthBloc: ${status['authBloc'] == true ? '✅' : '❌'}');
-    Logger.info('   EmotionBloc: ${status['emotionBloc'] == true ? '✅' : '❌'}');
+    Logger.info('   HomeBloc: ${status['homeBloc'] == true ? '.' : '.'}');
+    Logger.info('   AuthBloc: ${status['authBloc'] == true ? '.' : '.'}');
+    Logger.info('   EmotionBloc: ${status['emotionBloc'] == true ? '.' : '.'}');
     Logger.info(
-      '   OnboardingBloc: ${status['onboardingBloc'] == true ? '✅' : '❌'}',
+      '   OnboardingBloc: ${status['onboardingBloc'] == true ? '.' : '.'}',
     );
-    Logger.info('   SplashCubit: ${status['splashCubit'] == true ? '✅' : '❌'}');
+    Logger.info('   SplashCubit: ${status['splashCubit'] == true ? '.' : '.'}');
   }
 
   /// Reset all statistics (for testing)

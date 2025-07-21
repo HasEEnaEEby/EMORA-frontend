@@ -111,7 +111,7 @@ class EnhancedApiService {
     // Log successful responses
     if (response.statusCode! >= 200 && response.statusCode! < 300) {
       Logger.info(
-        '✅ API Success: ${response.requestOptions.method} ${response.requestOptions.path}',
+        '. API Success: ${response.requestOptions.method} ${response.requestOptions.path}',
         {
           'statusCode': response.statusCode,
           'duration_ms': duration?.inMilliseconds,
@@ -136,7 +136,7 @@ class EnhancedApiService {
 
     // Log error details
     Logger.error(
-      '❌ API Error: ${error.requestOptions.method} ${error.requestOptions.path}',
+      '. API Error: ${error.requestOptions.method} ${error.requestOptions.path}',
       {
         'statusCode': error.response?.statusCode,
         'errorType': error.type.name,
@@ -354,7 +354,7 @@ class EnhancedApiService {
       _handleDioError(e, method, path);
       rethrow;
     } catch (e) {
-      Logger.error('❌ Unexpected error in $method $path', e);
+      Logger.error('. Unexpected error in $method $path', e);
       rethrow;
     }
   }
@@ -432,7 +432,7 @@ class EnhancedApiService {
       final response = await get('/api/health');
       return response.statusCode == 200;
     } catch (e) {
-      Logger.error('❌ API health check failed', e);
+      Logger.error('. API health check failed', e);
       return false;
     }
   }

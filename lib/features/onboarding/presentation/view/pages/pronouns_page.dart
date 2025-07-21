@@ -44,7 +44,7 @@ class _PronounsPageState extends State<PronounsPage>
   void _initializePronounOptions() {
     final stepData = widget.step.data;
 
-    // ✅ FIXED: Use exact backend values for both display and value
+    // . FIXED: Use exact backend values for both display and value
     final defaultPronounOptions = [
       {'display': 'She / Her', 'value': 'She / Her'},
       {'display': 'He / Him', 'value': 'He / Him'},
@@ -54,7 +54,7 @@ class _PronounsPageState extends State<PronounsPage>
 
     // Try to get options from API response first
     if (stepData != null && stepData['options'] is List) {
-      final apiOptions = stepData['options'] as List<dynamic>;
+      final apiOptions = stepData['options'] as List<dynamic>? ?? [];
       _pronounOptions = apiOptions
           .map((option) {
             if (option is Map<String, dynamic>) {
@@ -78,13 +78,13 @@ class _PronounsPageState extends State<PronounsPage>
           .toList();
 
       print(
-        '🔧 Pronoun options from API: ${_pronounOptions.map((o) => '"${o['value']}" (${o['display']})').join(', ')}',
+        '. Pronoun options from API: ${_pronounOptions.map((o) => '"${o['value']}" (${o['display']})').join(', ')}',
       );
     } else {
       // Fallback to default options if API doesn't provide them
       _pronounOptions = defaultPronounOptions;
       print(
-        '🔧 Pronoun options from default: ${_pronounOptions.map((o) => '"${o['value']}" (${o['display']})').join(', ')}',
+        '. Pronoun options from default: ${_pronounOptions.map((o) => '"${o['value']}" (${o['display']})').join(', ')}',
       );
     }
 
@@ -95,7 +95,7 @@ class _PronounsPageState extends State<PronounsPage>
       );
       if (!isValidSelection) {
         print(
-          '⚠️ Current selection "$_selectedPronouns" not in available options, clearing selection',
+          '. Current selection "$_selectedPronouns" not in available options, clearing selection',
         );
         _selectedPronouns = null;
       }
@@ -103,7 +103,7 @@ class _PronounsPageState extends State<PronounsPage>
   }
 
   String _normalizePronounValue(String input) {
-    // ✅ FIXED: Normalize to exact backend format
+    // . FIXED: Normalize to exact backend format
     switch (input.toLowerCase().replaceAll(' ', '').replaceAll('/', '')) {
       case 'sheher':
         return 'She / Her';
@@ -127,9 +127,9 @@ class _PronounsPageState extends State<PronounsPage>
       _selectedPronouns = pronounValue;
     });
 
-    print('💾 Saving pronouns: "$pronounValue"');
+    print('. Saving pronouns: "$pronounValue"');
     print(
-      '📋 Available options: ${_pronounOptions.map((o) => '"${o['value']}"').join(', ')}',
+      '. Available options: ${_pronounOptions.map((o) => '"${o['value']}"').join(', ')}',
     );
 
     context.read<OnboardingBloc>().add(SavePronouns(pronounValue));

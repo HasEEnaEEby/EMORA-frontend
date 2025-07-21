@@ -10,6 +10,7 @@ import 'friend_state.dart';
 
 class FriendBloc extends Bloc<FriendEvent, FriendState> {
   final SearchUsers searchUsers;
+  final SearchAllUsers searchAllUsers;
   final SendFriendRequest sendFriendRequest;
   final CancelFriendRequest cancelFriendRequest;
   final RespondToFriendRequest respondToFriendRequest;
@@ -27,6 +28,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
 
   FriendBloc({
     required this.searchUsers,
+    required this.searchAllUsers,
     required this.sendFriendRequest,
     required this.cancelFriendRequest,
     required this.respondToFriendRequest,
@@ -37,6 +39,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
   }) : super(const FriendInitial()) {
     // Register all event handlers
     on<SearchUsersEvent>(_onSearchUsers);
+    on<SearchAllUsersEvent>(_onSearchAllUsers);
     on<ClearSearchEvent>(_onClearSearch);
     on<SendFriendRequestEvent>(_onSendFriendRequest);
     on<CancelFriendRequestEvent>(_onCancelFriendRequest);
@@ -59,14 +62,14 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     Emitter<FriendState> emit,
   ) async {
     if (_isSearching) {
-      Logger.info('🔍 Search already in progress, ignoring duplicate request');
+      Logger.info('. Search already in progress, ignoring duplicate request');
       return;
     }
 
     _isSearching = true;
 
     try {
-      Logger.info('🔍 Searching users: ${event.query}');
+      Logger.info('. Searching users: ${event.query}');
       emit(const FriendSearchLoading());
 
       final result = await searchUsers(SearchUsersParams(
@@ -77,30 +80,90 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Search users failed: ${failure.message}');
+          Logger.error('. Search users failed: ${failure.message}');
           emit(FriendSearchError(
             message: failure.message,
             query: event.query,
           ));
         },
         (searchResults) {
-          Logger.info('✅ Found ${searchResults.length} users');
+          Logger.info('. Found ${searchResults.length} users');
           
           if (searchResults.isEmpty) {
             emit(FriendSearchEmpty(query: event.query));
           } else {
+            final suggestions = (searchResults['suggestions'] as List)
+                .cast<FriendSuggestionEntity>();
+            final total = searchResults['total'] as int? ?? suggestions.length;
             emit(FriendSearchLoaded(
-              searchResults: searchResults,
-              query: event.query,
-              hasMore: searchResults.length >= event.limit,
+              searchResults: suggestions,
+              totalResults: total,
+              currentPage: event.page,
             ));
           }
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error during search', e);
+      Logger.error('. Unexpected error during search', e);
       emit(FriendSearchError(
         message: 'Failed to search users: ${e.toString()}',
+        query: event.query,
+      ));
+    } finally {
+      _isSearching = false;
+    }
+  }
+
+  Future<void> _onSearchAllUsers(
+    SearchAllUsersEvent event,
+    Emitter<FriendState> emit,
+  ) async {
+    if (_isSearching) {
+      Logger.info('. Search already in progress, ignoring duplicate request');
+      return;
+    }
+
+    _isSearching = true;
+
+    try {
+      Logger.info('. Searching all users');
+      emit(const FriendSearchLoading());
+
+      final result = await searchAllUsers(SearchAllUsersParams(
+        query: event.query,
+        page: event.page,
+        limit: event.limit,
+      ));
+
+      result.fold(
+        (failure) {
+          Logger.error('. Search all users failed: ${failure.message}');
+          emit(FriendSearchError(
+            message: failure.message,
+            query: event.query,
+          ));
+        },
+        (searchResults) {
+          Logger.info('. Found ${searchResults.length} users');
+          
+          if (searchResults.isEmpty) {
+            emit(FriendSearchEmpty(query: event.query));
+          } else {
+            final suggestions = (searchResults['suggestions'] as List)
+                .cast<FriendSuggestionEntity>();
+            final total = searchResults['total'] as int? ?? suggestions.length;
+            emit(FriendSearchLoaded(
+              searchResults: suggestions,
+              totalResults: total,
+              currentPage: event.page,
+            ));
+          }
+        },
+      );
+    } catch (e) {
+      Logger.error('. Unexpected error during search all users', e);
+      emit(FriendSearchError(
+        message: 'Failed to search all users: ${e.toString()}',
         query: event.query,
       ));
     } finally {
@@ -133,14 +196,14 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     Emitter<FriendState> emit,
   ) async {
     try {
-      Logger.info('❌ Cancelling friend request to: ${event.userId}');
-      print('🔍 _onCancelFriendRequest - event.userId: ${event.userId}');
-      print('🔍 _onCancelFriendRequest - event.userId length: ${event.userId.length}');
-      print('🔍 _onCancelFriendRequest - event.userId isEmpty: ${event.userId.isEmpty}');
+      Logger.info('. Cancelling friend request to: ${event.userId}');
+      print('. _onCancelFriendRequest - event.userId: ${event.userId}');
+      print('. _onCancelFriendRequest - event.userId length: ${event.userId.length}');
+      print('. _onCancelFriendRequest - event.userId isEmpty: ${event.userId.isEmpty}');
 
       // Validate userId
       if (event.userId.isEmpty) {
-        Logger.error('❌ Cancel friend request failed: userId is empty');
+        Logger.error('. Cancel friend request failed: userId is empty');
         emit(FriendError(
           message: 'Invalid user ID for friend request cancellation',
           errorType: 'cancel_request',
@@ -148,7 +211,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         return;
       }
 
-      // ✅ OPTIMISTIC UPDATE: Immediately remove from sent requests
+      // . OPTIMISTIC UPDATE: Immediately remove from sent requests
       FriendsLoaded? currentState;
       if (state is FriendsLoaded) {
         currentState = state as FriendsLoaded;
@@ -179,9 +242,9 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Cancel friend request failed: ${failure.message}');
+          Logger.error('. Cancel friend request failed: ${failure.message}');
           
-          // ✅ REVERT OPTIMISTIC UPDATE on failure
+          // . REVERT OPTIMISTIC UPDATE on failure
           if (state is FriendRequestActionLoading) {
             final currentState = state as FriendRequestActionLoading;
             // Find the original request to restore it
@@ -196,9 +259,9 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
         (success) {
           if (success) {
-            Logger.info('✅ Friend request cancelled successfully');
+            Logger.info('. Friend request cancelled successfully');
             
-            // ✅ EMIT SUCCESS STATE with optimistic data
+            // . EMIT SUCCESS STATE with optimistic data
             if (currentState != null) {
               // Remove from sent requests
               final updatedSentRequests = currentState.sentRequests
@@ -220,13 +283,13 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
                 hasMoreFriends: currentState.hasMoreFriends,
               ));
               
-              // ✅ DELAYED SILENT SYNC: Refresh data in background after UI update
+              // . DELAYED SILENT SYNC: Refresh data in background after UI update
               Future.delayed(const Duration(seconds: 2), () {
                 _silentRefreshPendingRequests();
               });
             }
           } else {
-            // ✅ REVERT OPTIMISTIC UPDATE on failure
+            // . REVERT OPTIMISTIC UPDATE on failure
             _silentRefreshPendingRequests();
             emit(const FriendError(
               message: 'Failed to cancel friend request',
@@ -236,8 +299,8 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error cancelling friend request', e);
-      // ✅ REVERT OPTIMISTIC UPDATE on error
+      Logger.error('. Unexpected error cancelling friend request', e);
+      // . REVERT OPTIMISTIC UPDATE on error
       _silentRefreshPendingRequests();
       emit(FriendError(
         message: 'Failed to cancel friend request: ${e.toString()}',
@@ -250,7 +313,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     SendFriendRequestEvent event,
     Emitter<FriendState> emit,
   ) async {
-    // ✅ ADDED: Prevent multiple friend requests at once
+    // . ADDED: Prevent multiple friend requests at once
     if (_isSendingFriendRequest) {
       Logger.info('📤 Friend request already in progress, ignoring duplicate request');
       return;
@@ -261,7 +324,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     try {
       Logger.info('📤 Sending friend request to: ${event.userId}');
 
-      // ✅ OPTIMISTIC UPDATE: Immediately move from suggestions to sent requests
+      // . OPTIMISTIC UPDATE: Immediately move from suggestions to sent requests
       FriendsLoaded? currentState;
       if (state is FriendsLoaded) {
         currentState = state as FriendsLoaded;
@@ -315,19 +378,19 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Send friend request failed: ${failure.message}');
+          Logger.error('. Send friend request failed: ${failure.message}');
           
-          // ✅ REVERT OPTIMISTIC UPDATE on failure
+          // . REVERT OPTIMISTIC UPDATE on failure
           _silentRefreshData();
           
           if (failure is DuplicateFriendRequestException) {
             emit(FriendError(
-              message: 'Friend request already sent to this user',
+              message: 'You have already sent a friend request to this user',
               errorType: 'already_sent',
             ));
           } else if (failure is FriendRequestException) {
             emit(FriendError(
-              message: 'Already friends with this user',
+              message: 'You are already friends with this user',
               errorType: 'already_friends',
             ));
           } else if (failure is RateLimitException) {
@@ -349,9 +412,9 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
         (success) {
           if (success) {
-            Logger.info('✅ Friend request sent successfully');
+            Logger.info('. Friend request sent successfully');
             
-            // ✅ EMIT SUCCESS STATE with optimistic data
+            // . EMIT SUCCESS STATE with optimistic data
             if (currentState != null) {
               // Find the suggestion that was moved
               final suggestionToMove = currentState.suggestions
@@ -385,8 +448,8 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
                 };
                 
                 Logger.info('🎯 Emitting FriendRequestActionSuccess for send request');
-                Logger.info('📊 Updated suggestions count: ${updatedSuggestions.length}');
-                Logger.info('📊 Updated sent requests count: ${updatedSentRequests.length}');
+                Logger.info('. Updated suggestions count: ${updatedSuggestions.length}');
+                Logger.info('. Updated sent requests count: ${updatedSentRequests.length}');
                 
                 emit(FriendRequestActionSuccess(
                   message: 'Friend request sent successfully!',
@@ -398,14 +461,14 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
                   hasMoreFriends: currentState.hasMoreFriends,
                 ));
                 
-                // ✅ DELAYED SILENT SYNC: Refresh data in background after UI update
+                // . DELAYED SILENT SYNC: Refresh data in background after UI update
                 Future.delayed(const Duration(seconds: 2), () {
                   _silentRefreshData();
                 });
               }
             }
           } else {
-            // ✅ REVERT OPTIMISTIC UPDATE on failure
+            // . REVERT OPTIMISTIC UPDATE on failure
             _silentRefreshData();
             emit(const FriendError(
               message: 'Failed to send friend request',
@@ -415,8 +478,8 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error sending friend request', e);
-      // ✅ REVERT OPTIMISTIC UPDATE on error
+      Logger.error('. Unexpected error sending friend request', e);
+      // . REVERT OPTIMISTIC UPDATE on error
       _silentRefreshData();
       if (e is RateLimitException) {
         emit(FriendError(
@@ -435,7 +498,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         ));
       }
     } finally {
-      // ✅ ADDED: Always reset the flag
+      // . ADDED: Always reset the flag
       _isSendingFriendRequest = false;
     }
   }
@@ -444,7 +507,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     RespondToFriendRequestEvent event,
     Emitter<FriendState> emit,
   ) async {
-    // ✅ ADDED: Prevent multiple responses at once
+    // . ADDED: Prevent multiple responses at once
     if (_isRespondingToFriendRequest) {
       Logger.info('📝 Friend request response already in progress, ignoring duplicate');
       return;
@@ -455,7 +518,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     try {
       Logger.info('📝 Responding to friend request: ${event.action}');
 
-      // ✅ OPTIMISTIC UPDATE: Immediately move from received to friends (if accept) or remove (if reject)
+      // . OPTIMISTIC UPDATE: Immediately move from received to friends (if accept) or remove (if reject)
       if (state is FriendsLoaded) {
         final currentState = state as FriendsLoaded;
         
@@ -532,9 +595,9 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Respond to friend request failed: ${failure.message}');
+          Logger.error('. Respond to friend request failed: ${failure.message}');
           
-          // ✅ REVERT OPTIMISTIC UPDATE on failure
+          // . REVERT OPTIMISTIC UPDATE on failure
           _silentRefreshData();
           
           if (failure is RateLimitException) {
@@ -556,9 +619,9 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
         (success) {
           if (success) {
-            Logger.info('✅ Friend request response sent successfully');
+            Logger.info('. Friend request response sent successfully');
             
-            // ✅ SILENT SYNC: Refresh data in background
+            // . SILENT SYNC: Refresh data in background
             _silentRefreshData();
             
             final actionMessage = event.action == 'accept' 
@@ -578,7 +641,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
               ));
             }
           } else {
-            // ✅ REVERT OPTIMISTIC UPDATE on failure
+            // . REVERT OPTIMISTIC UPDATE on failure
             _silentRefreshData();
             emit(FriendError(
               message: 'Failed to ${event.action} friend request',
@@ -588,8 +651,8 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error responding to friend request', e);
-      // ✅ REVERT OPTIMISTIC UPDATE on error
+      Logger.error('. Unexpected error responding to friend request', e);
+      // . REVERT OPTIMISTIC UPDATE on error
       _silentRefreshData();
       if (e is RateLimitException) {
         emit(FriendError(
@@ -608,7 +671,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         ));
       }
     } finally {
-      // ✅ ADDED: Always reset the flag
+      // . ADDED: Always reset the flag
       _isRespondingToFriendRequest = false;
     }
   }
@@ -618,27 +681,27 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     Emitter<FriendState> emit,
   ) async {
     if (_isLoadingRequests && !event.forceRefresh) {
-      Logger.info('📋 Pending requests already loading');
+      Logger.info('. Pending requests already loading');
       return;
     }
 
     _isLoadingRequests = true;
 
     try {
-      Logger.info('📋 Loading pending friend requests');
+      Logger.info('. Loading pending friend requests');
 
       final result = await getPendingRequests(const NoParams());
 
       result.fold(
         (failure) {
-          Logger.error('❌ Load pending requests failed: ${failure.message}');
+          Logger.error('. Load pending requests failed: ${failure.message}');
           emit(FriendError(
             message: failure.message,
             errorType: 'load_requests',
           ));
         },
         (pendingRequests) {
-          Logger.info('✅ Loaded pending requests: ${pendingRequests['sent']?.length ?? 0} sent, ${pendingRequests['received']?.length ?? 0} received');
+          Logger.info('. Loaded pending requests: ${pendingRequests['sent']?.length ?? 0} sent, ${pendingRequests['received']?.length ?? 0} received');
           
           // Update state with new pending requests
           if (state is FriendsLoaded) {
@@ -654,7 +717,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error loading pending requests', e);
+      Logger.error('. Unexpected error loading pending requests', e);
       emit(FriendError(
         message: 'Failed to load pending requests: ${e.toString()}',
         errorType: 'load_requests',
@@ -709,7 +772,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
       // Process results
       friends.fold(
         (failure) {
-          Logger.error('❌ Load friends failed: ${failure.message}');
+          Logger.error('. Load friends failed: ${failure.message}');
           emit(FriendError(
             message: failure.message,
             errorType: 'load_friends',
@@ -718,14 +781,14 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         (friendsList) {
           suggestions.fold(
             (suggestionsFailure) {
-              Logger.warning('⚠️ Load suggestions failed: ${suggestionsFailure.message}');
+              Logger.warning('. Load suggestions failed: ${suggestionsFailure.message}');
               // Continue with empty suggestions
               _emitFriendsLoadedState(friendsList, [], {}, event, emit);
             },
             (suggestionsList) {
               requests.fold(
                 (requestsFailure) {
-                  Logger.warning('⚠️ Load requests failed: ${requestsFailure.message}');
+                  Logger.warning('. Load requests failed: ${requestsFailure.message}');
                   // Continue with empty requests
                   _emitFriendsLoadedState(friendsList, suggestionsList, {}, event, emit);
                 },
@@ -738,7 +801,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error loading friends', e);
+      Logger.error('. Unexpected error loading friends', e);
       emit(FriendError(
         message: 'Failed to load friends: ${e.toString()}',
         errorType: 'load_friends',
@@ -755,7 +818,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     LoadFriendsEvent event,
     Emitter<FriendState> emit,
   ) {
-    Logger.info('✅ Loaded friends data: ${friends.length} friends, ${suggestions.length} suggestions');
+    Logger.info('. Loaded friends data: ${friends.length} friends, ${suggestions.length} suggestions');
     
     emit(FriendsLoaded(
       friends: friends,
@@ -773,7 +836,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     try {
       Logger.info('🗑️ Removing friend: ${event.friendUserId}');
 
-      // ✅ OPTIMISTIC UPDATE: Immediately remove from friends list
+      // . OPTIMISTIC UPDATE: Immediately remove from friends list
       if (state is FriendsLoaded) {
         final currentState = state as FriendsLoaded;
         final updatedFriends = currentState.friends
@@ -797,9 +860,9 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Remove friend failed: ${failure.message}');
+          Logger.error('. Remove friend failed: ${failure.message}');
           
-          // ✅ REVERT OPTIMISTIC UPDATE on failure
+          // . REVERT OPTIMISTIC UPDATE on failure
           _silentRefreshData();
           
           emit(FriendError(
@@ -809,9 +872,9 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
         (success) {
           if (success) {
-            Logger.info('✅ Friend removed successfully');
+            Logger.info('. Friend removed successfully');
             
-            // ✅ SILENT SYNC: Refresh data in background
+            // . SILENT SYNC: Refresh data in background
             _silentRefreshData();
             
             if (state is FriendRequestActionLoading) {
@@ -827,7 +890,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
               ));
             }
           } else {
-            // ✅ REVERT OPTIMISTIC UPDATE on failure
+            // . REVERT OPTIMISTIC UPDATE on failure
             _silentRefreshData();
             emit(const FriendError(
               message: 'Failed to remove friend',
@@ -837,8 +900,8 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error removing friend', e);
-      // ✅ REVERT OPTIMISTIC UPDATE on error
+      Logger.error('. Unexpected error removing friend', e);
+      // . REVERT OPTIMISTIC UPDATE on error
       _silentRefreshData();
       emit(FriendError(
         message: 'Failed to remove friend: ${e.toString()}',
@@ -860,12 +923,12 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Load friend suggestions failed: ${failure.message}');
+          Logger.error('. Load friend suggestions failed: ${failure.message}');
           // Don't emit error state, just log the warning
-          Logger.warning('⚠️ Could not load friend suggestions');
+          Logger.warning('. Could not load friend suggestions');
         },
         (suggestions) {
-          Logger.info('✅ Loaded ${suggestions.length} friend suggestions');
+          Logger.info('. Loaded ${suggestions.length} friend suggestions');
           
           // Update suggestions in current state
           if (state is FriendsLoaded) {
@@ -878,7 +941,7 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error loading friend suggestions', e);
+      Logger.error('. Unexpected error loading friend suggestions', e);
       // Don't emit error state for non-critical operation
     }
   }
@@ -949,14 +1012,14 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
   /// Get the current friend request status for a specific user
   /// This is the centralized method for UI widgets to check status
   FriendRequestStatus getFriendRequestStatus(String userId) {
-    Logger.info('🔍 getFriendRequestStatus called for userId: $userId');
-    Logger.info('🔍 Current state type: ${state.runtimeType}');
+    Logger.info('. getFriendRequestStatus called for userId: $userId');
+    Logger.info('. Current state type: ${state.runtimeType}');
     
     // Check if currently loading for this specific user
     if (state is FriendRequestActionLoading) {
       final loadingState = state as FriendRequestActionLoading;
       if (loadingState.targetUserId == userId) {
-        Logger.info('🔍 Returning sending status for userId: $userId');
+        Logger.info('. Returning sending status for userId: $userId');
         return FriendRequestStatus.sending;
       }
     }
@@ -964,23 +1027,23 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     // Check if request was recently sent successfully
     if (state is FriendRequestActionSuccess) {
       final successState = state as FriendRequestActionSuccess;
-      Logger.info('🔍 Success state - actionType: ${successState.actionType}, targetUserId: ${successState.targetUserId}');
+      Logger.info('. Success state - actionType: ${successState.actionType}, targetUserId: ${successState.targetUserId}');
       if (successState.targetUserId == userId) {
         switch (successState.actionType) {
           case 'send':
-            Logger.info('🔍 Returning requested status for userId: $userId');
+            Logger.info('. Returning requested status for userId: $userId');
             return FriendRequestStatus.requested;
           case 'accept':
-            Logger.info('🔍 Returning accepted status for userId: $userId');
+            Logger.info('. Returning accepted status for userId: $userId');
             return FriendRequestStatus.accepted;
           case 'cancel':
-            Logger.info('🔍 Returning notRequested status for userId: $userId');
+            Logger.info('. Returning notRequested status for userId: $userId');
             return FriendRequestStatus.notRequested;
           case 'reject':
-            Logger.info('🔍 Returning notRequested status for userId: $userId');
+            Logger.info('. Returning notRequested status for userId: $userId');
             return FriendRequestStatus.notRequested;
           case 'remove':
-            Logger.info('🔍 Returning notRequested status for userId: $userId');
+            Logger.info('. Returning notRequested status for userId: $userId');
             return FriendRequestStatus.notRequested;
         }
       }
@@ -1000,26 +1063,26 @@ class FriendBloc extends Bloc<FriendEvent, FriendState> {
     // Check if state is loaded and check current data
     if (state is FriendsLoaded) {
       final currentState = state as FriendsLoaded;
-      Logger.info('🔍 FriendsLoaded state - friends: ${currentState.friends.length}, suggestions: ${currentState.suggestions.length}, sentRequests: ${currentState.sentRequests.length}');
+      Logger.info('. FriendsLoaded state - friends: ${currentState.friends.length}, suggestions: ${currentState.suggestions.length}, sentRequests: ${currentState.sentRequests.length}');
 
       // Check if already friends
       if (currentState.friends.any((f) => f.id == userId)) {
-        Logger.info('🔍 User $userId is already a friend');
+        Logger.info('. User $userId is already a friend');
         return FriendRequestStatus.friends;
       }
 
       // Check if request already exists in pending
       if (currentState.sentRequests.any((req) => req.userId == userId)) {
-        Logger.info('🔍 User $userId has a sent request');
+        Logger.info('. User $userId has a sent request');
         return FriendRequestStatus.requested;
       }
 
       if (currentState.receivedRequests.any((req) => req.userId == userId)) {
-        Logger.info('🔍 User $userId has a received request');
+        Logger.info('. User $userId has a received request');
         return FriendRequestStatus.requested;
       }
       
-      Logger.info('🔍 User $userId has no pending requests');
+      Logger.info('. User $userId has no pending requests');
     }
 
     // Default state

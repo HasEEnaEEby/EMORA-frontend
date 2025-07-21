@@ -106,7 +106,7 @@ class OnboardingSyncService {
         if (await _syncUserData(pendingUserData)) {
           await sharedPreferences.remove(_pendingUserDataKey);
           successfulSyncs++;
-          Logger.info('✅ User data synced and removed from queue');
+          Logger.info('. User data synced and removed from queue');
         }
       }
 
@@ -119,12 +119,12 @@ class OnboardingSyncService {
         if (await _syncCompletion(pendingCompletion)) {
           await sharedPreferences.remove(_pendingCompletionKey);
           successfulSyncs++;
-          Logger.info('✅ Onboarding completion synced and removed from queue');
+          Logger.info('. Onboarding completion synced and removed from queue');
         }
       }
 
       if (!hasPendingOperations) {
-        Logger.info('✅ No pending onboarding operations');
+        Logger.info('. No pending onboarding operations');
       } else if (successfulSyncs > 0) {
         Logger.info(
           '🎉 Successfully synced $successfulSyncs onboarding operations',
@@ -142,9 +142,9 @@ class OnboardingSyncService {
       final success = await remoteDataSource.saveUserData(userData);
 
       if (success) {
-        Logger.info('✅ User data synced successfully');
+        Logger.info('. User data synced successfully');
       } else {
-        Logger.warning('⚠️ User data sync returned false');
+        Logger.warning('. User data sync returned false');
       }
 
       return success;
@@ -161,9 +161,9 @@ class OnboardingSyncService {
       final success = await remoteDataSource.completeOnboarding(userData);
 
       if (success) {
-        Logger.info('✅ Onboarding completion synced successfully');
+        Logger.info('. Onboarding completion synced successfully');
       } else {
-        Logger.warning('⚠️ Onboarding completion sync returned false');
+        Logger.warning('. Onboarding completion sync returned false');
       }
 
       return success;

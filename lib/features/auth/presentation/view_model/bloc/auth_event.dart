@@ -38,7 +38,7 @@ class AuthCheckUsername extends AuthEvent {
 
 /// Event to login user
 class AuthLogin extends AuthEvent {
-  final String username; // Note: Your AuthBloc uses username, not email
+  final String username;
   final String password;
 
   const AuthLogin({required this.username, required this.password});
@@ -50,14 +50,20 @@ class AuthLogin extends AuthEvent {
   String toString() => 'AuthLogin(username: $username)';
 }
 
-class LogoutEvent extends AuthEvent {}
+/// SINGLE logout event - removing the duplicate
+class AuthLogout extends AuthEvent {
+  const AuthLogout();
 
-/// Event to register user - Complete version with all required fields
+  @override
+  String toString() => 'AuthLogout()';
+}
+
+/// Event to register user
 class AuthRegister extends AuthEvent {
   final String username;
   final String email;
   final String password;
-  final String confirmPassword; // ✅ Added confirmPassword field
+  final String confirmPassword;
   final String? pronouns;
   final String? ageGroup;
   final String? selectedAvatar;
@@ -71,7 +77,7 @@ class AuthRegister extends AuthEvent {
     required this.username,
     required this.email,
     required this.password,
-    required this.confirmPassword, // ✅ Added to constructor
+    required this.confirmPassword,
     this.pronouns,
     this.ageGroup,
     this.selectedAvatar,
@@ -84,30 +90,22 @@ class AuthRegister extends AuthEvent {
 
   @override
   List<Object?> get props => [
-    username,
-    email,
-    password,
-    confirmPassword, // ✅ Added to props
-    pronouns,
-    ageGroup,
-    selectedAvatar,
-    location,
-    latitude,
-    longitude,
-    termsAccepted,
-    privacyAccepted,
-  ];
+        username,
+        email,
+        password,
+        confirmPassword,
+        pronouns,
+        ageGroup,
+        selectedAvatar,
+        location,
+        latitude,
+        longitude,
+        termsAccepted,
+        privacyAccepted,
+      ];
 
   @override
   String toString() => 'AuthRegister(username: $username, email: $email)';
-}
-
-/// CRITICAL: Event to logout user - This MUST be present
-class AuthLogout extends AuthEvent {
-  const AuthLogout();
-
-  @override
-  String toString() => 'AuthLogout()';
 }
 
 /// Event to refresh token
@@ -118,10 +116,10 @@ class AuthRefreshToken extends AuthEvent {
   String toString() => 'AuthRefreshToken()';
 }
 
-/// Event for token refresh failure - forces logout and shows user message
+
 class AuthTokenRefreshFailed extends AuthEvent {
   final String message;
-  
+
   const AuthTokenRefreshFailed({
     this.message = 'Your session has expired. Please log in again.',
   });
@@ -133,7 +131,6 @@ class AuthTokenRefreshFailed extends AuthEvent {
   String toString() => 'AuthTokenRefreshFailed(message: $message)';
 }
 
-/// Event to clear auth errors
 class AuthClearError extends AuthEvent {
   const AuthClearError();
 

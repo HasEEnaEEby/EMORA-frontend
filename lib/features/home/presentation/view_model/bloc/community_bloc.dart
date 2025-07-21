@@ -94,7 +94,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Load global feed failed: ${failure.message}');
+          Logger.error('. Load global feed failed: ${failure.message}');
           
           if (state is CommunityFeedLoaded) {
             final currentState = state as CommunityFeedLoaded;
@@ -118,12 +118,12 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
           }
         },
         (globalPosts) {
-          Logger.info('✅ Loaded ${globalPosts.length} global posts');
+          Logger.info('. Loaded ${globalPosts.length} global posts');
           _updateFeedWithGlobalPosts(globalPosts, event, emit);
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error loading global feed', e);
+      Logger.error('. Unexpected error loading global feed', e);
       emit(CommunityError(
         message: 'Failed to load global feed: ${e.toString()}',
         errorType: 'load_global_feed',
@@ -174,7 +174,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Load friends feed failed: ${failure.message}');
+          Logger.error('. Load friends feed failed: ${failure.message}');
           
           if (state is CommunityFeedLoaded) {
             final currentState = state as CommunityFeedLoaded;
@@ -198,12 +198,12 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
           }
         },
         (friendsPosts) {
-          Logger.info('✅ Loaded ${friendsPosts.length} friends posts');
+          Logger.info('. Loaded ${friendsPosts.length} friends posts');
           _updateFeedWithFriendsPosts(friendsPosts, event, emit);
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error loading friends feed', e);
+      Logger.error('. Unexpected error loading friends feed', e);
       emit(CommunityError(
         message: 'Failed to load friends feed: ${e.toString()}',
         errorType: 'load_friends_feed',
@@ -252,7 +252,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Load trending posts failed: ${failure.message}');
+          Logger.error('. Load trending posts failed: ${failure.message}');
           
           if (state is CommunityFeedLoaded) {
             final currentState = state as CommunityFeedLoaded;
@@ -276,12 +276,12 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
           }
         },
         (trendingPosts) {
-          Logger.info('✅ Loaded ${trendingPosts.length} trending posts');
+          Logger.info('. Loaded ${trendingPosts.length} trending posts');
           _updateFeedWithTrendingPosts(trendingPosts, event, emit);
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error loading trending posts', e);
+      Logger.error('. Unexpected error loading trending posts', e);
       emit(CommunityError(
         message: 'Failed to load trending posts: ${e.toString()}',
         errorType: 'load_trending_posts',
@@ -376,7 +376,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ React to post failed: ${failure.message}');
+          Logger.error('. React to post failed: ${failure.message}');
           
           if (state is CommunityFeedLoaded) {
             final currentState = state as CommunityFeedLoaded;
@@ -396,7 +396,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         },
         (success) {
           if (success) {
-            Logger.info('✅ Successfully reacted to post');
+            Logger.info('. Successfully reacted to post');
             
             // Update the post with new reaction locally
             _updatePostReaction(event.postId, event.emoji, event.type, emit);
@@ -426,7 +426,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error reacting to post', e);
+      Logger.error('. Unexpected error reacting to post', e);
       emit(CommunityError(
         message: 'Failed to add reaction: ${e.toString()}',
         errorType: 'react_to_post',
@@ -464,7 +464,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Remove reaction failed: ${failure.message}');
+          Logger.error('. Remove reaction failed: ${failure.message}');
           
           if (state is CommunityFeedLoaded) {
             final currentState = state as CommunityFeedLoaded;
@@ -484,7 +484,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         },
         (success) {
           if (success) {
-            Logger.info('✅ Successfully removed reaction from post');
+            Logger.info('. Successfully removed reaction from post');
             
             // Update the post locally by removing reaction
             _removePostReaction(event.postId, emit);
@@ -514,7 +514,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error removing reaction', e);
+      Logger.error('. Unexpected error removing reaction', e);
       emit(CommunityError(
         message: 'Failed to remove reaction: ${e.toString()}',
         errorType: 'remove_reaction',
@@ -554,7 +554,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Add comment failed: ${failure.message}');
+          Logger.error('. Add comment failed: ${failure.message}');
           
           if (state is CommunityFeedLoaded) {
             final currentState = state as CommunityFeedLoaded;
@@ -573,7 +573,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
           }
         },
         (comment) {
-          Logger.info('✅ Successfully added comment to post');
+          Logger.info('. Successfully added comment to post');
           
           // Update the post with new comment count locally
           _updatePostCommentCount(event.postId, emit);
@@ -597,7 +597,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error adding comment', e);
+      Logger.error('. Unexpected error adding comment', e);
       emit(CommunityError(
         message: 'Failed to add comment: ${e.toString()}',
         errorType: 'add_comment',
@@ -622,14 +622,14 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Load comments failed: ${failure.message}');
+          Logger.error('. Load comments failed: ${failure.message}');
           emit(CommentsError(
             postId: event.postId,
             message: failure.message,
           ));
         },
         (comments) {
-          Logger.info('✅ Loaded ${comments.length} comments');
+          Logger.info('. Loaded ${comments.length} comments');
           emit(CommentsLoaded(
             postId: event.postId,
             comments: comments,
@@ -640,7 +640,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error loading comments', e);
+      Logger.error('. Unexpected error loading comments', e);
       emit(CommentsError(
         postId: event.postId,
         message: 'Failed to load comments: ${e.toString()}',
@@ -678,7 +678,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         isAnonymous: event.isAnonymous,
       );
 
-      Logger.info('✅ Community post created successfully');
+      Logger.info('. Community post created successfully');
       
       // Add the new post to the current feed
       if (state is CommunityFeedLoaded) {
@@ -692,7 +692,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       }
       
     } catch (e) {
-      Logger.error('❌ Unexpected error creating community post', e);
+      Logger.error('. Unexpected error creating community post', e);
       emit(CommunityError(
         message: 'Failed to create community post: ${e.toString()}',
         errorType: 'create_post',
@@ -705,14 +705,14 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     Emitter<CommunityState> emit,
   ) async {
     if (_isLoadingStats && !event.forceRefresh) {
-      Logger.info('📊 Global stats already loading');
+      Logger.info('. Global stats already loading');
       return;
     }
 
     _isLoadingStats = true;
 
     try {
-      Logger.info('📊 Loading global mood statistics');
+      Logger.info('. Loading global mood statistics');
 
       final result = await getGlobalStats(GetGlobalStatsParams(
         timeRange: event.timeRange,
@@ -720,12 +720,12 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
 
       result.fold(
         (failure) {
-          Logger.error('❌ Load global stats failed: ${failure.message}');
+          Logger.error('. Load global stats failed: ${failure.message}');
           // Don't emit error state for stats - it's not critical
-          Logger.warning('⚠️ Could not load global mood statistics');
+          Logger.warning('. Could not load global mood statistics');
         },
         (globalStats) {
-          Logger.info('✅ Loaded global mood statistics: ${globalStats.length} emotions');
+          Logger.info('. Loaded global mood statistics: ${globalStats.length} emotions');
           
           // Update stats in current state
           if (state is CommunityFeedLoaded) {
@@ -738,7 +738,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         },
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error loading global stats', e);
+      Logger.error('. Unexpected error loading global stats', e);
       // Don't emit error state for non-critical operation
     } finally {
       _isLoadingStats = false;

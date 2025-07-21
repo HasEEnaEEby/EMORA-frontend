@@ -1,12 +1,23 @@
 import 'dart:math' as math;
 
-import 'package:emora_mobile_app/features/emotion/presentation/view/pages/earth_emotional_map_view.dart';
+import 'package:emora_mobile_app/features/emotion/presentation/view_model/bloc/emotion_bloc.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/widget/earth_widget.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/widget/orbit_paths.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/widget/solar_system.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/widget/space_background.dart';
 import 'package:flutter/material.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/view/pages/enhanced_atlas_view.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:emora_mobile_app/app/di/injection_container.dart' as di;
+import 'package:emora_mobile_app/features/emotion/domain/use_case/log_emotion.dart';
+import 'package:emora_mobile_app/features/emotion/domain/use_case/get_emotion_feed.dart';
+import 'package:emora_mobile_app/features/emotion/domain/use_case/get_global_emotion_stats.dart';
+import 'package:emora_mobile_app/features/emotion/domain/use_case/get_global_emotion_heatmap.dart';
+import 'package:emora_mobile_app/features/emotion/domain/repository/emotion_repository.dart';
+import 'package:emora_mobile_app/features/emotion/services/insights_service.dart';
+import 'package:emora_mobile_app/features/emotion/presentation/widget/ai_insights_widget.dart';
+import 'package:emora_mobile_app/core/network/api_service.dart';
+import 'package:emora_mobile_app/features/emotion/presentation/view/pages/models/emotion_map_models.dart';
 
 class MoodAtlasView extends StatefulWidget {
   const MoodAtlasView({super.key});
@@ -27,6 +38,12 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
   late AnimationController _uiPulseController;
   late AnimationController _floatingController;
 
+  // AI Insights
+  EmotionInsight? _globalInsight;
+  bool _isLoadingInsights = false;
+  String? _insightsErrorMessage;
+  InsightsService? _insightsService;
+
   // Cinematic transition animations
   late Animation<double> _zoomAnimation;
   late Animation<double> _fadeAnimation;
@@ -39,6 +56,8 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
   void initState() {
     super.initState();
     _initializeAnimations();
+    _initializeInsightsService();
+    _loadGlobalInsights();
   }
 
   void _initializeAnimations() {
@@ -133,6 +152,202 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
     );
   }
 
+  void _initializeInsightsService() {
+    try {
+      _insightsService = InsightsService(di.sl<ApiService>());
+      print('✅ InsightsService initialized successfully in MoodAtlasView');
+    } catch (e) {
+      print('❌ Failed to initialize InsightsService in MoodAtlasView: $e');
+      _insightsService = null;
+    }
+  }
+
+  Future<void> _loadGlobalInsights() async {
+    if (_insightsService == null) {
+      print('⚠️ InsightsService not initialized');
+      setState(() {
+        _isLoadingInsights = false;
+        _insightsErrorMessage = 'Insights service not available';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingInsights = true;
+      _insightsErrorMessage = null;
+    });
+
+    try {
+      final insight = await _insightsService!.getGlobalInsights(
+        timeRange: '7d',
+      );
+      
+      setState(() {
+        _globalInsight = insight;
+        _isLoadingInsights = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingInsights = false;
+        _insightsErrorMessage = 'Failed to load AI insights: $e';
+      });
+      print('Error loading global insights: $e');
+    }
+  }
+
+  void _showAIInsightsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A1A2E),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                // Handle bar
+                Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade600,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.psychology,
+                              color: Color(0xFF8B5CF6),
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                'AI Emotional Intelligence',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        
+                        // Global Insights
+                        if (_globalInsight != null) ...[
+                          Text(
+                            'Global Insights',
+                            style: TextStyle(
+                              color: Colors.grey.shade300,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          AIInsightsWidget(
+                            insight: _globalInsight,
+                            onRefresh: _loadGlobalInsights,
+                          ),
+                        ] else if (_insightsService == null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.orange.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.warning_amber, color: Colors.orange.shade400),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'AI Insights service not available. Please check your connection.',
+                                    style: TextStyle(
+                                      color: Colors.orange.shade400,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        
+                        // Loading state
+                        if (_isLoadingInsights)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(20),
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF8B5CF6),
+                              ),
+                            ),
+                          ),
+                        
+                        // Error state
+                        if (_insightsErrorMessage != null)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.red.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline, color: Colors.red.shade400),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _insightsErrorMessage!,
+                                    style: TextStyle(
+                                      color: Colors.red.shade400,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _rotationController.dispose();
@@ -166,35 +381,60 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
     _floatingController.stop();
 
     print('🎬 Starting epic zoom transition...');
+    
     // Start the epic transition
     _transitionController.forward().then((_) {
-      print('✅ Transition complete! Navigating to map...');
+      if (!mounted) return;
 
-      // Navigate to enhanced atlas after transition
+      // Get the EmotionBloc from current context before navigation
+      EmotionBloc? emotionBloc;
+      try {
+        emotionBloc = context.read<EmotionBloc>();
+        print('✅ Found EmotionBloc in MoodAtlasView context');
+      } catch (e) {
+        print('⚠️ EmotionBloc not found in MoodAtlasView: $e');
+      }
+
       Navigator.push(
-            context,
-            PageRouteBuilder(
-              transitionDuration: const Duration(milliseconds: 800),
-              pageBuilder: (context, animation, secondaryAnimation) =>
-                  const EnhancedAtlasView(),
-              transitionsBuilder: (context, animation, _, child) {
-                return FadeTransition(
-                  opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-                    CurvedAnimation(parent: animation, curve: Curves.easeIn),
-                  ),
-                  child: child,
-                );
-              },
-            ),
-          )
-          .then((_) {
-            print('🔙 Returned from map, resetting...');
-            _resetAfterTransition();
-          })
-          .catchError((error) {
-            print('❌ Navigation error: $error');
-            _resetAfterTransition();
-          });
+        context,
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 800),
+          pageBuilder: (context, animation, secondaryAnimation) {
+            // Pass the EmotionBloc to the new route
+            if (emotionBloc != null) {
+              return BlocProvider.value(
+                value: emotionBloc,
+                child:  EnhancedAtlasView(),
+              );
+            } else {
+              // Fallback: create a new EmotionBloc instance using DI
+              return BlocProvider(
+                create: (context) => EmotionBloc(
+                  logEmotion: di.sl<LogEmotion>(),
+                  getEmotionFeed: di.sl<GetEmotionFeed>(),
+                  getGlobalEmotionStats: di.sl<GetGlobalEmotionStats>(),
+                  getGlobalHeatmap: di.sl<GetGlobalEmotionHeatmap>(),
+                  emotionRepository: di.sl<EmotionRepository>(),
+                ),
+                child:  EnhancedAtlasView(),
+              );
+            }
+          },
+          transitionsBuilder: (context, animation, _, child) {
+            return FadeTransition(
+              opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeIn),
+              ),
+              child: child,
+            );
+          },
+        ),
+      ).then((_) {
+        if (mounted) _resetAfterTransition();
+      }).catchError((error) {
+        print('❌ Navigation error: $error');
+        if (mounted) _resetAfterTransition();
+      });
     });
   }
 
@@ -347,7 +587,47 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
                 ),
 
                 const Spacer(),
-                const Spacer(),
+                
+                // AI Insights Button
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                        const Color(0xFF6366F1).withValues(alpha: 0.2),
+                      ],
+                    ),
+                    border: Border.all(
+                      color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: _showAIInsightsModal,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        child: const Icon(
+                          Icons.psychology,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -367,7 +647,7 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
               // Main instruction card - make it tappable as backup
               GestureDetector(
                 onTap: () {
-                  print('📝 INSTRUCTION CARD TAPPED as backup!');
+                  print('�� INSTRUCTION CARD TAPPED as backup!');
                   _onEarthTap();
                 },
                 behavior: HitTestBehavior.opaque,

@@ -1,3 +1,4 @@
+// lib/features/profile/data/data_source/remote/profile_remote_data_source.dart - FIXED VERSION
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/features/auth/data/data_source/local/auth_local_data_source.dart';
 import 'package:emora_mobile_app/features/profile/data/model/achievement_model.dart';
@@ -28,51 +29,164 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   @override
   Future<UserProfileModel> getUserProfile(String userId) async {
     try {
-      Logger.info('🔍 Fetching profile from API for user: $userId');
+      Logger.info('🔄 Fetching profile from API for user: $userId');
 
-      // Always try API call first to get fresh data with force refresh
-      final response = await apiService.getUserProfile();
-
+      // Fetch both profile and comprehensive stats
+      final profileResponse = await apiService.getUserProfileWithStats();
+      
       Logger.info('✅ Profile API response received');
+      
+      // Try to get comprehensive stats, but don't fail if endpoint doesn't exist
+      Map<String, dynamic> statsResponse = {};
+      try {
+        statsResponse = await apiService.getComprehensiveStats();
+        Logger.info('✅ Comprehensive stats API response received');
+      } catch (e) {
+        Logger.warning('⚠️ Comprehensive stats endpoint not available, using fallback data');
+        statsResponse = {
+          'totalEntries': 0,
+          'currentStreak': 0,
+          'longestStreak': 0,
+          'totalFriends': 0,
+          'helpedFriends': 0,
+          'badgesEarned': 0,
+          'level': 'New Explorer',
+          'favoriteEmotion': '',
+        };
+      }
 
-      // Handle nested response structure from backend
-      final userData = response['user'] as Map<String, dynamic>? ?? response;
+      // 🔧 FIX: Handle the correct backend response structure
+      // The backend returns: { success: true, message: "...", data: { user: { ... } } }
+      final responseData = profileResponse['data'] as Map<String, dynamic>? ?? profileResponse;
+      final userData = responseData['user'] as Map<String, dynamic>? ?? responseData;
+      
+      Logger.info('📊 Full backend response: $profileResponse');
+      Logger.info('📊 Response data: $responseData');
+      Logger.info('📊 User data: $userData');
+      Logger.info('📊 Stats response: $statsResponse');
+
+      // Extract user data and stats
       final profileData = userData['profile'] as Map<String, dynamic>? ?? {};
       final preferencesData = userData['preferences'] as Map<String, dynamic>? ?? {};
+      final statsData = userData['stats'] as Map<String, dynamic>? ?? {};
 
-      // DEBUG: Log the actual backend response
-      Logger.info('🔍 Backend response - userData: $userData');
-      Logger.info('🔍 Backend response - profileData: $profileData');
-      Logger.info('🔍 Backend response - displayName: ${profileData['displayName']}');
+      Logger.info('📊 Backend profileData: $profileData');
+      Logger.info('📊 Backend statsData: $statsData');
 
+      // 🔧 FIX 1: Use backend-calculated stats instead of local calculation
       final displayName = profileData['displayName']?.toString() ?? 
+                         userData['displayName']?.toString() ?? 
                          userData['name']?.toString() ?? 
-                         userData['username']?.toString() ?? 'User';
+                         userData['username']?.toString() ?? 
+                         'User';
 
-      Logger.info('🔍 Computed displayName: $displayName');
+      // 🔧 FIX 2: Get email from userData
+      String email = userData['email']?.toString() ?? '';
+      if (email.isEmpty) {
+        try {
+          final authDataSource = GetIt.instance<AuthLocalDataSource>();
+          final localUserData = await authDataSource.getUserData();
+          email = localUserData?.email ?? 'No email available';
+        } catch (e) {
+          Logger.warning('⚠️ Could not fetch email from local storage: $e');
+          email = 'No email available';
+        }
+      }
+
+      // 🔧 FIX 3: Properly extract bio
+      final bio = profileData['bio']?.toString();
+      final bioText = (bio != null && bio.isNotEmpty) ? bio : null;
+
+      // 🔧 FIX 4: Properly extract avatar with fallbacks
+      final selectedAvatar = userData['selectedAvatar']?.toString();
+      final avatar = selectedAvatar ?? userData['avatar']?.toString() ?? 'fox';
+
+      // 🔧 FIX 5: Use comprehensive stats from the dedicated stats endpoint
+      final comprehensiveStats = statsResponse as Map<String, dynamic>;
+      
+      final totalEntries = comprehensiveStats['totalEntries'] ?? 
+                          statsData['totalEntries'] ?? 
+                          userData['totalEntries'] ?? 
+                          userData['totalEmotions'] ?? 
+                          userData['dashboard']?['totalEmotions'] ?? 0;
+      
+      final currentStreak = comprehensiveStats['currentStreak'] ?? 
+                           statsData['currentStreak'] ?? 
+                           userData['currentStreak'] ?? 
+                           userData['dashboard']?['currentStreak'] ?? 0;
+      
+      final longestStreak = comprehensiveStats['longestStreak'] ?? 
+                           statsData['longestStreak'] ?? 
+                           userData['longestStreak'] ?? 
+                           userData['dashboard']?['longestStreak'] ?? 0;
+      
+      final favoriteEmotion = comprehensiveStats['favoriteEmotion']?.toString() ?? 
+                             statsData['favoriteEmotion']?.toString() ?? 
+                             userData['favoriteEmotion']?.toString() ?? 
+                             userData['dashboard']?['dominantEmotion']?.toString();
+      
+      final totalFriends = comprehensiveStats['totalFriends'] ?? 
+                          statsData['totalFriends'] ?? 
+                          userData['totalFriends'] ?? 
+                          userData['analytics']?['totalFriends'] ?? 0;
+      
+      final helpedFriends = comprehensiveStats['helpedFriends'] ?? 
+                           statsData['helpedFriends'] ?? 
+                           userData['helpedFriends'] ?? 
+                           userData['analytics']?['totalComfortReactionsSent'] ?? 0;
+      
+      final badgesEarned = comprehensiveStats['badgesEarned'] ?? 
+                           statsData['badgesEarned'] ?? 
+                           userData['badgesEarned'] ?? 
+                           userData['achievements']?['earned'] ?? 0;
+      
+      final userLevel = comprehensiveStats['level']?.toString() ?? 
+                       statsData['level']?.toString() ?? 
+                       userData['level']?.toString() ?? 
+                       'New Explorer';
+
+      Logger.info('📝 Extracted data from backend:');
+      Logger.info('   - displayName: $displayName');
+      Logger.info('   - username: ${userData['username']}');
+      Logger.info('   - email: $email');
+      Logger.info('   - bio: $bioText');
+      Logger.info('   - avatar: $avatar');
+      Logger.info('   - totalEntries: $totalEntries');
+      Logger.info('   - currentStreak: $currentStreak');
+      Logger.info('   - longestStreak: $longestStreak');
+      Logger.info('   - favoriteEmotion: $favoriteEmotion');
+      Logger.info('   - totalFriends: $totalFriends');
+      Logger.info('   - helpedFriends: $helpedFriends');
+      Logger.info('   - badgesEarned: $badgesEarned');
+      Logger.info('   - userLevel: $userLevel');
 
       return UserProfileModel(
         id: userData['id']?.toString() ?? userId,
-        name: displayName, // Use the computed displayName
+        name: displayName,
         username: userData['username']?.toString() ?? 'user',
-        email: userData['email']?.toString() ?? '', // ✅ Remove fallback - use real email only
-        avatar: userData['selectedAvatar']?.toString() ?? 'fox',
-        bio: profileData['bio']?.toString(),
+        email: email,
+        avatar: avatar,
+        bio: bioText,
         pronouns: userData['pronouns']?.toString() ?? 'They / Them',
         ageGroup: userData['ageGroup']?.toString() ?? '18-24',
         themeColor: profileData['themeColor']?.toString() ?? '#8B5CF6',
-        joinDate: userData['createdAt'] != null
+        joinDate: userData['joinDate'] != null
+            ? DateTime.parse(userData['joinDate'])
+            : userData['createdAt'] != null
             ? DateTime.parse(userData['createdAt'])
             : DateTime.now(),
-        totalEntries: _calculateTotalEntries(response),
-        currentStreak: _calculateCurrentStreak(response),
-        longestStreak: _calculateLongestStreak(response),
-        favoriteEmotion: _getFavoriteEmotion(response),
-        totalFriends: _getTotalFriends(response),
-        helpedFriends: _getHelpedFriends(response),
-        level: _calculateUserLevel(response),
-        badgesEarned: _getBadgesEarned(response),
-        lastActive: userData['lastLoginAt'] != null
+        // 🔧 FIX 6: Use comprehensive stats
+        totalEntries: totalEntries,
+        currentStreak: currentStreak,
+        longestStreak: longestStreak,
+        favoriteEmotion: favoriteEmotion,
+        totalFriends: totalFriends,
+        helpedFriends: helpedFriends,
+        level: userLevel,
+        badgesEarned: badgesEarned,
+        lastActive: userData['lastActive'] != null
+            ? DateTime.parse(userData['lastActive'])
+            : userData['lastLoginAt'] != null
             ? DateTime.parse(userData['lastLoginAt'])
             : userData['updatedAt'] != null
             ? DateTime.parse(userData['updatedAt'])
@@ -83,8 +197,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       );
     } catch (e) {
       Logger.error('❌ Error fetching profile: $e');
-      // ✅ CRITICAL: Remove fallback to mock data - always throw error
-      // This ensures the app only uses real data from the backend
       throw Exception('Failed to fetch user profile: $e');
     }
   }
@@ -94,6 +206,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     try {
       Logger.info('📝 Updating profile via API');
 
+      // 🔧 FIX 7: Enhanced update data structure to match your API
       final updateData = {
         'pronouns': profile.pronouns ?? 'They / Them',
         'ageGroup': profile.ageGroup ?? '18-24',
@@ -105,46 +218,58 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         },
       };
 
+      Logger.info('📤 Sending update data: $updateData');
+
       final response = await apiService.updateUserProfile(updateData);
       Logger.info('✅ Profile updated successfully');
+      Logger.info('📥 Update response: $response');
       
-      // Clear cache to ensure fresh data is fetched
+      // 🔧 FIX 8: Clear cache and fetch fresh data
       apiService.clearCache();
       
-      // After successful update, fetch the updated profile from the server
-      // to ensure we have the latest data including any server-side changes
-      return await getUserProfile(profile.id);
+      // Wait a bit for server to process
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Fetch the updated profile to ensure we have the latest data
+      final updatedProfile = await getUserProfile(profile.id);
+      Logger.info('✅ Fresh profile data fetched after update');
+      
+      return updatedProfile;
     } catch (e) {
       Logger.error('❌ Error updating profile: $e');
-      return profile;
+      throw Exception('Failed to update profile: $e');
     }
   }
 
   @override
   Future<UserPreferencesModel> getUserPreferences(String userId) async {
     try {
-      Logger.info('🔍 Fetching preferences from API');
+      Logger.info('🔄 Fetching preferences from API');
 
       final response = await apiService.getUserProfile();
-
-      final preferences = response['preferences'] ?? {};
+      final userData = response['user'] as Map<String, dynamic>? ?? response;
+      final preferences = userData['preferences'] as Map<String, dynamic>? ?? {};
+      final notifications = preferences['notifications'] as Map<String, dynamic>? ?? {};
 
       return UserPreferencesModel(
-        notificationsEnabled:
-            preferences['notifications']?['dailyReminder'] ?? true,
-        sharingEnabled: preferences['privacy']?['shareEmotions'] ?? false,
-        language: preferences['app']?['language'] ?? 'English',
-        theme: preferences['app']?['theme'] ?? 'Cosmic Purple',
-        darkModeEnabled: preferences['app']?['darkMode'] ?? true,
+        notificationsEnabled: notifications['dailyReminder'] ?? true,
+        sharingEnabled: preferences['shareEmotions'] ?? false,
+        language: 'English',
+        theme: userData['profile']?['themeColor'] ?? '#8B5CF6',
+        darkModeEnabled: true,
         privacySettings: {
-          'shareLocation': preferences['privacy']?['shareLocation'] ?? false,
-          'anonymousMode': preferences['privacy']?['anonymousMode'] ?? false,
-          'moodPrivacy': preferences['privacy']?['moodPrivacy'] ?? 'private',
+          'shareLocation': preferences['shareLocation'] ?? false,
+          'anonymousMode': preferences['anonymousMode'] ?? false,
+          'moodPrivacy': preferences['moodPrivacy'] ?? 'private',
+          'shareEmotions': preferences['shareEmotions'] ?? false,
         },
         customSettings: {
-          'reminderTime':
-              preferences['notifications']?['reminderTime'] ?? '20:00',
-          'autoBackup': preferences['app']?['autoBackup'] ?? true,
+          'reminderTime': notifications['time'] ?? '20:00',
+          'timezone': notifications['timezone'] ?? 'UTC',
+          'friendRequests': notifications['friendRequests'] ?? true,
+          'comfortReactions': notifications['comfortReactions'] ?? true,
+          'friendMoodUpdates': notifications['friendMoodUpdates'] ?? true,
+          'allowRecommendations': preferences['allowRecommendations'] ?? true,
         },
       );
     } catch (e) {
@@ -162,13 +287,21 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       Logger.info('📝 Updating preferences via API');
 
       final updateData = {
-        'notificationsEnabled': preferences.notificationsEnabled,
-        'dataSharingEnabled': preferences.sharingEnabled,
-        'language': preferences.language,
-        'theme': preferences.theme,
-        'darkModeEnabled': preferences.darkModeEnabled,
-        'privacySettings': preferences.privacySettings,
-        'customSettings': preferences.customSettings,
+        'preferences': {
+          'notifications': {
+            'dailyReminder': preferences.notificationsEnabled,
+            'time': preferences.customSettings?['reminderTime'] ?? '20:00',
+            'timezone': preferences.customSettings?['timezone'] ?? 'UTC',
+            'friendRequests': preferences.customSettings?['friendRequests'] ?? true,
+            'comfortReactions': preferences.customSettings?['comfortReactions'] ?? true,
+            'friendMoodUpdates': preferences.customSettings?['friendMoodUpdates'] ?? true,
+          },
+          'shareLocation': preferences.privacySettings?['shareLocation'] ?? false,
+          'shareEmotions': preferences.privacySettings?['shareEmotions'] ?? false,
+          'anonymousMode': preferences.privacySettings?['anonymousMode'] ?? false,
+          'allowRecommendations': preferences.customSettings?['allowRecommendations'] ?? true,
+          'moodPrivacy': preferences.privacySettings?['moodPrivacy'] ?? 'private',
+        }
       };
 
       final response = await apiService.updateUserPreferences(updateData);
@@ -187,26 +320,29 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
       final achievementsList = await apiService.getUserAchievements();
 
+      if (achievementsList.isEmpty) {
+        // Return engaging starter achievements if none exist
+        return _createEngagingStarterAchievements(userId);
+      }
+
       return achievementsList.map((achievement) {
         return AchievementModel(
           id: achievement['id'] ?? achievement['_id'] ?? '',
           title: achievement['title'] ?? achievement['name'] ?? '',
           description: achievement['description'] ?? '',
-          icon: _mapAchievementIcon(
-            achievement['icon'] ?? achievement['category'],
-          ),
+          icon: _mapAchievementIcon(achievement['icon'] ?? achievement['category']),
           category: achievement['category'] ?? 'general',
           earned: achievement['earned'] ?? achievement['isEarned'] ?? false,
           earnedDate: achievement['earnedDate'],
           progress: achievement['progress'] ?? 0,
           requirement: achievement['requirement'] ?? achievement['target'] ?? 1,
-          color: achievement['color'] ?? '#6B7280',
+          color: achievement['color'] ?? _getColorForCategory(achievement['category']),
           rarity: _mapAchievementRarity(achievement['category']),
         );
       }).toList();
     } catch (e) {
       Logger.error('❌ Error fetching achievements: $e');
-      return _createStarterAchievements(userId);
+      return _createEngagingStarterAchievements(userId);
     }
   }
 
@@ -235,59 +371,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     }
   }
 
-  // Helper methods
-  int _calculateTotalEntries(Map<String, dynamic> userData) {
-    final analytics = userData['analytics'] as Map<String, dynamic>?;
-    return analytics?['totalEntries'] ?? 0;
-  }
-
-  int _calculateCurrentStreak(Map<String, dynamic> userData) {
-    final analytics = userData['analytics'] as Map<String, dynamic>?;
-    return analytics?['currentStreak'] ?? 0;
-  }
-
-  int _calculateLongestStreak(Map<String, dynamic> userData) {
-    final analytics = userData['analytics'] as Map<String, dynamic>?;
-    return analytics?['longestStreak'] ?? 0;
-  }
-
-  String? _getFavoriteEmotion(Map<String, dynamic> userData) {
-    final analytics = userData['analytics'] as Map<String, dynamic>?;
-    return analytics?['favoriteEmotion'];
-  }
-
-  int _getTotalFriends(Map<String, dynamic> userData) {
-    return 0; // Implement based on your social features
-  }
-
-  int _getHelpedFriends(Map<String, dynamic> userData) {
-    return 0; // Implement based on your social features
-  }
-
-  String _calculateUserLevel(Map<String, dynamic> userData) {
-    final totalEntries = _calculateTotalEntries(userData);
-    final currentStreak = _calculateCurrentStreak(userData);
-
-    if (totalEntries >= 365 && currentStreak >= 100) {
-      return 'Emotion Master';
-    } else if (totalEntries >= 180 && currentStreak >= 50) {
-      return 'Mindful Sage';
-    } else if (totalEntries >= 90 && currentStreak >= 30) {
-      return 'Feeling Guide';
-    } else if (totalEntries >= 30 && currentStreak >= 10) {
-      return 'Emotion Seeker';
-    } else if (totalEntries >= 10) {
-      return 'Mindful Beginner';
-    } else {
-      return 'New Explorer';
-    }
-  }
-
-  int _getBadgesEarned(Map<String, dynamic> userData) {
-    final analytics = userData['analytics'] as Map<String, dynamic>?;
-    return analytics?['badgesEarned'] ?? 0;
-  }
-
+  // 🔧 FIX 9: Remove local calculation methods since we're using backend stats
   String _mapAchievementIcon(String? category) {
     final iconMap = {
       'milestone': 'emoji_events',
@@ -296,8 +380,27 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       'social': 'people',
       'exploration': 'explore',
       'mindfulness': 'psychology',
+      'first_steps': 'emoji_emotions',
+      'getting_started': 'trending_up',
+      'emotion_explorer': 'explore',
+      'dedicated_tracker': 'psychology',
+      'three_day_streak': 'local_fire_department',
+      'week_warrior': 'military_tech',
+      'consistent_tracker': 'schedule',
     };
     return iconMap[category] ?? 'star';
+  }
+
+  String _getColorForCategory(String? category) {
+    final colorMap = {
+      'milestone': '#10B981',
+      'streak': '#EF4444',
+      'diversity': '#8B5CF6',
+      'social': '#3B82F6',
+      'exploration': '#F59E0B',
+      'mindfulness': '#6366F1',
+    };
+    return colorMap[category] ?? '#6B7280';
   }
 
   String _mapAchievementRarity(String? category) {
@@ -312,12 +415,14 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     return rarityMap[category] ?? 'common';
   }
 
-  List<AchievementModel> _createStarterAchievements(String userId) {
+  // 🔧 FIX 10: More engaging and comprehensive starter achievements
+  List<AchievementModel> _createEngagingStarterAchievements(String userId) {
     return [
+      // Welcome & First Steps
       const AchievementModel(
-        id: 'starter_001',
-        title: 'Welcome!',
-        description: 'Welcome to your emotional journey',
+        id: 'welcome_aboard',
+        title: 'Welcome Aboard! 🎉',
+        description: 'Welcome to your emotional wellness journey',
         icon: 'star',
         category: 'milestone',
         earned: true,
@@ -327,10 +432,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         rarity: 'common',
       ),
       const AchievementModel(
-        id: 'starter_002',
-        title: 'First Entry',
-        description: 'Complete your first mood entry',
-        icon: 'sentiment_satisfied',
+        id: 'first_steps',
+        title: 'First Steps',
+        description: 'Log your first emotion entry',
+        icon: 'emoji_emotions',
         category: 'milestone',
         earned: false,
         progress: 0,
@@ -339,16 +444,170 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         rarity: 'common',
       ),
       const AchievementModel(
-        id: 'starter_003',
-        title: 'Week Warrior',
-        description: 'Log your mood for 7 consecutive days',
+        id: 'profile_complete',
+        title: 'Profile Master',
+        description: 'Complete your profile with avatar, bio, and preferences',
+        icon: 'account_circle',
+        category: 'milestone',
+        earned: false,
+        progress: 0,
+        requirement: 1,
+        color: '#8B5CF6',
+        rarity: 'common',
+      ),
+      
+      // Streak Achievements
+      const AchievementModel(
+        id: 'three_day_streak',
+        title: 'Three Day Streak 🔥',
+        description: 'Log emotions for 3 consecutive days',
         icon: 'local_fire_department',
         category: 'streak',
         earned: false,
         progress: 0,
-        requirement: 7,
+        requirement: 3,
         color: '#EF4444',
         rarity: 'rare',
+      ),
+      const AchievementModel(
+        id: 'week_warrior',
+        title: 'Week Warrior ⚡',
+        description: 'Maintain a 7-day logging streak',
+        icon: 'military_tech',
+        category: 'streak',
+        earned: false,
+        progress: 0,
+        requirement: 7,
+        color: '#F59E0B',
+        rarity: 'rare',
+      ),
+      const AchievementModel(
+        id: 'month_master',
+        title: 'Month Master 🏆',
+        description: 'Complete 30 consecutive days of emotion tracking',
+        icon: 'emoji_events',
+        category: 'streak',
+        earned: false,
+        progress: 0,
+        requirement: 30,
+        color: '#EF4444',
+        rarity: 'epic',
+      ),
+      
+      // Progress Milestones
+      const AchievementModel(
+        id: 'getting_started',
+        title: 'Getting Started 📈',
+        description: 'Complete 5 emotion entries',
+        icon: 'trending_up',
+        category: 'milestone',
+        earned: false,
+        progress: 0,
+        requirement: 5,
+        color: '#10B981',
+        rarity: 'common',
+      ),
+      const AchievementModel(
+        id: 'emotion_explorer',
+        title: 'Emotion Explorer 🧭',
+        description: 'Log 15 different emotions',
+        icon: 'explore',
+        category: 'exploration',
+        earned: false,
+        progress: 0,
+        requirement: 15,
+        color: '#6366F1',
+        rarity: 'rare',
+      ),
+      const AchievementModel(
+        id: 'dedicated_tracker',
+        title: 'Dedicated Tracker 🎯',
+        description: 'Complete 30 emotion entries',
+        icon: 'psychology',
+        category: 'milestone',
+        earned: false,
+        progress: 0,
+        requirement: 30,
+        color: '#8B5CF6',
+        rarity: 'epic',
+      ),
+      
+      // Mindfulness & Growth
+      const AchievementModel(
+        id: 'mindful_moments',
+        title: 'Mindful Moments 🧘',
+        description: 'Log emotions with detailed notes 5 times',
+        icon: 'psychology',
+        category: 'mindfulness',
+        earned: false,
+        progress: 0,
+        requirement: 5,
+        color: '#6366F1',
+        rarity: 'rare',
+      ),
+      const AchievementModel(
+        id: 'emotion_diversity',
+        title: 'Emotion Rainbow 🌈',
+        description: 'Experience and log 10 different emotion categories',
+        icon: 'palette',
+        category: 'diversity',
+        earned: false,
+        progress: 0,
+        requirement: 10,
+        color: '#8B5CF6',
+        rarity: 'epic',
+      ),
+      const AchievementModel(
+        id: 'growth_mindset',
+        title: 'Growth Mindset 🌱',
+        description: 'Update your profile and personalize your experience',
+        icon: 'trending_up',
+        category: 'milestone',
+        earned: false,
+        progress: 0,
+        requirement: 1,
+        color: '#10B981',
+        rarity: 'common',
+      ),
+      
+      // Social & Community (for future features)
+      const AchievementModel(
+        id: 'social_butterfly',
+        title: 'Social Butterfly 🦋',
+        description: 'Connect with your first friend',
+        icon: 'people',
+        category: 'social',
+        earned: false,
+        progress: 0,
+        requirement: 1,
+        color: '#3B82F6',
+        rarity: 'rare',
+      ),
+      const AchievementModel(
+        id: 'helpful_heart',
+        title: 'Helpful Heart ❤️',
+        description: 'Support a friend with comfort reactions',
+        icon: 'favorite',
+        category: 'social',
+        earned: false,
+        progress: 0,
+        requirement: 1,
+        color: '#EF4444',
+        rarity: 'rare',
+      ),
+      
+      // Special Recognition
+      const AchievementModel(
+        id: 'early_adopter',
+        title: 'Early Adopter 🚀',
+        description: 'One of the first to join our community',
+        icon: 'rocket_launch',
+        category: 'special',
+        earned: true,
+        progress: 1,
+        requirement: 1,
+        color: '#F59E0B',
+        rarity: 'legendary',
       ),
     ];
   }

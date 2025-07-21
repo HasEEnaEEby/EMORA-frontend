@@ -249,7 +249,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
     );
   }
 
-  // ✅ Enhanced navigation handling with user-friendly feedback
+  // . Enhanced navigation handling with user-friendly feedback
   void _handleNavigationState(SplashState state) {
     // Add delay to ensure smooth animation completion
     Future.delayed(const Duration(milliseconds: 800), () {
@@ -293,7 +293,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
           arguments: state.userData,
         );
       } else if (state is SplashError) {
-        Logger.error('❌ Splash error: ${state.message}', state.message);
+        Logger.error('. Splash error: ${state.message}', state.message);
         NavigationService.showErrorSnackBar('Error: ${state.message}');
 
         // Smart error fallback based on whether user can retry
@@ -320,7 +320,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
     });
   }
 
-  // ✅ Helper method to show user-friendly navigation feedback
+  // . Helper method to show user-friendly navigation feedback
   void _showNavigationFeedback(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -535,7 +535,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
         placeholderBuilder: (context) => _buildTextLogo(),
       );
     } catch (e) {
-      Logger.warning('⚠️ SVG logo not found, using text logo');
+      Logger.warning('. SVG logo not found, using text logo');
       return _buildTextLogo();
     }
   }

@@ -11,6 +11,7 @@ class AchievementEntity extends Equatable {
   final int requirement;
   final int progress;
   final String category;
+  final String rarity;
 
   const AchievementEntity({
     required this.id,
@@ -23,6 +24,7 @@ class AchievementEntity extends Equatable {
     required this.requirement,
     required this.progress,
     required this.category,
+    required this.rarity,
   });
 
   // Factory constructor to create from backend response
@@ -38,6 +40,7 @@ class AchievementEntity extends Equatable {
       requirement: data['requirement'] as int,
       progress: data['progress'] as int,
       category: data['category'] as String,
+      rarity: data['rarity'] as String? ?? 'common',
     );
   }
 
@@ -52,6 +55,7 @@ class AchievementEntity extends Equatable {
     int? requirement,
     int? progress,
     String? category,
+    String? rarity,
   }) {
     return AchievementEntity(
       id: id ?? this.id,
@@ -64,6 +68,7 @@ class AchievementEntity extends Equatable {
       requirement: requirement ?? this.requirement,
       progress: progress ?? this.progress,
       category: category ?? this.category,
+      rarity: rarity ?? this.rarity,
     );
   }
 
@@ -79,10 +84,11 @@ class AchievementEntity extends Equatable {
     requirement,
     progress,
     category,
+    rarity,
   ];
 
   @override
   String toString() {
-    return 'AchievementEntity(id: $id, title: $title, earned: $earned, progress: $progress/$requirement)';
+    return 'AchievementEntity(id: $id, title: $title, earned: $earned, progress: $progress/$requirement, rarity: $rarity)';
   }
 }

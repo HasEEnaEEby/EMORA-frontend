@@ -296,8 +296,8 @@ class AppConfig {
   static const bool enableLogging = true;
   static const bool enableNetworkLogging = true;
   static const bool enableOfflineMode = true;
-  static const bool gracefullyHandleMissingEndpoints = false; // ✅ DISABLED: Let real auth errors propagate
-  static const bool enableProfileDialogMockData = false; // ✅ DISABLED: Always use real profile data
+  static const bool gracefullyHandleMissingEndpoints = false; // . DISABLED: Let real auth errors propagate
+  static const bool enableProfileDialogMockData = false; // . DISABLED: Always use real profile data
   static const bool enableAchievementMockData =
       true; // For testing achievements
 
@@ -309,7 +309,7 @@ class AppConfig {
   static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
   static const Duration longAnimationDuration = Duration(milliseconds: 600);
   static const Duration cacheExpirationDuration = Duration(hours: 24);
-  static const Duration cacheValidityDuration = Duration(hours: 24); // ✅ Increased cache duration to reduce redundant API calls
+  static const Duration cacheValidityDuration = Duration(hours: 24); // . Increased cache duration to reduce redundant API calls
   static const Duration retryDelay = Duration(seconds: 2);
   static const int maxRetryAttempts = 3;
   static const int maxCacheSize = 100;
@@ -344,7 +344,7 @@ class AppConfig {
     'Other',
   ];
 
-  // ✅ FIXED: Match exact backend validation values
+  // . FIXED: Match exact backend validation values
   static const List<String> availableAgeGroups = [
     'Under 18',
     '18-24', // Fixed: backend expects 18-24, not 18-25
@@ -434,7 +434,7 @@ class AppConfig {
   ];
 
   static const String defaultPronoun = 'They / Them';
-  static const String defaultAgeGroup = '18-24'; // ✅ Fixed to match backend expectations
+  static const String defaultAgeGroup = '18-24'; // . Fixed to match backend expectations
   static const String defaultAvatar = 'panda';
   static const String defaultLanguage = 'en';
   static const String defaultTheme = 'Cosmic Purple';
@@ -548,7 +548,7 @@ class AppConfig {
   static const String usernameExistsMessage =
       'This name is already taken. How about trying one of these? 💡';
   static const String usernameAvailableMessage =
-      'Perfect! This name is available ✅';
+      'Perfect! This name is available .';
 
   // Profile Dialog Messages
   static const String profileUpdateSuccessMessage =
@@ -562,7 +562,7 @@ class AppConfig {
   static const String dataExportSuccessMessage =
       'Data exported successfully! 📁';
   static const String dataExportErrorMessage =
-      'Could not export data. Please try again 📋';
+      'Could not export data. Please try again .';
   static const String avatarChangeSuccessMessage =
       'Avatar updated! Looking good! 🐾';
 
@@ -573,7 +573,7 @@ class AppConfig {
   static const String onboardingCompleteMessage =
       'Your emotional journey begins 🪷';
   static const String usernameCheckingMessage =
-      'Checking if this name is available... 🔍';
+      'Checking if this name is available... .';
 
   // Onboarding Messages
   static const String onboardingWelcomeMessage =
@@ -587,7 +587,7 @@ class AppConfig {
   static const String developmentModeMessage =
       'Running in development mode - crafting with care 🛠️';
   static const String endpointNotAvailableMessage =
-      'This feature is being crafted with love 🔧';
+      'This feature is being crafted with love .';
 
   // ===========================
   // ENVIRONMENT HELPERS
@@ -814,7 +814,7 @@ class AppConfig {
     if (!isDevelopmentMode) return false;
     if (statusCode == 404) return true;
     
-    // ✅ CRITICAL FIX: Never gracefully handle 401 errors
+    // . CRITICAL FIX: Never gracefully handle 401 errors
     // Authentication errors must always propagate to auth layer
     // if (statusCode == 401 && gracefullyHandleMissingEndpoints) return true;
     
@@ -832,8 +832,8 @@ class AppConfig {
   static String getFriendlyErrorMessage(String originalError) {
     if (originalError.contains('404') || originalError.contains('not found')) {
       return isDevelopmentMode
-          ? 'Feature not available in development mode 🔧'
-          : 'Service temporarily unavailable 📋';
+          ? 'Feature not available in development mode .'
+          : 'Service temporarily unavailable .';
     }
     if (originalError.contains('401') ||
         originalError.contains('unauthorized')) {
@@ -1009,7 +1009,7 @@ class AppConfig {
     } catch (e) {
       // If we can't parse the token, treat it as expired
       if (isDevelopmentMode) {
-        print('⚠️ Error parsing JWT token: $e');
+        print('. Error parsing JWT token: $e');
       }
       return true;
     }
@@ -1249,7 +1249,7 @@ class AppConfig {
 
   static void logConfigInfo() {
     if (enableLogging && isDevelopmentMode) {
-      print('🔧 AppConfig Info:');
+      print('. AppConfig Info:');
       print('  - App Name: $appName');
       print('  - Version: $appVersion');
       print('  - API Base URL: $effectiveApiBaseUrl');

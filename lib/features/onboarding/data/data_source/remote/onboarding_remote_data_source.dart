@@ -31,7 +31,7 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
       // Handle both formats: direct steps array or nested in 'steps' key
       List<dynamic> stepsData;
       if (data['steps'] != null) {
-        stepsData = data['steps'] as List<dynamic>;
+        stepsData = data['steps'] as List<dynamic>? ?? [];
       } else if (data is List) {
         stepsData = data as List;
       } else {
@@ -45,29 +45,29 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
           )
           .toList();
 
-      Logger.info('✅ Retrieved ${steps.length} onboarding steps from server');
+      Logger.info('. Retrieved ${steps.length} onboarding steps from server');
       return steps;
     } on ValidationException catch (e) {
-      Logger.error('❌ Validation error fetching onboarding steps', e);
+      Logger.error('. Validation error fetching onboarding steps', e);
       rethrow;
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Authentication error fetching onboarding steps', e);
+      Logger.error('. Authentication error fetching onboarding steps', e);
       rethrow;
     } on NotFoundException catch (e) {
-      Logger.error('❌ Onboarding steps endpoint not found', e);
+      Logger.error('. Onboarding steps endpoint not found', e);
       rethrow;
     } on ServerException catch (e) {
-      Logger.error('❌ Server error fetching onboarding steps', e);
+      Logger.error('. Server error fetching onboarding steps', e);
       rethrow;
     } on NetworkException catch (e) {
-      Logger.error('❌ Network error fetching onboarding steps', e);
+      Logger.error('. Network error fetching onboarding steps', e);
       // Convert to ServerException for consistency
       throw ServerException(
         message: 'Network error: ${e.message}',
         code: e.code,
       );
     } catch (e) {
-      Logger.error('❌ Unexpected error fetching onboarding steps', e);
+      Logger.error('. Unexpected error fetching onboarding steps', e);
       throw ServerException(message: 'Unexpected error: ${e.toString()}');
     }
   }
@@ -86,40 +86,40 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
       // Use the new response handler
       final data = ApiResponseHandler.handleResponse(response);
 
-      Logger.info('✅ User onboarding data saved to server');
+      Logger.info('. User onboarding data saved to server');
       Logger.debug('📥 Server response', data);
 
       return true;
     } on ValidationException catch (e) {
-      Logger.error('❌ Validation error saving user data', e);
+      Logger.error('. Validation error saving user data', e);
 
       // Check for specific age group validation error
       if (e.message.contains('ageGroup')) {
         Logger.error(
-          '🔧 Age group validation failed - check frontend age options',
+          '. Age group validation failed - check frontend age options',
         );
-        Logger.error('📋 Current user data: ${userData.ageGroup}');
+        Logger.error('. Current user data: ${userData.ageGroup}');
       }
 
       // Return false for validation errors but don't throw
       // This allows the app to continue working offline
       return false;
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Authentication error saving user data', e);
+      Logger.error('. Authentication error saving user data', e);
       rethrow;
     } on NotFoundException catch (e) {
-      Logger.error('❌ User data endpoint not found', e);
+      Logger.error('. User data endpoint not found', e);
       rethrow;
     } on ServerException catch (e) {
-      Logger.error('❌ Server error saving user data', e);
+      Logger.error('. Server error saving user data', e);
       // Return false for server errors but don't throw
       return false;
     } on NetworkException catch (e) {
-      Logger.error('❌ Network error saving user data', e);
+      Logger.error('. Network error saving user data', e);
       // Return false for network errors but don't throw
       return false;
     } catch (e) {
-      Logger.error('❌ Unexpected error saving user data', e);
+      Logger.error('. Unexpected error saving user data', e);
       return false;
     }
   }
@@ -138,37 +138,37 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
       // Use the new response handler
       final data = ApiResponseHandler.handleResponse(response);
 
-      Logger.info('✅ Onboarding completed on server');
+      Logger.info('. Onboarding completed on server');
       Logger.debug('📥 Server response', data);
 
       return true;
     } on ValidationException catch (e) {
-      Logger.error('❌ Validation error completing onboarding', e);
+      Logger.error('. Validation error completing onboarding', e);
 
       // Check for specific age group validation error
       if (e.message.contains('ageGroup')) {
-        Logger.error('🔧 Age group validation failed during completion');
-        Logger.error('📋 Current user data: ${userData.ageGroup}');
+        Logger.error('. Age group validation failed during completion');
+        Logger.error('. Current user data: ${userData.ageGroup}');
       }
 
       // Return false for validation errors but don't throw
       return false;
     } on UnauthorizedException catch (e) {
-      Logger.error('❌ Authentication error completing onboarding', e);
+      Logger.error('. Authentication error completing onboarding', e);
       rethrow;
     } on NotFoundException catch (e) {
-      Logger.error('❌ Onboarding completion endpoint not found', e);
+      Logger.error('. Onboarding completion endpoint not found', e);
       rethrow;
     } on ServerException catch (e) {
-      Logger.error('❌ Server error completing onboarding', e);
+      Logger.error('. Server error completing onboarding', e);
       // Return false for server errors but don't throw
       return false;
     } on NetworkException catch (e) {
-      Logger.error('❌ Network error completing onboarding', e);
+      Logger.error('. Network error completing onboarding', e);
       // Return false for network errors but don't throw
       return false;
     } catch (e) {
-      Logger.error('❌ Unexpected error completing onboarding', e);
+      Logger.error('. Unexpected error completing onboarding', e);
       return false;
     }
   }

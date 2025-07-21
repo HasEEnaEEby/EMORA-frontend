@@ -3,8 +3,8 @@ import 'package:dartz/dartz.dart';
 import 'package:emora_mobile_app/core/config/app_config.dart';
 import 'package:emora_mobile_app/core/errors/exceptions.dart';
 import 'package:emora_mobile_app/core/errors/failures.dart';
-import 'package:emora_mobile_app/core/network/api_service.dart'; // ✅ Added ApiService import
-import 'package:emora_mobile_app/core/network/dio_client.dart'; // ✅ Added DioClient import
+import 'package:emora_mobile_app/core/network/api_service.dart'; // . Added ApiService import
+import 'package:emora_mobile_app/core/network/dio_client.dart'; // . Added DioClient import
 import 'package:emora_mobile_app/core/network/network_info.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/features/auth/data/data_source/local/auth_local_data_source.dart';
@@ -18,15 +18,15 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
   final AuthLocalDataSource localDataSource;
   final NetworkInfo networkInfo;
-  final ApiService apiService; // ✅ Added ApiService injection
-  final DioClient dioClient; // ✅ Added DioClient injection
+  final ApiService apiService; // . Added ApiService injection
+  final DioClient dioClient; // . Added DioClient injection
 
   AuthRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
     required this.networkInfo,
-    required this.apiService, // ✅ Added ApiService injection
-    required this.dioClient, // ✅ Added DioClient injection
+    required this.apiService, // . Added ApiService injection
+    required this.dioClient, // . Added DioClient injection
   });
 
   @override
@@ -34,7 +34,7 @@ class AuthRepositoryImpl implements AuthRepository {
     required String username,
     required String email,
     required String password,
-    required String confirmPassword, // ✅ Added confirmPassword parameter
+    required String confirmPassword, // . Added confirmPassword parameter
     String? pronouns,
     String? ageGroup,
     String? selectedAvatar,
@@ -50,7 +50,7 @@ class AuthRepositoryImpl implements AuthRepository {
           username: username,
           email: email,
           password: password,
-          confirmPassword: confirmPassword, // ✅ Added confirmPassword parameter
+          confirmPassword: confirmPassword, // . Added confirmPassword parameter
           pronouns: pronouns,
           ageGroup: ageGroup,
           selectedAvatar: selectedAvatar,
@@ -69,23 +69,23 @@ class AuthRepositoryImpl implements AuthRepository {
         );
         await localDataSource.markAsLoggedIn();
 
-        // ✅ CRITICAL FIX: Set auth token in both ApiService and DioClient for immediate use
+        // . CRITICAL FIX: Set auth token in both ApiService and DioClient for immediate use
         await _synchronizeAuthToken(authResponse.token);
 
-        Logger.info('✅ Registration successful and data saved locally');
+        Logger.info('. Registration successful and data saved locally');
         return Right(authResponse);
       } else {
-        Logger.warning('❌ No internet connection for registration');
+        Logger.warning('. No internet connection for registration');
         return Left(NetworkFailure(message: AppConfig.networkErrorMessage));
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error during registration', e);
+      Logger.error('. Server error during registration', e);
       return Left(ServerFailure(message: e.message));
     } on CacheException catch (e) {
-      Logger.error('❌ Cache error during registration', e);
+      Logger.error('. Cache error during registration', e);
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error during registration', e);
+      Logger.error('. Unexpected error during registration', e);
       return Left(ServerFailure(message: AppConfig.serverErrorMessage));
     }
   }
@@ -114,23 +114,23 @@ class AuthRepositoryImpl implements AuthRepository {
         );
         await localDataSource.markAsLoggedIn();
 
-        // ✅ CRITICAL FIX: Set auth token in both ApiService and DioClient for immediate use
+        // . CRITICAL FIX: Set auth token in both ApiService and DioClient for immediate use
         await _synchronizeAuthToken(authResponse.token);
 
-        Logger.info('✅ Login successful and data saved locally');
+        Logger.info('. Login successful and data saved locally');
         return Right(authResponse);
       } else {
-        Logger.warning('❌ No internet connection for login');
+        Logger.warning('. No internet connection for login');
         return Left(NetworkFailure(message: AppConfig.networkErrorMessage));
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error during login', e);
+      Logger.error('. Server error during login', e);
       return Left(ServerFailure(message: e.message));
     } on CacheException catch (e) {
-      Logger.error('❌ Cache error during login', e);
+      Logger.error('. Cache error during login', e);
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error during login', e);
+      Logger.error('. Unexpected error during login', e);
       return Left(ServerFailure(message: AppConfig.serverErrorMessage));
     }
   }
@@ -138,17 +138,17 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, UserEntity>> getCurrentUser() async {
     try {
-      Logger.info('👤 Getting current user');
+      Logger.info('. Getting current user');
 
       // Try to get user from cache first
       try {
         final cachedUser = await localDataSource.getUserData();
         if (cachedUser != null) {
-          Logger.info('✅ User found in cache');
+          Logger.info('. User found in cache');
           return Right(cachedUser.toEntity());
         }
       } catch (e) {
-        Logger.warning('⚠️ No cached user found');
+        Logger.warning('. No cached user found');
       }
 
       // If no cached user and we have internet, try to fetch from server
@@ -157,24 +157,24 @@ class AuthRepositoryImpl implements AuthRepository {
         if (token != null) {
           final user = await remoteDataSource.getCurrentUser();
           await localDataSource.saveUserData(UserModel.fromEntity(user));
-          Logger.info('✅ User fetched from server and cached');
+          Logger.info('. User fetched from server and cached');
           return Right(user);
         } else {
-          Logger.warning('❌ No auth token found');
+          Logger.warning('. No auth token found');
           return Left(AuthFailure(message: AppConfig.unauthorizedErrorMessage));
         }
       } else {
-        Logger.warning('❌ No internet connection and no cached user');
+        Logger.warning('. No internet connection and no cached user');
         return Left(NetworkFailure(message: AppConfig.networkErrorMessage));
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error getting current user', e);
+      Logger.error('. Server error getting current user', e);
       return Left(ServerFailure(message: e.message));
     } on CacheException catch (e) {
-      Logger.error('❌ Cache error getting current user', e);
+      Logger.error('. Cache error getting current user', e);
       return Left(CacheFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error getting current user', e);
+      Logger.error('. Unexpected error getting current user', e);
       return Left(ServerFailure(message: AppConfig.serverErrorMessage));
     }
   }
@@ -188,10 +188,10 @@ class AuthRepositoryImpl implements AuthRepository {
       if (await networkInfo.isConnected) {
         try {
           await remoteDataSource.logout();
-          Logger.info('✅ Logout successful on server');
+          Logger.info('. Logout successful on server');
         } catch (e) {
           Logger.warning(
-            '⚠️ Server logout failed, continuing with local logout: $e',
+            '. Server logout failed, continuing with local logout: $e',
           );
         }
       }
@@ -199,18 +199,18 @@ class AuthRepositoryImpl implements AuthRepository {
       // Always clear local data
       await clearAuthData();
       
-      // ✅ CRITICAL FIX: Clear auth tokens from both network clients
+      // . CRITICAL FIX: Clear auth tokens from both network clients
       await _clearAuthTokens();
       
-      Logger.info('✅ Local auth data cleared');
+      Logger.info('. Local auth data cleared');
       return const Right(null);
     } catch (e) {
-      Logger.error('❌ Error during logout', e);
+      Logger.error('. Error during logout', e);
       // Even if there's an error, try to clear local data
       try {
         await clearAuthData();
       } catch (clearError) {
-        Logger.error('❌ Failed to clear local data during logout', clearError);
+        Logger.error('. Failed to clear local data during logout', clearError);
       }
       return Left(CacheFailure(message: 'Logout completed with errors'));
     }
@@ -221,18 +221,18 @@ class AuthRepositoryImpl implements AuthRepository {
     String username,
   ) async {
     try {
-      Logger.info('🔍 Checking username availability: $username');
+      Logger.info('. Checking username availability: $username');
 
       if (await networkInfo.isConnected) {
         final result = await remoteDataSource.checkUsernameAvailability(
           username,
         );
-        Logger.info('✅ Username availability check completed');
+        Logger.info('. Username availability check completed');
         return Right(result);
       } else {
         // Return mock data in offline mode
         Logger.warning(
-          '❌ No internet connection, returning mock availability check',
+          '. No internet connection, returning mock availability check',
         );
         final isAvailable = !AppConfig.reservedUsernames.contains(
           username.toLowerCase(),
@@ -245,10 +245,10 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error checking username', e);
+      Logger.error('. Server error checking username', e);
       return Left(ServerFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error checking username', e);
+      Logger.error('. Unexpected error checking username', e);
       // Return mock data on error
       final isAvailable = !AppConfig.reservedUsernames.contains(
         username.toLowerCase(),
@@ -270,17 +270,17 @@ class AuthRepositoryImpl implements AuthRepository {
       if (await networkInfo.isConnected) {
         final newToken = await remoteDataSource.refreshToken(refreshToken);
         await localDataSource.saveAuthToken(newToken);
-        Logger.info('✅ Token refreshed successfully');
+        Logger.info('. Token refreshed successfully');
         return Right(newToken);
       } else {
-        Logger.warning('❌ No internet connection for token refresh');
+        Logger.warning('. No internet connection for token refresh');
         return Left(NetworkFailure(message: AppConfig.networkErrorMessage));
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error refreshing token', e);
+      Logger.error('. Server error refreshing token', e);
       return Left(ServerFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Unexpected error refreshing token', e);
+      Logger.error('. Unexpected error refreshing token', e);
       return Left(ServerFailure(message: AppConfig.serverErrorMessage));
     }
   }
@@ -291,7 +291,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final hasBeenLoggedIn = await localDataSource.hasEverBeenLoggedIn();
       return Right(hasBeenLoggedIn);
     } catch (e) {
-      Logger.error('❌ Error checking login history', e);
+      Logger.error('. Error checking login history', e);
       return Left(CacheFailure(message: 'Failed to check login history'));
     }
   }
@@ -302,13 +302,13 @@ class AuthRepositoryImpl implements AuthRepository {
       Logger.info('🗑️ Clearing all auth data');
       await localDataSource.clearAuthData();
       
-      // ✅ CRITICAL FIX: Clear auth tokens from both network clients
+      // . CRITICAL FIX: Clear auth tokens from both network clients
       await _clearAuthTokens();
       
-      Logger.info('✅ Auth data cleared successfully');
+      Logger.info('. Auth data cleared successfully');
       return const Right(null);
     } catch (e) {
-      Logger.error('❌ Error clearing auth data', e);
+      Logger.error('. Error clearing auth data', e);
       return Left(CacheFailure(message: 'Failed to clear auth data'));
     }
   }
@@ -319,7 +319,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await localDataSource.saveAuthToken(token);
       return const Right(null);
     } catch (e) {
-      Logger.error('❌ Error saving auth token', e);
+      Logger.error('. Error saving auth token', e);
       return Left(CacheFailure(message: 'Failed to save auth token'));
     }
   }
@@ -330,7 +330,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = await localDataSource.getAuthToken();
       return Right(token);
     } catch (e) {
-      Logger.error('❌ Error getting auth token', e);
+      Logger.error('. Error getting auth token', e);
       return Left(CacheFailure(message: 'Failed to get auth token'));
     }
   }
@@ -341,7 +341,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await localDataSource.saveRefreshToken(refreshToken);
       return const Right(null);
     } catch (e) {
-      Logger.error('❌ Error saving refresh token', e);
+      Logger.error('. Error saving refresh token', e);
       return Left(CacheFailure(message: 'Failed to save refresh token'));
     }
   }
@@ -352,7 +352,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final token = await localDataSource.getRefreshToken();
       return Right(token);
     } catch (e) {
-      Logger.error('❌ Error getting refresh token', e);
+      Logger.error('. Error getting refresh token', e);
       return Left(CacheFailure(message: 'Failed to get refresh token'));
     }
   }
@@ -363,7 +363,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await localDataSource.saveUserData(UserModel.fromEntity(user));
       return const Right(null);
     } catch (e) {
-      Logger.error('❌ Error saving user data', e);
+      Logger.error('. Error saving user data', e);
       return Left(CacheFailure(message: 'Failed to save user data'));
     }
   }
@@ -374,7 +374,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final userModel = await localDataSource.getUserData();
       return Right(userModel?.toEntity());
     } catch (e) {
-      Logger.error('❌ Error getting saved user data', e);
+      Logger.error('. Error getting saved user data', e);
       return Left(CacheFailure(message: 'Failed to get saved user data'));
     }
   }
@@ -406,7 +406,7 @@ class AuthRepositoryImpl implements AuthRepository {
             (newToken) async {
               // Update both network clients with new token
               await _synchronizeAuthToken(newToken);
-              Logger.info('✅ Token refreshed successfully');
+              Logger.info('. Token refreshed successfully');
               return const Right(true);
             },
           );
@@ -437,7 +437,7 @@ class AuthRepositoryImpl implements AuthRepository {
                 return const Right(false);
               } else if (failure is ServerFailure || failure is NetworkFailure) {
                 // Server/network error - assume token is valid to avoid unnecessary logouts
-                Logger.warning('⚠️ Server/network error during token validation, assuming valid: ${failure.message}');
+                Logger.warning('. Server/network error during token validation, assuming valid: ${failure.message}');
                 return const Right(true);
               } else {
                 // Other failures - clear auth data to be safe
@@ -447,13 +447,13 @@ class AuthRepositoryImpl implements AuthRepository {
               }
             },
             (user) {
-              Logger.info('✅ Token validated successfully with server');
+              Logger.info('. Token validated successfully with server');
               return const Right(true);
             },
           );
         } catch (e) {
           // Exception during server validation - assume token is valid to avoid unnecessary logouts
-          Logger.warning('⚠️ Exception during token validation, assuming valid: $e');
+          Logger.warning('. Exception during token validation, assuming valid: $e');
           return const Right(true);
         }
       } else {
@@ -462,59 +462,59 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Right(true);
       }
     } catch (e) {
-      Logger.error('❌ Error checking authentication status', e);
+      Logger.error('. Error checking authentication status', e);
       // Clear auth data on any authentication check error
       try {
         await clearAuthData();
       } catch (clearError) {
-        Logger.error('❌ Failed to clear auth data after error', clearError);
+        Logger.error('. Failed to clear auth data after error', clearError);
       }
       return const Right(false);
     }
   }
 
-  /// ✅ CRITICAL FIX: Synchronize auth tokens across both network clients
+  /// . CRITICAL FIX: Synchronize auth tokens across both network clients
   /// This ensures that both ApiService and DioClient have the same token
   Future<void> _synchronizeAuthToken(String token) async {
     try {
       // Set token in ApiService (for internal _authToken field)
       apiService.setAuthToken(token);
       
-      // ✅ FIXED: Wait for DioClient async token setting
+      // . FIXED: Wait for DioClient async token setting
       await dioClient.setAuthToken(token);
       
       Logger.info('🔑 Auth token synchronized successfully in both ApiService and DioClient');
     } catch (e) {
-      Logger.error('❌ Failed to synchronize auth tokens', e);
+      Logger.error('. Failed to synchronize auth tokens', e);
       // Still attempt to set in ApiService as fallback
       try {
         apiService.setAuthToken(token);
-        Logger.warning('⚠️ Fallback: Token set only in ApiService');
+        Logger.warning('. Fallback: Token set only in ApiService');
       } catch (fallbackError) {
-        Logger.error('❌ Critical: Failed to set token in any client', fallbackError);
+        Logger.error('. Critical: Failed to set token in any client', fallbackError);
       }
     }
   }
 
-  /// ✅ CRITICAL FIX: Clear auth tokens from both network clients
+  /// . CRITICAL FIX: Clear auth tokens from both network clients
   /// This ensures that both ApiService and DioClient clear their tokens
   Future<void> _clearAuthTokens() async {
     try {
       // Clear token from ApiService
       apiService.clearAuthToken();
       
-      // ✅ FIXED: Wait for DioClient async token clearing
+      // . FIXED: Wait for DioClient async token clearing
       await dioClient.clearAuthToken();
       
       Logger.info('🔑 Auth tokens cleared successfully from both ApiService and DioClient');
     } catch (e) {
-      Logger.error('❌ Failed to clear auth tokens from both clients', e);
+      Logger.error('. Failed to clear auth tokens from both clients', e);
       // Still attempt to clear from ApiService as fallback
       try {
         apiService.clearAuthToken();
-        Logger.warning('⚠️ Fallback: Token cleared only from ApiService');
+        Logger.warning('. Fallback: Token cleared only from ApiService');
       } catch (fallbackError) {
-        Logger.error('❌ Critical: Failed to clear token from any client', fallbackError);
+        Logger.error('. Critical: Failed to clear token from any client', fallbackError);
       }
     }
   }

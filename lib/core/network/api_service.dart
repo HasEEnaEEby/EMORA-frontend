@@ -24,7 +24,7 @@ class ApiService {
     _dio = dio;
     _setupInterceptors();
     
-    // ✅ UPDATED: Optimized timeout configuration
+    // . UPDATED: Optimized timeout configuration
     _dio.options.connectTimeout = Duration(seconds: 10);
     _dio.options.receiveTimeout = Duration(seconds: 45); // Increased for friend requests
     _dio.options.sendTimeout = Duration(seconds: 30);
@@ -51,13 +51,13 @@ class ApiService {
         onResponse: (response, handler) {
           if (AppConfig.enableNetworkLogging) {
             Logger.info(
-              '✅ API Response: ${response.statusCode} ${response.requestOptions.path}',
+              '. API Response: ${response.statusCode} ${response.requestOptions.path}',
             );
           }
           handler.next(response);
         },
         onError: (error, handler) {
-          Logger.error('❌ API Error: ${error.requestOptions.path}', error);
+          Logger.error('. API Error: ${error.requestOptions.path}', error);
 
           if (error.response?.statusCode == 401) {
             // Token expired or invalid
@@ -83,14 +83,26 @@ class ApiService {
 
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
-      Logger.info('👤 Fetching user profile from backend...');
+      Logger.info('. Fetching user profile from backend...');
 
       final data = await getData('/api/user/profile', forceRefresh: true);
 
-      Logger.info('✅ Profile data received successfully');
+      Logger.info('. Profile data received successfully');
+      Logger.info('📊 Profile response structure: ${data.keys}');
+      
+      // Log the actual data structure for debugging
+      if (data['data'] != null) {
+        final profileData = data['data'] as Map<String, dynamic>;
+        Logger.info('📊 Profile data keys: ${profileData.keys}');
+        if (profileData['stats'] != null) {
+          final stats = profileData['stats'] as Map<String, dynamic>;
+          Logger.info('📊 Stats data: $stats');
+        }
+      }
+      
       return data;
     } catch (e) {
-      Logger.error('❌ Failed to fetch user profile', e);
+      Logger.error('. Failed to fetch user profile', e);
       rethrow;
     }
   }
@@ -104,10 +116,10 @@ class ApiService {
 
       final data = await patchData('/api/user/profile', data: profileData);
 
-      Logger.info('✅ Profile updated successfully');
+      Logger.info('. Profile updated successfully');
       return data;
     } catch (e) {
-      Logger.error('❌ Failed to update user profile', e);
+      Logger.error('. Failed to update user profile', e);
       rethrow;
     }
   }
@@ -122,10 +134,10 @@ class ApiService {
       // Use PUT method as per your backend route
       final data = await putData('/api/user/preferences', data: preferences);
 
-      Logger.info('✅ Preferences updated successfully');
+      Logger.info('. Preferences updated successfully');
       return data;
     } catch (e) {
-      Logger.error('❌ Failed to update user preferences', e);
+      Logger.error('. Failed to update user preferences', e);
       rethrow;
     }
   }
@@ -135,11 +147,15 @@ class ApiService {
       Logger.info('🏆 Fetching user achievements...');
 
       final data = await getData('/api/user/achievements');
-
-      // Simple fallback for development
+      
+      if (data['success'] == true && data['data'] != null) {
+        final achievements = data['data']['achievements'] as List<dynamic>?;
+        return achievements?.cast<Map<String, dynamic>>() ?? [];
+      }
+      
       return <Map<String, dynamic>>[];
     } catch (e) {
-      Logger.error('❌ Failed to fetch achievements', e);
+      Logger.error('. Failed to fetch achievements', e);
       return <Map<String, dynamic>>[];
     }
   }
@@ -174,10 +190,10 @@ class ApiService {
 
       final data = await postData('/api/user/export-data', data: requestData);
 
-      Logger.info('✅ Data export initiated successfully');
+      Logger.info('. Data export initiated successfully');
       return data;
     } catch (e) {
-      Logger.error('❌ Failed to export user data', e);
+      Logger.error('. Failed to export user data', e);
       rethrow;
     }
   }
@@ -193,10 +209,10 @@ class ApiService {
       // Clear the auth token after successful logout
       clearAuthToken();
 
-      Logger.info('✅ User logged out successfully');
+      Logger.info('. User logged out successfully');
       return data;
     } catch (e) {
-      Logger.error('❌ Logout failed', e);
+      Logger.error('. Logout failed', e);
       // Even if logout fails on server, clear local token
       clearAuthToken();
       rethrow;
@@ -390,7 +406,7 @@ class ApiService {
       return await _ongoingRequests[cacheKey]!;
     }
 
-    // ✅ REMOVED: Mock fallback logic that was intercepting real errors
+    // . REMOVED: Mock fallback logic that was intercepting real errors
     // Real authentication errors must propagate to the auth layer
 
     // Make new request
@@ -407,7 +423,7 @@ class ApiService {
 
       return response;
     } catch (e) {
-      // ✅ CRITICAL FIX: Always propagate real errors to auth layer
+      // . CRITICAL FIX: Always propagate real errors to auth layer
       // No more mock fallback that hides 401 authentication errors
       rethrow;
     } finally {
@@ -450,7 +466,7 @@ class ApiService {
   }
 
   bool _shouldMockEndpoint(String path) {
-    // ✅ CRITICAL FIX: Never mock authentication registration or login
+    // . CRITICAL FIX: Never mock authentication registration or login
     // These must show real errors to users for proper UX
     final criticalEndpoints = [
       '/api/auth/register',
@@ -470,13 +486,13 @@ class ApiService {
       '/onboarding/steps',
       '/onboarding/user-data',
       '/onboarding/complete',
-      // ✅ CRITICAL: Remove profile endpoints from mock list
+      // . CRITICAL: Remove profile endpoints from mock list
       // '/api/user/profile', 
       // '/api/user/preferences', 
       '/api/user/achievements', 
       '/api/user/export-data', 
       '/api/health',
-      // ✅ CRITICAL: NEVER mock these endpoints - they must use real database data
+      // . CRITICAL: NEVER mock these endpoints - they must use real database data
       // '/api/user/home-data',
       // '/api/user/statistics', 
       // '/api/emotions/global-stats',
@@ -490,7 +506,7 @@ class ApiService {
     Map<String, dynamic> mockData = {};
 
     try {
-      // ✅ CRITICAL: Remove profile mock data - always use real API calls
+      // . CRITICAL: Remove profile mock data - always use real API calls
       if (path.contains('/api/user/achievements')) {
         mockData = {
           'status': 'success',
@@ -573,7 +589,7 @@ class ApiService {
         };
       }
 
-      Logger.info('🔧 Generated mock response for: $path');
+      Logger.info('. Generated mock response for: $path');
 
       return Response(
         data: mockData,
@@ -581,7 +597,7 @@ class ApiService {
         requestOptions: RequestOptions(path: path),
       );
     } catch (e) {
-      Logger.error('❌ Error generating mock response', e);
+      Logger.error('. Error generating mock response', e);
 
       final fallbackData = {
         'status': 'success',
@@ -616,6 +632,138 @@ class ApiService {
       'cachedResponses': _responseCache.length,
       'ongoingRequests': _ongoingRequests.length,
     };
+  }
+
+  /// 🔧 NEW: Get user's emotion entries for stats calculation
+  Future<Map<String, dynamic>> getUserEmotionEntries(String userId) async {
+    try {
+      final response = await _dio.get(
+        '/api/user/emotions',
+        queryParameters: {
+          'userId': userId,
+          'limit': 1000,
+          'includeDeleted': false,
+        },
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      Logger.error('❌ Error fetching user emotion entries: $e');
+      return {'entries': [], 'total': 0};
+    }
+  }
+
+  /// 🔧 NEW: Get user's friends for stats calculation
+  Future<Map<String, dynamic>> getUserFriends(String userId) async {
+    try {
+      final response = await _dio.get(
+        '/api/user/friends',
+        queryParameters: {
+          'userId': userId,
+          'status': 'accepted',
+        },
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      Logger.error('❌ Error fetching user friends: $e');
+      return {'friends': [], 'total': 0};
+    }
+  }
+
+  /// 🔧 NEW: Get support given by user for stats calculation
+  Future<Map<String, dynamic>> getUserSupportGiven(String userId) async {
+    try {
+      final response = await _dio.get(
+        '/api/user/support-given',
+        queryParameters: {
+          'userId': userId,
+        },
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      Logger.error('❌ Error fetching user support data: $e');
+      return {
+        'helpedFriendsCount': 0,
+        'comfortReactionsGiven': 0,
+        'supportMessagesCount': 0,
+      };
+    }
+  }
+
+  /// 🔧 NEW: Get comprehensive user stats in a single call
+  Future<Map<String, dynamic>> getUserComprehensiveStats(String userId) async {
+    try {
+      final response = await _dio.get(
+        '/api/user/stats/comprehensive',
+        queryParameters: {
+          'userId': userId,
+        },
+      );
+      return response.data as Map<String, dynamic>;
+    } catch (e) {
+      Logger.error('❌ Error fetching comprehensive user stats: $e');
+      return {
+        'totalEntries': 0,
+        'currentStreak': 0,
+        'longestStreak': 0,
+        'favoriteEmotion': null,
+        'totalFriends': 0,
+        'helpedFriends': 0,
+        'badgesEarned': 0,
+        'level': 'New Explorer',
+        'lastUpdated': DateTime.now().toIso8601String(),
+      };
+    }
+  }
+
+  /// 🔧 NEW: Get user profile with comprehensive stats
+  Future<Map<String, dynamic>> getUserProfileWithStats() async {
+    try {
+      Logger.info('🔄 Fetching user profile with stats from backend...');
+
+      // Use the same endpoint as getUserProfile since the backend already includes stats
+      final data = await getData('/api/user/profile', forceRefresh: true);
+
+      Logger.info('✅ Profile with stats data received successfully');
+      Logger.info('📊 Full response structure: ${data.keys}');
+      
+      // Log the stats data for debugging
+      if (data['data'] != null) {
+        final profileData = data['data'] as Map<String, dynamic>;
+        Logger.info('📊 Profile data keys: ${profileData.keys}');
+        
+        if (profileData['stats'] != null) {
+          final stats = profileData['stats'] as Map<String, dynamic>;
+          Logger.info('📊 Stats data: $stats');
+          Logger.info('📊 Total entries: ${stats['totalEntries']}');
+          Logger.info('📊 Current streak: ${stats['currentStreak']}');
+          Logger.info('📊 Longest streak: ${stats['longestStreak']}');
+        } else {
+          Logger.warning('⚠️ No stats data found in profile response');
+        }
+      }
+      
+      return data;
+    } catch (e) {
+      Logger.error('❌ Failed to fetch user profile with stats', e);
+      rethrow;
+    }
+  }
+
+  /// 🔧 NEW: Get comprehensive user stats
+  Future<Map<String, dynamic>> getComprehensiveStats() async {
+    try {
+      Logger.info('🔄 Fetching comprehensive stats from backend...');
+
+      final data = await getData('/api/user/stats/comprehensive', forceRefresh: true);
+
+      Logger.info('✅ Comprehensive stats data received successfully');
+      Logger.info('📊 Stats response: $data');
+      
+      return data;
+    } catch (e) {
+      Logger.error('❌ Failed to fetch comprehensive stats', e);
+      rethrow;
+    }
   }
 }
 

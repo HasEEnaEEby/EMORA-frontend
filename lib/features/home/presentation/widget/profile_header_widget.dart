@@ -1,17 +1,23 @@
-// lib/features/profile/presentation/widget/profile_header_widget.dart
+// lib/features/profile/presentation/widget/profile_header_widget.dart - BACKEND CONNECTED VERSION
 import 'package:emora_mobile_app/features/profile/domain/entity/profile_entity.dart';
+import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ProfileHeaderWidget extends StatelessWidget {
   final ProfileEntity profile;
   final VoidCallback? onEditProfile;
   final VoidCallback? onAvatarTap;
+  final Function(String)? onAvatarChanged;
+  final bool isLoading; // New: Loading state for stats
 
   const ProfileHeaderWidget({
     super.key,
     required this.profile,
     this.onEditProfile,
     this.onAvatarTap,
+    this.onAvatarChanged,
+    this.isLoading = false,
   });
 
   @override
@@ -23,8 +29,8 @@ class ProfileHeaderWidget extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            const Color(0xFF8B5CF6).withValues(alpha: 0.15),
-            const Color(0xFF8B5CF6).withValues(alpha: 0.05),
+            profile.themeColorAsColor.withValues(alpha: 0.15),
+            profile.themeColorAsColor.withValues(alpha: 0.05),
             Colors.transparent,
           ],
         ),
@@ -36,7 +42,7 @@ class ProfileHeaderWidget extends StatelessWidget {
           const SizedBox(height: 16),
           _buildUserInfo(context),
           const SizedBox(height: 16),
-          _buildStatsRow(context),
+          _buildStatsRow(context), // Connected to backend data
           const SizedBox(height: 16),
           _buildLevelBadge(context),
         ],
@@ -45,187 +51,92 @@ class ProfileHeaderWidget extends StatelessWidget {
   }
 
   Widget _buildAvatarSection(BuildContext context) {
-    return Stack(
-      children: [
-        GestureDetector(
-          onTap: onAvatarTap,
+    return GestureDetector(
+      onTap: onAvatarTap ?? () {
+        HapticFeedback.lightImpact();
+        _showAvatarSelectionDialog(context);
+      },
           child: Container(
-            width: 120,
-            height: 120,
+        padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF8B5CF6),
-                  const Color(0xFF8B5CF6).withValues(alpha: 0.8),
+              profile.themeColorAsColor.withValues(alpha: 0.3),
+              profile.themeColorAsColor.withValues(alpha: 0.1),
                 ],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
-                  blurRadius: 24,
-                  offset: const Offset(0, 12),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+              color: profile.themeColorAsColor.withValues(alpha: 0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
                 ),
               ],
             ),
-            child: Center(
-              child: Text(
-                _getAvatarEmoji(profile.avatar),
-                style: const TextStyle(fontSize: 56),
-              ),
-            ),
-          ),
-        ),
-        if (onEditProfile != null)
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: GestureDetector(
-              onTap: onEditProfile,
               child: Container(
-                width: 36,
-                height: 36,
+          width: 80,
+          height: 80,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B5CF6),
                   shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFF0A0A0F), width: 3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: const Icon(Icons.edit, size: 18, color: Colors.white),
+            color: Colors.white.withValues(alpha: 0.1),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.2),
+              width: 2,
+            ),
+          ),
+          child: Center(
+                         child: Text(
+               DialogUtils.getEmojiForAvatar(profile.avatar ?? 'fox'),
+               style: const TextStyle(fontSize: 40),
+             ),
               ),
             ),
           ),
-      ],
     );
   }
 
   Widget _buildUserInfo(BuildContext context) {
     return Column(
       children: [
-        // Display displayName only (no fallback)
-        if (profile.displayName != null)
-          Text(
-            profile.displayName!,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-            textAlign: TextAlign.center,
+        Text(
+          profile.effectiveDisplayName,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
           ),
-        if (profile.bio != null && profile.bio!.isNotEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
-            child: Text(
-              profile.bio!,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 15,
-                fontStyle: FontStyle.italic,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        const SizedBox(height: 6),
-
-        // Username as secondary info (read-only)
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.alternate_email, size: 14, color: Colors.grey[400]),
-              const SizedBox(width: 6),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 4),
               Text(
-                profile.username,
+          '@${profile.username}',
                 style: TextStyle(
                   color: Colors.grey[400],
-                  fontSize: 14,
+            fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ],
+        if (profile.bio != null && profile.bio!.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            profile.bio!,
+                    style: TextStyle(
+                      color: Colors.grey[300],
+                      fontSize: 14,
+              fontWeight: FontWeight.w400,
+                    ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // Display email from database
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.2),
-              width: 1,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.email_outlined, size: 16, color: Colors.grey[300]),
-              const SizedBox(width: 8),
-              Text(
-                profile.email,
-                style: TextStyle(
-                  color: Colors.grey[300],
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 12),
-
-        // Display join date (createdAt from database)
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.calendar_today_outlined,
-              size: 14,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(width: 6),
-            Text(
-              'Joined ${_formatJoinDate(profile.joinDate)}',
-              style: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
+        ],
       ],
     );
   }
 
-
-
+  /// ✅ BACKEND CONNECTED: Stats row with real data from your API
   Widget _buildStatsRow(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -236,43 +147,112 @@ class ProfileHeaderWidget extends StatelessWidget {
           color: Colors.white.withValues(alpha: 0.1),
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Row(
+      child: isLoading
+          ? _buildLoadingStatsRow()
+          : Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildStatItem(
             context,
             'Entries',
-            profile.totalEntries.toString(),
+                  _formatStatValue(profile.totalEntries),
             Icons.edit_note,
             const Color(0xFF10B981),
+                  subtitle: _getEntriesSubtitle(),
           ),
           _buildVerticalDivider(),
           _buildStatItem(
             context,
             'Streak',
-            profile.currentStreak.toString(),
+                  _formatStatValue(profile.currentStreak),
             Icons.local_fire_department,
             const Color(0xFFF59E0B),
+                  subtitle: _getStreakSubtitle(),
           ),
           _buildVerticalDivider(),
           _buildStatItem(
             context,
             'Friends',
-            profile.totalFriends.toString(),
+                  _formatStatValue(profile.totalFriends),
             Icons.people,
             const Color(0xFF3B82F6),
+                  subtitle: _getFriendsSubtitle(),
           ),
           _buildVerticalDivider(),
           _buildStatItem(
             context,
             'Badges',
-            profile.badgesEarned.toString(),
+                  _formatStatValue(profile.badgesEarned),
             Icons.emoji_events,
             const Color(0xFFEF4444),
+                  subtitle: _getBadgesSubtitle(),
           ),
         ],
       ),
+    );
+  }
+
+  /// Loading state for stats
+  Widget _buildLoadingStatsRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildLoadingStatItem(),
+        _buildVerticalDivider(),
+        _buildLoadingStatItem(),
+        _buildVerticalDivider(),
+        _buildLoadingStatItem(),
+        _buildVerticalDivider(),
+        _buildLoadingStatItem(),
+      ],
+    );
+  }
+
+  Widget _buildLoadingStatItem() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey[700]?.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: Colors.grey[500],
+            ),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          width: 24,
+          height: 18,
+          decoration: BoxDecoration(
+            color: Colors.grey[700],
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Container(
+          width: 40,
+          height: 12,
+          decoration: BoxDecoration(
+            color: Colors.grey[700],
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+      ],
     );
   }
 
@@ -284,32 +264,74 @@ class ProfileHeaderWidget extends StatelessWidget {
     );
   }
 
+  /// Enhanced stat item with backend data and optional subtitle
   Widget _buildStatItem(
     BuildContext context,
     String label,
     String value,
     IconData icon,
-    Color color,
-  ) {
-    return Column(
+    Color color, {
+    String? subtitle,
+  }) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => _onStatTapped(context, label, value),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Column(
       children: [
-        Container(
+              // Icon with animated background
+              TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 600),
+                tween: Tween(begin: 0.0, end: 1.0),
+                builder: (context, value, child) {
+                  return Transform.scale(
+                    scale: 0.8 + (0.2 * value),
+                    child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
           ),
           child: Icon(icon, size: 20, color: color),
+                    ),
+                  );
+                },
         ),
         const SizedBox(height: 6),
-        Text(
-          value,
+              
+              // Value with number animation
+              TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 800),
+                tween: Tween(
+                  begin: 0.0, 
+                  end: double.tryParse(value.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0,
+                ),
+                builder: (context, animatedValue, child) {
+                  return Text(
+                    _formatAnimatedValue(animatedValue, value),
           style: const TextStyle(
             color: Colors.white,
             fontSize: 18,
             fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
           ),
+                  );
+                },
         ),
+              
+              // Label
         Text(
           label,
           style: TextStyle(
@@ -318,38 +340,95 @@ class ProfileHeaderWidget extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-      ],
+              
+              // Optional subtitle for additional context
+              if (subtitle != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: color.withValues(alpha: 0.8),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Handle stat item taps for detailed views
+  void _onStatTapped(BuildContext context, String label, String value) {
+    HapticFeedback.lightImpact();
+    
+    String message = '';
+    switch (label.toLowerCase()) {
+      case 'entries':
+        message = 'You\'ve logged $value emotion entries! Keep tracking your emotional journey.';
+        break;
+      case 'streak':
+        message = profile.currentStreak > 0 
+            ? 'Amazing! You\'re on a $value day streak. Keep it up!'
+            : 'Start logging daily to build your streak!';
+        break;
+      case 'friends':
+        message = profile.totalFriends > 0
+            ? 'You have $value friends supporting your journey!'
+            : 'Connect with friends to share your emotional wellness journey!';
+        break;
+      case 'badges':
+        message = profile.badgesEarned > 0
+            ? 'You\'ve earned $value achievement badges! Check your achievements for more.'
+            : 'Complete activities to earn your first achievement badge!';
+        break;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: profile.themeColorAsColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 
   Widget _buildLevelBadge(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [const Color(0xFF8B5CF6), const Color(0xFFD8A5FF)],
+          colors: [
+            profile.themeColorAsColor.withValues(alpha: 0.2),
+            profile.themeColorAsColor.withValues(alpha: 0.1),
+          ],
         ),
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: profile.themeColorAsColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(_getLevelIcon(profile.level), size: 22, color: Colors.white),
-          const SizedBox(width: 10),
+          Icon(
+            Icons.emoji_events,
+            color: profile.themeColorAsColor,
+            size: 16,
+          ),
+          const SizedBox(width: 8),
           Text(
             profile.level,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
+            style: TextStyle(
+              color: profile.themeColorAsColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -357,111 +436,57 @@ class ProfileHeaderWidget extends StatelessWidget {
     );
   }
 
-  /// Maps database avatar names to emojis
-  /// Supports all avatars from your database: fox, rabbit, panda, elephant, horse, zebra, bear, pig, raccoon, cat, dog, owl, penguin
-  String _getAvatarEmoji(String? avatarName) {
-    final avatarMap = {
-      // Your database avatars
-      'fox': '🦊',
-      'rabbit': '🐰',
-      'panda': '🐼',
-      'elephant': '🐘',
-      'horse': '🐴',
-      'zebra': '🦓',
-      'bear': '🐻',
-      'pig': '🐷',
-      'raccoon': '🦝',
-      'cat': '🐱',
-      'dog': '🐶',
-      'owl': '🦉',
-      'penguin': '🐧',
-
-      // Additional fallback avatars
-      'tiger': '🐯',
-      'lion': '🦁',
-      'monkey': '🐵',
-      'koala': '🐨',
-      'wolf': '🐺',
-      'hamster': '🐹',
-      'mouse': '🐭',
-      'bird': '🐦',
-      'duck': '🦆',
-      'chicken': '🐔',
-      'turtle': '🐢',
-      'fish': '🐠',
-      'dolphin': '🐬',
-      'whale': '🐳',
-      'octopus': '🐙',
-
-      // Emoji-style avatars (fallback)
-      'happy': '😊',
-      'excited': '🤩',
-      'calm': '😌',
-      'peaceful': '🕊️',
-      'energetic': '⚡',
-      'creative': '🎨',
-      'wise': '🦉',
-      'brave': '🦁',
-      'gentle': '🐱',
-      'playful': '🐶',
-      'mystical': '🦄',
-      'nature': '🌸',
-      'ocean': '🌊',
-      'mountain': '🏔️',
-      'star': '⭐',
-      'moon': '🌙',
-      'sun': '☀️',
-      'rainbow': '🌈',
-      'butterfly': '🦋',
-      'tree': '🌳',
-    };
-
-    return avatarMap[avatarName?.toLowerCase()] ?? '🦊'; // Default to fox
+  void _showAvatarSelectionDialog(BuildContext context) {
+    // Implementation for avatar selection dialog
+    // This would show available avatars for selection
   }
 
-  IconData _getLevelIcon(String level) {
-    switch (level.toLowerCase()) {
-      case 'emotion master':
-        return Icons.psychology;
-      case 'mindful sage':
-        return Icons.auto_awesome;
-      case 'feeling guide':
-        return Icons.explore;
-      case 'emotion seeker':
-        return Icons.search;
-      case 'mindful beginner':
-        return Icons.school;
-      case 'new explorer':
-        return Icons.explore_outlined;
-      default:
-        return Icons.star;
+  /// ✅ HELPER METHODS for backend data formatting
+
+  /// Format stat values with appropriate units
+  String _formatStatValue(int value) {
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}k';
     }
+    return value.toString();
+                      }
+
+  /// Format animated values during transitions
+  String _formatAnimatedValue(double animatedValue, String originalValue) {
+    if (originalValue.contains('k')) {
+      return '${(animatedValue / 1000).toStringAsFixed(1)}k';
+    }
+    return animatedValue.round().toString();
   }
 
-  String _formatJoinDate(DateTime joinDate) {
-    final now = DateTime.now();
-    final difference = now.difference(joinDate);
+  /// Get contextual subtitles for each stat
+  String? _getEntriesSubtitle() {
+    if (profile.totalEntries == 0) return 'Start logging';
+    if (profile.totalEntries < 5) return 'Getting started';
+    if (profile.totalEntries < 30) return 'Building habits';
+    if (profile.totalEntries < 100) return 'Great progress';
+    return 'Expert tracker';
+  }
 
-    if (difference.inDays > 365) {
-      final years = (difference.inDays / 365).floor();
-      return years == 1 ? '1 year ago' : '$years years ago';
-    } else if (difference.inDays > 30) {
-      final months = (difference.inDays / 30).floor();
-      return months == 1 ? '1 month ago' : '$months months ago';
-    } else if (difference.inDays > 0) {
-      return difference.inDays == 1
-          ? '1 day ago'
-          : '${difference.inDays} days ago';
-    } else if (difference.inHours > 0) {
-      return difference.inHours == 1
-          ? '1 hour ago'
-          : '${difference.inHours} hours ago';
-    } else if (difference.inMinutes > 0) {
-      return difference.inMinutes == 1
-          ? '1 minute ago'
-          : '${difference.inMinutes} minutes ago';
-    } else {
-      return 'Just now';
-    }
+  String? _getStreakSubtitle() {
+    if (profile.currentStreak == 0) return 'No streak yet';
+    if (profile.currentStreak == 1) return 'Good start!';
+    if (profile.currentStreak < 7) return 'Building up';
+    if (profile.currentStreak < 30) return 'On fire! 🔥';
+    return 'Legendary! 🏆';
+  }
+
+  String? _getFriendsSubtitle() {
+    if (profile.totalFriends == 0) return 'Add friends';
+    if (profile.totalFriends < 5) return 'Growing network';
+    if (profile.totalFriends < 10) return 'Social butterfly';
+    return 'Community leader';
+  }
+
+  String? _getBadgesSubtitle() {
+    if (profile.badgesEarned == 0) return 'Earn your first';
+    if (profile.badgesEarned < 5) return 'Collecting badges';
+    if (profile.badgesEarned < 10) return 'Achievement hunter';
+    return 'Badge master';
   }
 }

@@ -34,13 +34,13 @@ void main() async {
       final data = jsonDecode(loginResponse.body);
       
       if (data['success'] == true) {
-        print('✅ Login successful!');
+        print('. Login successful!');
         
         final token = data['data']['token'];
         final user = data['data']['user'];
         
         print('🔑 Token received: ${token.substring(0, 20)}...');
-        print('👤 User: ${user['username']}');
+        print('. User: ${user['username']}');
         
         // Step 2: Test authenticated request
         print('\n🔒 Step 2: Testing authenticated request...');
@@ -58,16 +58,16 @@ void main() async {
         print('📥 Home Data Body: ${homeResponse.body}');
         
         if (homeResponse.statusCode == 200) {
-          print('✅ Authenticated request successful!');
+          print('. Authenticated request successful!');
         } else {
-          print('❌ Authenticated request failed');
+          print('. Authenticated request failed');
         }
         
       } else {
-        print('❌ Login failed: ${data['message']}');
+        print('. Login failed: ${data['message']}');
       }
     } else {
-      print('❌ Login request failed: ${loginResponse.statusCode}');
+      print('. Login request failed: ${loginResponse.statusCode}');
       print('📥 Error: ${loginResponse.body}');
     }
     

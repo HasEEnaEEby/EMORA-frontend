@@ -43,7 +43,7 @@ class AppRouter {
   static const String insights = '/insights';
   static const String friends = '/friends';
   static const String profile = '/profile';
-  static const String profileFull = '/profile-full'; // NEW: Full profile page
+  static const String profileFull = '/profile-full';
   static const String settings = '/settings';
 
   /// Main route generator with proper error handling
@@ -79,10 +79,9 @@ class AppRouter {
           return _createHomeRoute(settings);
 
         case dashboard:
-          // ✅ Redirect dashboard to home for consistency
           Logger.info('🔄 Redirecting /dashboard to /home for consistency');
           return _createHomeRoute(RouteSettings(
-            name: home, // Change route name to home for clarity
+            name: home,
             arguments: settings.arguments,
           ));
 
@@ -95,7 +94,7 @@ class AppRouter {
         case friends:
           return _createFriendsRoute(settings);
 
-        case '/profile':
+        case profile:
           return MaterialPageRoute(
             builder: (context) => BlocProvider(
               create: (context) => GetIt.instance<ProfileBloc>(),
@@ -105,7 +104,7 @@ class AppRouter {
           );
 
         case profileFull:
-          return _createFullProfileRoute(settings); // NEW: Full profile page
+          return _createFullProfileRoute(settings);
 
         default:
           Logger.warning('❌ Unknown route: $routeName');
@@ -123,7 +122,7 @@ class AppRouter {
   }
 
   // ============================================================================
-  // ROUTE FACTORIES
+  // ROUTE FACTORIES - FIXED WITH PROPER BLOC MANAGEMENT
   // ============================================================================
 
   static Route<dynamic> _createSplashRoute(RouteSettings settings) {
@@ -150,6 +149,7 @@ class AppRouter {
     );
   }
 
+  // CRITICAL FIX: Provide AuthBloc at the auth choice level to share across auth flows
   static Route<dynamic> _createAuthChoiceRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
@@ -165,23 +165,46 @@ class AppRouter {
           }
         }
 
-        return AuthChoiceView(onboardingData: onboardingData);
-      },
-    );
-  }
-
-  static Route<dynamic> _createLoginRoute(RouteSettings settings) {
-    return _createSlideRoute(
-      settings: settings,
-      builder: (context) {
+        // CRITICAL FIX: Create AuthBloc here to share across auth flows
         return BlocProvider<AuthBloc>(
           create: (_) => di.sl<AuthBloc>(),
-          child: const LoginView(),
+          child: AuthChoiceView(onboardingData: onboardingData),
         );
       },
     );
   }
 
+  // CRITICAL FIX: Reuse existing AuthBloc when available
+  static Route<dynamic> _createLoginRoute(RouteSettings settings) {
+    return _createSlideRoute(
+      settings: settings,
+      builder: (context) {
+        return Builder(
+          builder: (context) {
+            // Try to get existing AuthBloc from context
+            try {
+              final existingBloc = context.read<AuthBloc>();
+              // Check if BLoC is not closed
+              if (!existingBloc.isClosed) {
+                Logger.info('✅ Reusing existing AuthBloc for login');
+                return const LoginView();
+              }
+            } catch (e) {
+              Logger.info('ℹ️ No existing AuthBloc found, creating new one');
+            }
+
+            // If no existing BLoC or it's closed, create a new one
+            return BlocProvider<AuthBloc>(
+              create: (_) => di.sl<AuthBloc>(),
+              child: const LoginView(),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // CRITICAL FIX: Reuse existing AuthBloc when available
   static Route<dynamic> _createRegisterRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
@@ -197,9 +220,26 @@ class AppRouter {
           }
         }
 
-        return BlocProvider<AuthBloc>(
-          create: (_) => di.sl<AuthBloc>(),
-          child: RegisterView(onboardingData: onboardingData),
+        return Builder(
+          builder: (context) {
+            // Try to get existing AuthBloc from context
+            try {
+              final existingBloc = context.read<AuthBloc>();
+              // Check if BLoC is not closed
+              if (!existingBloc.isClosed) {
+                Logger.info('✅ Reusing existing AuthBloc for register');
+                return RegisterView(onboardingData: onboardingData);
+              }
+            } catch (e) {
+              Logger.info('ℹ️ No existing AuthBloc found, creating new one');
+            }
+
+            // If no existing BLoC or it's closed, create a new one
+            return BlocProvider<AuthBloc>(
+              create: (_) => di.sl<AuthBloc>(),
+              child: RegisterView(onboardingData: onboardingData),
+            );
+          },
         );
       },
     );
@@ -217,7 +257,6 @@ class AppRouter {
     );
   }
 
-  // CRITICAL FIX: Simplified and guaranteed to work home route
   static Route<dynamic> _createHomeRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
@@ -233,27 +272,31 @@ class AppRouter {
           }
         }
 
-        Logger.info('✅ Creating home route with enhanced dashboard');
+        Logger.info('🏠 Creating home route with enhanced dashboard');
 
-        // Create a comprehensive home wrapper with all necessary BLoCs
         return MultiBlocProvider(
           providers: [
             BlocProvider<HomeBloc>(
-              create: (_) => di.sl<HomeBloc>()..add(const LoadHomeData()),
+              create: (_) => di.sl<HomeBloc>(), // ✅ CRITICAL FIX: Don't add events immediately
               lazy: false,
             ),
             BlocProvider<EmotionBloc>(
               create: (_) => di.sl<EmotionBloc>(),
               lazy: false,
             ),
-            // NEW: Add ProfileBloc for tab-based profile access
             BlocProvider<ProfileBloc>(
               create: (_) => di.sl<ProfileBloc>(),
-              lazy: true, // Lazy load since it's not always needed
+              lazy: true,
             ),
           ],
           child: Builder(
             builder: (context) {
+              // ✅ CRITICAL FIX: Add the event after the BLoC is properly initialized
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) {
+                  context.read<HomeBloc>().add(const LoadHomeData());
+                }
+              });
               return EnhancedHomeWrapper(userData: arguments);
             },
           ),
@@ -283,15 +326,13 @@ class AppRouter {
     );
   }
 
-  // NEW: Tab-based profile route (simplified for bottom navigation)
   static Route<dynamic> _createProfileTabRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
-      builder: (context) => const ProfileView(), // Home tab profile
+      builder: (context) => const ProfileView(),
     );
   }
 
-  // NEW: Full-screen profile route with BLoC
   static Route<dynamic> _createFullProfileRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
@@ -299,13 +340,13 @@ class AppRouter {
         final featureFlags = di.getFeatureFlags();
 
         if (!featureFlags.isProfileEnabled) {
-          Logger.warning('❌ Profile feature is disabled');
+          Logger.warning('⚠️ Profile feature is disabled');
           return const ProfileDisabledView();
         }
 
         return BlocProvider<ProfileBloc>(
           create: (_) => di.sl<ProfileBloc>(),
-          child: const FullProfileView(), // Full-featured profile page
+          child: const FullProfileView(),
         );
       },
     );
@@ -432,14 +473,14 @@ class AppRouter {
       case insights:
       case friends:
       case profile:
-      case profileFull: // NEW: Full profile requires auth
+      case profileFull:
       case settings:
         if (context != null) {
           try {
             final authBloc = context.read<AuthBloc>();
             return authBloc.state is AuthAuthenticated;
           } catch (e) {
-            Logger.warning('Could not check auth state: $e');
+            Logger.warning('⚠️ Could not check auth state: $e');
             return false;
           }
         }
@@ -461,7 +502,6 @@ class AppRouter {
     }
   }
 
-  // NEW: Navigate to full profile with feature check
   static Future<void> navigateToProfile(BuildContext context) async {
     final featureFlags = di.getFeatureFlags();
 
@@ -480,7 +520,7 @@ class AppRouter {
 }
 
 // ============================================================================
-// ENHANCED HOME WRAPPER - COMPLETELY FIXED
+// ENHANCED HOME WRAPPER
 // ============================================================================
 class EnhancedHomeWrapper extends StatefulWidget {
   final Map<String, dynamic>? userData;
@@ -499,18 +539,16 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
   void initState() {
     super.initState();
 
-    // Ensure home data is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         try {
           context.read<HomeBloc>().add(const LoadHomeData());
         } catch (e) {
-          Logger.error('Failed to trigger home data load: $e');
+          Logger.error('❌ Failed to trigger home data load: $e');
         }
       }
     });
 
-    // CRITICAL FIX: Set a timeout to show dashboard if loading takes too long
     _loadingTimeoutTimer = Timer(const Duration(seconds: 3), () {
       if (mounted && !_shouldShowDashboard) {
         Logger.warning('⏰ Loading timeout reached - forcing dashboard display');
@@ -530,12 +568,11 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Prevent back navigation from home
+      canPop: false,
       child: BlocListener<HomeBloc, HomeState>(
         listener: (context, state) {
           if (state is HomeError) {
-            Logger.error('Home error: ${state.message}');
-            // Show error but don't block the UI
+            Logger.error('❌ Home error: ${state.message}');
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -551,7 +588,6 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
               );
             }
           } else if (state is HomeDashboardState) {
-            // Cancel timeout timer when we get to dashboard state
             _loadingTimeoutTimer?.cancel();
             if (!_shouldShowDashboard) {
               setState(() {
@@ -564,16 +600,13 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
           builder: (context, state) {
             Logger.info('🏠 Home state: ${state.runtimeType}');
 
-            // CRITICAL FIX: Show dashboard if timeout occurred OR we're in success state
             if (_shouldShowDashboard || state is HomeDashboardState) {
               return const Dashboard();
             } else if (state is HomeLoading || state is HomeInitial) {
               return _buildLoadingView();
             } else if (state is HomeError) {
-              // Show dashboard with error state instead of blocking
               return const Dashboard();
             } else {
-              // Fallback - show dashboard for any unknown state
               return const Dashboard();
             }
           },
@@ -590,7 +623,6 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ✅ Enhanced loading indicator with smooth transition
               Container(
                 width: 120,
                 height: 120,
@@ -625,10 +657,7 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 40),
-
-              // ✅ Clearer loading message
               ShaderMask(
                 shaderCallback: (bounds) => const LinearGradient(
                   colors: [Color(0xFF8B5CF6), Color(0xFFD8A5FF)],
@@ -643,9 +672,7 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
               Text(
                 'Almost ready! Just a moment while we prepare your personal space...',
                 textAlign: TextAlign.center,
@@ -655,10 +682,7 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
                   fontWeight: FontWeight.w400,
                 ),
               ),
-
               const SizedBox(height: 40),
-
-              // ✅ More encouraging continue button
               TextButton(
                 onPressed: () {
                   Logger.info('👆 User manually continued to dashboard');
@@ -698,7 +722,6 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
 // PROFILE VIEWS
 // ============================================================================
 
-// NEW: Full-featured profile view with BLoC integration
 class FullProfileView extends StatelessWidget {
   const FullProfileView({super.key});
 
@@ -706,13 +729,11 @@ class FullProfileView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<ProfileBloc>(
       create: (_) => di.sl<ProfileBloc>(),
-      child:
-          const ProfileView(), // Your existing ProfileView from the widget files
+      child: const ProfileView(),
     );
   }
 }
 
-// NEW: Profile disabled view
 class ProfileDisabledView extends StatelessWidget {
   const ProfileDisabledView({super.key});
 
@@ -764,13 +785,8 @@ class ProfileDisabledView extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF8B5CF6),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 0,
               ),
               child: const Text('Go Back'),
@@ -783,7 +799,7 @@ class ProfileDisabledView extends StatelessWidget {
 }
 
 // ============================================================================
-// PLACEHOLDER VIEWS FOR INCOMPLETE FEATURES
+// PLACEHOLDER VIEWS
 // ============================================================================
 
 class MoodMapPlaceholderView extends StatelessWidget {
@@ -805,14 +821,8 @@ class MoodMapPlaceholderView extends StatelessWidget {
           children: [
             Icon(Icons.explore, size: 80, color: Color(0xFF8B5CF6)),
             SizedBox(height: 16),
-            Text(
-              'Global Emotion Map',
-              style: TextStyle(color: Colors.white, fontSize: 24),
-            ),
-            Text(
-              'Explore emotions worldwide!',
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
+            Text('Global Emotion Map', style: TextStyle(color: Colors.white, fontSize: 24)),
+            Text('Explore emotions worldwide!', style: TextStyle(color: Colors.grey, fontSize: 16)),
           ],
         ),
       ),
@@ -853,25 +863,14 @@ class ErrorScreen extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.red.withValues(alpha: 0.1),
-                    border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.3),
-                      width: 2,
-                    ),
+                    border: Border.all(color: Colors.red.withValues(alpha: 0.3), width: 2),
                   ),
-                  child: const Icon(
-                    Icons.error_outline,
-                    size: 50,
-                    color: Colors.red,
-                  ),
+                  child: const Icon(Icons.error_outline, size: 50, color: Colors.red),
                 ),
                 const SizedBox(height: 24),
                 const Text(
                   'Navigation Error',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -881,27 +880,16 @@ class ErrorScreen extends StatelessWidget {
                 ),
                 if (routeName != null) ...[
                   const SizedBox(height: 8),
-                  Text(
-                    'Route: $routeName',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
+                  Text('Route: $routeName', style: const TextStyle(fontSize: 14, color: Colors.grey)),
                 ],
                 const SizedBox(height: 32),
                 ElevatedButton(
-                  onPressed: () => NavigationService.safeNavigate(
-                    AppRouter.splash,
-                    clearStack: true,
-                  ),
+                  onPressed: () => NavigationService.safeNavigate(AppRouter.splash, clearStack: true),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8B5CF6),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     elevation: 0,
                   ),
                   child: const Text('Go to Home'),

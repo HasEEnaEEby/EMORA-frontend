@@ -66,16 +66,16 @@ class _AvatarPageState extends State<AvatarPage>
 
       // Try different possible structures
       if (stepData['avatars'] is List) {
-        apiAvatars = stepData['avatars'] as List<dynamic>;
+        apiAvatars = stepData['avatars'] as List<dynamic>? ?? [];
       } else if (stepData['options'] is List) {
-        apiAvatars = stepData['options'] as List<dynamic>;
+        apiAvatars = stepData['options'] as List<dynamic>? ?? [];
       } else if (stepData is List) {
         apiAvatars = stepData as List<dynamic>;
       }
 
       if (apiAvatars.isNotEmpty) {
         _avatarOptions = apiAvatars;
-        print('🔧 Avatar options from API: ${_avatarOptions.length} items');
+        print('. Avatar options from API: ${_avatarOptions.length} items');
 
         // Debug: Show what we're getting from API
         for (int i = 0; i < _avatarOptions.length && i < 3; i++) {
@@ -86,13 +86,13 @@ class _AvatarPageState extends State<AvatarPage>
       } else {
         _avatarOptions = defaultAvatars;
         print(
-          '🔧 Avatar options from default (API structure empty): ${_avatarOptions.length} items',
+          '. Avatar options from default (API structure empty): ${_avatarOptions.length} items',
         );
       }
     } else {
       _avatarOptions = defaultAvatars;
       print(
-        '🔧 Avatar options from default (no API data): ${_avatarOptions.length} items',
+        '. Avatar options from default (no API data): ${_avatarOptions.length} items',
       );
     }
 
@@ -103,7 +103,7 @@ class _AvatarPageState extends State<AvatarPage>
 
       if (!isValidSelection) {
         print(
-          '⚠️ Current selection "$_selectedAvatar" not in available options, clearing selection',
+          '. Current selection "$_selectedAvatar" not in available options, clearing selection',
         );
         _selectedAvatar = null;
       }
@@ -130,9 +130,9 @@ class _AvatarPageState extends State<AvatarPage>
       _selectedAvatar = avatarValue;
     });
 
-    print('💾 Saving avatar: "$avatarValue"');
+    print('. Saving avatar: "$avatarValue"');
     print(
-      '📋 Available options: ${_avatarOptions.map(_extractAvatarValue).join(', ')}',
+      '. Available options: ${_avatarOptions.map(_extractAvatarValue).join(', ')}',
     );
 
     context.read<OnboardingBloc>().add(SaveAvatar(avatarValue));

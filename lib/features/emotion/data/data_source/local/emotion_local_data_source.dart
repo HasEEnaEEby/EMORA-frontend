@@ -16,6 +16,18 @@ abstract class EmotionLocalDataSource {
   Future<List<Map<String, dynamic>>> getUserEmotionHistory();
   Future<void> clearEmotionCache();
 
+  // User stats methods
+  Future<Map<String, dynamic>> getCachedUserStats(String userId);
+  Future<void> cacheUserStats(String userId, Map<String, dynamic> stats);
+
+  // User insights methods
+  Future<Map<String, dynamic>> getCachedUserInsights(String userId);
+  Future<void> cacheUserInsights(String userId, Map<String, dynamic> insights);
+
+  // User analytics methods
+  Future<Map<String, dynamic>> getCachedUserAnalytics(String userId);
+  Future<void> cacheUserAnalytics(String userId, Map<String, dynamic> analytics);
+
   Future isCacheStale({required Duration maxAge}) async {}
 }
 
@@ -25,6 +37,9 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
   static const String _heatmapDataKey = 'CACHED_HEATMAP_DATA';
   static const String _userEmotionsKey = 'USER_EMOTION_HISTORY';
   static const String _emotionCacheTimestampKey = 'EMOTION_CACHE_TIMESTAMP';
+  static const String _userStatsKey = 'USER_EMOTION_STATS';
+  static const String _userInsightsKey = 'USER_EMOTION_INSIGHTS';
+  static const String _userAnalyticsKey = 'USER_EMOTION_ANALYTICS';
 
   @override
   Future<void> cacheEmotionFeed(List<Map<String, dynamic>> emotionFeed) async {
@@ -42,9 +57,9 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
         DateTime.now().toIso8601String(),
       );
 
-      Logger.info('✅ Emotion feed cached successfully');
+      Logger.info('. Emotion feed cached successfully');
     } catch (e) {
-      Logger.error('❌ Error caching emotion feed', e);
+      Logger.error('. Error caching emotion feed', e);
       throw CacheException(
         message: 'Failed to cache emotion feed: ${e.toString()}',
       );
@@ -66,15 +81,15 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
             .toList();
 
         Logger.info(
-          '✅ Cached emotion feed retrieved: ${emotionFeed.length} entries',
+          '. Cached emotion feed retrieved: ${emotionFeed.length} entries',
         );
         return emotionFeed;
       } else {
-        Logger.warning('⚠️ No cached emotion feed found');
+        Logger.warning('. No cached emotion feed found');
         return [];
       }
     } catch (e) {
-      Logger.error('❌ Error retrieving cached emotion feed', e);
+      Logger.error('. Error retrieving cached emotion feed', e);
       return [];
     }
   }
@@ -93,9 +108,9 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
         DateTime.now().toIso8601String(),
       );
 
-      Logger.info('✅ Global emotion stats cached successfully');
+      Logger.info('. Global emotion stats cached successfully');
     } catch (e) {
-      Logger.error('❌ Error caching global stats', e);
+      Logger.error('. Error caching global stats', e);
       throw CacheException(
         message: 'Failed to cache global stats: ${e.toString()}',
       );
@@ -114,14 +129,14 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
         final globalStats = Map<String, dynamic>.from(
           json.decode(globalStatsJson),
         );
-        Logger.info('✅ Cached global emotion stats retrieved');
+        Logger.info('. Cached global emotion stats retrieved');
         return globalStats;
       } else {
-        Logger.warning('⚠️ No cached global emotion stats found');
+        Logger.warning('. No cached global emotion stats found');
         return null;
       }
     } catch (e) {
-      Logger.error('❌ Error retrieving cached global stats', e);
+      Logger.error('. Error retrieving cached global stats', e);
       return null;
     }
   }
@@ -140,9 +155,9 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
         DateTime.now().toIso8601String(),
       );
 
-      Logger.info('✅ Emotion heatmap data cached successfully');
+      Logger.info('. Emotion heatmap data cached successfully');
     } catch (e) {
-      Logger.error('❌ Error caching heatmap data', e);
+      Logger.error('. Error caching heatmap data', e);
       throw CacheException(
         message: 'Failed to cache heatmap data: ${e.toString()}',
       );
@@ -159,14 +174,14 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
 
       if (heatmapJson != null) {
         final heatmapData = Map<String, dynamic>.from(json.decode(heatmapJson));
-        Logger.info('✅ Cached emotion heatmap data retrieved');
+        Logger.info('. Cached emotion heatmap data retrieved');
         return heatmapData;
       } else {
-        Logger.warning('⚠️ No cached emotion heatmap data found');
+        Logger.warning('. No cached emotion heatmap data found');
         return null;
       }
     } catch (e) {
-      Logger.error('❌ Error retrieving cached heatmap data', e);
+      Logger.error('. Error retrieving cached heatmap data', e);
       return null;
     }
   }
@@ -192,9 +207,9 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
       final emotionsJson = json.encode(existingEmotions);
       await prefs.setString(_userEmotionsKey, emotionsJson);
 
-      Logger.info('✅ User emotion cached successfully');
+      Logger.info('. User emotion cached successfully');
     } catch (e) {
-      Logger.error('❌ Error caching user emotion', e);
+      Logger.error('. Error caching user emotion', e);
       throw CacheException(
         message: 'Failed to cache user emotion: ${e.toString()}',
       );
@@ -216,7 +231,7 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
             .toList();
 
         Logger.info(
-          '✅ User emotion history retrieved: ${emotions.length} entries',
+          '. User emotion history retrieved: ${emotions.length} entries',
         );
         return emotions;
       } else {
@@ -224,7 +239,7 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
         return [];
       }
     } catch (e) {
-      Logger.error('❌ Error retrieving user emotion history', e);
+      Logger.error('. Error retrieving user emotion history', e);
       return [];
     }
   }
@@ -248,9 +263,21 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
         await prefs.remove(key);
       }
 
-      Logger.info('✅ Emotion cache cleared successfully');
+      // Clear user-specific cache keys (we'll need to get all keys and filter)
+      final allKeys = prefs.getKeys();
+      final userCacheKeys = allKeys.where((key) => 
+        key.startsWith(_userStatsKey) || 
+        key.startsWith(_userInsightsKey) || 
+        key.startsWith(_userAnalyticsKey)
+      ).toList();
+
+      for (final key in userCacheKeys) {
+        await prefs.remove(key);
+      }
+
+      Logger.info('. Emotion cache cleared successfully');
     } catch (e) {
-      Logger.error('❌ Error clearing emotion cache', e);
+      Logger.error('. Error clearing emotion cache', e);
       throw CacheException(
         message: 'Failed to clear emotion cache: ${e.toString()}',
       );
@@ -284,9 +311,153 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
       // Return true if cache is older than maxAge
       return difference > maxAge;
     } catch (e) {
-      Logger.error('❌ Failed to check cache staleness', e);
+      Logger.error('. Failed to check cache staleness', e);
       // If we can't determine staleness, assume cache is stale
       return true;
+    }
+  }
+
+  // User stats methods
+  @override
+  Future<Map<String, dynamic>> getCachedUserStats(String userId) async {
+    try {
+      Logger.info('📊 Retrieving cached user stats for $userId...');
+
+      final prefs = await SharedPreferences.getInstance();
+      final userStatsKey = '${_userStatsKey}_$userId';
+      final userStatsJson = prefs.getString(userStatsKey);
+
+      if (userStatsJson != null) {
+        final userStats = Map<String, dynamic>.from(json.decode(userStatsJson));
+        Logger.info('. Cached user stats retrieved');
+        return userStats;
+      } else {
+        Logger.warning('. No cached user stats found for $userId');
+        return {};
+      }
+    } catch (e) {
+      Logger.error('. Error retrieving cached user stats', e);
+      return {};
+    }
+  }
+
+  @override
+  Future<void> cacheUserStats(String userId, Map<String, dynamic> stats) async {
+    try {
+      Logger.info('📊 Caching user stats for $userId...');
+
+      final prefs = await SharedPreferences.getInstance();
+      final userStatsKey = '${_userStatsKey}_$userId';
+      final userStatsJson = json.encode(stats);
+
+      await prefs.setString(userStatsKey, userStatsJson);
+      await prefs.setString(
+        _emotionCacheTimestampKey,
+        DateTime.now().toIso8601String(),
+      );
+
+      Logger.info('. User stats cached successfully');
+    } catch (e) {
+      Logger.error('. Error caching user stats', e);
+      throw CacheException(
+        message: 'Failed to cache user stats: ${e.toString()}',
+      );
+    }
+  }
+
+  // User insights methods
+  @override
+  Future<Map<String, dynamic>> getCachedUserInsights(String userId) async {
+    try {
+      Logger.info('💡 Retrieving cached user insights for $userId...');
+
+      final prefs = await SharedPreferences.getInstance();
+      final userInsightsKey = '${_userInsightsKey}_$userId';
+      final userInsightsJson = prefs.getString(userInsightsKey);
+
+      if (userInsightsJson != null) {
+        final userInsights = Map<String, dynamic>.from(json.decode(userInsightsJson));
+        Logger.info('. Cached user insights retrieved');
+        return userInsights;
+      } else {
+        Logger.warning('. No cached user insights found for $userId');
+        return {};
+      }
+    } catch (e) {
+      Logger.error('. Error retrieving cached user insights', e);
+      return {};
+    }
+  }
+
+  @override
+  Future<void> cacheUserInsights(String userId, Map<String, dynamic> insights) async {
+    try {
+      Logger.info('💡 Caching user insights for $userId...');
+
+      final prefs = await SharedPreferences.getInstance();
+      final userInsightsKey = '${_userInsightsKey}_$userId';
+      final userInsightsJson = json.encode(insights);
+
+      await prefs.setString(userInsightsKey, userInsightsJson);
+      await prefs.setString(
+        _emotionCacheTimestampKey,
+        DateTime.now().toIso8601String(),
+      );
+
+      Logger.info('. User insights cached successfully');
+    } catch (e) {
+      Logger.error('. Error caching user insights', e);
+      throw CacheException(
+        message: 'Failed to cache user insights: ${e.toString()}',
+      );
+    }
+  }
+
+  // User analytics methods
+  @override
+  Future<Map<String, dynamic>> getCachedUserAnalytics(String userId) async {
+    try {
+      Logger.info('📈 Retrieving cached user analytics for $userId...');
+
+      final prefs = await SharedPreferences.getInstance();
+      final userAnalyticsKey = '${_userAnalyticsKey}_$userId';
+      final userAnalyticsJson = prefs.getString(userAnalyticsKey);
+
+      if (userAnalyticsJson != null) {
+        final userAnalytics = Map<String, dynamic>.from(json.decode(userAnalyticsJson));
+        Logger.info('. Cached user analytics retrieved');
+        return userAnalytics;
+      } else {
+        Logger.warning('. No cached user analytics found for $userId');
+        return {};
+      }
+    } catch (e) {
+      Logger.error('. Error retrieving cached user analytics', e);
+      return {};
+    }
+  }
+
+  @override
+  Future<void> cacheUserAnalytics(String userId, Map<String, dynamic> analytics) async {
+    try {
+      Logger.info('📈 Caching user analytics for $userId...');
+
+      final prefs = await SharedPreferences.getInstance();
+      final userAnalyticsKey = '${_userAnalyticsKey}_$userId';
+      final userAnalyticsJson = json.encode(analytics);
+
+      await prefs.setString(userAnalyticsKey, userAnalyticsJson);
+      await prefs.setString(
+        _emotionCacheTimestampKey,
+        DateTime.now().toIso8601String(),
+      );
+
+      Logger.info('. User analytics cached successfully');
+    } catch (e) {
+      Logger.error('. Error caching user analytics', e);
+      throw CacheException(
+        message: 'Failed to cache user analytics: ${e.toString()}',
+      );
     }
   }
 }

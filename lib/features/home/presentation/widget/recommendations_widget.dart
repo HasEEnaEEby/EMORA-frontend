@@ -1,13 +1,19 @@
 // lib/features/home/presentation/widget/recommendations_widget.dart
 import 'package:emora_mobile_app/features/home/data/mock_insights_data.dart';
+import 'package:emora_mobile_app/features/home/data/model/insights_models.dart';
 import 'package:flutter/material.dart';
 
 class RecommendationsWidget extends StatelessWidget {
-  const RecommendationsWidget({super.key});
+  final Map<String, dynamic>? analyticsData;
+  
+  const RecommendationsWidget({
+    super.key,
+    this.analyticsData,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final recommendations = MockInsightsData.getRecommendations();
+    final recommendations = _getRecommendations();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -58,6 +64,96 @@ class RecommendationsWidget extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  List<RecommendationItem> _getRecommendations() {
+    if (analyticsData == null || analyticsData!.isEmpty) {
+      return MockInsightsData.getRecommendations();
+    }
+
+    final recommendations = <RecommendationItem>[];
+    
+    // Generate recommendations based on analytics data
+    final totalEntries = analyticsData!['totalEntries'] as int? ?? 0;
+    final dominantEmotion = analyticsData!['dominantEmotion'] as String?;
+    final moodTrend = analyticsData!['moodTrend'] as String?;
+    final musicRecommendation = analyticsData!['musicRecommendation'] as String?;
+    
+    if (totalEntries == 0) {
+      recommendations.add(RecommendationItem(
+        emoji: '🎯',
+        title: 'Start Tracking',
+        description: 'Begin logging your emotions to get personalized insights',
+        impact: 'Essential',
+        impactColor: const Color(0xFF8B5CF6),
+      ));
+    } else if (totalEntries < 5) {
+      recommendations.add(RecommendationItem(
+        emoji: '📈',
+        title: 'Keep Going',
+        description: 'Log more emotions to unlock detailed patterns',
+        impact: 'High',
+        impactColor: const Color(0xFF10B981),
+      ));
+    }
+    
+    if (dominantEmotion != null) {
+      switch (dominantEmotion) {
+        case 'sadness':
+        case 'anxiety':
+        case 'fear':
+          recommendations.add(RecommendationItem(
+            emoji: '🧘',
+            title: 'Mindfulness Practice',
+            description: 'Try meditation or deep breathing exercises',
+            impact: 'High',
+            impactColor: const Color(0xFF10B981),
+          ));
+          break;
+        case 'anger':
+        case 'frustration':
+          recommendations.add(RecommendationItem(
+            emoji: '🏃',
+            title: 'Physical Activity',
+            description: 'Exercise can help release tension and improve mood',
+            impact: 'Medium',
+            impactColor: const Color(0xFFFFD700),
+          ));
+          break;
+        case 'joy':
+        case 'gratitude':
+          recommendations.add(RecommendationItem(
+            emoji: '🌟',
+            title: 'Share Positivity',
+            description: 'Connect with others and spread your positive energy',
+            impact: 'High',
+            impactColor: const Color(0xFF4CAF50),
+          ));
+          break;
+      }
+    }
+    
+    if (moodTrend == 'needs_attention') {
+      recommendations.add(RecommendationItem(
+        emoji: '💬',
+        title: 'Talk to Someone',
+        description: 'Consider reaching out to friends, family, or a professional',
+        impact: 'High',
+        impactColor: const Color(0xFF10B981),
+      ));
+    }
+    
+    if (musicRecommendation != null && musicRecommendation != 'Start logging emotions to get personalized recommendations') {
+      recommendations.add(RecommendationItem(
+        emoji: '🎵',
+        title: 'Music Therapy',
+        description: musicRecommendation,
+        impact: 'Medium',
+        impactColor: const Color(0xFF8B5CF6),
+      ));
+    }
+    
+    return recommendations.isNotEmpty ? recommendations : MockInsightsData.getRecommendations();
   }
 
   Widget _buildRecommendationItem(

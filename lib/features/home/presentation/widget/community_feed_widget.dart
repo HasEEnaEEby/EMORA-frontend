@@ -43,13 +43,13 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
   List<Map<String, dynamic>> _convertPostsToMaps(
     List<CommunityPostEntity> posts,
   ) {
-    print('🔍 Converting ${posts.length} posts to maps');
+    print('. Converting ${posts.length} posts to maps');
 
     return posts.take(3).map((post) {
-      print('🔍 Post ID: ${post.id}');
-      print('🔍 Post note: "${post.message}"');
-      print('🔍 Post emoji: ${post.emoji}');
-      print('🔍 Post reactions: ${post.reactions.length}');
+      print('. Post ID: ${post.id}');
+      print('. Post note: "${post.message}"');
+      print('. Post emoji: ${post.emoji}');
+      print('. Post reactions: ${post.reactions.length}');
 
       // Handle message content with fallback
       final messageContent = post.message.isNotEmpty
@@ -116,42 +116,50 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
 
   Widget _buildHeader() {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF8B5CF6).withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.groups_rounded,
-                color: Color(0xFF8B5CF6),
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Community Moments',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+        Expanded(
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                Text(
-                  'Feel connected & supported',
-                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                child: const Icon(
+                  Icons.groups_rounded,
+                  color: Color(0xFF8B5CF6),
+                  size: 20,
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Community Moments',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    Text(
+                      'Feel connected & supported',
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(width: 8),
         GestureDetector(
           onTap: widget.onViewAllTapped,
           child: Container(
@@ -192,13 +200,13 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
   Widget _buildCommunityContent() {
     return BlocBuilder<CommunityBloc, CommunityState>(
       builder: (context, state) {
-        print('🔍 CommunityFeedWidget state: ${state.runtimeType}');
+        print('. CommunityFeedWidget state: ${state.runtimeType}');
 
         if (state is CommunityLoading) {
           return _buildLoadingState();
         } else if (state is CommunityFeedLoaded) {
           final posts = _convertPostsToMaps(state.globalPosts);
-          print('🔍 Converted ${posts.length} posts for display');
+          print('. Converted ${posts.length} posts for display');
 
           if (posts.isEmpty) {
             return _buildEmptyState();
@@ -254,7 +262,7 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
             final post = posts[index];
             final postId = post['id'] as String? ?? '';
 
-            print('🔍 Building post $index with ID: $postId');
+            print('. Building post $index with ID: $postId');
 
             return Container(
               margin: const EdgeInsets.only(bottom: 16),
@@ -433,7 +441,7 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
                 ),
               );
             } else {
-              print('❌ Cannot react: Post ID is empty');
+              print('. Cannot react: Post ID is empty');
             }
           },
           child: Container(

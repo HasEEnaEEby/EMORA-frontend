@@ -233,7 +233,7 @@ class FriendRequestModel extends Equatable {
       // If userId is still empty, try using the request ID as a fallback
       if (userId.isEmpty) {
         userId = FriendModel._safeString(json['id']);
-        print('🔍 FriendRequestModel.fromJson - Using request ID as userId fallback: $userId');
+        print('. FriendRequestModel.fromJson - Using request ID as userId fallback: $userId');
       }
       
       final username = FriendModel._safeString(userData?['username'] ?? json['username']);
@@ -246,24 +246,24 @@ class FriendRequestModel extends Equatable {
                             FriendModel._parseLocation(json['location']);
       
       // Enhanced debug logging
-      print('🔍 FriendRequestModel.fromJson - Raw JSON: $json');
-      print('🔍 FriendRequestModel.fromJson - userData: $userData');
-      print('🔍 FriendRequestModel.fromJson - userData?[id]: ${userData?['id']}');
-      print('🔍 FriendRequestModel.fromJson - json[userId]: ${json['userId']}');
-      print('🔍 FriendRequestModel.fromJson - Final userId: $userId');
-      print('🔍 FriendRequestModel.fromJson - Final username: $username');
-      print('🔍 FriendRequestModel.fromJson - Final displayName: $displayName');
-      print('🔍 FriendRequestModel.fromJson - Final location: $locationString');
+      print('. FriendRequestModel.fromJson - Raw JSON: $json');
+      print('. FriendRequestModel.fromJson - userData: $userData');
+      print('. FriendRequestModel.fromJson - userData?[id]: ${userData?['id']}');
+      print('. FriendRequestModel.fromJson - json[userId]: ${json['userId']}');
+      print('. FriendRequestModel.fromJson - Final userId: $userId');
+      print('. FriendRequestModel.fromJson - Final username: $username');
+      print('. FriendRequestModel.fromJson - Final displayName: $displayName');
+      print('. FriendRequestModel.fromJson - Final location: $locationString');
       
       // Additional validation
       if (userId.isEmpty) {
-        print('❌ FriendRequestModel.fromJson - userId is empty after parsing');
-        print('❌ FriendRequestModel.fromJson - This will cause issues with cancel requests');
+        print('. FriendRequestModel.fromJson - userId is empty after parsing');
+        print('. FriendRequestModel.fromJson - This will cause issues with cancel requests');
       }
       
       // Final validation - ensure we have at least an ID and userId
       if (FriendModel._safeString(json['id']).isEmpty) {
-        print('❌ FriendRequestModel.fromJson - Request ID is empty, cannot create valid model');
+        print('. FriendRequestModel.fromJson - Request ID is empty, cannot create valid model');
         return FriendRequestModel.empty();
       }
       
@@ -279,8 +279,8 @@ class FriendRequestModel extends Equatable {
         mutualFriends: FriendModel._safeInt(json['mutualFriends']),
       );
     } catch (e) {
-      print('❌ FriendRequestModel.fromJson - Error: $e');
-      print('❌ FriendRequestModel.fromJson - Stack trace: ${StackTrace.current}');
+      print('. FriendRequestModel.fromJson - Error: $e');
+      print('. FriendRequestModel.fromJson - Stack trace: ${StackTrace.current}');
       return FriendRequestModel.empty();
     }
   }
@@ -400,19 +400,41 @@ class FriendSuggestionModel extends Equatable {
 
   factory FriendSuggestionModel.fromJson(Map<String, dynamic> json) {
     try {
+      // Extract location name if location is an object
+      String? locationString;
+      final locationField = json['location'];
+      if (locationField is Map<String, dynamic>) {
+        locationString = locationField['name'] as String? ??
+                        locationField['city'] as String? ??
+                        locationField['country'] as String? ??
+                        'Unknown';
+      } else if (locationField is String) {
+        locationString = locationField;
+      } else {
+        locationString = 'Unknown';
+      }
       return FriendSuggestionModel(
         id: FriendModel._safeString(json['id']),
         username: FriendModel._safeString(json['username']),
         displayName: FriendModel._safeString(json['displayName'] ?? json['username']),
         selectedAvatar: FriendModel._safeString(json['selectedAvatar']),
-        location: FriendModel._parseLocation(json['location']),
+        location: locationString,
         mutualFriends: FriendModel._safeInt(json['mutualFriends']),
-        commonInterests: (json['commonInterests'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? [],
-        isRequested: FriendModel._safeBool(json['isRequested']),
+        commonInterests: _safeListCast(json['commonInterests']),
+        isRequested: FriendModel._safeBool(json['isRequested'] ?? false),
       );
     } catch (e) {
       return FriendSuggestionModel.empty();
     }
+  }
+
+  // Helper method for safe list casting
+  static List<String> _safeListCast(dynamic value) {
+    if (value == null) return [];
+    if (value is List) {
+      return value.map((e) => e?.toString() ?? '').toList();
+    }
+    return [];
   }
 
   factory FriendSuggestionModel.empty() {

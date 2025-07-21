@@ -35,9 +35,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
         final currentUser = await authLocalDataSource.getCurrentUser();
         if (currentUser != null) {
           userId = currentUser.id;
-          Logger.info('🔍 Using current user ID: $userId');
+          Logger.info('. Using current user ID: $userId');
         } else {
-          Logger.warning('❌ No logged in user found');
+          Logger.warning('. No logged in user found');
           return Left(AuthFailure(message: 'No logged in user found'));
         }
       }
@@ -47,25 +47,25 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
       // Cache the result
       await localDataSource.cacheUserProfile(result);
-      Logger.info('💾 Profile cached successfully');
+      Logger.info('. Profile cached successfully');
 
       return Right(result.toEntity());
     } on ServerException catch (e) {
-      Logger.warning('⚠️ Server error, trying cache: ${e.message}');
+      Logger.warning('. Server error, trying cache: ${e.message}');
       try {
         final cachedProfile = await localDataSource.getLastUserProfile();
         if (cachedProfile != null) {
           Logger.info('📱 Using cached profile');
           return Right(cachedProfile.toEntity());
         } else {
-          Logger.warning('❌ No cached profile available');
+          Logger.warning('. No cached profile available');
           return Left(ServerFailure(message: e.message));
         }
       } catch (_) {
         return Left(ServerFailure(message: e.message));
       }
     } catch (e) {
-      Logger.error('❌ Unexpected error getting profile: $e');
+      Logger.error('. Unexpected error getting profile: $e');
       return Left(ServerFailure(message: e.toString()));
     }
   }
@@ -83,7 +83,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
           profileModel,
         );
         await localDataSource.cacheUserProfile(updatedProfile);
-        Logger.info('✅ Profile updated and cached');
+        Logger.info('. Profile updated and cached');
         return Right(updatedProfile.toEntity());
       } else {
         // Offline: cache locally and return
@@ -92,10 +92,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
         return Right(profile);
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error updating profile: ${e.message}');
+      Logger.error('. Server error updating profile: ${e.message}');
       return Left(ServerFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Error updating profile: $e');
+      Logger.error('. Error updating profile: $e');
       return Left(
         ServerFailure(message: 'Failed to update profile: ${e.toString()}'),
       );
@@ -106,7 +106,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<Either<Failure, UserPreferencesEntity>> getUserPreferences(
     String userId,
   ) async {
-    Logger.info('🔧 Getting preferences for user: $userId');
+    Logger.info('. Getting preferences for user: $userId');
 
     if (await networkInfo.isConnected) {
       try {
@@ -114,10 +114,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
           userId,
         );
         await localDataSource.cacheUserPreferences(remotePreferences);
-        Logger.info('✅ Preferences fetched and cached');
+        Logger.info('. Preferences fetched and cached');
         return Right(remotePreferences.toEntity());
       } on ServerException catch (e) {
-        Logger.warning('⚠️ Server error, trying cache: ${e.message}');
+        Logger.warning('. Server error, trying cache: ${e.message}');
         try {
           final cachedPreferences = await localDataSource
               .getCachedUserPreferences();
@@ -130,7 +130,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
           return Left(ServerFailure(message: e.message));
         }
       } catch (e) {
-        Logger.error('❌ Error fetching preferences: $e');
+        Logger.error('. Error fetching preferences: $e');
         return Left(
           ServerFailure(
             message: 'Failed to fetch preferences: ${e.toString()}',
@@ -156,7 +156,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
           UserPreferencesEntity(),
         ); // Return default preferences
       } catch (e) {
-        Logger.warning('⚠️ Offline error: $e');
+        Logger.warning('. Offline error: $e');
         return Left(NetworkFailure(message: 'No internet connection'));
       }
     }
@@ -177,7 +177,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
           preferencesModel,
         );
         await localDataSource.cacheUserPreferences(updatedPreferences);
-        Logger.info('✅ Preferences updated and cached');
+        Logger.info('. Preferences updated and cached');
         return Right(updatedPreferences.toEntity());
       } else {
         // Offline: cache locally and return
@@ -186,10 +186,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
         return Right(preferences);
       }
     } on ServerException catch (e) {
-      Logger.error('❌ Server error updating preferences: ${e.message}');
+      Logger.error('. Server error updating preferences: ${e.message}');
       return Left(ServerFailure(message: e.message));
     } catch (e) {
-      Logger.error('❌ Error updating preferences: $e');
+      Logger.error('. Error updating preferences: $e');
       return Left(
         ServerFailure(message: 'Failed to update preferences: ${e.toString()}'),
       );
@@ -209,7 +209,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         );
         await localDataSource.cacheAchievements(remoteAchievements);
         Logger.info(
-          '✅ ${remoteAchievements.length} achievements fetched and cached',
+          '. ${remoteAchievements.length} achievements fetched and cached',
         );
 
         // FIXED: Use the toEntity() method instead of manual mapping
@@ -219,7 +219,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
               .toList(),
         );
       } on ServerException catch (e) {
-        Logger.warning('⚠️ Server error, trying cache: ${e.message}');
+        Logger.warning('. Server error, trying cache: ${e.message}');
         try {
           final cachedAchievements = await localDataSource
               .getCachedAchievements();
@@ -239,7 +239,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
           return Left(ServerFailure(message: e.message));
         }
       } catch (e) {
-        Logger.error('❌ Error fetching achievements: $e');
+        Logger.error('. Error fetching achievements: $e');
         return Left(
           ServerFailure(
             message: 'Failed to fetch achievements: ${e.toString()}',
@@ -265,10 +265,10 @@ class ProfileRepositoryImpl implements ProfileRepository {
         Logger.info('📱 No cached achievements available');
         return Left(CacheFailure(message: 'No cached achievements available'));
       } on CacheException {
-        Logger.warning('❌ Cache error for achievements');
+        Logger.warning('. Cache error for achievements');
         return Left(CacheFailure(message: 'No cached achievements available'));
       } catch (e) {
-        Logger.error('❌ Offline achievements error: $e');
+        Logger.error('. Offline achievements error: $e');
         return Left(
           NetworkFailure(
             message:
@@ -291,19 +291,19 @@ class ProfileRepositoryImpl implements ProfileRepository {
           'preferences',
           'activity_history',
         ]);
-        Logger.info('✅ Data export initiated successfully');
+        Logger.info('. Data export initiated successfully');
         return Right(exportResult);
       } on ServerException catch (e) {
-        Logger.error('❌ Server error during export: ${e.message}');
+        Logger.error('. Server error during export: ${e.message}');
         return Left(ServerFailure(message: e.message));
       } catch (e) {
-        Logger.error('❌ Error exporting data: $e');
+        Logger.error('. Error exporting data: $e');
         return Left(
           ServerFailure(message: 'Failed to export data: ${e.toString()}'),
         );
       }
     } else {
-      Logger.warning('❌ Export requires internet connection');
+      Logger.warning('. Export requires internet connection');
       return Left(
         NetworkFailure(
           message: 'No internet connection. Data export requires connection.',
@@ -321,20 +321,20 @@ class ProfileRepositoryImpl implements ProfileRepository {
         final result = await remoteDataSource.deleteUserAccount(userId);
         if (result) {
           await localDataSource.clearCache();
-          Logger.info('✅ Account deleted and cache cleared');
+          Logger.info('. Account deleted and cache cleared');
         }
         return Right(result);
       } on ServerException catch (e) {
-        Logger.error('❌ Server error during deletion: ${e.message}');
+        Logger.error('. Server error during deletion: ${e.message}');
         return Left(ServerFailure(message: e.message));
       } catch (e) {
-        Logger.error('❌ Error deleting account: $e');
+        Logger.error('. Error deleting account: $e');
         return Left(
           ServerFailure(message: 'Failed to delete account: ${e.toString()}'),
         );
       }
     } else {
-      Logger.warning('❌ Account deletion requires internet connection');
+      Logger.warning('. Account deletion requires internet connection');
       return Left(
         NetworkFailure(
           message:

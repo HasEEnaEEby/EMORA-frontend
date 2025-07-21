@@ -19,7 +19,7 @@ void testEnhancedFriendRequestButton() {
   ];
   
   for (final state in states) {
-    print('✅ Testing state: $state');
+    print('. Testing state: $state');
   }
   
   print('🎉 All button states tested successfully!');
@@ -28,9 +28,9 @@ void testEnhancedFriendRequestButton() {
 // Test the celebration animation
 void testCelebrationAnimation() {
   print('🎊 Testing Celebration Animation...');
-  print('✅ Celebration particles effect');
-  print('✅ Central celebration message');
-  print('✅ Auto-remove after 2 seconds');
+  print('. Celebration particles effect');
+  print('. Central celebration message');
+  print('. Auto-remove after 2 seconds');
   print('🎉 Celebration animation tested successfully!');
 }
 
@@ -48,7 +48,7 @@ void testEnhancedSnackbars() {
   ];
   
   for (final testCase in testCases) {
-    print('✅ Testing ${testCase['type']}: ${testCase['title']}');
+    print('. Testing ${testCase['type']}: ${testCase['title']}');
   }
   
   print('🎉 All snackbar notifications tested successfully!');
@@ -57,9 +57,9 @@ void testEnhancedSnackbars() {
 // Test haptic feedback
 void testHapticFeedback() {
   print('📳 Testing Haptic Feedback...');
-  print('✅ Medium impact for sending requests');
-  print('✅ Heavy impact for accepted requests');
-  print('✅ Light impact for errors');
+  print('. Medium impact for sending requests');
+  print('. Heavy impact for accepted requests');
+  print('. Light impact for errors');
   print('🎉 Haptic feedback tested successfully!');
 }
 
@@ -83,7 +83,7 @@ void main() {
   print('✨ Enhanced Friend Request System is ready!');
   
   // Test checklist
-  print('\n📋 TESTING CHECKLIST:');
+  print('\n. TESTING CHECKLIST:');
   print('□ Button shows "Add Friend" initially');
   print('□ Button shows pulsing "Sending..." when loading');
   print('□ Button shows golden "Request Sent" with shimmer after success');
@@ -99,20 +99,20 @@ void main() {
 /*
 SETUP INSTRUCTIONS:
 
-1. ✅ Created enhanced_friend_request_button.dart with:
+1. . Created enhanced_friend_request_button.dart with:
    - Multiple button states (notRequested, sending, requested, accepted, friends, error)
    - Smooth animations (pulse, shimmer, success)
    - Emotional theming with gradients
    - Haptic feedback integration
 
-2. ✅ Updated friends_view.dart with:
+2. . Updated friends_view.dart with:
    - Enhanced BlocListener with better state handling
    - Improved user suggestion cards with emotional glow
    - Enhanced snackbar notifications with icons and better messaging
    - Celebration overlay for new friendships
    - Better pending requests dialog
 
-3. ✅ Added helper methods:
+3. . Added helper methods:
    - _handleSuccessState() - Enhanced success feedback
    - _handleErrorState() - Better error messaging
    - _handleLoadingState() - Loading state management

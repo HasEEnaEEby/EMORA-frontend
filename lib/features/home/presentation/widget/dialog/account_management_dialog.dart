@@ -73,7 +73,7 @@ class AccountManagementDialog {
     );
   }
 
-  /// ✅ Added missing showPrivacySettings method
+  /// . Added missing showPrivacySettings method
   static void showPrivacySettings(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
@@ -224,7 +224,7 @@ class AccountManagementDialog {
     );
   }
 
-  /// ✅ Added missing showSupportHelp method
+  /// . Added missing showSupportHelp method
   static void showSupportHelp(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
@@ -668,7 +668,7 @@ class AccountManagementDialog {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildDeleteItem('🔒 Profile information and settings'),
-              _buildDeleteItem('📊 All emotion logs and history'),
+              _buildDeleteItem('. All emotion logs and history'),
               _buildDeleteItem('🏆 Achievements and progress'),
               _buildDeleteItem('👥 Social connections and shared content'),
               _buildDeleteItem('📈 Analytics and insights data'),

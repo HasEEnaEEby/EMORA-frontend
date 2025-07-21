@@ -42,6 +42,8 @@ class EmotionLoaded extends EmotionState {
   final Map<String, dynamic> globalStats;
   final Map<String, dynamic> heatmapData;
   final List<Map<String, dynamic>> userEmotionHistory;
+  final Map<String, dynamic> userInsights;
+  final Map<String, dynamic> userAnalytics;
   final DateTime lastUpdated;
 
   const EmotionLoaded({
@@ -49,6 +51,8 @@ class EmotionLoaded extends EmotionState {
     required this.globalStats,
     required this.heatmapData,
     required this.userEmotionHistory,
+    required this.userInsights,
+    required this.userAnalytics,
     required this.lastUpdated,
   });
 
@@ -58,6 +62,8 @@ class EmotionLoaded extends EmotionState {
     globalStats,
     heatmapData,
     userEmotionHistory,
+    userInsights,
+    userAnalytics,
     lastUpdated,
   ];
 }
@@ -67,6 +73,8 @@ class EmotionPartiallyLoaded extends EmotionState {
   final Map<String, dynamic>? globalStats;
   final Map<String, dynamic>? heatmapData;
   final List<Map<String, dynamic>>? userEmotionHistory;
+  final Map<String, dynamic>? userInsights;
+  final Map<String, dynamic>? userAnalytics;
   final List<String> failedOperations;
   final DateTime lastUpdated;
 
@@ -75,6 +83,8 @@ class EmotionPartiallyLoaded extends EmotionState {
     this.globalStats,
     this.heatmapData,
     this.userEmotionHistory,
+    this.userInsights,
+    this.userAnalytics,
     required this.failedOperations,
     required this.lastUpdated,
   });
@@ -85,6 +95,8 @@ class EmotionPartiallyLoaded extends EmotionState {
     globalStats,
     heatmapData,
     userEmotionHistory,
+    userInsights,
+    userAnalytics,
     failedOperations,
     lastUpdated,
   ];

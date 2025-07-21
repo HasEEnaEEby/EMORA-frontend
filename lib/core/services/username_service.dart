@@ -152,9 +152,9 @@ class UsernameService {
         }
       }
 
-      Logger.info('✅ Generated ${suggestions.length} automated suggestions');
+      Logger.info('. Generated ${suggestions.length} automated suggestions');
     } catch (e) {
-      Logger.warning('⚠️ Error in generation, using fallback: $e');
+      Logger.warning('. Error in generation, using fallback: $e');
 
       // Use fallback generation if everything fails
       final fallbackSuggestions = _generateFallbackSuggestions(
@@ -196,12 +196,12 @@ class UsernameService {
       ]);
 
       _lastWordFetch = now;
-      Logger.info('✅ Word data refreshed successfully');
+      Logger.info('. Word data refreshed successfully');
       Logger.info(
-        '📊 Words: ${_dynamicAdjectives.length} adjectives, ${_dynamicNouns.length} nouns, ${_dynamicEmotions.length} emotions',
+        '. Words: ${_dynamicAdjectives.length} adjectives, ${_dynamicNouns.length} nouns, ${_dynamicEmotions.length} emotions',
       );
     } catch (e) {
-      Logger.warning('⚠️ Failed to refresh word data: $e');
+      Logger.warning('. Failed to refresh word data: $e');
 
       // Use fallback if we have no cached data
       if (_dynamicAdjectives.isEmpty ||
@@ -239,7 +239,7 @@ class UsernameService {
             .toList();
       }
     } catch (e) {
-      Logger.warning('⚠️ Failed to fetch adjectives: $e');
+      Logger.warning('. Failed to fetch adjectives: $e');
     }
   }
 
@@ -274,7 +274,7 @@ class UsernameService {
       // Supplement with nature/animal words from another API if available
       await _fetchNatureWords();
     } catch (e) {
-      Logger.warning('⚠️ Failed to fetch nouns: $e');
+      Logger.warning('. Failed to fetch nouns: $e');
     }
   }
 
@@ -317,7 +317,7 @@ class UsernameService {
         }
       }
     } catch (e) {
-      Logger.warning('⚠️ Failed to fetch nature words: $e');
+      Logger.warning('. Failed to fetch nature words: $e');
     }
   }
 
@@ -380,7 +380,7 @@ class UsernameService {
         ]);
       }
     } catch (e) {
-      Logger.warning('⚠️ Failed to fetch emotion words: $e');
+      Logger.warning('. Failed to fetch emotion words: $e');
     }
   }
 
@@ -499,9 +499,9 @@ class UsernameService {
   /// Get username availability message
   static String getAvailabilityMessage(bool isAvailable, String username) {
     if (isAvailable) {
-      return '✅ Great choice! "$username" is available';
+      return '. Great choice! "$username" is available';
     } else {
-      return '❌ "$username" is already taken. Try something unique!';
+      return '. "$username" is already taken. Try something unique!';
     }
   }
 
@@ -540,7 +540,7 @@ class UsernameService {
 
   /// Get warning message for potential real name usage
   static String getRealNameWarning() {
-    return '⚠️ Consider using a more creative username instead of your real name for better privacy and safety.';
+    return '. Consider using a more creative username instead of your real name for better privacy and safety.';
   }
 
   /// Clear all caches

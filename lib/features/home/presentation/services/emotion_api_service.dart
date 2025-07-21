@@ -42,22 +42,37 @@ class EmotionApiService {
         queryParams['maxIntensity'] = maxIntensity;
       }
 
+      Logger.info('🔍 DEBUG: Calling emotion history API with params: $queryParams');
       final response = await _dioClient.get(
         '/api/emotions',
         queryParameters: queryParams,
       );
 
+      Logger.info('🔍 DEBUG: API Response Status: ${response.statusCode}');
+      Logger.info('🔍 DEBUG: API Response Data: ${response.data}');
+
       if (response.statusCode == 200) {
         final data = response.data;
         final emotions = data['data']?['emotions'] ?? [];
 
+        Logger.info('🔍 DEBUG: Raw emotions data: ${emotions.length} items');
+        if (emotions.isNotEmpty) {
+          Logger.info('🔍 DEBUG: First emotion: ${emotions.first}');
+        }
+
         final emotionEntries = emotions.map<EmotionEntryModel>((emotion) {
-          return EmotionEntryModel.fromJson(emotion);
+          try {
+            return EmotionEntryModel.fromJson(emotion);
+          } catch (e) {
+            Logger.error('❌ Error parsing emotion: $emotion', e);
+            rethrow;
+          }
         }).toList();
 
         Logger.info('✅ Retrieved ${emotionEntries.length} emotions from backend');
         return emotionEntries;
       } else {
+        Logger.error('❌ API returned status: ${response.statusCode}');
         throw Exception('Failed to fetch emotions: ${response.statusCode}');
       }
     } catch (e) {
@@ -94,13 +109,13 @@ class EmotionApiService {
 
       if (response.statusCode == 201) {
         final data = response.data;
-        Logger.info('✅ Emotion logged successfully: ${data['data']?['emotion']?['id']}');
+        Logger.info('. Emotion logged successfully: ${data['data']?['emotion']?['id']}');
         return data;
       } else {
         throw Exception('Failed to log emotion: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Failed to log emotion', e);
+      Logger.error('. Failed to log emotion', e);
       rethrow;
     }
   }
@@ -111,7 +126,7 @@ class EmotionApiService {
     String period = '30d',
   }) async {
     try {
-      Logger.info('📊 Fetching user emotion stats from backend...');
+      Logger.info('. Fetching user emotion stats from backend...');
 
       final response = await _dioClient.get(
         '/api/emotions/stats',
@@ -120,13 +135,13 @@ class EmotionApiService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        Logger.info('✅ Retrieved emotion stats from backend');
+        Logger.info('. Retrieved emotion stats from backend');
         return data['data'] ?? {};
       } else {
         throw Exception('Failed to fetch emotion stats: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Failed to fetch emotion stats', e);
+      Logger.error('. Failed to fetch emotion stats', e);
       rethrow;
     }
   }
@@ -134,19 +149,19 @@ class EmotionApiService {
   /// Get emotion constants (types, categories, etc.)
   Future<Map<String, dynamic>> getEmotionConstants() async {
     try {
-      Logger.info('📋 Fetching emotion constants from backend...');
+      Logger.info('. Fetching emotion constants from backend...');
 
       final response = await _dioClient.get('/api/emotions/constants');
 
       if (response.statusCode == 200) {
         final data = response.data;
-        Logger.info('✅ Retrieved emotion constants from backend');
+        Logger.info('. Retrieved emotion constants from backend');
         return data['data'] ?? {};
       } else {
         throw Exception('Failed to fetch emotion constants: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Failed to fetch emotion constants', e);
+      Logger.error('. Failed to fetch emotion constants', e);
       rethrow;
     }
   }
@@ -175,13 +190,13 @@ class EmotionApiService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        Logger.info('✅ Emotion updated successfully');
+        Logger.info('. Emotion updated successfully');
         return data;
       } else {
         throw Exception('Failed to update emotion: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Failed to update emotion', e);
+      Logger.error('. Failed to update emotion', e);
       rethrow;
     }
   }
@@ -194,13 +209,13 @@ class EmotionApiService {
       final response = await _dioClient.delete('/api/emotions/$emotionId');
 
       if (response.statusCode == 200) {
-        Logger.info('✅ Emotion deleted successfully');
+        Logger.info('. Emotion deleted successfully');
         return true;
       } else {
         throw Exception('Failed to delete emotion: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Failed to delete emotion', e);
+      Logger.error('. Failed to delete emotion', e);
       rethrow;
     }
   }
@@ -220,13 +235,13 @@ class EmotionApiService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        Logger.info('✅ Retrieved emotion summary from backend');
+        Logger.info('. Retrieved emotion summary from backend');
         return data['data'] ?? {};
       } else {
         throw Exception('Failed to fetch emotion summary: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Failed to fetch emotion summary', e);
+      Logger.error('. Failed to fetch emotion summary', e);
       rethrow;
     }
   }
@@ -234,7 +249,7 @@ class EmotionApiService {
   /// Get weekly emotion insights
   Future<Map<String, dynamic>> getWeeklyInsights() async {
     try {
-      Logger.info('📊 Fetching weekly insights from backend...');
+      Logger.info('. Fetching weekly insights from backend...');
 
       // Get emotion stats for the last 7 days
       final stats = await getUserEmotionStats(period: '7d');
@@ -249,10 +264,10 @@ class EmotionApiService {
       // Calculate insights from the data
       final insights = _calculateWeeklyInsights(stats, recentEmotions);
 
-      Logger.info('✅ Retrieved weekly insights from backend');
+      Logger.info('. Retrieved weekly insights from backend');
       return insights;
     } catch (e) {
-      Logger.error('❌ Failed to fetch weekly insights', e);
+      Logger.error('. Failed to fetch weekly insights', e);
       rethrow;
     }
   }
@@ -272,10 +287,10 @@ class EmotionApiService {
         limit: 20,
       );
 
-      Logger.info('✅ Retrieved ${emotions.length} emotions for today');
+      Logger.info('. Retrieved ${emotions.length} emotions for today');
       return emotions;
     } catch (e) {
-      Logger.error('❌ Failed to fetch today\'s journey', e);
+      Logger.error('. Failed to fetch today\'s journey', e);
       rethrow;
     }
   }
@@ -300,17 +315,17 @@ class EmotionApiService {
       final emotionsByDate = <String, List<EmotionEntryModel>>{};
       
       for (final emotion in emotions) {
-        final dateKey = '${emotion.timestamp.year}-${emotion.timestamp.month.toString().padLeft(2, '0')}-${emotion.timestamp.day.toString().padLeft(2, '0')}';
+        final dateKey = '${emotion.createdAt.year}-${emotion.createdAt.month.toString().padLeft(2, '0')}-${emotion.createdAt.day.toString().padLeft(2, '0')}';
         if (!emotionsByDate.containsKey(dateKey)) {
           emotionsByDate[dateKey] = [];
         }
         emotionsByDate[dateKey]!.add(emotion);
       }
 
-      Logger.info('✅ Retrieved calendar data for ${emotionsByDate.length} days');
+      Logger.info('. Retrieved calendar data for ${emotionsByDate.length} days');
       return emotionsByDate;
     } catch (e) {
-      Logger.error('❌ Failed to fetch calendar data', e);
+      Logger.error('. Failed to fetch calendar data', e);
       rethrow;
     }
   }
@@ -321,7 +336,7 @@ class EmotionApiService {
       final response = await _dioClient.healthCheck();
       return response.statusCode == 200;
     } catch (e) {
-      Logger.error('❌ Backend health check failed', e);
+      Logger.error('. Backend health check failed', e);
       return false;
     }
   }

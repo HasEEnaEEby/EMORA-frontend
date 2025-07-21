@@ -2,6 +2,7 @@
 // FRIENDS TAB CONTENT - components/friends_tab_content.dart
 // ============================================================================
 
+import 'package:emora_mobile_app/core/utils/friends_utils.dart';
 import 'package:emora_mobile_app/features/home/presentation/view/pages/friends_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,9 +12,17 @@ import '../../../view_model/bloc/community_bloc.dart';
 import '../../../view_model/bloc/community_state.dart';
 import '../../../view_model/bloc/friend_bloc.dart';
 import '../../../view_model/bloc/friend_state.dart';
-import '../../../widget/enhanced_friend_request_button.dart';
+import '../../../widget/enhanced_friend_request_button.dart' hide FriendRequestStatus, EnhancedFriendRequestButton;
+import 'package:emora_mobile_app/features/friends/services/mood_reaction_service.dart';
+import 'package:emora_mobile_app/features/friends/domain/entity/friend_mood_data.dart';
+import 'package:emora_mobile_app/core/network/dio_client.dart';
+import 'package:emora_mobile_app/core/utils/logger.dart';
+import 'package:emora_mobile_app/core/navigation/navigation_service.dart';
 
 class FriendsTabContent {
+  // Service instance for mood reactions
+  static final MoodReactionService _moodReactionService = MoodReactionService(DioClient.instance);
+
   // Global Feed Tab
   static Widget globalFeed(Future<void> Function() onRefresh) {
     return BlocBuilder<CommunityBloc, CommunityState>(
@@ -107,12 +116,9 @@ class FriendsTabContent {
       color: const Color(0xFF8B5CF6),
       child: ListView.builder(
         padding: const EdgeInsets.all(20),
-        itemCount: state.globalPosts.length + 1,
+        itemCount: state.globalPosts.length,
         itemBuilder: (context, index) {
-          if (index == 0) {
-            return _buildGlobalStats();
-          }
-          return _buildMoodCard(state.globalPosts[index - 1]);
+          return _buildMoodCard(state.globalPosts[index]);
         },
       ),
     );
@@ -267,42 +273,7 @@ class FriendsTabContent {
   // WIDGET BUILDERS
   // ============================================================================
 
-  static Widget _buildGlobalStats() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF1A1A2E).withValues(alpha: 0.8),
-            const Color(0xFF16213E).withValues(alpha: 0.6),
-          ],
-        ),
-        border: Border.all(
-          color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
-        ),
-      ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Global Mood Today',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Loading global mood statistics...',
-            style: TextStyle(color: Colors.grey, fontSize: 14),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   static Widget _buildMoodCard(CommunityPostEntity post) {
     return Container(
@@ -415,102 +386,410 @@ class FriendsTabContent {
   static Widget _buildFriendCard(FriendEntity friend) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1A1A2E).withValues(alpha: 0.8),
-            const Color(0xFF16213E).withValues(alpha: 0.6),
+            const Color(0xFF1A1A2E).withValues(alpha: 0.9),
+            const Color(0xFF16213E).withValues(alpha: 0.7),
           ],
         ),
         border: Border.all(
-          color: const Color(0xFF10B981).withValues(alpha: 0.2),
+          color: const Color(0xFF10B981).withValues(alpha: 0.3),
+          width: 1.5,
         ),
-      ),
-      child: Row(
-        children: [
-          Stack(
-            children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.2),
-                child: Text(
-                  _getAvatarEmoji(friend.selectedAvatar),
-                  style: const TextStyle(
-                    color: Color(0xFF10B981),
-                    fontWeight: FontWeight.w700,
-                    fontSize: 26,
-                  ),
-                ),
-              ),
-              if (friend.isOnline)
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF10B981),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFF0A0A0F), width: 2),
-                    ),
-                  ),
-                ),
-            ],
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF10B981).withValues(alpha: 0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Column(
+        children: [
+          // Header with friend info
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
               children: [
-                Text(
-                  friend.displayName.isNotEmpty ? friend.displayName : friend.username,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
+                Stack(
                   children: [
-                    Text(
-                      friend.status,
-                      style: TextStyle(
-                        color: friend.isOnline ? const Color(0xFF10B981) : Colors.grey[400],
-                        fontSize: 12,
+                    CircleAvatar(
+                      radius: 32,
+                      backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.2),
+                      child: Text(
+                        _getAvatarEmoji(friend.selectedAvatar),
+                        style: const TextStyle(
+                          color: Color(0xFF10B981),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 28,
+                        ),
                       ),
                     ),
+                    if (friend.isOnline)
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          width: 14,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: const Color(0xFF0A0A0F), width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF10B981).withValues(alpha: 0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        friend.displayName.isNotEmpty ? friend.displayName : friend.username,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            friend.isOnline ? Icons.circle : Icons.circle_outlined,
+                            color: friend.isOnline ? const Color(0xFF10B981) : Colors.grey[500],
+                            size: 12,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            friend.status,
+                            style: TextStyle(
+                              color: friend.isOnline ? const Color(0xFF10B981) : Colors.grey[400],
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                if (friend.mutualFriends > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFD700).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: const Color(0xFFFFD700).withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.people_outline, color: Color(0xFFFFD700), size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${friend.mutualFriends}',
+                          style: const TextStyle(
+                            color: Color(0xFFFFD700),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
-          if (friend.mutualFriends > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: const Color(0xFFFFD700).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: const Color(0xFFFFD700).withValues(alpha: 0.3),
-                ),
-              ),
-              child: Text(
-                '${friend.mutualFriends}👥',
-                style: const TextStyle(
-                  color: Color(0xFFFFD700),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          
+          // Mood Activity Section
+          _buildMoodActivitySection(friend),
+          
+          // Action Buttons
+          _buildFriendActionButtons(friend),
         ],
       ),
     );
   }
+
+  static Widget _buildMoodActivitySection(FriendEntity friend) {
+    // Use real mood data from friend entity
+    final recentMood = friend.recentMood;
+    
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF1A1A2E).withValues(alpha: 0.6),
+        border: Border.all(
+          color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.psychology, color: Color(0xFF8B5CF6), size: 20),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Recent Mood',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          if (recentMood != null) ...[
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: recentMood.color.withValues(alpha: 0.2),
+                    border: Border.all(
+                      color: recentMood.color.withValues(alpha: 0.4),
+                      width: 2,
+                    ),
+                  ),
+                  child: Text(
+                    recentMood.emoji,
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        recentMood.note ?? 'Feeling ${recentMood.emotion.toLowerCase()}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          height: 1.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${recentMood.locationDisplay} • ${FriendsUtils.formatTimestamp(recentMood.timestamp)}',
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildMoodReactions(recentMood),
+          ] else ...[
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.grey.withValues(alpha: 0.1),
+                border: Border.all(
+                  color: Colors.grey.withValues(alpha: 0.2),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: Colors.grey[400], size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'No recent mood activity',
+                      style: TextStyle(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  static Widget _buildMoodReactions(FriendMoodData mood) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildReactionButton('💬', 'Hug', () => _sendReaction(mood.id, 'hug')),
+        const SizedBox(width: 8),
+        _buildReactionButton('🎵', 'Music', () => _sendReaction(mood.id, 'music')),
+        const SizedBox(width: 8),
+        _buildReactionButton('📩', 'Message', () => _sendReaction(mood.id, 'message')),
+          const SizedBox(width: 8),
+        _buildAnonymousSupportButton(mood.id),
+      ],
+      ),
+    );
+  }
+
+  static Widget _buildReactionButton(String emoji, String label, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+          border: Border.all(
+            color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 16)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF8B5CF6),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildAnonymousSupportButton(String moodId) {
+    return GestureDetector(
+      onTap: () => _sendAnonymousSupport(moodId),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFF10B981).withValues(alpha: 0.1),
+          border: Border.all(
+            color: const Color(0xFF10B981).withValues(alpha: 0.3),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('💜', style: TextStyle(fontSize: 16)),
+            const SizedBox(width: 6),
+            const Text(
+              'Support',
+              style: TextStyle(
+                color: Color(0xFF10B981),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildFriendActionButtons(FriendEntity friend) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildActionButton(
+              'View Profile',
+              Icons.person_outline,
+              const Color(0xFF8B5CF6),
+              () => _viewFriendProfile(friend),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildActionButton(
+              'Send Message',
+              Icons.chat_bubble_outline,
+              const Color(0xFF10B981),
+              () => _sendMessage(friend),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildActionButton(
+              'Mood Map',
+              Icons.map_outlined,
+              const Color(0xFFFFD700),
+              () => _viewFriendOnMap(friend),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Widget _buildActionButton(String label, IconData icon, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: color.withValues(alpha: 0.1),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+
 
   static Widget _buildSentRequestsHeader(int count) {
     return Container(
@@ -639,13 +918,13 @@ class FriendsTabContent {
         
         return GestureDetector(
           onTap: isLoading ? null : () {
-            print('🔍 _buildCancelRequestButton - userId: $userId');
-            print('🔍 _buildCancelRequestButton - userId length: ${userId.length}');
-            print('🔍 _buildCancelRequestButton - userId isEmpty: ${userId.isEmpty}');
+            print('. _buildCancelRequestButton - userId: $userId');
+            print('. _buildCancelRequestButton - userId length: ${userId.length}');
+            print('. _buildCancelRequestButton - userId isEmpty: ${userId.isEmpty}');
             
             // Validate userId before calling onCancel
             if (userId.isEmpty) {
-              print('❌ _buildCancelRequestButton - userId is empty, not calling onCancel');
+              print('. _buildCancelRequestButton - userId is empty, not calling onCancel');
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text('Invalid user data. Please refresh and try again.'),
@@ -905,6 +1184,8 @@ class FriendsTabContent {
           color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
         ),
       ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
       child: Row(
         children: [
           Container(
@@ -952,12 +1233,15 @@ class FriendsTabContent {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Text(
+                      Flexible(
+                        child: Text(
                       '@${suggestion.username}',
                       style: TextStyle(
                         color: Colors.grey[400],
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -983,7 +1267,8 @@ class FriendsTabContent {
                     ),
                     if (suggestion.mutualFriends > 0) ...[
                       const SizedBox(width: 8),
-                      Container(
+                        Flexible(
+                          child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(6),
@@ -998,6 +1283,8 @@ class FriendsTabContent {
                             color: Color(0xFF10B981),
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),
@@ -1041,9 +1328,9 @@ class FriendsTabContent {
           const SizedBox(width: 12),
           BlocBuilder<FriendBloc, FriendState>(
             builder: (context, state) {
-              // ✅ Use centralized status check from BLoC
+              // . Use centralized status check from BLoC
               final friendBloc = context.read<FriendBloc>();
-              FriendRequestStatus buttonStatus = friendBloc.getFriendRequestStatus(suggestion.id);
+              FriendRequestStatus buttonStatus = friendBloc.getFriendRequestStatus(suggestion.id) as FriendRequestStatus;
               
               return EnhancedFriendRequestButton(
                 userId: suggestion.id,
@@ -1054,11 +1341,12 @@ class FriendsTabContent {
             },
           ),
         ],
+        ),
       ),
     );
   }
 
-  /// Get avatar emoji from avatar name
+
   static String _getAvatarEmoji(String avatarName) {
     const avatarEmojis = {
       'panda': '🐼',
@@ -1140,37 +1428,15 @@ class FriendsTabContent {
           _buildActionButton(
             'Find Friends',
             Icons.person_add,
-            () => tabController.animateTo(4), // Go to discover tab
+            const Color(0xFF8B5CF6),
+            () => tabController.animateTo(3), // Go to discover tab
           ),
         ],
       ),
     );
   }
 
-  static Widget _buildActionButton(String label, IconData icon, VoidCallback onTap) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF8B5CF6),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-        icon: Icon(icon, color: Colors.white, size: 20),
-        label: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      ),
-    );
-  }
+
 
   static Widget _buildLoadingState() {
     return const Center(
@@ -1237,5 +1503,116 @@ class FriendsTabContent {
         ),
       ),
     );
+  }
+
+
+
+  static Future<void> _sendReaction(String moodId, String reactionType) async {
+    try {
+      Logger.info('💝 Sending $reactionType reaction to mood $moodId');
+      
+      final success = await _moodReactionService.sendReaction(
+        moodId: moodId,
+        reactionType: reactionType,
+      );
+
+      if (success) {
+        Logger.info('✅ Reaction sent successfully');
+        // Show success feedback to user
+        ScaffoldMessenger.of(NavigationService.navigatorKey.currentContext!).showSnackBar(
+          SnackBar(
+            content: Text('$reactionType sent! 💝'),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        Logger.warning('⚠️ Failed to send reaction');
+        ScaffoldMessenger.of(NavigationService.navigatorKey.currentContext!).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to send reaction. Please try again.'),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      Logger.error('❌ Error sending reaction: $e');
+      ScaffoldMessenger.of(NavigationService.navigatorKey.currentContext!).showSnackBar(
+        SnackBar(
+          content: const Text('Error sending reaction. Please try again.'),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  static Future<void> _sendAnonymousSupport(String moodId) async {
+    try {
+      Logger.info('💜 Sending anonymous support to mood $moodId');
+      
+      final success = await _moodReactionService.sendReaction(
+        moodId: moodId,
+        reactionType: 'anonymous_support',
+        isAnonymous: true,
+      );
+
+      if (success) {
+        Logger.info('✅ Anonymous support sent successfully');
+        ScaffoldMessenger.of(NavigationService.navigatorKey.currentContext!).showSnackBar(
+          SnackBar(
+            content: const Text('Anonymous support sent! 💜'),
+            backgroundColor: const Color(0xFF8B5CF6),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        Logger.warning('⚠️ Failed to send anonymous support');
+        ScaffoldMessenger.of(NavigationService.navigatorKey.currentContext!).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to send support. Please try again.'),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      Logger.error('❌ Error sending anonymous support: $e');
+      ScaffoldMessenger.of(NavigationService.navigatorKey.currentContext!).showSnackBar(
+        SnackBar(
+          content: const Text('Error sending support. Please try again.'),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  static void _viewFriendProfile(FriendEntity friend) {
+    print('Viewing profile for ${friend.username}');
+    // TODO: Navigate to friend profile
+  }
+
+  static void _sendMessage(FriendEntity friend) {
+    print('Sending message to ${friend.username}');
+    // TODO: Navigate to chat
+  }
+
+  static void _viewFriendOnMap(FriendEntity friend) {
+    print('Viewing ${friend.username} on map');
+    // TODO: Navigate to map with friend filter
   }
 }

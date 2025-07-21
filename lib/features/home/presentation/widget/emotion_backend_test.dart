@@ -457,7 +457,7 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
       });
 
       Logger.info(
-        '✅ Test completed: $testName - ${result['success'] ? 'SUCCESS' : 'FAILED'}',
+        '. Test completed: $testName - ${result['success'] ? 'SUCCESS' : 'FAILED'}',
       );
     } catch (e) {
       setState(() {
@@ -474,7 +474,7 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
         }
       });
 
-      Logger.error('❌ Test failed: $testName', e);
+      Logger.error('. Test failed: $testName', e);
     }
   }
 

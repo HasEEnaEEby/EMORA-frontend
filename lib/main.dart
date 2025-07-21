@@ -8,6 +8,7 @@ import 'app/bloc_observer.dart';
 import 'app/di/injection_container.dart' as di;
 import 'core/navigation/navigation_service.dart';
 import 'core/utils/logger.dart';
+import 'package:just_audio/just_audio.dart';
 
 
 Future<void> main() async {
@@ -17,7 +18,7 @@ Future<void> main() async {
 
     Logger.init(
       level: LogLevel
-          .warning, // Only log warnings, errors, and critical messages in production
+          .warning, 
       enableFileLogging: false,
       clearPreviousLogs: true,
     );
@@ -90,7 +91,7 @@ Future<void> _setupSystemUI() async {
 
 Future<void> _initializeDependencies() async {
   try {
-    Logger.info('🔧 Initializing dependencies...');
+    Logger.info('. Initializing dependencies...');
     await di.init();
     Logger.info(' Dependencies initialized');
   } catch (e, stackTrace) {
@@ -102,9 +103,9 @@ Future<void> _initializeDependencies() async {
 void _setupBlocObserver() {
   try {
     Bloc.observer = AppBlocObserver();
-    Logger.info('✅ Bloc observer configured');
+    Logger.info('. Bloc observer configured');
   } catch (e, stackTrace) {
-    Logger.error('❌ Failed to setup Bloc observer: $e', stackTrace);
+    Logger.error('. Failed to setup Bloc observer: $e', stackTrace);
   }
 }
 
@@ -205,4 +206,64 @@ Widget _buildErrorApp(String error) {
       ),
     ),
   );
+}
+
+class SpotifyTrackPlayer extends StatefulWidget {
+  final String previewUrl;
+  final String trackName;
+  final String artist;
+  final String imageUrl;
+
+  const SpotifyTrackPlayer({
+    required this.previewUrl,
+    required this.trackName,
+    required this.artist,
+    required this.imageUrl,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  State<SpotifyTrackPlayer> createState() => _SpotifyTrackPlayerState();
+}
+
+class _SpotifyTrackPlayerState extends State<SpotifyTrackPlayer> {
+  late AudioPlayer _player;
+  bool _isPlaying = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer();
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  void _togglePlay() async {
+    if (_isPlaying) {
+      await _player.pause();
+    } else {
+      await _player.setUrl(widget.previewUrl);
+      await _player.play();
+    }
+    setState(() {
+      _isPlaying = !_isPlaying;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Image.network(widget.imageUrl, width: 50, height: 50, fit: BoxFit.cover),
+      title: Text(widget.trackName),
+      subtitle: Text(widget.artist),
+      trailing: IconButton(
+        icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
+        onPressed: _togglePlay,
+      ),
+    );
+  }
 }

@@ -52,7 +52,7 @@ class EmotionBackendService {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        Logger.info('✅ Emotion logged successfully');
+        Logger.info('. Emotion logged successfully');
         return {
           'success': true,
           'data': response.data,
@@ -62,7 +62,7 @@ class EmotionBackendService {
         throw Exception('Failed to log emotion: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Failed to log emotion', e);
+      Logger.error('. Failed to log emotion', e);
 
       if (AppConfig.isDevelopmentMode) {
         Logger.info('🔄 Using fallback emotion logging');
@@ -99,7 +99,7 @@ class EmotionBackendService {
         throw Exception('Failed to get emotion feed: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Failed to fetch emotion feed', e);
+      Logger.error('. Failed to fetch emotion feed', e);
 
       if (AppConfig.isDevelopmentMode) {
         return _getFallbackEmotionFeed();
@@ -136,7 +136,7 @@ class EmotionBackendService {
         throw Exception('Failed to get global stats: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Failed to fetch global emotion stats', e);
+      Logger.error('. Failed to fetch global emotion stats', e);
 
       if (AppConfig.isDevelopmentMode) {
         return _getFallbackGlobalStats();
@@ -173,7 +173,7 @@ class EmotionBackendService {
         throw Exception('Failed to get heatmap data: ${response.statusCode}');
       }
     } catch (e) {
-      Logger.error('❌ Failed to fetch global emotion heatmap', e);
+      Logger.error('. Failed to fetch global emotion heatmap', e);
 
       if (AppConfig.isDevelopmentMode) {
         return _getFallbackHeatmapData();
@@ -186,17 +186,17 @@ class EmotionBackendService {
   /// Check backend connectivity
   Future<bool> checkBackendHealth() async {
     try {
-      Logger.info('🔍 Checking backend health...');
+      Logger.info('. Checking backend health...');
 
       final response = await dioClient.healthCheck();
       final isHealthy = response.statusCode == 200;
 
       Logger.info(
-        '${isHealthy ? '✅' : '❌'} Backend health: ${isHealthy ? 'OK' : 'Failed'}',
+        '${isHealthy ? '.' : '.'} Backend health: ${isHealthy ? 'OK' : 'Failed'}',
       );
       return isHealthy;
     } catch (e) {
-      Logger.error('❌ Backend health check failed', e);
+      Logger.error('. Backend health check failed', e);
       return false;
     }
   }
@@ -234,7 +234,7 @@ class EmotionBackendService {
         }
       }
     } catch (e) {
-      Logger.warning('⚠️ Failed to parse location coordinates: $e');
+      Logger.warning('. Failed to parse location coordinates: $e');
     }
 
     return {

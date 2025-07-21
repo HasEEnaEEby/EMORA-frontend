@@ -1,18 +1,21 @@
-// ============================================================================
-// ENHANCED ATLAS WITH LEAFLET & AI FEATURES - FIXED VERSION
-// ============================================================================
-
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
-
-// ============================================================================
-// ENHANCED ATLAS VIEW WITH AI FEATURES
-// ============================================================================
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:emora_mobile_app/features/emotion/presentation/view_model/bloc/emotion_bloc.dart';
+import 'package:emora_mobile_app/features/emotion/presentation/view/pages/models/emotion_map_models.dart';
+import 'package:emora_mobile_app/features/emotion/services/emotion_map_service.dart';
+import 'package:emora_mobile_app/features/emotion/services/insights_service.dart';
+import 'package:emora_mobile_app/features/emotion/presentation/widget/global_insights_widget.dart';
+import 'package:emora_mobile_app/features/emotion/presentation/widget/ai_insights_widget.dart';
+import 'package:emora_mobile_app/app/di/injection_container.dart' as di;
+import 'package:emora_mobile_app/core/network/api_service.dart';
 
 class EnhancedAtlasView extends StatefulWidget {
-  const EnhancedAtlasView({super.key});
+  final EmotionBloc? emotionBloc; // Optional parameter
+
+  const EnhancedAtlasView({super.key, this.emotionBloc});
 
   @override
   State<EnhancedAtlasView> createState() => _EnhancedAtlasViewState();
@@ -33,16 +36,48 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
   String _timeFilter = '24h';
   String _emotionFilter = 'all';
   
-  // AI-powered data
+  // Real data from API
   List<GlobalEmotionPoint> _emotionPoints = [];
   List<EmotionCluster> _emotionClusters = [];
   GlobalEmotionStats? _globalStats;
-  
+  bool _isLoadingEmotions = true;
+  String? _errorMessage;
+
+  // AI Insights
+  EmotionInsight? _globalInsight;
+  EmotionInsight? _selectedRegionInsight;
+  bool _isLoadingInsights = false;
+  String? _insightsErrorMessage;
+  String _selectedTimeRange = '7d';
+
+  late EmotionBloc _emotionBloc;
+  final EmotionMapService _mapService = EmotionMapService();
+  InsightsService? _insightsService;
+
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
+    // Use the passed bloc or try to find it in context
+    if (widget.emotionBloc != null) {
+      _emotionBloc = widget.emotionBloc!;
+    } else {
+      _emotionBloc = context.read<EmotionBloc>();
+    }
+    
+    // Initialize insights service
+    try {
+      _insightsService = InsightsService(di.sl<ApiService>());
+      print('✅ InsightsService initialized successfully');
+    } catch (e) {
+      print('❌ Failed to initialize InsightsService: $e');
+      _insightsService = null;
+    }
+    
     _loadGlobalEmotionData();
+    
+    // Load AI insights
+    _loadGlobalInsights();
   }
 
   void _initializeAnimations() {
@@ -63,39 +98,556 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     _fadeController.forward();
   }
 
+  // API Methods
   Future<void> _loadGlobalEmotionData() async {
-    // Simulate AI-powered global emotion data loading
-    setState(() {
-      _emotionPoints = _generateGlobalEmotionPoints();
-      _emotionClusters = _generateEmotionClusters();
-      _globalStats = _generateGlobalStats();
+          setState(() {
+      _isLoadingEmotions = true;
+      _errorMessage = null;
     });
+
+    try {
+      // Load emotion data points
+      await _loadEmotionData();
+      
+      // Load emotion clusters
+      await _loadEmotionClusters();
+      
+      // Load global stats
+      await _loadGlobalStats();
+      
+      setState(() {
+        _isLoadingEmotions = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingEmotions = false;
+        _errorMessage = 'Failed to load emotion data: $e';
+      });
+    }
   }
+
+  Future<void> _loadEmotionData() async {
+    try {
+      print('🔄 Loading emotion data points...');
+      final apiResponse = await _mapService.getEmotionData();
+
+      if (apiResponse.success) {
+        print('✅ Loaded ${apiResponse.data.length} emotion points');
+        setState(() {
+          _emotionPoints = apiResponse.data;
+        });
+      } else {
+        throw Exception(apiResponse.error ?? 'Failed to load emotion data');
+      }
+    } catch (e) {
+      setState(() {
+        _emotionPoints = [];
+      });
+      print('❌ Error loading emotion data: $e');
+    }
+  }
+
+  Future<void> _loadEmotionClusters() async {
+    try {
+      print('🔄 Loading emotion clusters...');
+      final apiResponse = await _mapService.getEmotionClusters();
+
+      if (apiResponse.success) {
+        print('✅ Loaded ${apiResponse.data.length} emotion clusters');
+        print('📊 Cluster data: ${apiResponse.data.map((c) => '${c.country ?? c.displayName}: ${c.count} emotions (${c.coreEmotion})').join(', ')}');
+        
+        // Debug: Print each cluster details
+        for (int i = 0; i < apiResponse.data.length; i++) {
+          final cluster = apiResponse.data[i];
+          print('📍 Cluster $i: ${cluster.country} - ${cluster.coreEmotion} (${cluster.count} emotions, intensity: ${cluster.avgIntensity})');
+        }
+        
+        setState(() {
+          _emotionClusters = apiResponse.data;
+        });
+      } else {
+        print('❌ Failed to load clusters: ${apiResponse.error}');
+        setState(() {
+            _emotionClusters = [];
+        });
+      }
+    } catch (e) {
+      setState(() {
+            _emotionClusters = [];
+      });
+      print('❌ Error loading emotion clusters: $e');
+    }
+  }
+
+  Future<void> _loadGlobalStats() async {
+    try {
+      final apiResponse = await _mapService.getGlobalStats();
+
+      if (apiResponse.success && apiResponse.data != null) {
+        setState(() {
+          _globalStats = apiResponse.data;
+        });
+      }
+    } catch (e) {
+      setState(() {
+            _globalStats = null;
+      });
+      print('Error loading global stats: $e');
+    }
+  }
+
+  // AI Insights Methods
+  Future<void> _loadGlobalInsights() async {
+    if (_insightsService == null) {
+      print('⚠️ InsightsService not initialized');
+      setState(() {
+        _isLoadingInsights = false;
+        _insightsErrorMessage = 'Insights service not available';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingInsights = true;
+      _insightsErrorMessage = null;
+    });
+
+    try {
+      final insight = await _insightsService!.getGlobalInsights(
+        timeRange: _selectedTimeRange,
+      );
+      
+      setState(() {
+        _globalInsight = insight;
+        _isLoadingInsights = false;
+          });
+    } catch (e) {
+      setState(() {
+        _isLoadingInsights = false;
+        _insightsErrorMessage = 'Failed to load AI insights: $e';
+      });
+      print('Error loading global insights: $e');
+    }
+  }
+
+  Future<void> _loadRegionInsights(String region) async {
+    if (_insightsService == null) {
+      print('⚠️ InsightsService not initialized');
+      setState(() {
+        _isLoadingInsights = false;
+        _insightsErrorMessage = 'Insights service not available';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoadingInsights = true;
+      _insightsErrorMessage = null;
+    });
+
+    try {
+      final insight = await _insightsService!.getRegionInsights(
+        region: region,
+        timeRange: _selectedTimeRange,
+      );
+      
+      setState(() {
+        _selectedRegionInsight = insight;
+        _isLoadingInsights = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoadingInsights = false;
+        _insightsErrorMessage = 'Failed to load region insights: $e';
+      });
+      print('Error loading region insights: $e');
+    }
+  }
+
+  void _showAIInsightsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A1A2E),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                // Handle bar
+                Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade600,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.psychology,
+                              color: Color(0xFF8B5CF6),
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                'AI Emotional Intelligence',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        
+                        // Time range selector
+                        _buildTimeRangeSelector(),
+                        const SizedBox(height: 20),
+                        
+                        // Global Insights
+                        if (_globalInsight != null) ...[
+                          Text(
+                            'Global Insights',
+                            style: TextStyle(
+                              color: Colors.grey.shade300,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          AIInsightsWidget(
+                            insight: _globalInsight,
+                            onRefresh: _loadGlobalInsights,
+                          ),
+                          const SizedBox(height: 20),
+                        ] else if (_insightsService == null) ...[
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.orange.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.warning_amber, color: Colors.orange.shade400),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'AI Insights service not available. Please check your connection.',
+                                    style: TextStyle(
+                                      color: Colors.orange.shade400,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                        
+                        // Region Insights (if available)
+                        if (_selectedRegionInsight != null) ...[
+                          Text(
+                            '${_selectedRegionInsight!.region} Insights',
+                            style: TextStyle(
+                              color: Colors.grey.shade300,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          AIInsightsWidget(
+                            insight: _selectedRegionInsight,
+                            onRefresh: () => _loadRegionInsights(_selectedRegionInsight!.region),
+                          ),
+                        ],
+                        
+                        // Loading state
+                        if (_isLoadingInsights)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(20),
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF8B5CF6),
+                              ),
+                            ),
+                          ),
+                        
+                        // Error state
+                        if (_insightsErrorMessage != null)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.red.withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.error_outline, color: Colors.red.shade400),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _insightsErrorMessage!,
+                                    style: TextStyle(
+                                      color: Colors.red.shade400,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTimeRangeSelector() {
+    final timeRanges = [
+      {'value': '24h', 'label': '24 Hours'},
+      {'value': '7d', 'label': '7 Days'},
+      {'value': '30d', 'label': '30 Days'},
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Time Range',
+          style: TextStyle(
+            color: Colors.grey.shade400,
+            fontSize: 14,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: timeRanges.map((range) {
+            final isSelected = _selectedTimeRange == range['value'];
+            return Expanded(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedTimeRange = range['value']!;
+                  });
+                  _loadGlobalInsights();
+                },
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: isSelected
+                        ? const Color(0xFF8B5CF6).withValues(alpha: 0.2)
+                        : Colors.transparent,
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFF8B5CF6)
+                          : Colors.grey.shade600,
+                    ),
+                  ),
+                  child: Text(
+                    range['label']!,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.grey.shade400,
+                      fontSize: 12,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildClusterStats(EmotionCluster cluster) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Cluster Statistics',
+            style: TextStyle(
+              color: Colors.grey.shade300,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatItem(
+                  'Count',
+                  '${cluster.count}',
+                  Icons.people,
+                  const Color(0xFF4CAF50),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatItem(
+                  'Avg Intensity',
+                  '${cluster.avgIntensity.toStringAsFixed(1)}/5',
+                  Icons.speed,
+                  const Color(0xFFFF9800),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatItem(
+                  'Dominant Emotion',
+                  cluster.coreEmotion,
+                  Icons.sentiment_satisfied,
+                  _getEmotionColor(cluster.coreEmotion),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildStatItem(
+                  'Location',
+                  cluster.displayName,
+                  Icons.location_on,
+                  const Color(0xFF2196F3),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: color.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 16),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 12,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+        }
+
+
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F),
-      body: Stack(
-        children: [
-          // Enhanced Leaflet Map
-          _buildEnhancedMap(),
-          
-          // Gradient Overlay
-          _buildGradientOverlay(),
-          
-          // Enhanced Header
-          _buildEnhancedHeader(),
-          
-          // AI Control Panel - FIXED WITH INTRINSIC WIDTH
-          _buildAIControlPanel(),
-          
-          // Live Stats Panel - FIXED WITH INTRINSIC WIDTH
-          _buildLiveStatsPanel(),
-          
-          // Floating Action Buttons
-          _buildFloatingActions(),
-        ],
+    return BlocListener<EmotionBloc, EmotionState>(
+      listener: (context, state) {
+        // Handle emotion bloc state changes if needed
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0A0A0F),
+        body: Stack(
+          children: [
+            // Enhanced Leaflet Map
+            _buildEnhancedMap(),
+            
+            // Gradient Overlay
+            _buildGradientOverlay(),
+            
+            // Enhanced Header
+            _buildEnhancedHeader(),
+            
+            // Live Stats Panel
+            if (_globalStats != null) _buildLiveStatsPanel(),
+            
+            // Floating Action Buttons
+            _buildFloatingActions(),
+            
+            // Loading Overlay
+            if (_isLoadingEmotions) _buildLoadingOverlay(),
+            
+            // Error Overlay
+            if (_errorMessage != null) _buildErrorOverlay(),
+          ],
+        ),
       ),
     );
   }
@@ -109,6 +661,10 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
         minZoom: 1.0,
         maxZoom: 18.0,
         backgroundColor: const Color(0xFF0A0A0F),
+
+        onMapReady: () {
+          print('Map is ready for interaction');
+        },
       ),
       children: [
         // Dark theme map tiles
@@ -119,11 +675,11 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
         ),
         
         // Emotion Clusters
-        if (_showClusters) MarkerLayer(
+        if (_showClusters && _emotionClusters.isNotEmpty) MarkerLayer(
           markers: _emotionClusters.map((cluster) => Marker(
             point: cluster.center,
-            width: cluster.size * 2,
-            height: cluster.size * 2,
+            width: (cluster.size * 0.8).clamp(15.0, 40.0), // Smaller size
+            height: (cluster.size * 0.8).clamp(15.0, 40.0), // Smaller size
             child: EmotionClusterMarker(
               cluster: cluster,
               animation: _pulseAnimation,
@@ -133,11 +689,11 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
         ),
         
         // Individual Emotion Points
-        MarkerLayer(
+        if (_emotionPoints.isNotEmpty) MarkerLayer(
           markers: _emotionPoints.map((point) => Marker(
-            point: point.location,
-            width: 40,
-            height: 40,
+            point: point.coordinates,
+            width: 20, // Smaller size
+            height: 20, // Smaller size
             child: GlobalEmotionMarker(
               point: point,
               animation: _pulseAnimation,
@@ -145,24 +701,13 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
             ),
           )).toList(),
         ),
-        
-        // User's emotion contribution
-        MarkerLayer(
-          markers: [
-            Marker(
-              point: LatLng(27.7172, 85.3240), // User location
-              width: 60,
-              height: 60,
-              child: UserContributionMarker(animation: _pulseAnimation),
-            ),
-          ],
-        ),
       ],
     );
   }
 
   Widget _buildGradientOverlay() {
     return Positioned.fill(
+      child: IgnorePointer(
       child: Container(
         decoration: BoxDecoration(
           gradient: RadialGradient(
@@ -170,8 +715,9 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
             radius: 1.5,
             colors: [
               Colors.transparent,
-              const Color(0xFF0A0A0F).withOpacity(0.3),
+                const Color(0xFF0A0A0F).withValues(alpha: 0.2),
             ],
+            ),
           ),
         ),
       ),
@@ -189,8 +735,8 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              const Color(0xFF0A0A0F).withOpacity(0.9),
-              const Color(0xFF0A0A0F).withOpacity(0.7),
+              const Color(0xFF0A0A0F).withValues(alpha: 0.9),
+              const Color(0xFF0A0A0F).withValues(alpha: 0.7),
               Colors.transparent,
             ],
           ),
@@ -221,7 +767,7 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                                 colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
                               ).createShader(bounds),
                               child: const Text(
-                                'Global Atlas',
+                                'Global Emotion Map',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 24,
@@ -236,7 +782,7 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                         ],
                       ),
                       Text(
-                        'AI-powered global emotion intelligence',
+                        'Real-time global emotional intelligence',
                         style: TextStyle(
                           color: Colors.grey[400],
                           fontSize: 14,
@@ -247,11 +793,14 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                   ),
                 ),
                 
-                // Share emotion button
+                // Filter button
                 _buildGlassButton(
-                  icon: Icons.favorite,
-                  onTap: _shareEmotionToGlobal,
-                  color: const Color(0xFFE91E63),
+                  icon: Icons.filter_list,
+                  onTap: _showFilterModal,
+                ),
+                _buildGlassButton(
+                  icon: Icons.refresh,
+                  onTap: _refreshGlobalData,
                 ),
               ],
             ),
@@ -261,100 +810,24 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     );
   }
 
-  Widget _buildAIControlPanel() {
-    return Positioned(
-      top: 140,
-      left: 20,
-      child: IntrinsicWidth( // FIX: Wrap with IntrinsicWidth
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width - 40, // Respect screen bounds
-          ),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            color: const Color(0xFF1A1A2E).withOpacity(0.9),
-            border: Border.all(
-              color: const Color(0xFF8B5CF6).withOpacity(0.3),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, // FIX: Add mainAxisSize.min
-            children: [
-              Row(
-                mainAxisSize: MainAxisSize.min, // FIX: Add mainAxisSize.min
-                children: [
-                  Icon(Icons.psychology, color: Color(0xFF8B5CF6), size: 20),
-                  SizedBox(width: 8),
-                  Text(
-                    'AI Controls',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 12),
-              
-              // Time filter - FIXED
-              _buildFilterRow(
-                'Time Range',
-                ['1h', '24h', '7d', '30d'],
-                _timeFilter,
-                (value) => setState(() => _timeFilter = value),
-              ),
-              
-              const SizedBox(height: 8),
-              
-              // Emotion filter - FIXED
-              _buildFilterRow(
-                'Emotion Type',
-                ['all', 'positive', 'negative', 'neutral'],
-                _emotionFilter,
-                (value) => setState(() => _emotionFilter = value),
-              ),
-              
-              const SizedBox(height: 12),
-              
-              // Toggle switches - FIXED
-              _buildToggleRow('Clusters', _showClusters, (value) {
-                setState(() => _showClusters = value);
-              }),
-              
-              _buildToggleRow('Predictions', _showPredictions, (value) {
-                setState(() => _showPredictions = value);
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLiveStatsPanel() {
-    if (_globalStats == null) return const SizedBox.shrink();
-    
     return Positioned(
       bottom: 30,
       left: 20,
       right: 20,
-      child: IntrinsicHeight( // FIX: Wrap with IntrinsicHeight
+      child: IntrinsicHeight(
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
-            color: const Color(0xFF1A1A2E).withOpacity(0.9),
+            color: const Color(0xFF1A1A2E).withValues(alpha: 0.9),
             border: Border.all(
-              color: const Color(0xFF8B5CF6).withOpacity(0.3),
+              color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
             ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min, // FIX: Add mainAxisSize.min
+            mainAxisSize: MainAxisSize.min,
             children: [
               Row(
                 children: [
@@ -370,7 +843,7 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                   ),
                   Spacer(),
                   Text(
-                    'Live • ${_globalStats!.lastUpdated}',
+                    'Live • ${_formatTimeAgo(_globalStats!.lastUpdated)}',
                     style: TextStyle(
                       color: Color(0xFF4CAF50),
                       fontSize: 12,
@@ -381,34 +854,34 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
               
               const SizedBox(height: 16),
               
-              // Global stats grid - FIXED
-              IntrinsicHeight( // FIX: Wrap Row with IntrinsicHeight
+              // Global stats grid
+              IntrinsicHeight(
                 child: Row(
                   children: [
                     Expanded(
                       child: _buildStatCard(
-                        'Active Users',
-                        '${(_globalStats!.activeUsers / 1000).toStringAsFixed(1)}K',
-                        Icons.people,
+                        'Total Emotions',
+                        '${_globalStats!.totalEmotions}',
+                        Icons.psychology,
                         Color(0xFF2196F3),
                       ),
                     ),
                     SizedBox(width: 12),
                     Expanded(
                       child: _buildStatCard(
-                        'Avg Mood',
-                        '${_globalStats!.averageMood.toStringAsFixed(1)}/10',
-                        Icons.mood,
-                        _getMoodColor(_globalStats!.averageMood),
+                        'Avg Intensity',
+                        '${_globalStats!.avgIntensity.toStringAsFixed(1)}/5',
+                        Icons.trending_up,
+                        _getIntensityColor(_globalStats!.avgIntensity),
                       ),
                     ),
                     SizedBox(width: 12),
                     Expanded(
                       child: _buildStatCard(
                         'Dominant',
-                        _globalStats!.dominantEmotion,
+                        _globalStats!.dominantEmotion.toUpperCase(),
                         Icons.favorite,
-                        Color(0xFFE91E63),
+                        _getEmotionColor(_globalStats!.dominantEmotion),
                       ),
                     ),
                   ],
@@ -428,10 +901,10 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
       child: Column(
         children: [
           FloatingActionButton(
-            heroTag: 'my_location',
-            backgroundColor: Color(0xFF2196F3),
-            onPressed: _goToMyLocation,
-            child: Icon(Icons.my_location, color: Colors.white),
+            heroTag: 'ai_insights',
+            backgroundColor: Color(0xFF8B5CF6),
+            onPressed: _showAIInsightsModal,
+            child: Icon(Icons.psychology, color: Colors.white),
           ),
           
           SizedBox(height: 12),
@@ -447,11 +920,63 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
           
           FloatingActionButton(
             heroTag: 'insights',
-            backgroundColor: Color(0xFF8B5CF6),
+            backgroundColor: Color(0xFF6366F1),
             onPressed: _showGlobalInsights,
             child: Icon(Icons.analytics, color: Colors.white),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingOverlay() {
+    return Positioned.fill(
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.7),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: Colors.white),
+              SizedBox(height: 16),
+              Text(
+                'Loading global emotions...',
+                style: TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorOverlay() {
+    return Positioned(
+      top: 100,
+      left: 20,
+      right: 20,
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.error, color: Colors.white),
+            SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                _errorMessage!,
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.close, color: Colors.white),
+              onPressed: () => setState(() => _errorMessage = null),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -469,9 +994,9 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
         height: 44,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: (color ?? Colors.white).withOpacity(0.1),
+          color: (color ?? Colors.white).withValues(alpha: 0.1),
           border: Border.all(
-            color: (color ?? Colors.white).withOpacity(0.2),
+            color: (color ?? Colors.white).withValues(alpha: 0.2),
           ),
         ),
         child: Icon(icon, color: color ?? Colors.white, size: 20),
@@ -483,16 +1008,15 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     return AnimatedBuilder(
       animation: _pulseAnimation,
       builder: (context, child) {
-        // Clamp the animation value to prevent overflow
         final clampedValue = _pulseAnimation.value.clamp(0.0, 1.0);
         
         return Container(
           padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: Color(0xFF4CAF50).withOpacity(0.2),
+            color: Color(0xFF4CAF50).withValues(alpha: 0.2),
             border: Border.all(
-              color: Color(0xFF4CAF50).withOpacity(clampedValue),
+              color: Color(0xFF4CAF50).withValues(alpha: clampedValue),
             ),
           ),
           child: Row(
@@ -553,7 +1077,7 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
                   color: isSelected 
-                      ? Color(0xFF8B5CF6).withOpacity(0.3)
+                      ? Color(0xFF8B5CF6).withValues(alpha: 0.3)
                       : Colors.transparent,
                   border: Border.all(
                     color: isSelected 
@@ -579,18 +1103,18 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
   Widget _buildToggleRow(String title, bool value, Function(bool) onChanged) {
     return Container(
       constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width - 80, // FIX: Add max width constraint
+        maxWidth: MediaQuery.of(context).size.width - 80, 
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min, // FIX: Add mainAxisSize.min
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Flexible( // FIX: Use Flexible instead of Expanded in constrained space
+          Flexible( 
             child: Text(
               title,
               style: TextStyle(color: Colors.grey[400], fontSize: 12),
             ),
           ),
-          SizedBox(width: 8), // FIX: Add some spacing
+          SizedBox(width: 8),
           Switch(
             value: value,
             onChanged: onChanged,
@@ -607,8 +1131,8 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: color.withValues(alpha: 0.1),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min, // FIX: Add mainAxisSize.min
@@ -637,44 +1161,153 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
   }
 
   // Action methods
-  void _shareEmotionToGlobal() {
+  void _showFilterModal() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => ShareEmotionModal(),
-    );
-  }
-
-  void _goToMyLocation() async {
-    try {
-      Position position = await Geolocator.getCurrentPosition();
-      _mapController.move(
-        LatLng(position.latitude, position.longitude),
-        8.0,
+      builder: (context) => FilterModal(
+        onFiltersChanged: (filters) {
+          // Apply filters and reload data
+          _loadGlobalEmotionData();
+        },
+      ),
       );
-    } catch (e) {
-      // Handle error
-    }
   }
 
   void _refreshGlobalData() {
     _loadGlobalEmotionData();
+    _loadGlobalInsights();
   }
 
   void _showGlobalInsights() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => GlobalInsightsView(stats: _globalStats),
+        builder: (context) => GlobalInsightsWidget(stats: _globalStats),
       ),
     );
   }
 
+
+
   void _showClusterDetails(EmotionCluster cluster) {
+    // Load region insights for this cluster
+    // Use country name for better matching, fallback to city, then display name
+    final regionName = cluster.country ?? cluster.city ?? cluster.displayName;
+    print('🔍 Loading insights for region: $regionName (cluster: ${cluster.displayName})');
+    _loadRegionInsights(regionName);
+    
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ClusterDetailsModal(cluster: cluster),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        maxChildSize: 0.9,
+        minChildSize: 0.5,
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A1A2E),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 8),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade600,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              cluster.emotionEmoji,
+                              style: const TextStyle(fontSize: 32),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${cluster.count} people feeling ${cluster.coreEmotion}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    cluster.displayName,
+                                    style: TextStyle(
+                                      color: Colors.grey.shade400,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.close, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        
+                        // Cluster statistics
+                        _buildClusterStats(cluster),
+                        
+                        const SizedBox(height: 20),
+                        
+                        // AI Insights for this region
+                        if (_selectedRegionInsight != null) ...[
+                          Text(
+                            'AI Insights for ${cluster.displayName}',
+                            style: TextStyle(
+                              color: Colors.grey.shade300,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          AIInsightsWidget(
+                            insight: _selectedRegionInsight,
+                            onRefresh: () => _loadRegionInsights(cluster.displayName),
+                          ),
+                          const SizedBox(height: 20),
+                        ],
+                        
+                        // Loading state for insights
+                        if (_isLoadingInsights)
+                          const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(20),
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF8B5CF6),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -686,71 +1319,36 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     );
   }
 
-  // Data generation methods (replace with real AI/API calls)
-  List<GlobalEmotionPoint> _generateGlobalEmotionPoints() {
-    return [
-      GlobalEmotionPoint(
-        location: LatLng(40.7128, -74.0060),
-        emotion: 'excited',
-        intensity: 0.8,
-        timestamp: DateTime.now(),
-        aiContext: 'Major event happening in NYC',
-      ),
-      GlobalEmotionPoint(
-        location: LatLng(51.5074, -0.1278),
-        emotion: 'content',
-        intensity: 0.7,
-        timestamp: DateTime.now(),
-        aiContext: 'UK showing high contentment due to recent policy changes',
-      ),
-      GlobalEmotionPoint(
-        location: LatLng(35.6762, 139.6503),
-        emotion: 'focused',
-        intensity: 0.9,
-        timestamp: DateTime.now(),
-        aiContext: 'Tokyo showing high focus during work hours',
-      ),
-      // Add more points...
-    ];
+  // Utility methods
+  String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    
+    if (difference.inMinutes < 1) return 'Just now';
+    if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
+    if (difference.inHours < 24) return '${difference.inHours}h ago';
+    return '${difference.inDays}d ago';
   }
 
-  List<EmotionCluster> _generateEmotionClusters() {
-    return [
-      EmotionCluster(
-        center: LatLng(51.5074, -0.1278),
-        dominantEmotion: 'content',
-        emotionCount: 1250,
-        averageIntensity: 0.65,
-        size: 60,
-        aiInsight: 'UK showing high contentment due to recent policy changes',
-      ),
-      EmotionCluster(
-        center: LatLng(40.7128, -74.0060),
-        dominantEmotion: 'excited',
-        emotionCount: 2100,
-        averageIntensity: 0.8,
-        size: 80,
-        aiInsight: 'NYC showing high excitement around major events',
-      ),
-      // Add more clusters...
-    ];
-  }
-
-  GlobalEmotionStats _generateGlobalStats() {
-    return GlobalEmotionStats(
-      activeUsers: 125000,
-      averageMood: 7.2,
-      dominantEmotion: 'Content',
-      lastUpdated: '2 min ago',
-      trendDirection: 'up',
-    );
-  }
-
-  Color _getMoodColor(double mood) {
-    if (mood >= 8.0) return Color(0xFF4CAF50);
-    if (mood >= 6.0) return Color(0xFF2196F3);
-    if (mood >= 4.0) return Color(0xFFFF9800);
+  Color _getIntensityColor(double intensity) {
+    if (intensity >= 4.0) return Color(0xFF4CAF50);
+    if (intensity >= 3.0) return Color(0xFF2196F3);
+    if (intensity >= 2.0) return Color(0xFFFF9800);
     return Color(0xFFF44336);
+  }
+
+  Color _getEmotionColor(String emotion) {
+    switch (emotion.toLowerCase()) {
+      case 'joy': return Color(0xFFF59E0B);
+      case 'trust': return Color(0xFF10B981);
+      case 'fear': return Color(0xFF8B5CF6);
+      case 'surprise': return Color(0xFFF97316);
+      case 'sadness': return Color(0xFF3B82F6);
+      case 'disgust': return Color(0xFF059669);
+      case 'anger': return Color(0xFFEF4444);
+      case 'anticipation': return Color(0xFFFCD34D);
+      default: return Color(0xFF6B7280);
+    }
   }
 
   @override
@@ -759,60 +1357,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     _fadeController.dispose();
     super.dispose();
   }
-}
-
-// ============================================================================
-// DATA MODELS
-// ============================================================================
-
-class GlobalEmotionPoint {
-  final LatLng location;
-  final String emotion;
-  final double intensity;
-  final DateTime timestamp;
-  final String aiContext;
-
-  GlobalEmotionPoint({
-    required this.location,
-    required this.emotion,
-    required this.intensity,
-    required this.timestamp,
-    required this.aiContext,
-  });
-}
-
-class EmotionCluster {
-  final LatLng center;
-  final String dominantEmotion;
-  final int emotionCount;
-  final double averageIntensity;
-  final double size;
-  final String aiInsight;
-
-  EmotionCluster({
-    required this.center,
-    required this.dominantEmotion,
-    required this.emotionCount,
-    required this.averageIntensity,
-    required this.size,
-    required this.aiInsight,
-  });
-}
-
-class GlobalEmotionStats {
-  final int activeUsers;
-  final double averageMood;
-  final String dominantEmotion;
-  final String lastUpdated;
-  final String trendDirection;
-
-  GlobalEmotionStats({
-    required this.activeUsers,
-    required this.averageMood,
-    required this.dominantEmotion,
-    required this.lastUpdated,
-    required this.trendDirection,
-  });
 }
 
 // ============================================================================
@@ -841,45 +1385,39 @@ class EmotionClusterMarker extends StatelessWidget {
           return Stack(
             alignment: Alignment.center,
             children: [
-              // Pulsing ring
+              // Blurred pulsing ring
               Container(
-                width: cluster.size * animation.value,
-                height: cluster.size * animation.value,
+                width: (cluster.size * 0.6 * animation.value).clamp(8.0, 25.0),
+                height: (cluster.size * 0.6 * animation.value).clamp(8.0, 25.0),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _getEmotionColor(cluster.dominantEmotion)
-                      .withOpacity(0.1 * (2 - animation.value).clamp(0.0, 1.0)),
-                  border: Border.all(
-                    color: _getEmotionColor(cluster.dominantEmotion)
-                        .withOpacity(0.3 * (2 - animation.value).clamp(0.0, 1.0)),
-                    width: 2,
+                  color: _getEmotionColor(cluster.coreEmotion)
+                      .withValues(alpha: 0.05 * (2 - animation.value).clamp(0.0, 1.0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _getEmotionColor(cluster.coreEmotion).withValues(alpha: 0.3),
+                      blurRadius: 8.0,
+                      spreadRadius: 2.0,
                   ),
+                  ],
                 ),
               ),
               
-              // Main cluster marker
+              // Main cluster marker - smaller with blur
               Container(
-                width: cluster.size * 0.6,
-                height: cluster.size * 0.6,
+                width: (cluster.size * 0.4).clamp(6.0, 18.0),
+                height: (cluster.size * 0.4).clamp(6.0, 18.0),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      _getEmotionColor(cluster.dominantEmotion),
-                      _getEmotionColor(cluster.dominantEmotion).withOpacity(0.7),
-                    ],
-                  ),
-                  border: Border.all(color: Colors.white, width: 3),
-                ),
-                child: Center(
-                  child: Text(
-                    '${(cluster.emotionCount / 1000).toStringAsFixed(1)}K',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
+                  color: _getEmotionColor(cluster.coreEmotion).withValues(alpha: 0.8),
+                  border: Border.all(color: Colors.white, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _getEmotionColor(cluster.coreEmotion).withValues(alpha: 0.4),
+                      blurRadius: 4.0,
+                      spreadRadius: 1.0,
                     ),
-                  ),
+                  ],
                 ),
               ),
             ],
@@ -891,18 +1429,15 @@ class EmotionClusterMarker extends StatelessWidget {
 
   Color _getEmotionColor(String emotion) {
     switch (emotion.toLowerCase()) {
-      case 'happy': case 'excited': case 'joyful':
-        return Color(0xFFFFD700);
-      case 'content': case 'peaceful': case 'calm':
-        return Color(0xFF4CAF50);
-      case 'sad': case 'down': case 'melancholy':
-        return Color(0xFF2196F3);
-      case 'angry': case 'frustrated': case 'annoyed':
-        return Color(0xFFE91E63);
-      case 'anxious': case 'worried': case 'stressed':
-        return Color(0xFFFF9800);
-      default:
-        return Color(0xFF8B5CF6);
+      case 'joy': return Color(0xFFF59E0B);
+      case 'trust': return Color(0xFF10B981);
+      case 'fear': return Color(0xFF8B5CF6);
+      case 'surprise': return Color(0xFFF97316);
+      case 'sadness': return Color(0xFF3B82F6);
+      case 'disgust': return Color(0xFF059669);
+      case 'anger': return Color(0xFFEF4444);
+      case 'anticipation': return Color(0xFFFCD34D);
+      default: return Color(0xFF6B7280);
     }
   }
 }
@@ -929,25 +1464,39 @@ class GlobalEmotionMarker extends StatelessWidget {
           return Stack(
             alignment: Alignment.center,
             children: [
-              // Pulsing effect
+              // Blurred pulsing effect
               Container(
-                width: 30 * animation.value,
-                height: 30 * animation.value,
+                width: (15 * animation.value).clamp(8.0, 20.0),
+                height: (15 * animation.value).clamp(8.0, 20.0),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _getEmotionColor(point.emotion)
-                      .withOpacity(0.2 * (2 - animation.value).clamp(0.0, 1.0)),
+                  color: _getEmotionColor(point.coreEmotion)
+                      .withValues(alpha: 0.1 * (2 - animation.value).clamp(0.0, 1.0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _getEmotionColor(point.coreEmotion).withValues(alpha: 0.2),
+                      blurRadius: 4.0,
+                      spreadRadius: 1.0,
+                    ),
+                  ],
                 ),
               ),
               
-              // Main marker
+              // Main marker - smaller with blur
               Container(
-                width: 20,
-                height: 20,
+                width: 12,
+                height: 12,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _getEmotionColor(point.emotion),
-                  border: Border.all(color: Colors.white, width: 2),
+                  color: _getEmotionColor(point.coreEmotion).withValues(alpha: 0.9),
+                  border: Border.all(color: Colors.white, width: 1),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _getEmotionColor(point.coreEmotion).withValues(alpha: 0.3),
+                      blurRadius: 2.0,
+                      spreadRadius: 0.5,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -958,72 +1507,17 @@ class GlobalEmotionMarker extends StatelessWidget {
   }
 
   Color _getEmotionColor(String emotion) {
-    // Same as EmotionClusterMarker._getEmotionColor
     switch (emotion.toLowerCase()) {
-      case 'happy': case 'excited': case 'joyful':
-        return Color(0xFFFFD700);
-      case 'content': case 'peaceful': case 'calm':
-        return Color(0xFF4CAF50);
-      case 'sad': case 'down': case 'melancholy':
-        return Color(0xFF2196F3);
-      case 'angry': case 'frustrated': case 'annoyed':
-        return Color(0xFFE91E63);
-      case 'anxious': case 'worried': case 'stressed':
-        return Color(0xFFFF9800);
-      default:
-        return Color(0xFF8B5CF6);
+      case 'joy': return Color(0xFFF59E0B);
+      case 'trust': return Color(0xFF10B981);
+      case 'fear': return Color(0xFF8B5CF6);
+      case 'surprise': return Color(0xFFF97316);
+      case 'sadness': return Color(0xFF3B82F6);
+      case 'disgust': return Color(0xFF059669);
+      case 'anger': return Color(0xFFEF4444);
+      case 'anticipation': return Color(0xFFFCD34D);
+      default: return Color(0xFF6B7280);
     }
-  }
-}
-
-class UserContributionMarker extends StatelessWidget {
-  final Animation<double> animation;
-
-  const UserContributionMarker({super.key, required this.animation});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: animation,
-      builder: (context, child) {
-        return Stack(
-          alignment: Alignment.center,
-          children: [
-            // Pulsing rings
-            Container(
-              width: 50 * animation.value,
-              height: 50 * animation.value,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFF8B5CF6).withOpacity(0.1 * (2 - animation.value).clamp(0.0, 1.0)),
-                border: Border.all(
-                  color: Color(0xFF8B5CF6).withOpacity(0.3 * (2 - animation.value).clamp(0.0, 1.0)),
-                  width: 2,
-                ),
-              ),
-            ),
-            
-            // Main marker
-            Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: RadialGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-                ),
-                border: Border.all(color: Colors.white, width: 3),
-              ),
-              child: Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-          ],
-        );
-      },
-    );
   }
 }
 
@@ -1031,7 +1525,11 @@ class UserContributionMarker extends StatelessWidget {
 // MODAL COMPONENTS
 // ============================================================================
 
-class ShareEmotionModal extends StatelessWidget {
+class FilterModal extends StatelessWidget {
+  final Function(EmotionMapFilters) onFiltersChanged;
+
+  const FilterModal({super.key, required this.onFiltersChanged});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -1045,7 +1543,7 @@ class ShareEmotionModal extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'Share Your Emotion',
+              'Filter Emotions',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 24,
@@ -1054,11 +1552,11 @@ class ShareEmotionModal extends StatelessWidget {
             ),
             SizedBox(height: 16),
             Text(
-              'Your emotion will be anonymously added to the global emotion map',
+              'Customize your global emotion view',
               style: TextStyle(color: Colors.grey[400]),
               textAlign: TextAlign.center,
             ),
-            // Add emotion selection UI here
+            // Add filter controls here
           ],
         ),
       ),
@@ -1093,14 +1591,18 @@ class ClusterDetailsModal extends StatelessWidget {
             ),
             SizedBox(height: 16),
             Text(
-              '${cluster.emotionCount} people feeling ${cluster.dominantEmotion}',
+              '${cluster.count} people feeling ${cluster.coreEmotion}',
               style: TextStyle(color: Colors.grey[400]),
             ),
             SizedBox(height: 16),
             Text(
-              cluster.aiInsight,
+              'Location: ${cluster.displayName}',
               style: TextStyle(color: Colors.white),
-              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Average Intensity: ${cluster.avgIntensity.toStringAsFixed(1)}/5',
+              style: TextStyle(color: Colors.grey[400]),
             ),
           ],
         ),
@@ -1136,45 +1638,25 @@ class EmotionDetailsModal extends StatelessWidget {
             ),
             SizedBox(height: 16),
             Text(
-              'Feeling: ${point.emotion}',
+              'Location: ${point.displayName}',
               style: TextStyle(color: Colors.white),
             ),
             SizedBox(height: 8),
             Text(
-              'Intensity: ${(point.intensity * 100).toStringAsFixed(0)}%',
+              'Core Emotion: ${point.coreEmotion}',
               style: TextStyle(color: Colors.grey[400]),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: 8),
             Text(
-              point.aiContext,
-              style: TextStyle(color: Colors.white),
-              textAlign: TextAlign.center,
+              'Count: ${point.count} emotions',
+              style: TextStyle(color: Colors.grey[400]),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Avg Intensity: ${point.avgIntensity.toStringAsFixed(1)}/5',
+              style: TextStyle(color: Colors.grey[400]),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class GlobalInsightsView extends StatelessWidget {
-  final GlobalEmotionStats? stats;
-
-  const GlobalInsightsView({super.key, this.stats});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFF0A0A0F),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: Text('Global Insights'),
-        foregroundColor: Colors.white,
-      ),
-      body: Center(
-        child: Text(
-          'Global insights coming soon...',
-          style: TextStyle(color: Colors.white),
         ),
       ),
     );

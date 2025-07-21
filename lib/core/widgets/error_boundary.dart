@@ -201,7 +201,7 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
       try {
         widget.onRetry!();
       } catch (e, stack) {
-        Logger.error('❌ ErrorBoundary: Retry failed in ${widget.context}', e, stack);
+        Logger.error('. ErrorBoundary: Retry failed in ${widget.context}', e, stack);
         setState(() {
           _hasError = true;
           _error = e;
@@ -243,7 +243,7 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
   /// Call this method when an error occurs to trigger the error boundary
   void captureError(Object error, StackTrace stackTrace) {
     Logger.error(
-      '❌ ErrorBoundary: Captured error in ${widget.context ?? 'unknown context'}',
+      '. ErrorBoundary: Captured error in ${widget.context ?? 'unknown context'}',
       error,
       stackTrace,
     );
@@ -262,7 +262,7 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
 mixin ErrorBoundaryMixin<T extends StatefulWidget> on State<T> {
   void handleError(Object error, StackTrace stackTrace, [String? context]) {
     Logger.error(
-      '❌ ErrorBoundaryMixin: Error in ${context ?? T.toString()}',
+      '. ErrorBoundaryMixin: Error in ${context ?? T.toString()}',
       error,
       stackTrace,
     );
@@ -299,7 +299,7 @@ mixin ErrorBoundaryMixin<T extends StatefulWidget> on State<T> {
 /// Global error handling utilities
 class GlobalErrorHandler {
   static void handleUncaughtError(Object error, StackTrace stackTrace) {
-    Logger.error('❌ GlobalErrorHandler: Uncaught error', error, stackTrace);
+    Logger.error('. GlobalErrorHandler: Uncaught error', error, stackTrace);
     
     // Show user notification if possible
     if (NavigationService.currentContext != null) {
@@ -311,7 +311,7 @@ class GlobalErrorHandler {
 
   static void handleFlutterError(FlutterErrorDetails details) {
     Logger.error(
-      '❌ GlobalErrorHandler: Flutter error',
+      '. GlobalErrorHandler: Flutter error',
       details.exception,
       details.stack,
     );

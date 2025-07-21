@@ -169,7 +169,7 @@ class _OnboardingViewState extends State<OnboardingView>
 
               // Last resort fallback with more detailed error info
               Logger.error(
-                '❌ Unexpected OnboardingBloc state: ${state.runtimeType}',
+                '. Unexpected OnboardingBloc state: ${state.runtimeType}',
                 'Unhandled state',
               );
               return _buildErrorView('Unexpected state: ${state.runtimeType}');
@@ -232,7 +232,7 @@ class _OnboardingViewState extends State<OnboardingView>
   }
 
   void _handleOnboardingError(String message) {
-    Logger.error('❌ Onboarding error: $message', message);
+    Logger.error('. Onboarding error: $message', message);
 
     if (message.contains('network') ||
         message.contains('connection') ||
@@ -266,7 +266,7 @@ class _OnboardingViewState extends State<OnboardingView>
       'timestamp': DateTime.now().toIso8601String(),
     };
 
-    Logger.info('📊 Updated collected data with ACTUAL onboarding values:');
+    Logger.info('. Updated collected data with ACTUAL onboarding values:');
     Logger.info('  username: ${userData.username}');
     Logger.info('  pronouns: ${userData.pronouns}');
     Logger.info('  ageGroup: ${userData.ageGroup}');
@@ -278,7 +278,7 @@ class _OnboardingViewState extends State<OnboardingView>
     UserOnboardingEntity userData,
   ) async {
     try {
-      Logger.info('✅ Handling onboarding completion');
+      Logger.info('. Handling onboarding completion');
       _updateCollectedData(userData);
       await _saveOnboardingData(_collectedData);
 
@@ -325,9 +325,9 @@ class _OnboardingViewState extends State<OnboardingView>
         AppRouter.authChoice,
         arguments: _collectedData, // Pass the ACTUAL collected data
       );
-      Logger.info('✅ Primary navigation successful with data');
+      Logger.info('. Primary navigation successful with data');
     } catch (primaryError) {
-      Logger.error('❌ Primary navigation failed', primaryError);
+      Logger.error('. Primary navigation failed', primaryError);
 
       try {
         // Fallback 1: Use NavigationService
@@ -335,16 +335,16 @@ class _OnboardingViewState extends State<OnboardingView>
           AppRouter.authChoice,
           arguments: _collectedData,
         );
-        Logger.info('✅ Fallback 1 navigation successful');
+        Logger.info('. Fallback 1 navigation successful');
       } catch (fallback1Error) {
-        Logger.error('❌ Fallback 1 navigation failed', fallback1Error);
+        Logger.error('. Fallback 1 navigation failed', fallback1Error);
 
         try {
           // Fallback 2: Navigate to auth wrapper
           Navigator.of(context).pushReplacementNamed(AppRouter.auth);
-          Logger.info('✅ Fallback 2 navigation successful');
+          Logger.info('. Fallback 2 navigation successful');
         } catch (fallback2Error) {
-          Logger.error('❌ Fallback 2 navigation failed', fallback2Error);
+          Logger.error('. Fallback 2 navigation failed', fallback2Error);
           _showNavigationError();
         }
       }
@@ -453,17 +453,6 @@ class _OnboardingViewState extends State<OnboardingView>
               ),
 
               const SizedBox(height: 12),
-
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pushReplacementNamed(AppRouter.home);
-                },
-                child: const Text(
-                  'Continue as Guest',
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
             ],
           ),
         );
@@ -474,7 +463,7 @@ class _OnboardingViewState extends State<OnboardingView>
   // FIXED: Save onboarding data more reliably
   Future<void> _saveOnboardingData(Map<String, dynamic> data) async {
     try {
-      Logger.info('💾 Saving onboarding data: $data');
+      Logger.info('. Saving onboarding data: $data');
       final prefs = await SharedPreferences.getInstance();
 
       // Save individual fields
@@ -499,12 +488,12 @@ class _OnboardingViewState extends State<OnboardingView>
 
       await prefs.setString('onboarding_data_json', jsonString);
 
-      Logger.info('✅ Onboarding data saved successfully');
+      Logger.info('. Onboarding data saved successfully');
       Logger.info('  Saved pronouns: ${data['pronouns']}');
       Logger.info('  Saved ageGroup: ${data['ageGroup']}');
       Logger.info('  Saved avatar: ${data['selectedAvatar']}');
     } catch (e) {
-      Logger.error('❌ Failed to save onboarding data', e);
+      Logger.error('. Failed to save onboarding data', e);
       rethrow;
     }
   }
@@ -656,7 +645,7 @@ class _OnboardingViewState extends State<OnboardingView>
         .toList();
 
     if (displayableSteps.isEmpty) {
-      Logger.error('❌ No displayable steps found', 'Empty steps list');
+      Logger.error('. No displayable steps found', 'Empty steps list');
       return _buildErrorView('No onboarding steps available');
     }
 

@@ -13,7 +13,7 @@ import '../../../core/config/app_config.dart';
 import '../injection_container.dart';
 
 class CoreModule {
-  // ✅ CRITICAL FIX: Initialize ApiService with saved auth token from storage
+  // . CRITICAL FIX: Initialize ApiService with saved auth token from storage
   static void _initializeApiServiceWithSavedToken(GetIt sl) {
     try {
       Logger.info('🔑 Initializing ApiService with saved auth token...');
@@ -27,17 +27,17 @@ class CoreModule {
       if (savedToken != null && savedToken.isNotEmpty) {
         // Set the token in ApiService for immediate use
         apiService.setAuthToken(savedToken);
-        Logger.info('✅ Auth token loaded and set in ApiService on app startup');
+        Logger.info('. Auth token loaded and set in ApiService on app startup');
       } else {
         Logger.info('ℹ️ No saved auth token found - user needs to log in');
       }
     } catch (e) {
-      Logger.error('❌ Failed to initialize ApiService with saved token', e);
+      Logger.error('. Failed to initialize ApiService with saved token', e);
       // Don't rethrow - this is not critical for app startup
     }
   }
   static Future<void> init(GetIt sl) async {
-    Logger.info('🔧 Initializing core module...');
+    Logger.info('. Initializing core module...');
 
     try {
       await _initExternalDependencies(sl);
@@ -45,9 +45,9 @@ class CoreModule {
       _initServices(sl);
       _initFeatureFlags(sl);
 
-      Logger.info('✅ Core module initialized successfully');
+      Logger.info('. Core module initialized successfully');
     } catch (e) {
-      Logger.error('❌ Core module initialization failed', e);
+      Logger.error('. Core module initialization failed', e);
       rethrow;
     }
   }
@@ -59,7 +59,7 @@ class CoreModule {
       // SharedPreferences
       final sharedPreferences = await SharedPreferences.getInstance();
       sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
-      Logger.info('✅ SharedPreferences registered successfully');
+      Logger.info('. SharedPreferences registered successfully');
 
       // Internet Connection Checker
       sl.registerLazySingleton<InternetConnectionChecker>(
@@ -68,15 +68,15 @@ class CoreModule {
           checkInterval: const Duration(seconds: 15),
         ),
       );
-      Logger.info('✅ InternetConnectionChecker registered successfully');
+      Logger.info('. InternetConnectionChecker registered successfully');
     } catch (e) {
-      Logger.error('❌ Failed to initialize external dependencies', e);
+      Logger.error('. Failed to initialize external dependencies', e);
       rethrow;
     }
   }
 
   static void _initCoreDependencies(GetIt sl) {
-    Logger.info('🔧 Initializing core dependencies...');
+    Logger.info('. Initializing core dependencies...');
 
     // Network Info
     sl.registerLazySingleton<NetworkInfo>(
@@ -92,10 +92,10 @@ class CoreModule {
     // FIXED: Register ApiService with required dio parameter
     sl.registerLazySingleton<ApiService>(() => ApiService(dio: sl<Dio>()));
 
-    // ✅ CRITICAL FIX: Initialize ApiService with saved auth token
+    // . CRITICAL FIX: Initialize ApiService with saved auth token
     _initializeApiServiceWithSavedToken(sl);
 
-    Logger.info('✅ Core dependencies registered successfully');
+    Logger.info('. Core dependencies registered successfully');
   }
 
   static void _initServices(GetIt sl) {
@@ -104,7 +104,7 @@ class CoreModule {
     // Username Service with automated word generation
     sl.registerLazySingleton<UsernameService>(() => UsernameService());
 
-    Logger.info('✅ Core services registered successfully');
+    Logger.info('. Core services registered successfully');
   }
 
   static void _initFeatureFlags(GetIt sl) {
@@ -126,12 +126,12 @@ class CoreModule {
     );
 
     Logger.info(
-      '✅ Feature flags initialized - Mood: $isMoodFeatureAvailable, Emotion: $isEmotionFeatureAvailable, Automated Usernames: $isAutomatedUsernamesEnabled',
+      '. Feature flags initialized - Mood: $isMoodFeatureAvailable, Emotion: $isEmotionFeatureAvailable, Automated Usernames: $isAutomatedUsernamesEnabled',
     );
   }
 
   static Map<String, dynamic> verify(GetIt sl) {
-    Logger.info('🔍 Verifying core module registrations...');
+    Logger.info('. Verifying core module registrations...');
 
     final serviceChecks = <String, bool Function()>{
       'SharedPreferences': () => sl.isRegistered<SharedPreferences>(),
@@ -153,15 +153,15 @@ class CoreModule {
       final isRegistered = entry.value();
 
       if (isRegistered) {
-        Logger.info('✅ Core: $serviceName is registered');
+        Logger.info('. Core: $serviceName is registered');
         registeredCount++;
       } else {
-        Logger.warning('⚠️ Core: $serviceName is NOT registered');
+        Logger.warning('. Core: $serviceName is NOT registered');
       }
     }
 
     Logger.info(
-      '📊 Core Module: $registeredCount/$totalCount services registered',
+      '. Core Module: $registeredCount/$totalCount services registered',
     );
 
     return {
@@ -222,16 +222,16 @@ class CoreModule {
 
       // Test word statistics
       final wordStats = UsernameService.getWordStats();
-      Logger.info('📊 Word automation: ${wordStats['automation_status']}');
+      Logger.info('. Word automation: ${wordStats['automation_status']}');
 
       // Test Feature Flags
       final featureFlags = sl<FeatureFlagService>();
       Logger.info('🚩 Feature flags: ${featureFlags.enabledFeatures}');
 
-      Logger.info('✅ All core services tested successfully');
+      Logger.info('. All core services tested successfully');
       return true;
     } catch (e) {
-      Logger.error('❌ Core services test failed', e);
+      Logger.error('. Core services test failed', e);
       return false;
     }
   }
@@ -378,9 +378,9 @@ class CoreModule {
       UsernameService.clearCache();
       await UsernameService.forceRefreshWords();
 
-      Logger.info('✅ Core module reset completed');
+      Logger.info('. Core module reset completed');
     } catch (e) {
-      Logger.warning('⚠️ Error during core module reset: $e');
+      Logger.warning('. Error during core module reset: $e');
     }
   }
 

@@ -15,7 +15,7 @@ import '../../../features/onboarding/presentation/view_model/bloc/onboarding_blo
 
 class OnboardingModule {
   static Future<void> init(GetIt sl) async {
-    Logger.info('📋 Initializing onboarding module...');
+    Logger.info('. Initializing onboarding module...');
 
     try {
       _initDataSources(sl);
@@ -23,9 +23,9 @@ class OnboardingModule {
       _initUseCases(sl);
       _initBloc(sl);
 
-      Logger.info('✅ Onboarding module initialized successfully');
+      Logger.info('. Onboarding module initialized successfully');
     } catch (e) {
-      Logger.error('❌ Onboarding module initialization failed', e);
+      Logger.error('. Onboarding module initialization failed', e);
       rethrow;
     }
   }
@@ -90,7 +90,7 @@ class OnboardingModule {
   }
 
   static Map<String, dynamic> verify(GetIt sl) {
-    Logger.info('🔍 Verifying onboarding module registrations...');
+    Logger.info('. Verifying onboarding module registrations...');
 
     final serviceChecks = <String, bool Function()>{
       'OnboardingLocalDataSource': () =>
@@ -112,15 +112,15 @@ class OnboardingModule {
       final isRegistered = entry.value();
 
       if (isRegistered) {
-        Logger.info('✅ Onboarding: $serviceName is registered');
+        Logger.info('. Onboarding: $serviceName is registered');
         registeredCount++;
       } else {
-        Logger.warning('⚠️ Onboarding: $serviceName is NOT registered');
+        Logger.warning('. Onboarding: $serviceName is NOT registered');
       }
     }
 
     Logger.info(
-      '📊 Onboarding Module: $registeredCount/$totalCount services registered',
+      '. Onboarding Module: $registeredCount/$totalCount services registered',
     );
 
     return {

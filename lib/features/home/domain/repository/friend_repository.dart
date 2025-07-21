@@ -5,7 +5,14 @@ import '../entity/friend_entity.dart';
 
 abstract class FriendRepository {
   // Search users for friend suggestions
-  Future<Either<Failure, List<FriendSuggestionEntity>>> searchUsers({
+  Future<Either<Failure, Map<String, dynamic>>> searchUsers({
+    required String query,
+    int page = 1,
+    int limit = 10,
+  });
+
+  // Search all users globally (including friends, excluding self)
+  Future<Either<Failure, Map<String, dynamic>>> searchAllUsers({
     required String query,
     int page = 1,
     int limit = 10,

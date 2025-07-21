@@ -151,7 +151,7 @@ class UserOnboardingModel {
     // FIXED: Validate age group using backend values
     if (ageGroup != null && !validBackendAgeGroups.contains(ageGroup)) {
       print(
-        '⚠️ Warning: Invalid age group "$ageGroup". Valid backend options: $validBackendAgeGroups',
+        '. Warning: Invalid age group "$ageGroup". Valid backend options: $validBackendAgeGroups',
       );
     }
   }
@@ -189,12 +189,12 @@ class UserOnboardingModel {
       final isValidBackendValue = validBackendAgeGroups.contains(ageGroup);
       if (!isValidBackendValue) {
         print(
-          '⚠️ Warning: Invalid age group "$ageGroup". Converting to backend value...',
+          '. Warning: Invalid age group "$ageGroup". Converting to backend value...',
         );
         final convertedValue = BackendValues.getBackendAgeGroup(ageGroup);
         print('🔄 Converted: "$ageGroup" -> "$convertedValue"');
       } else {
-        print('✅ Sending valid backend age group: "$ageGroup"');
+        print('. Sending valid backend age group: "$ageGroup"');
       }
     }
 
