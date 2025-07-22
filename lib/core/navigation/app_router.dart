@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:emora_mobile_app/features/auth/presentation/view/auth_choice_page.dart';
 import 'package:emora_mobile_app/features/home/presentation/view/pages/friends_view.dart';
-import 'package:emora_mobile_app/features/home/presentation/view/pages/insights_view.dart';
 import 'package:emora_mobile_app/features/home/presentation/view/pages/profile_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -28,6 +27,8 @@ import '../../features/splash/presentation/view/splash_view.dart';
 import '../../features/splash/presentation/view_model/cubit/splash_cubit.dart';
 import 'navigation_service.dart';
 import 'route_analytics.dart';
+import '../../features/auth/presentation/view/forgot_password_view.dart';
+
 
 class AppRouter {
   // Route constants
@@ -45,6 +46,8 @@ class AppRouter {
   static const String profile = '/profile';
   static const String profileFull = '/profile-full';
   static const String settings = '/settings';
+  static const String forgotPassword = '/forgot-password';
+  static const String resetPassword = '/reset-password';
 
   /// Main route generator with proper error handling
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -88,9 +91,6 @@ class AppRouter {
         case moodMap:
           return _createMoodMapRoute(settings);
 
-        case insights:
-          return _createInsightsRoute(settings);
-
         case friends:
           return _createFriendsRoute(settings);
 
@@ -105,6 +105,18 @@ class AppRouter {
 
         case profileFull:
           return _createFullProfileRoute(settings);
+
+        case forgotPassword:
+          return MaterialPageRoute(
+            builder: (context) => const ForgotPasswordView(),
+            settings: settings,
+          );
+        // case resetPassword:
+        //   final token = (settings.arguments as Map?)?['token'] as String?;
+        //   return MaterialPageRoute(
+        //     builder: (context) => ResetPasswordView(token: token),
+        //     settings: settings,
+        //   );
 
         default:
           Logger.warning('❌ Unknown route: $routeName');
@@ -316,13 +328,6 @@ class AppRouter {
     return _createSlideRoute(
       settings: settings,
       builder: (context) => const FriendsView(),
-    );
-  }
-
-  static Route<dynamic> _createInsightsRoute(RouteSettings settings) {
-    return _createSlideRoute(
-      settings: settings,
-      builder: (context) => const InsightsView(),
     );
   }
 

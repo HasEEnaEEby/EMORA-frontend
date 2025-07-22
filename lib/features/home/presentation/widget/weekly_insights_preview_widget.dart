@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
 import '../../data/model/weekly_insights_model.dart';
 
 class WeeklyInsightsPreviewWidget extends StatelessWidget {

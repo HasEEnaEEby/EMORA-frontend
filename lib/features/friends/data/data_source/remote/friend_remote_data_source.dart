@@ -897,4 +897,61 @@ class FriendRemoteDataSource {
         );
     }
   }
+
+  /// Get friend's profile
+  Future<Map<String, dynamic>> getFriendProfile({required String friendId}) async {
+    try {
+      Logger.info('👤 Fetching profile for friend: $friendId');
+      final response = await _apiService.getData(
+        '/api/user/profile',
+        queryParameters: {'userId': friendId},
+      );
+      Logger.info('✅ Friend profile fetched successfully');
+      return response;
+    } on DioException catch (e) {
+      Logger.error('❌ Get friend profile failed', e);
+      throw _handleDioException(e, 'get friend profile');
+    }
+  }
+
+  /// Get friend's last known location (from moods)
+  Future<Map<String, dynamic>?> getFriendLocation({required String friendId}) async {
+    try {
+      Logger.info('📍 Fetching last known location for friend: $friendId');
+      final response = await _apiService.getData(
+        '/api/friends/$friendId/moods',
+        queryParameters: {'limit': 1},
+      );
+      Logger.info('✅ Friend moods fetched for location');
+      final moods = response['data']?['moods'] as List?;
+      if (moods != null && moods.isNotEmpty) {
+        final mood = moods.first as Map<String, dynamic>;
+        return mood['location'] as Map<String, dynamic>?;
+      }
+      return null;
+    } on DioException catch (e) {
+      Logger.error('❌ Get friend location failed', e);
+      throw _handleDioException(e, 'get friend location');
+    }
+  }
+
+  /// Send a message to a friend (if messaging API exists)
+  Future<Map<String, dynamic>> sendMessageToFriend({required String friendId, required String message}) async {
+    try {
+      Logger.info('💬 Sending message to friend: $friendId');
+      // If you have a messaging API, use it here. Example:
+      final response = await _apiService.postData(
+        '/api/messages/send',
+        data: {
+          'recipientId': friendId,
+          'message': message,
+        },
+      );
+      Logger.info('✅ Message sent successfully');
+      return response;
+    } on DioException catch (e) {
+      Logger.error('❌ Send message to friend failed', e);
+      throw _handleDioException(e, 'send message to friend');
+    }
+  }
 }

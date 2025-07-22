@@ -1,3 +1,4 @@
+import 'package:emora_mobile_app/features/home/domain/entity/community_entity.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:emora_mobile_app/features/friends/domain/entity/friend_mood_data.dart';
@@ -13,7 +14,8 @@ class FriendEntity extends Equatable {
   final DateTime friendshipDate;
   final String status; // 'pending', 'accepted', 'blocked'
   final int mutualFriends;
-  final FriendMoodData? recentMood; // Real mood data from backend
+  final FriendMoodData? recentMood; 
+  final CommunityPostEntity? recentCommunityPost;
 
   const FriendEntity({
     required this.id,
@@ -27,6 +29,7 @@ class FriendEntity extends Equatable {
     required this.status,
     this.mutualFriends = 0,
     this.recentMood,
+    this.recentCommunityPost,
   });
 
   factory FriendEntity.fromJson(Map<String, dynamic> json) {
@@ -47,6 +50,9 @@ class FriendEntity extends Equatable {
       mutualFriends: _safeIntCast(json['mutualFriends']),
       recentMood: json['recentMood'] != null 
           ? FriendMoodData.fromJson(json['recentMood'])
+          : null,
+      recentCommunityPost: json['recentCommunityPost'] != null
+          ? CommunityPostEntity.fromJson(json['recentCommunityPost'])
           : null,
     );
   }
@@ -83,6 +89,7 @@ class FriendEntity extends Equatable {
       'status': status,
       'mutualFriends': mutualFriends,
       'recentMood': recentMood?.toJson(),
+      'recentCommunityPost': recentCommunityPost?.toJson(),
     };
   }
 
@@ -98,6 +105,7 @@ class FriendEntity extends Equatable {
     String? status,
     int? mutualFriends,
     FriendMoodData? recentMood,
+    CommunityPostEntity? recentCommunityPost,
   }) {
     return FriendEntity(
       id: id ?? this.id,
@@ -111,6 +119,7 @@ class FriendEntity extends Equatable {
       status: status ?? this.status,
       mutualFriends: mutualFriends ?? this.mutualFriends,
       recentMood: recentMood ?? this.recentMood,
+      recentCommunityPost: recentCommunityPost ?? this.recentCommunityPost,
     );
   }
 
@@ -127,6 +136,7 @@ class FriendEntity extends Equatable {
         status,
         mutualFriends,
         recentMood,
+        recentCommunityPost,
       ];
 }
 

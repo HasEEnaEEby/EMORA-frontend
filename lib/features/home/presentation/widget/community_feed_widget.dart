@@ -630,18 +630,9 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
               size: 32,
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'No community moments yet',
-            style: TextStyle(
-              color: Colors.grey[300],
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
           const SizedBox(height: 8),
           Text(
-            'Be the first to share your emotions with the community! Your feelings matter and others can find comfort in knowing they\'re not alone.',
+            'Find your feeling in the other , help people wo are suffuring , meesage them Your feelings matter and others can find comfort in knowing they\'re not alone.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Colors.grey[500],

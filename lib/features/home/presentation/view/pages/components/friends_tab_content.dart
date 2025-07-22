@@ -5,6 +5,7 @@
 import 'package:emora_mobile_app/core/utils/friends_utils.dart';
 import 'package:emora_mobile_app/features/home/presentation/view/pages/friends_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../domain/entity/community_entity.dart';
 import '../../../../domain/entity/friend_entity.dart';
@@ -18,6 +19,7 @@ import 'package:emora_mobile_app/features/friends/domain/entity/friend_mood_data
 import 'package:emora_mobile_app/core/network/dio_client.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/core/navigation/navigation_service.dart';
+// import 'package:emora_mobile_app/features/user/presentation/view/user_profile_page.dart';
 
 class FriendsTabContent {
   // Service instance for mood reactions
@@ -43,6 +45,7 @@ class FriendsTabContent {
   static Widget myFriends(Future<void> Function() onRefresh, TabController tabController) {
     return BlocBuilder<FriendBloc, FriendState>(
       builder: (context, state) {
+        print('[DEBUG] FriendBloc state: $state');
         if (state is FriendLoading) {
           return _buildLoadingState();
         } else if (state is FriendError) {
@@ -129,6 +132,12 @@ class FriendsTabContent {
       return _buildEmptyFriendsState(tabController);
     }
 
+    // DEBUG: Print all friends and their recentMood
+    for (final friend in state.friends) {
+      // ignore: avoid_print
+      print('[DEBUG] Friend: ${friend.username} (id: ${friend.id}) recentMood: ${friend.recentMood}');
+    }
+
     return RefreshIndicator(
       onRefresh: onRefresh,
       backgroundColor: const Color(0xFF1A1A2E),
@@ -140,7 +149,7 @@ class FriendsTabContent {
           if (index == 0) {
             return _buildFriendsOverview(state);
           }
-          return _buildFriendCard(state.friends[index - 1]);
+          return _buildFriendCard(state.friends[index - 1], context);
         },
       ),
     );
@@ -383,7 +392,7 @@ class FriendsTabContent {
     );
   }
 
-  static Widget _buildFriendCard(FriendEntity friend) {
+  static Widget _buildFriendCard(FriendEntity friend, BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -516,18 +525,19 @@ class FriendsTabContent {
           ),
           
           // Mood Activity Section
-          _buildMoodActivitySection(friend),
+          _buildMoodActivitySection(friend, context),
           
           // Action Buttons
-          _buildFriendActionButtons(friend),
+          _buildFriendActionButtons(friend, context),
         ],
       ),
     );
   }
 
-  static Widget _buildMoodActivitySection(FriendEntity friend) {
+  static Widget _buildMoodActivitySection(FriendEntity friend, BuildContext context) {
     // Use real mood data from friend entity
     final recentMood = friend.recentMood;
+    final recentCommunityPost = friend.recentCommunityPost;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -612,6 +622,75 @@ class FriendsTabContent {
             ),
             const SizedBox(height: 12),
             _buildMoodReactions(recentMood),
+          ] else if (recentCommunityPost != null) ...[
+            GestureDetector(
+              onTap: () => _viewCommunityPost(recentCommunityPost, context),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: const Color(0xFF8B5CF6).withValues(alpha: 0.2),
+                          border: Border.all(
+                            color: const Color(0xFF8B5CF6).withValues(alpha: 0.4),
+                            width: 2,
+                          ),
+                        ),
+                        child: Text(
+                          recentCommunityPost.emoji,
+                          style: const TextStyle(fontSize: 24),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              recentCommunityPost.message ?? '',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              FriendsUtils.formatTimestamp(recentCommunityPost.timestamp),
+                              style: TextStyle(
+                                color: Colors.grey[400],
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF8B5CF6).withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Community Post',
+                      style: TextStyle(
+                        color: Color(0xFF8B5CF6),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ] else ...[
             Container(
               padding: const EdgeInsets.all(16),
@@ -724,7 +803,7 @@ class FriendsTabContent {
     );
   }
 
-  static Widget _buildFriendActionButtons(FriendEntity friend) {
+  static Widget _buildFriendActionButtons(FriendEntity friend, BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       child: Row(
@@ -734,7 +813,7 @@ class FriendsTabContent {
               'View Profile',
               Icons.person_outline,
               const Color(0xFF8B5CF6),
-              () => _viewFriendProfile(friend),
+              () => _viewFriendProfile(friend, context),
             ),
           ),
           const SizedBox(width: 12),
@@ -743,7 +822,7 @@ class FriendsTabContent {
               'Send Message',
               Icons.chat_bubble_outline,
               const Color(0xFF10B981),
-              () => _sendMessage(friend),
+              () => _sendMessage(friend, context),
             ),
           ),
           const SizedBox(width: 12),
@@ -752,7 +831,7 @@ class FriendsTabContent {
               'Mood Map',
               Icons.map_outlined,
               const Color(0xFFFFD700),
-              () => _viewFriendOnMap(friend),
+              () => _viewFriendOnMap(friend, context),
             ),
           ),
         ],
@@ -925,7 +1004,7 @@ class FriendsTabContent {
             // Validate userId before calling onCancel
             if (userId.isEmpty) {
               print('. _buildCancelRequestButton - userId is empty, not calling onCancel');
-              ScaffoldMessenger.of(context).showSnackBar(
+              ScaffoldMessenger.of(NavigationService.navigatorKey.currentContext!).showSnackBar(
                 SnackBar(
                   content: const Text('Invalid user data. Please refresh and try again.'),
                   backgroundColor: const Color(0xFFEF4444),
@@ -1601,18 +1680,118 @@ class FriendsTabContent {
     }
   }
 
-  static void _viewFriendProfile(FriendEntity friend) {
+  static Future<bool> _sendComfortMessageToBackend(String friendId, String message) async {
+    try {
+      final response = await DioClient.instance.post(
+        '/api/messages/send',
+        data: {
+          'recipientId': friendId,
+          'message': message,
+        },
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Logger.info('✅ Comfort message sent to backend');
+        return true;
+      } else {
+        Logger.warning('⚠️ Failed to send comfort message: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      Logger.error('❌ Error sending comfort message: $e');
+      return false;
+    }
+  }
+
+  static void _viewFriendProfile(FriendEntity friend, BuildContext context) {
     print('Viewing profile for ${friend.username}');
-    // TODO: Navigate to friend profile
+    HapticFeedback.lightImpact();
+    // Placeholder: Show a simple profile page
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          appBar: AppBar(title: Text(friend.displayName.isNotEmpty ? friend.displayName : friend.username)),
+          body: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text('Username: ${friend.username}', style: TextStyle(fontSize: 18)),
+                Text('Display Name: ${friend.displayName}', style: TextStyle(fontSize: 16)),
+                Text('Avatar: ${friend.selectedAvatar}', style: TextStyle(fontSize: 16)),
+                if (friend.location != null) Text('Location: ${friend.location}', style: TextStyle(fontSize: 16)),
+                // Add more friend info as needed
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  static void _sendMessage(FriendEntity friend) {
+  static void _sendMessage(FriendEntity friend, BuildContext context) async {
     print('Sending message to ${friend.username}');
-    // TODO: Navigate to chat
+    HapticFeedback.mediumImpact();
+    String? message = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        String input = '';
+        return AlertDialog(
+          title: Text('Send Comfort Message to ${friend.displayName.isNotEmpty ? friend.displayName : friend.username}'),
+          content: TextField(
+            autofocus: true,
+            maxLength: 100,
+            decoration: const InputDecoration(hintText: 'Type your message...'),
+            onChanged: (val) => input = val,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, input.trim()),
+              child: const Text('Send'),
+            ),
+          ],
+        );
+      },
+    );
+    if (message != null && message.isNotEmpty) {
+      final success = await _sendComfortMessageToBackend(friend.id, message);
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Message sent to ${friend.displayName.isNotEmpty ? friend.displayName : friend.username}!'),
+            backgroundColor: const Color(0xFF10B981),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to send message. Please try again.'),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
-  static void _viewFriendOnMap(FriendEntity friend) {
+  static void _viewFriendOnMap(FriendEntity friend, BuildContext context) {
     print('Viewing ${friend.username} on map');
+    HapticFeedback.mediumImpact();
     // TODO: Navigate to map with friend filter
+  }
+
+  static void _viewCommunityPost(CommunityPostEntity post, BuildContext context) {
+    print('📝 Viewing community post: ${post.id}');
+    HapticFeedback.lightImpact();
+    // TODO: Implement navigation to a detailed post page
+    // No SnackBar or message for now
   }
 }

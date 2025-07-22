@@ -122,15 +122,8 @@ class _LoginViewState extends State<LoginView>
 
   void _navigateToForgotPassword() {
     if (_isLoading) return; // Prevent navigation during loading
-    
     Logger.info('🔑 Navigating to forgot password');
-    // Implement forgot password navigation
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Forgot password feature coming soon!'),
-        backgroundColor: Colors.orange,
-      ),
-    );
+    Navigator.pushNamed(context, AppRouter.forgotPassword);
   }
 
   @override

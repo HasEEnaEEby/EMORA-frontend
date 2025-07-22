@@ -10,12 +10,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
-
-import '../../../domain/entity/community_entity.dart';
 import '../../../domain/entity/friend_entity.dart';
 import '../../view_model/bloc/community_bloc.dart';
 import '../../view_model/bloc/community_event.dart';
-import '../../view_model/bloc/community_state.dart';
 import '../../view_model/bloc/friend_bloc.dart';
 import '../../view_model/bloc/friend_event.dart';
 import '../../view_model/bloc/friend_state.dart';
@@ -2480,5 +2477,22 @@ class UserProfileModal extends StatelessWidget {
       'raccoon': '🦝', 'cat': '🐱', 'dog': '🐶', 'owl': '🦉', 'penguin': '🐧',
     };
     return avatarEmojis[avatarName.toLowerCase()] ?? '🐾';
+  }
+}
+
+// ============================================================================
+// MINIMAL CHAT VIEW
+// ============================================================================
+
+class ChatView extends StatelessWidget {
+  final String friendId;
+  final String friendName;
+  const ChatView({required this.friendId, required this.friendName, super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Chat with $friendName')),
+      body: Center(child: Text('Chat with $friendName (Coming soon)')),
+    );
   }
 }

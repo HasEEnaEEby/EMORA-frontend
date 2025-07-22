@@ -1,3 +1,4 @@
+import 'package:emora_mobile_app/app/di/injection_container.dart' as di;
 import 'package:emora_mobile_app/features/emotion/presentation/view/pages/mood_atlas_view.dart';
 import 'package:emora_mobile_app/features/home/presentation/view/pages/enhanced_insights_view.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_bloc.dart';
@@ -23,7 +24,24 @@ import '../../../../../core/navigation/navigation_service.dart';
 import '../../../../../core/network/dio_client.dart';
 import '../../../../../core/utils/logger.dart';
 import '../../../../../features/emotion/presentation/view_model/bloc/emotion_bloc.dart';
-import 'package:emora_mobile_app/app/di/injection_container.dart' as di;
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
+
+IO.Socket? socket;
+
+void connectSocket(String userId, BuildContext context) {
+  socket = IO.io('http://localhost:8000', <String, dynamic>{
+    'transports': ['websocket'],
+    'autoConnect': false,
+  });
+
+  socket!.connect();
+
+  socket!.on('connect', (_) {
+    socket!.emit('join', {'room': 'user:$userId'});
+  });
+}
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -110,6 +128,12 @@ class _DashboardContentState extends State<_DashboardContent>
   Map<String, dynamic>? _editingEmotion;
   bool _isEditing = false;
   bool _isDeleting = false;
+
+  // Notification state variables
+  List<Map<String, dynamic>> _notifications = [];
+  bool _hasNotifications = false;
+  int _notificationCount = 0;
+  IO.Socket? _socket;
 
   // ✅ CRITICAL FIX: Use HomeDataModel's computed isNewUser property
   bool get _isUserNew {
@@ -360,6 +384,8 @@ class _DashboardContentState extends State<_DashboardContent>
   void initState() {
     super.initState();
     _initializeAnimations();
+    _initializeSocket();
+    loadInboxNotifications(); // <-- Add this line
     // IMMEDIATE mood update from state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateMoodFromCurrentState();
@@ -367,6 +393,235 @@ class _DashboardContentState extends State<_DashboardContent>
       _loadInitialData();
       _loadEnhancedDashboardData();
     });
+  }
+
+  void _initializeSocket() {
+    try {
+      final currentUserId = getCurrentUserId();
+      if (currentUserId != null) {
+        _socket = IO.io('http://localhost:8000', <String, dynamic>{
+          'transports': ['websocket'],
+          'autoConnect': false,
+        });
+        _socket!.connect();
+        _socket!.on('connect', (_) {
+          print('🔌 Socket connected');
+          _socket!.emit('join', {'room': 'user:$currentUserId'});
+        });
+        _socket!.on('new_message', (data) {
+          print('📱 New message received: $data');
+          _handleNewMessage(data);
+        });
+        _socket!.on('disconnect', (_) {
+          print('🔌 Socket disconnected');
+        });
+      }
+    } catch (e) {
+      print('❌ Error initializing socket: $e');
+    }
+  }
+
+  String? getCurrentUserId() {
+    if (widget.homeState is HomeDashboardState) {
+      final dashboardState = widget.homeState as HomeDashboardState;
+      final homeData = dashboardState.homeData;
+      // Try to extract user ID from dashboardData
+      final data = homeData.dashboardData['data'];
+      if (data != null && data['user'] != null && data['user']['id'] != null) {
+        return data['user']['id'] as String;
+      }
+    }
+    // Fallback: hardcoded for testing
+    return '687ab32176d3e5066eaa6431';
+  }
+
+  void _handleNewMessage(Map<String, dynamic> data) {
+    setState(() {
+      _notifications.insert(0, {
+        'id': DateTime.now().millisecondsSinceEpoch.toString(),
+        'senderName': data['senderName'] ?? 'Unknown',
+        'senderAvatar': data['senderAvatar'],
+        'content': data['content'] ?? '',
+        'senderId': data['senderId'],
+        'sentAt': data['sentAt'] ?? DateTime.now().toIso8601String(),
+        'isRead': false,
+        'type': 'message',
+      });
+      _notificationCount = _notifications.length;
+      _hasNotifications = _notifications.isNotEmpty;
+    });
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.message, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('New message from ${data['senderName']}: ${data['content']}'),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF8B5CF6),
+          duration: const Duration(seconds: 4),
+          action: SnackBarAction(
+            label: 'View',
+            textColor: Colors.white,
+            onPressed: () {
+              _showNotifications();
+            },
+          ),
+        ),
+      );
+    }
+  }
+
+  void _showNotifications() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.notifications, color: Color(0xFF8B5CF6)),
+            const SizedBox(width: 12),
+            const Text('Notifications', style: TextStyle(color: Colors.white)),
+            const Spacer(),
+            if (_hasNotifications)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B5CF6),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  _notificationCount > 9 ? '9+' : '$_notificationCount',
+                  style: const TextStyle(color: Colors.white, fontSize: 12),
+                ),
+              ),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 300,
+          child: _notifications.isEmpty
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.notifications_none, color: Colors.grey, size: 48),
+                      SizedBox(height: 16),
+                      Text('No new notifications', style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: _notifications.length,
+                  itemBuilder: (context, index) {
+                    final notification = _notifications[index];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: notification['isRead'] == true
+                            ? Colors.grey.withOpacity(0.1)
+                            : const Color(0xFF8B5CF6).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: notification['isRead'] == true
+                              ? Colors.grey.withOpacity(0.2)
+                              : const Color(0xFF8B5CF6).withOpacity(0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              if (notification['senderAvatar'] != null)
+                                CircleAvatar(
+                                  backgroundImage: AssetImage('assets/images/avatars/${notification['senderAvatar']}.png'),
+                                  radius: 16,
+                                ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  notification['senderName'] ?? 'System',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                _formatNotificationTime(notification['sentAt']),
+                                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            notification['content'] ?? '',
+                            style: const TextStyle(color: Colors.grey, fontSize: 13),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          if (_hasNotifications)
+            TextButton(
+              onPressed: () {
+                _clearNotifications();
+                Navigator.pop(context);
+              },
+              child: const Text('Clear All', style: TextStyle(color: Colors.red)),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close', style: TextStyle(color: Color(0xFF8B5CF6))),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _clearNotifications() {
+    setState(() {
+      _notifications.clear();
+      _notificationCount = 0;
+      _hasNotifications = false;
+    });
+  }
+
+  void _markNotificationAsRead(String notificationId) {
+    setState(() {
+      final index = _notifications.indexWhere((n) => n['id'] == notificationId);
+      if (index != -1) {
+        _notifications[index]['isRead'] = true;
+      }
+    });
+  }
+
+  String _formatNotificationTime(String? timeStr) {
+    if (timeStr == null) return '';
+    try {
+      final time = DateTime.parse(timeStr);
+      final now = DateTime.now();
+      final diff = now.difference(time);
+      if (diff.inMinutes < 1) return 'Just now';
+      if (diff.inHours < 1) return '${diff.inMinutes}m ago';
+      if (diff.inDays < 1) return '${diff.inHours}h ago';
+      return '${diff.inDays}d ago';
+    } catch (e) {
+      return '';
+    }
   }
 
   // ✅ ENHANCED: Update mood from current state and ensure data persistence
@@ -996,6 +1251,8 @@ class _DashboardContentState extends State<_DashboardContent>
 
   @override
   void dispose() {
+    _socket?.disconnect();
+    _socket?.dispose();
     _breathingController.dispose();
     _rippleController.dispose();
     _glowController.dispose();
@@ -1014,6 +1271,61 @@ class _DashboardContentState extends State<_DashboardContent>
         }
       },
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF0A0A0F),
+          elevation: 0,
+          centerTitle: false,
+          title: const Text(
+            'Emora',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          actions: [
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              child: Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.notifications,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                    onPressed: _showNotifications,
+                  ),
+                  if (_hasNotifications)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          _notificationCount > 9 ? '9+' : '$_notificationCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
         backgroundColor: const Color(0xFF0A0A0F),
         body: SafeArea(
           // ✅ CRITICAL FIX: Enhanced BlocListener with immediate mood updates
@@ -1761,6 +2073,44 @@ class _DashboardContentState extends State<_DashboardContent>
       ),
     );
   }
+
+  Future<void> loadInboxNotifications() async {
+    try {
+      final dio = Dio();
+      final dioClient = GetIt.instance<DioClient>();
+      final token = dioClient.getAuthToken();
+      if (token == null) {
+        print('No auth token found!');
+        return;
+      }
+      final response = await dio.get(
+        'http://localhost:8000/api/messages/inbox',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+      print('Inbox response: ${response.data}');
+      final messages = response.data['data']['messages'] as List;
+      setState(() {
+        _notifications = messages.map((msg) => {
+          'id': msg['id'],
+          'senderName': msg['senderName'],
+          'senderAvatar': msg['senderAvatar'],
+          'content': msg['content'],
+          'senderId': msg['senderId'],
+          'sentAt': msg['sentAt'],
+          'isRead': false,
+          'type': 'message',
+        }).toList();
+        _notificationCount = _notifications.length;
+        _hasNotifications = _notifications.isNotEmpty;
+      });
+    } catch (e) {
+      print('Failed to load inbox notifications: $e');
+    }
+  }
 }
 
 class EnhancedBottomNavigationCustom extends StatefulWidget {
@@ -2033,3 +2383,6 @@ class _EnhancedBottomNavigationCustomState
     );
   }
 }
+
+final dioClient = GetIt.instance<DioClient>();
+final token = dioClient.getAuthToken(); // This is synchronous and returns the stored token

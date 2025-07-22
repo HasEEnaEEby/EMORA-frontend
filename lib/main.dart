@@ -1,3 +1,4 @@
+import 'package:emora_mobile_app/core/network/dio_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,6 +10,15 @@ import 'app/di/injection_container.dart' as di;
 import 'core/navigation/navigation_service.dart';
 import 'core/utils/logger.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
+import 'package:get_it/get_it.dart';
+import 'features/auth/data/data_source/local/auth_local_data_source.dart';
+import 'features/auth/data/model/user_model.dart';
+import 'package:provider/provider.dart';
+import 'package:uni_links/uni_links.dart';
+import 'dart:async';
+import 'core/navigation/app_router.dart';
+import '../../features/auth/presentation/view/forgot_password_view.dart';
 
 
 Future<void> main() async {
@@ -35,7 +45,14 @@ Future<void> main() async {
     await _initializeDependencies();
 
     _setupBlocObserver();
-    runApp(const EmoraApp());
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ],
+        child: const EmoraApp(),
+      ),
+    );
 
     Logger.info(' App started successfully');
   } catch (e, stackTrace) {
@@ -264,6 +281,184 @@ class _SpotifyTrackPlayerState extends State<SpotifyTrackPlayer> {
         icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
         onPressed: _togglePlay,
       ),
+    );
+  }
+}
+
+class MessageEntity {
+  final String id;
+  final String senderId;
+  final String senderName;
+  final String content;
+  final DateTime sentAt;
+
+  MessageEntity({
+    required this.id,
+    required this.senderId,
+    required this.senderName,
+    required this.content,
+    required this.sentAt,
+  });
+
+  factory MessageEntity.fromJson(Map<String, dynamic> json) {
+    return MessageEntity(
+      id: json['id'],
+      senderId: json['senderId'],
+      senderName: json['senderName'],
+      content: json['content'],
+      sentAt: DateTime.parse(json['sentAt']),
+    );
+  }
+}
+
+class MessageRepository {
+  Future<List<MessageEntity>> fetchInbox() async {
+    final response = await DioClient.instance.get('/api/messages/inbox');
+    if (response.statusCode == 200) {
+      final List data = response.data['data']['messages'];
+      return data.map((json) => MessageEntity.fromJson(json)).toList();
+    } else {
+      throw Exception('Failed to load messages');
+    }
+  }
+}
+
+class MessagesInboxPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text('Messages')),
+      body: FutureBuilder<List<MessageEntity>>(
+        future: MessageRepository().fetchInbox(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('No messages yet'));
+          }
+          final messages = snapshot.data!;
+          return ListView.builder(
+            itemCount: messages.length,
+            itemBuilder: (context, index) {
+              final msg = messages[index];
+              return ListTile(
+                title: Text(msg.senderName),
+                subtitle: Text(msg.content),
+                trailing: Text(
+                  '${msg.sentAt.hour.toString().padLeft(2, '0')}:${msg.sentAt.minute.toString().padLeft(2, '0')}',
+                ),
+                onTap: () {
+                  // Optionally open conversation
+                },
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+class NotificationProvider extends ChangeNotifier {
+  final List<Map<String, dynamic>> _notifications = [];
+
+  List<Map<String, dynamic>> get notifications => List.unmodifiable(_notifications);
+
+  void addNotification(Map<String, dynamic> notification) {
+    _notifications.insert(0, notification);
+    notifyListeners();
+  }
+
+  void clearNotifications() {
+    _notifications.clear();
+    notifyListeners();
+  }
+}
+
+class NotificationService {
+  static IO.Socket? _socket;
+
+  static Future<void> connectAndListen(BuildContext context) async {
+    final userId = await getCurrentUserId();
+    if (userId == null) return;
+
+    _socket = IO.io('http://localhost:8000', <String, dynamic>{
+      'transports': ['websocket'],
+      'autoConnect': false,
+    });
+
+    _socket!.connect();
+
+    _socket!.on('connect', (_) {
+      _socket!.emit('join', {'room': 'user:$userId'});
+    });
+
+    _socket!.on('new_message', (data) {
+      // Add to notification provider
+      Provider.of<NotificationProvider>(context, listen: false).addNotification(data);
+      // Optionally show a SnackBar as well
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('New message from ${data['senderName']}: ${data['content']}'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    });
+  }
+
+  static void disconnect() {
+    _socket?.disconnect();
+  }
+}
+
+Future<String?> getCurrentUserId() async {
+  final authLocalDataSource = GetIt.instance<AuthLocalDataSource>();
+  final user = await authLocalDataSource.getCurrentUser();
+  return user?.id;
+}
+
+class NotificationListDialog extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final notifications = Provider.of<NotificationProvider>(context).notifications;
+    return AlertDialog(
+      title: Text('Notifications'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: notifications.isEmpty
+            ? Text('No new messages')
+            : ListView.builder(
+                shrinkWrap: true,
+                itemCount: notifications.length,
+                itemBuilder: (context, index) {
+                  final n = notifications[index];
+                  return ListTile(
+                    title: Text(n['senderName'] ?? 'Unknown'),
+                    subtitle: Text(n['content'] ?? ''),
+                    trailing: Text(
+                      n['sentAt'] != null
+                          ? DateTime.parse(n['sentAt']).toLocal().toString().substring(0, 16)
+                          : '',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  );
+                },
+              ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Provider.of<NotificationProvider>(context, listen: false).clearNotifications();
+            Navigator.pop(context);
+          },
+          child: Text('Clear All'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Close'),
+        ),
+      ],
     );
   }
 }

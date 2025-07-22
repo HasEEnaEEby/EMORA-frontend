@@ -1,3 +1,5 @@
+import 'package:emora_mobile_app/features/friends/domain/entity/friend_mood_data.dart';
+import 'package:emora_mobile_app/features/home/domain/entity/community_entity.dart';
 import 'package:equatable/equatable.dart';
 
 import '../../domain/entity/friend_entity.dart';
@@ -13,6 +15,8 @@ class FriendModel extends Equatable {
   final DateTime friendshipDate;
   final String status;
   final int mutualFriends;
+  final FriendMoodData? recentMood;
+  final CommunityPostEntity? recentCommunityPost;
 
   const FriendModel({
     required this.id,
@@ -25,6 +29,8 @@ class FriendModel extends Equatable {
     required this.friendshipDate,
     required this.status,
     this.mutualFriends = 0,
+    this.recentMood,
+    this.recentCommunityPost,
   });
 
   factory FriendModel.fromJson(Map<String, dynamic> json) {
@@ -40,6 +46,12 @@ class FriendModel extends Equatable {
         friendshipDate: _parseDateTime(json['friendshipDate']) ?? DateTime.now(),
         status: _safeString(json['status']),
         mutualFriends: _safeInt(json['mutualFriends']),
+        recentMood: json['recentMood'] != null
+            ? FriendMoodData.fromJson(json['recentMood'])
+            : null,
+        recentCommunityPost: json['recentCommunityPost'] != null
+            ? CommunityPostEntity.fromJson(json['recentCommunityPost'])
+            : null,
       );
     } catch (e) {
       return FriendModel.empty();
@@ -124,6 +136,8 @@ class FriendModel extends Equatable {
       friendshipDate: entity.friendshipDate,
       status: entity.status,
       mutualFriends: entity.mutualFriends,
+      recentMood: entity.recentMood,
+      recentCommunityPost: entity.recentCommunityPost,
     );
   }
 
@@ -139,6 +153,8 @@ class FriendModel extends Equatable {
       'friendshipDate': friendshipDate.toIso8601String(),
       'status': status,
       'mutualFriends': mutualFriends,
+      'recentMood': recentMood?.toJson(),
+      'recentCommunityPost': recentCommunityPost?.toJson(),
     };
   }
 
@@ -154,6 +170,8 @@ class FriendModel extends Equatable {
       friendshipDate: friendshipDate,
       status: status,
       mutualFriends: mutualFriends,
+      recentMood: recentMood,
+      recentCommunityPost: recentCommunityPost,
     );
   }
 
@@ -168,6 +186,8 @@ class FriendModel extends Equatable {
     DateTime? friendshipDate,
     String? status,
     int? mutualFriends,
+    FriendMoodData? recentMood,
+    CommunityPostEntity? recentCommunityPost,
   }) {
     return FriendModel(
       id: id ?? this.id,
@@ -180,6 +200,8 @@ class FriendModel extends Equatable {
       friendshipDate: friendshipDate ?? this.friendshipDate,
       status: status ?? this.status,
       mutualFriends: mutualFriends ?? this.mutualFriends,
+      recentMood: recentMood ?? this.recentMood,
+      recentCommunityPost: recentCommunityPost ?? this.recentCommunityPost,
     );
   }
 
@@ -195,6 +217,8 @@ class FriendModel extends Equatable {
         friendshipDate,
         status,
         mutualFriends,
+        recentMood,
+        recentCommunityPost,
       ];
 }
 

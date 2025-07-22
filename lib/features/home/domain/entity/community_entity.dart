@@ -84,6 +84,43 @@ class CommunityPostEntity extends Equatable {
     );
   }
 
+  factory CommunityPostEntity.fromJson(Map<String, dynamic> json) {
+    return CommunityPostEntity(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      username: json['username']?.toString() ?? '',
+      displayName: json['displayName']?.toString() ?? '',
+      selectedAvatar: json['selectedAvatar']?.toString() ?? 'panda',
+      emoji: json['emoji']?.toString() ?? '',
+      location: json['location']?.toString() ?? '',
+      message: json['message']?.toString() ?? json['content']?.toString() ?? '',
+      timestamp: json['timestamp'] != null ? DateTime.parse(json['timestamp']) : DateTime.now(),
+      moodColor: json['moodColor']?.toString() ?? '#8B5CF6',
+      activityType: json['activityType']?.toString() ?? 'General',
+      privacy: json['privacy']?.toString() ?? 'public',
+      isAnonymous: json['isAnonymous'] ?? false,
+      // For friend card, reactions/comments/view/share are not needed
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'username': username,
+      'displayName': displayName,
+      'selectedAvatar': selectedAvatar,
+      'emoji': emoji,
+      'location': location,
+      'message': message,
+      'timestamp': timestamp.toIso8601String(),
+      'moodColor': moodColor,
+      'activityType': activityType,
+      'privacy': privacy,
+      'isAnonymous': isAnonymous,
+    };
+  }
+
   @override
   List<Object?> get props => [
         id,

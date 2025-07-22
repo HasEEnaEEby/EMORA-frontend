@@ -616,48 +616,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
         ),
 
         const SizedBox(height: 24),
-
-        // Guest Button - FIXED: Added guest option
-        Container(
-          width: double.infinity,
-          height: 50,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.grey.withValues(alpha: 0.3),
-              width: 1,
-            ),
-          ),
-          child: OutlinedButton(
-            onPressed: _isNavigating ? null : () {
-              Logger.info('🔥 GUEST BUTTON TAPPED');
-              _continueAsGuest();
-            },
-            style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.transparent,
-              foregroundColor: Colors.grey[400],
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.person_outline, color: Colors.grey[400], size: 20),
-                const SizedBox(width: 12),
-                Text(
-                  'Continue as Guest',
-                  style: TextStyle(
-                    color: Colors.grey[400],
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ],
     );
   }

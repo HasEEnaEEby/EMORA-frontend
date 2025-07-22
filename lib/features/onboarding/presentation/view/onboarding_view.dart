@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/navigation/app_router.dart';
 import '../../../../core/navigation/navigation_service.dart';
@@ -745,56 +746,25 @@ class _OnboardingViewState extends State<OnboardingView>
     );
   }
 
-  Widget _buildBrandTitle() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF8B5FBF).withValues(alpha: 0.1),
-            const Color(0xFF6B3FA0).withValues(alpha: 0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF8B5FBF).withValues(alpha: 0.2),
-          width: 1,
+
+Widget _buildBrandTitle() {
+  return SvgPicture.asset(
+    'assets/images/EmoraLogo.svg',
+    width: 100, 
+    height: 80, 
+    fit: BoxFit.contain,
+    placeholderBuilder: (context) => SizedBox(
+      width: 100,
+      height: 80,
+      child: const Center(
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: Color(0xFF8B5FBF),
         ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: Color(0xFF8B5FBF),
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'Emora',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: const Color(0xFF8B5FBF).withValues(alpha: 0.6),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSkipButton() {
     return Container(
