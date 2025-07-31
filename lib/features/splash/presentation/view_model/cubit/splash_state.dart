@@ -1,7 +1,5 @@
-// lib/features/splash/presentation/view_model/cubit/splash_state.dart
 import 'package:equatable/equatable.dart';
 
-// ===== SPLASH STATES =====
 
 abstract class SplashState extends Equatable {
   const SplashState();

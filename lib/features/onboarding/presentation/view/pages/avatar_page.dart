@@ -1,4 +1,3 @@
-// lib/features/onboarding/presentation/view/pages/avatar_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -29,7 +28,7 @@ class AvatarPage extends StatefulWidget {
 class _AvatarPageState extends State<AvatarPage>
     with AutomaticKeepAliveClientMixin {
   String? _selectedAvatar;
-  late List<dynamic> _avatarOptions; // Changed to handle mixed types
+late List<dynamic> _avatarOptions; 
 
   @override
   bool get wantKeepAlive => true;
@@ -44,7 +43,6 @@ class _AvatarPageState extends State<AvatarPage>
   void _initializeAvatarOptions() {
     final stepData = widget.step.data;
 
-    // Default avatar options
     final defaultAvatars = [
       'panda',
       'elephant',
@@ -60,11 +58,9 @@ class _AvatarPageState extends State<AvatarPage>
       'lion',
     ];
 
-    // FIXED: Handle both List and nested structure from API
     if (stepData != null) {
       List<dynamic> apiAvatars = [];
 
-      // Try different possible structures
       if (stepData['avatars'] is List) {
         apiAvatars = stepData['avatars'] as List<dynamic>? ?? [];
       } else if (stepData['options'] is List) {
@@ -77,7 +73,6 @@ class _AvatarPageState extends State<AvatarPage>
         _avatarOptions = apiAvatars;
         print('. Avatar options from API: ${_avatarOptions.length} items');
 
-        // Debug: Show what we're getting from API
         for (int i = 0; i < _avatarOptions.length && i < 3; i++) {
           print(
             '  Avatar $i: ${_avatarOptions[i]} (${_avatarOptions[i].runtimeType})',
@@ -96,7 +91,6 @@ class _AvatarPageState extends State<AvatarPage>
       );
     }
 
-    // Validate current selection
     if (_selectedAvatar != null) {
       final extractedValues = _avatarOptions.map(_extractAvatarValue).toList();
       final isValidSelection = extractedValues.contains(_selectedAvatar);
@@ -110,7 +104,6 @@ class _AvatarPageState extends State<AvatarPage>
     }
   }
 
-  // FIXED: Safe avatar value extraction
   String _extractAvatarValue(dynamic avatar) {
     if (avatar is String) {
       return avatar;
@@ -232,7 +225,7 @@ class _AvatarPageState extends State<AvatarPage>
     }
 
     return AvatarSelectionGrid(
-      avatars: _avatarOptions, // Now passing List<dynamic>
+avatars: _avatarOptions, 
       selectedAvatar: _selectedAvatar,
       onAvatarSelected: _onAvatarSelected,
       crossAxisCount: 3,

@@ -1,4 +1,3 @@
-// lib/features/insights/presentation/widgets/insights_header.dart
 import 'package:flutter/material.dart';
 
 class InsightsHeader extends StatefulWidget {

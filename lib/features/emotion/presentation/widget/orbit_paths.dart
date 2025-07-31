@@ -24,7 +24,6 @@ class OrbitPaths extends StatelessWidget {
   }
 }
 
-// Orbital paths painter
 class OrbitPathsPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -35,11 +34,10 @@ class OrbitPathsPainter extends CustomPainter {
 
     final center = Offset(size.width / 2, size.height / 2);
 
-    // Draw orbital paths
-    canvas.drawCircle(center, 120, paint); // Venus
-    canvas.drawCircle(center, 200, paint); // Earth
-    canvas.drawCircle(center, 280, paint); // Mars
-    canvas.drawCircle(center, 360, paint); // Jupiter
+canvas.drawCircle(center, 120, paint); 
+canvas.drawCircle(center, 200, paint); 
+canvas.drawCircle(center, 280, paint); 
+canvas.drawCircle(center, 360, paint); 
   }
 
   @override

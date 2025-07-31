@@ -1,4 +1,3 @@
-// lib/features/onboarding/presentation/view_model/bloc/onboarding_event.dart
 import 'package:equatable/equatable.dart';
 
 import '../../../domain/entity/onboarding_entity.dart';
@@ -63,7 +62,6 @@ class SaveAvatar extends OnboardingEvent {
   List<Object> get props => [avatar];
 }
 
-// FIXED: This is the event that matches your OnboardingView
 class CompleteOnboardingEvent extends OnboardingEvent {
   final UserOnboardingEntity? userData;
 
@@ -75,7 +73,6 @@ class CompleteOnboardingEvent extends OnboardingEvent {
 
 class SkipOnboarding extends OnboardingEvent {}
 
-// Additional events for better UX
 class ResetOnboarding extends OnboardingEvent {}
 
 class UpdateUserData extends OnboardingEvent {
@@ -95,7 +92,6 @@ class UpdateUserData extends OnboardingEvent {
   List<Object?> get props => [username, pronouns, ageGroup, selectedAvatar];
 }
 
-// Additional events that might be useful
 class SelectPronouns extends OnboardingEvent {
   final String pronouns;
 

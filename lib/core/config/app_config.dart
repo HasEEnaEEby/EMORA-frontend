@@ -1,14 +1,8 @@
-// lib/core/config/app_config.dart
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-/// Master configuration file - Single source of truth for all app constants
-/// Updated with vibrant, child-friendly purple color palette and Profile Dialog support
 class AppConfig {
-  // ===========================
-  // APP IDENTITY & VERSION
-  // ===========================
   static const String appName = 'Emora';
   static const String appVersion = '1.0.0';
   static const String appDescription = 'Your mindful emotion companion';
@@ -22,11 +16,7 @@ class AppConfig {
   static const Duration receiveTimeout = Duration(seconds: 30);
   static const Duration sendTimeout = Duration(seconds: 30);
 
-  // ===========================
-  // API ENDPOINTS
-  // ===========================
 
-  // Authentication & User Management
   static const String loginEndpoint = '/api/auth/login';
   static const String registerEndpoint = '/api/auth/register';
   static const String logoutEndpoint = '/api/auth/logout';
@@ -36,27 +26,23 @@ class AppConfig {
   static const String updateProfileEndpoint = '/api/auth/profile/update';
   static const String deleteAccountEndpoint = '/api/auth/account/delete';
 
-  // Profile & User Data
   static const String userPreferencesEndpoint = '/api/user/preferences';
   static const String updatePreferencesEndpoint =
       '/api/user/preferences/update';
   static const String exportUserDataEndpoint = '/api/user/export';
   static const String achievementsEndpoint = '/api/user/achievements';
   static const String achievementDetailEndpoint =
-      '/api/user/achievements'; // /{id}
+'/api/user/achievements'; 
 
-  // Onboarding
   static const String checkUsernameEndpoint = '/api/auth/check-username';
   static const String onboardingStepsEndpoint = '/api/onboarding/steps';
   static const String userDataEndpoint = '/api/onboarding/user-data';
   static const String completeOnboardingEndpoint = '/api/onboarding/complete';
   static const String suggestUsernamesEndpoint = '/api/auth/suggest-usernames';
 
-  // Home & Dashboard
   static const String homeDataEndpoint = '/api/user/home-data';
   static const String userStatsEndpoint = '/api/user/stats';
 
-  // Emotions
   static const String logEmotionEndpoint = '/api/emotions/log';
   static const String emotionJourneyEndpoint = '/api/emotions/journey';
   static const String globalEmotionStatsEndpoint = '/api/emotions/global-stats';
@@ -66,9 +52,6 @@ class AppConfig {
   static const String ventingSessionEndpoint = '/api/emotions/vent';
   static const String emotionInsightsEndpoint = '/api/emotions/insights';
 
-  // ===========================
-  // STORAGE KEYS
-  // ===========================
   static const String authTokenKey = 'auth_token';
   static const String refreshTokenKey = 'refresh_token';
   static const String userDataKey = 'user_data';
@@ -84,62 +67,51 @@ class AppConfig {
   static const String cachedAchievementsKey = 'cached_achievements';
   static const String profileCacheKey = 'profile_cache';
 
-  // ===========================
-  // CHILD-FRIENDLY PURPLE COLOR PALETTE 🌈
-  // ===========================
 
-  // Original Colors (for backward compatibility)
   static const Color softLavender = Color(
     0xFFF3E8FF,
-  ); // Very light purple background
+); 
   static const Color midnightNavy = Color(
     0xFF374151,
-  ); // Charcoal purple for text
-  static const Color oceanMist = Color(0xFFB347D9); // Vibrant purple for CTAs
-  static const Color warmBlush = Color(0xFFFED7D7); // Gentle pink warmth
-  static const Color cloudWhite = Color(0xFFFFFFFF); // Pure white surfaces
+); 
+static const Color oceanMist = Color(0xFFB347D9); 
+static const Color warmBlush = Color(0xFFFED7D7); 
+static const Color cloudWhite = Color(0xFFFFFFFF); 
 
-  // Child-Friendly Purple Shades
   static const Color vibrantPurple = Color(
     0xFFB347D9,
-  ); // Main purple for buttons
+); 
   static const Color playfulPurple = Color(
     0xFFD8A5FF,
-  ); // Medium purple for accents
-  static const Color deepPurple = Color(0xFF8B3FB8); // Dark purple for text
-  static const Color charcoalPurple = Color(0xFF374151); // Primary text color
+); 
+static const Color deepPurple = Color(0xFF8B3FB8); 
+static const Color charcoalPurple = Color(0xFF374151); 
   static const Color royalPurple = Color(
     0xFF5B21B6,
-  ); // Darkest purple for contrast
+); 
 
-  // Child-Friendly Complementary Colors
-  static const Color sunnyYellow = Color(0xFFFEF3C7); // Warm yellow highlights
-  static const Color skyBlue = Color(0xFFDBEAFE); // Soft blue accents
-  static const Color mintGreen = Color(0xFFD1FAE5); // Fresh green success
-  static const Color peachPink = Color(0xFFFED7D7); // Gentle pink warmth
+static const Color sunnyYellow = Color(0xFFFEF3C7); 
+static const Color skyBlue = Color(0xFFDBEAFE); 
+static const Color mintGreen = Color(0xFFD1FAE5); 
+static const Color peachPink = Color(0xFFFED7D7); 
 
-  // Supporting Colors - Child-Friendly
-  static const Color softGray = Color(0xFFE5E7EB); // Light borders
+static const Color softGray = Color(0xFFE5E7EB); 
   static const Color deepLavender = Color(
     0xFF8B3FB8,
-  ); // Dark purple for secondary text
-  static const Color paleBlush = Color(0xFFFEF3C7); // Warm yellow backgrounds
-  static const Color mistBlue = Color(0xFFDBEAFE); // Soft blue accents
+); 
+static const Color paleBlush = Color(0xFFFEF3C7); 
+static const Color mistBlue = Color(0xFFDBEAFE); 
 
-  // Legacy mappings for backward compatibility
   static const Color primaryPurple = vibrantPurple;
   static const Color secondaryPurple = playfulPurple;
   static const Color accentPurple = peachPink;
   static const Color backgroundDark = softLavender;
   static const Color backgroundCard = cloudWhite;
-  static const Color backgroundSurface = Color(0xFFE9D8FD); // Soft lavender
+static const Color backgroundSurface = Color(0xFFE9D8FD); 
   static const Color textPrimary = charcoalPurple;
   static const Color textSecondary = deepPurple;
-  static const Color textMuted = Color(0xFF9CA3AF); // Purple gray
+static const Color textMuted = Color(0xFF9CA3AF); 
 
-  // ===========================
-  // PROFILE DIALOG COLORS 🎨
-  // ===========================
 
   static const Color dialogBackground = Color(0xFF1A1A2E);
   static const Color dialogSurface = cloudWhite;
@@ -147,7 +119,6 @@ class AppConfig {
   static const Color dialogBorder = Color(0xFFE5E7EB);
   static const Color dialogShadow = Color(0x1A000000);
 
-  // Theme Colors for Profile Dialogs
   static const Map<String, Color> themeColors = {
     'Cosmic Purple': Color(0xFF8B5CF6),
     'Ocean Blue': Color(0xFF3B82F6),
@@ -159,7 +130,6 @@ class AppConfig {
     'Royal Indigo': Color(0xFF6366F1),
   };
 
-  // Achievement Colors by Category
   static const Map<String, Color> achievementColors = {
     'progress': Color(0xFF10B981),
     'milestone': Color(0xFF3B82F6),
@@ -173,34 +143,25 @@ class AppConfig {
     'general': Color(0xFF6B7280),
   };
 
-  // ===========================
-  // CHILD-FRIENDLY EMOTION COLORS 🎨
-  // ===========================
 
-  static const Color emotionJoy = Color(0xFFFEF3C7); // Bright sunny yellow
-  static const Color emotionCalm = Color(0xFFD1FAE5); // Soft mint green
-  static const Color emotionSad = Color(0xFFDBEAFE); // Gentle sky blue
-  static const Color emotionAnxious = Color(0xFFF3E8FF); // Light purple
-  static const Color emotionAngry = Color(0xFFFED7D7); // Soft coral pink
-  static const Color emotionNeutral = Color(0xFFF9FAFB); // Cool gray
-  static const Color emotionPeaceful = Color(0xFFECFDF5); // Fresh mint
+static const Color emotionJoy = Color(0xFFFEF3C7); 
+static const Color emotionCalm = Color(0xFFD1FAE5); 
+static const Color emotionSad = Color(0xFFDBEAFE); 
+static const Color emotionAnxious = Color(0xFFF3E8FF); 
+static const Color emotionAngry = Color(0xFFFED7D7); 
+static const Color emotionNeutral = Color(0xFFF9FAFB); 
+static const Color emotionPeaceful = Color(0xFFECFDF5); 
   static const Color emotionExcited = Color(
     0xFFFEF3C7,
-  ); // Vibrant yellow-orange
-  static const Color emotionNumb = Color(0xFFF5F5F5); // Neutral light gray
+); 
+static const Color emotionNumb = Color(0xFFF5F5F5); 
 
-  // ===========================
-  // STATUS COLORS - CHILD-FRIENDLY
-  // ===========================
 
-  static const Color successGreen = Color(0xFFD1FAE5); // Happy green
-  static const Color errorRed = Color(0xFFFED7D7); // Gentle red
-  static const Color warningYellow = Color(0xFFFEF3C7); // Cheerful yellow
-  static const Color infoBlue = Color(0xFFDBEAFE); // Friendly blue
+static const Color successGreen = Color(0xFFD1FAE5); 
+static const Color errorRed = Color(0xFFFED7D7); 
+static const Color warningYellow = Color(0xFFFEF3C7); 
+static const Color infoBlue = Color(0xFFDBEAFE); 
 
-  // ===========================
-  // NAVIGATION COLORS - PLAYFUL
-  // ===========================
 
   static const Color navHome = vibrantPurple;
   static const Color navMoodAtlas = mintGreen;
@@ -208,11 +169,7 @@ class AppConfig {
   static const Color navFriends = peachPink;
   static const Color navVenting = sunnyYellow;
 
-  // ===========================
-  // CHILD-FRIENDLY DIMENSIONS
-  // ===========================
 
-  // Spacing - More generous for little fingers
   static const double paddingTiny = 6.0;
   static const double paddingSmall = 10.0;
   static const double paddingMedium = 16.0;
@@ -222,7 +179,6 @@ class AppConfig {
   static const double paddingHuge = 44.0;
   static const double paddingMassive = 52.0;
 
-  // Border Radius - More rounded for friendly feel
   static const double radiusTiny = 6.0;
   static const double radiusSmall = 12.0;
   static const double radiusMedium = 16.0;
@@ -232,7 +188,6 @@ class AppConfig {
   static const double radiusHuge = 32.0;
   static const double radiusCircular = 100.0;
 
-  // Text Sizes - Larger for better readability
   static const double textTiny = 12.0;
   static const double textSmall = 14.0;
   static const double textMedium = 16.0;
@@ -244,7 +199,6 @@ class AppConfig {
   static const double textDisplay = 34.0;
   static const double textHero = 38.0;
 
-  // Icon Sizes - Larger for better interaction
   static const double iconTiny = 16.0;
   static const double iconSmall = 20.0;
   static const double iconMedium = 24.0;
@@ -254,7 +208,6 @@ class AppConfig {
   static const double iconHuge = 68.0;
   static const double iconMassive = 84.0;
 
-  // Component Sizes - Child-friendly touch targets
   static const double buttonHeight = 52.0;
   static const double buttonHeightSmall = 40.0;
   static const double buttonHeightLarge = 60.0;
@@ -264,57 +217,46 @@ class AppConfig {
   static const double avatarSize = 52.0;
   static const double avatarSizeLarge = 84.0;
 
-  // Dialog-specific dimensions
   static const double dialogMaxWidth = 420.0;
   static const double dialogMaxHeight = 600.0;
   static const double dialogMinHeight = 300.0;
   static const double themeCardSize = 120.0;
   static const double achievementCardHeight = 100.0;
 
-  // Emotion-specific Dimensions
   static const double emotionTileSize = 88.0;
   static const double emotionDotSize = 16.0;
   static const double earthSectionHeight = 340.0;
   static const double sliderHeight = 52.0;
   static const double progressBarHeight = 10.0;
 
-  // Layout Constraints
   static const double maxContentWidth = 420.0;
   static const double sectionSpacing = 36.0;
   static const double itemSpacing = 20.0;
   static const double gridSpacing = 16.0;
 
-  // Touch Targets (Child-friendly)
   static const double minTouchTarget = 48.0;
   static const double comfortableTouchTarget = 52.0;
 
-  // ===========================
-  // ENVIRONMENT & FEATURE FLAGS
-  // ===========================
 
   static const bool isDevelopmentMode = true;
   static const bool enableLogging = true;
   static const bool enableNetworkLogging = true;
   static const bool enableOfflineMode = true;
-  static const bool gracefullyHandleMissingEndpoints = false; // . DISABLED: Let real auth errors propagate
-  static const bool enableProfileDialogMockData = false; // . DISABLED: Always use real profile data
+static const bool gracefullyHandleMissingEndpoints = false; 
+static const bool enableProfileDialogMockData = false; 
   static const bool enableAchievementMockData =
-      true; // For testing achievements
+true; 
 
-  // ===========================
-  // TIMING CONFIGURATION
-  // ===========================
 
   static const Duration splashDuration = Duration(seconds: 3);
   static const Duration defaultAnimationDuration = Duration(milliseconds: 300);
   static const Duration longAnimationDuration = Duration(milliseconds: 600);
   static const Duration cacheExpirationDuration = Duration(hours: 24);
-  static const Duration cacheValidityDuration = Duration(hours: 24); // . Increased cache duration to reduce redundant API calls
+static const Duration cacheValidityDuration = Duration(hours: 24); 
   static const Duration retryDelay = Duration(seconds: 2);
   static const int maxRetryAttempts = 3;
   static const int maxCacheSize = 100;
 
-  // Animation Durations (milliseconds) - Slightly longer for children
   static const int animationInstant = 150;
   static const int animationFast = 250;
   static const int animationMedium = 350;
@@ -322,9 +264,6 @@ class AppConfig {
   static const int animationXSlow = 850;
   static const int animationBreathing = 4000;
 
-  // ===========================
-  // VALIDATION CONSTANTS
-  // ===========================
 
   static const int minUsernameLength = 3;
   static const int maxUsernameLength = 20;
@@ -333,9 +272,6 @@ class AppConfig {
   static const int minBioLength = 0;
   static const int maxBioLength = 150;
 
-  // ===========================
-  // BUSINESS LOGIC DATA
-  // ===========================
 
   static const List<String> availablePronouns = [
     'She / Her',
@@ -344,15 +280,14 @@ class AppConfig {
     'Other',
   ];
 
-  // . FIXED: Match exact backend validation values
   static const List<String> availableAgeGroups = [
     'Under 18',
-    '18-24', // Fixed: backend expects 18-24, not 18-25
-    '25-34', // Fixed: backend expects 25-34, not 26-35  
-    '35-44', // Fixed: backend expects 35-44, not 36-45
-    '45-54', // Fixed: backend expects 45-54, not 46-60
-    '55-64', // Added: missing from original list
-    '65+',   // Fixed: backend expects 65+, not Over 60
+'18-24', 
+'25-34', 
+'35-44', 
+'45-54', 
+'55-64', 
+'65+',   
   ];
 
   static const List<String> availableAvatars = [
@@ -367,7 +302,6 @@ class AppConfig {
     'raccoon',
   ];
 
-  // Language options for Profile Dialogs
   static const List<Map<String, String>> availableLanguages = [
     {'code': 'en', 'name': 'English', 'flag': '🇺🇸'},
     {'code': 'es', 'name': 'Español', 'flag': '🇪🇸'},
@@ -381,7 +315,6 @@ class AppConfig {
     {'code': 'ko', 'name': '한국어', 'flag': '🇰🇷'},
   ];
 
-  // Theme options for Profile Dialogs
   static const List<Map<String, dynamic>> availableThemes = [
     {
       'name': 'Cosmic Purple',
@@ -434,7 +367,7 @@ class AppConfig {
   ];
 
   static const String defaultPronoun = 'They / Them';
-  static const String defaultAgeGroup = '18-24'; // . Fixed to match backend expectations
+static const String defaultAgeGroup = '18-24'; 
   static const String defaultAvatar = 'panda';
   static const String defaultLanguage = 'en';
   static const String defaultTheme = 'Cosmic Purple';
@@ -465,9 +398,6 @@ class AppConfig {
     'anonymous',
   ];
 
-  // ===========================
-  // USERNAME SUGGESTIONS
-  // ===========================
 
   static const List<String> usernameAdjectives = [
     'happy',
@@ -530,11 +460,7 @@ class AppConfig {
     'warm_whisper',
   ];
 
-  // ===========================
-  // GENTLE MESSAGING STRINGS
-  // ===========================
 
-  // Error Messages - Gentle and understanding
   static const String networkErrorMessage =
       'Connection seems quiet. Check your network when ready 🌸';
   static const String serverErrorMessage =
@@ -550,7 +476,6 @@ class AppConfig {
   static const String usernameAvailableMessage =
       'Perfect! This name is available .';
 
-  // Profile Dialog Messages
   static const String profileUpdateSuccessMessage =
       'Profile updated successfully! ✨';
   static const String profileUpdateErrorMessage =
@@ -566,7 +491,6 @@ class AppConfig {
   static const String avatarChangeSuccessMessage =
       'Avatar updated! Looking good! 🐾';
 
-  // Success Messages - Encouraging and warm
   static const String loginSuccessMessage = 'Welcome back! 🌸';
   static const String registrationSuccessMessage = 'Your space is ready! ✨';
   static const String logoutSuccessMessage = 'Take care, see you soon 👋';
@@ -575,7 +499,6 @@ class AppConfig {
   static const String usernameCheckingMessage =
       'Checking if this name is available... .';
 
-  // Onboarding Messages
   static const String onboardingWelcomeMessage =
       'Welcome to your emotional sanctuary 🌺';
   static const String onboardingSkipMessage =
@@ -583,15 +506,11 @@ class AppConfig {
   static const String onboardingProgressMessage =
       'Creating your personalized space...';
 
-  // Development Messages
   static const String developmentModeMessage =
       'Running in development mode - crafting with care 🛠️';
   static const String endpointNotAvailableMessage =
       'This feature is being crafted with love .';
 
-  // ===========================
-  // ENVIRONMENT HELPERS
-  // ===========================
 
   static bool get isDebugMode {
     bool inDebugMode = false;
@@ -609,9 +528,6 @@ class AppConfig {
     }
   }
 
-  // ===========================
-  // VALIDATION LOGIC
-  // ===========================
 
   static bool isValidUsername(String username) {
     if (username.length < minUsernameLength ||
@@ -715,11 +631,7 @@ class AppConfig {
     return null;
   }
 
-  // ===========================
-  // PROFILE DIALOG HELPERS
-  // ===========================
 
-  /// Get avatar emoji from avatar name
   static String getAvatarEmoji(String avatarName) {
     switch (avatarName.toLowerCase()) {
       case 'panda':
@@ -745,46 +657,38 @@ class AppConfig {
     }
   }
 
-  /// Get theme by name
   static Map<String, dynamic>? getThemeByName(String themeName) {
     try {
       return availableThemes.firstWhere((theme) => theme['name'] == themeName);
     } catch (e) {
-      return availableThemes.first; // Default to first theme
+return availableThemes.first; 
     }
   }
 
-  /// Get language by code
   static Map<String, String>? getLanguageByCode(String languageCode) {
     try {
       return availableLanguages.firstWhere(
         (lang) => lang['code'] == languageCode,
       );
     } catch (e) {
-      return availableLanguages.first; // Default to English
+return availableLanguages.first; 
     }
   }
 
-  /// Get achievement color by category
   static Color getAchievementColorByCategory(String category) {
     return achievementColors[category.toLowerCase()] ??
         achievementColors['general']!;
   }
 
-  /// Get theme color by name
   static Color getThemeColorByName(String themeName) {
     return themeColors[themeName] ?? themeColors['Cosmic Purple']!;
   }
 
-  // ===========================
-  // USERNAME SUGGESTION LOGIC
-  // ===========================
 
   static List<String> generateUsernamesSuggestions({int count = 5}) {
     final suggestions = <String>[];
     final random = DateTime.now().millisecondsSinceEpoch;
 
-    // Generate adjective + noun combinations
     for (int i = 0; i < count - 1; i++) {
       final adjIndex = (random + i) % usernameAdjectives.length;
       final nounIndex = (random + i * 2) % usernameNouns.length;
@@ -795,7 +699,6 @@ class AppConfig {
       suggestions.add(suggestion);
     }
 
-    // Add one fallback
     final fallbackIndex = random % fallbackUsernames.length;
     final fallbackNumber = random % 9999 + 1;
     suggestions.add('${fallbackUsernames[fallbackIndex]}$fallbackNumber');
@@ -803,9 +706,6 @@ class AppConfig {
     return suggestions;
   }
 
-  // ===========================
-  // ERROR HANDLING
-  // ===========================
 
   static bool shouldHandleErrorGracefully(
     int? statusCode,
@@ -814,9 +714,6 @@ class AppConfig {
     if (!isDevelopmentMode) return false;
     if (statusCode == 404) return true;
     
-    // . CRITICAL FIX: Never gracefully handle 401 errors
-    // Authentication errors must always propagate to auth layer
-    // if (statusCode == 401 && gracefullyHandleMissingEndpoints) return true;
     
     if (errorMessage != null) {
       if (errorMessage.contains('user/home-data') ||
@@ -851,9 +748,6 @@ class AppConfig {
         : serverErrorMessage;
   }
 
-  // ===========================
-  // EMOTIONAL DESIGN HELPERS
-  // ===========================
 
   static Color getEmotionColor(String emotion) {
     switch (emotion.toLowerCase()) {
@@ -942,72 +836,54 @@ class AppConfig {
     return isColorDark(backgroundColor) ? cloudWhite : charcoalPurple;
   }
 
-  // ===========================
-  // SPLASH & ONBOARDING LOGIC
-  // ===========================
 
   static bool shouldShowSplash() {
-    // Always show splash on first launch
     return true;
   }
 
   static bool shouldShowOnboarding() {
-    // Onboarding should only be shown once per install
-    return true; // This will be managed by local storage
+return true; 
   }
 
-  // ===========================
-  // AUTHENTICATION HELPERS
-  // ===========================
 
   static bool isTokenExpired(String? token) {
     if (token == null || token.isEmpty) return true;
 
     try {
-      // Parse JWT token to check expiration
       final parts = token.split('.');
       if (parts.length != 3) {
-        // Invalid JWT format
         return true;
       }
 
       final payload = parts[1];
-      // Add padding if needed for base64 decoding
       final normalizedPayload = payload.padRight(
         (payload.length + 3) ~/ 4 * 4,
         '=',
       );
 
-      // Decode the payload
       final payloadBytes = base64Url.decode(normalizedPayload);
       final payloadString = utf8.decode(payloadBytes);
       final payloadMap = jsonDecode(payloadString) as Map<String, dynamic>;
 
-      // Check for expiration time (exp claim in JWT)
       final exp = payloadMap['exp'];
       if (exp == null) {
-        // No expiration claim - treat as expired for security
         return true;
       }
 
-      // Convert exp (seconds since epoch) to DateTime
       final expirationTime = DateTime.fromMillisecondsSinceEpoch(
-        (exp as int) * 1000, // Convert seconds to milliseconds
+(exp as int) * 1000, 
       );
 
-      // Add a small buffer (30 seconds) to account for clock skew
       final now = DateTime.now().add(const Duration(seconds: 30));
 
       final isExpired = now.isAfter(expirationTime);
       
       if (isDevelopmentMode && isExpired) {
-        // Log token expiration in development for debugging
         print('🔑 Token expired: exp=$expirationTime, now=$now');
       }
 
       return isExpired;
     } catch (e) {
-      // If we can't parse the token, treat it as expired
       if (isDevelopmentMode) {
         print('. Error parsing JWT token: $e');
       }
@@ -1016,12 +892,9 @@ class AppConfig {
   }
 
   static Duration getTokenExpirationTime() {
-    return const Duration(days: 7); // Default token expiration
+return const Duration(days: 7); 
   }
 
-  // ===========================
-  // MOCK DATA FOR DEVELOPMENT
-  // ===========================
 
   static Map<String, dynamic> getDefaultOnboardingData() {
     return {
@@ -1209,9 +1082,6 @@ class AppConfig {
         data['selectedAvatar'] != null;
   }
 
-  // ===========================
-  // APPLICATION STATE HELPERS
-  // ===========================
 
   static Map<String, dynamic> getInitialAppState() {
     return {
@@ -1243,9 +1113,6 @@ class AppConfig {
     };
   }
 
-  // ===========================
-  // DEVELOPMENT UTILITIES
-  // ===========================
 
   static void logConfigInfo() {
     if (enableLogging && isDevelopmentMode) {
@@ -1283,11 +1150,7 @@ class AppConfig {
     };
   }
 
-  // ===========================
-  // PROFILE DIALOG INTEGRATION
-  // ===========================
 
-  /// Check if profile dialogs should use mock data
   static bool shouldUseMockData(String feature) {
     if (!isDevelopmentMode) return false;
 
@@ -1305,23 +1168,19 @@ class AppConfig {
     }
   }
 
-  /// Get safe endpoint URL with fallback handling
   static String getSafeEndpointUrl(String endpoint) {
     return '$effectiveApiBaseUrl$endpoint';
   }
 
-  /// Check if endpoint should be mocked based on feature flags
   static bool shouldMockEndpoint(String endpoint) {
     if (!isDevelopmentMode) return false;
 
-    // Profile-related endpoints
     if (endpoint.contains('/profile') ||
         endpoint.contains('/preferences') ||
         endpoint.contains('/user/')) {
       return enableProfileDialogMockData;
     }
 
-    // Achievement endpoints
     if (endpoint.contains('/achievements')) {
       return enableAchievementMockData;
     }

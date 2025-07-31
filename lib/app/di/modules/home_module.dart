@@ -44,12 +44,10 @@ class HomeModule {
   static void _initDataSources(GetIt sl) {
     Logger.info('📱 Initializing home data sources...');
 
-    // Local Data Source
     sl.registerLazySingleton<HomeLocalDataSource>(
       () => HomeLocalDataSourceImpl(),
     );
 
-    // Remote Data Source
     sl.registerLazySingleton<HomeRemoteDataSource>(
       () => HomeRemoteDataSourceImpl(
         dioClient: sl<DioClient>(),
@@ -57,7 +55,6 @@ class HomeModule {
       ),
     );
 
-    // Community Remote Data Source
     sl.registerLazySingleton<CommunityRemoteDataSource>(
       () => CommunityRemoteDataSourceImpl(
         apiService: sl<ApiService>(),
@@ -65,7 +62,6 @@ class HomeModule {
       ),
     );
 
-    // Friend Remote Data Source
     sl.registerLazySingleton<FriendRemoteDataSource>(
       () => FriendRemoteDataSourceImpl(
         apiService: sl<ApiService>(),
@@ -73,7 +69,6 @@ class HomeModule {
       ),
     );
 
-    // Emotion API Service
     sl.registerLazySingleton<EmotionApiService>(
       () => EmotionApiService(
         sl<ApiService>(),
@@ -84,7 +79,6 @@ class HomeModule {
   static void _initRepository(GetIt sl) {
     Logger.info('🗃️ Initializing home repository...');
 
-    // Repository - Register both interface and implementation
     sl.registerLazySingleton<HomeRepositoryImpl>(
       () => HomeRepositoryImpl(
         remoteDataSource: sl<HomeRemoteDataSource>(),
@@ -93,10 +87,8 @@ class HomeModule {
       ),
     );
 
-    // Register the interface pointing to the implementation
     sl.registerLazySingleton<HomeRepository>(() => sl<HomeRepositoryImpl>());
 
-    // Community Repository
     sl.registerLazySingleton<CommunityRepositoryImpl>(
       () => CommunityRepositoryImpl(
         remoteDataSource: sl<CommunityRemoteDataSource>(),
@@ -106,7 +98,6 @@ class HomeModule {
 
     sl.registerLazySingleton<CommunityRepository>(() => sl<CommunityRepositoryImpl>());
 
-    // Friend Repository
     sl.registerLazySingleton<FriendRepositoryImpl>(
       () => FriendRepositoryImpl(
         remoteDataSource: sl<FriendRemoteDataSource>(),
@@ -130,7 +121,6 @@ class HomeModule {
 
     sl.registerLazySingleton<NavigateToMainFlow>(() => NavigateToMainFlow());
 
-    // Community Use Cases
     sl.registerLazySingleton<GetGlobalFeed>(
       () => GetGlobalFeed(sl<CommunityRepository>()),
     );
@@ -163,7 +153,6 @@ class HomeModule {
       () => GetGlobalStats(sl<CommunityRepository>()),
     );
 
-    // Friend Use Cases
     sl.registerLazySingleton<SearchUsers>(
       () => SearchUsers(sl<FriendRepository>()),
     );
@@ -204,7 +193,6 @@ class HomeModule {
   static void _initBloc(GetIt sl) {
     Logger.info('🧩 Initializing home bloc...');
 
-    // ✅ CRITICAL FIX: Change from lazySingleton to factory to prevent BLoC lifecycle issues
     sl.registerFactory<HomeBloc>(
       () => HomeBloc(
         loadHomeData: sl<LoadHomeData>(),

@@ -1,4 +1,3 @@
-// lib/features/onboarding/data/repository/onboarding_repository_impl.dart
 import 'dart:developer' as developer;
 
 import 'package:dartz/dartz.dart';
@@ -31,37 +30,29 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     try {
       Logger.info('. Getting onboarding steps with offline-first strategy...');
 
-      // **OFFLINE-FIRST STRATEGY**
-      // 1. Always get local data first for immediate response
       final localSteps = await localDataSource.getCachedOnboardingSteps();
 
-      // 2. Check if we should try to fetch fresh data
       final isConnected = await networkInfo.isConnected;
       final isCacheFresh = localDataSource.isCacheFresh();
 
       Logger.info('. Network: $isConnected, Cache fresh: $isCacheFresh');
 
-      // 3. If online and cache is stale, try to get fresh data
       if (isConnected && !isCacheFresh) {
         try {
           Logger.info('🌐 Fetching fresh onboarding steps...');
           final remoteSteps = await remoteDataSource.getOnboardingSteps();
 
-          // 4. Cache the fresh data
           if (remoteSteps.isNotEmpty) {
             await localDataSource.cacheOnboardingSteps(remoteSteps);
             Logger.info('. Using fresh onboarding steps from server');
             return Right(remoteSteps.map((step) => step.toEntity()).toList());
           }
         } on NotFoundException catch (e) {
-          // FIXED: Handle 404 gracefully in development
           developer.log(
             'Onboarding steps endpoint not available in development mode: ${e.message}',
             name: 'OnboardingRepository',
           );
-          // Continue to use cached data
         } on ServerException catch (e) {
-          // FIXED: Handle server errors gracefully
           if (e.message.contains('404')) {
             developer.log(
               'Onboarding steps endpoint not available: ${e.message}',
@@ -70,14 +61,11 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
           } else {
             Logger.warning('. Failed to fetch fresh steps, using cached: $e');
           }
-          // Continue to use cached data
         } catch (e) {
           Logger.warning('. Failed to fetch fresh steps, using cached: $e');
-          // Continue to use cached data
         }
       }
 
-      // 5. Return cached data (either because offline, cache is fresh, or remote failed)
       Logger.info('📱 Using cached onboarding steps');
       return Right(localSteps.map((step) => step.toEntity()).toList());
     } on CacheException catch (e) {
@@ -119,8 +107,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
       final userDataModel = UserOnboardingModel.fromEntity(userData);
 
-      // **OFFLINE-FIRST STRATEGY**
-      // 1. Always save locally first
       final localSaved = await localDataSource.saveUserOnboardingData(
         userDataModel,
       );
@@ -131,7 +117,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
       Logger.info('. Saved user onboarding data locally');
 
-      // 2. Try to sync with remote if connected (don't block user flow)
       if (await networkInfo.isConnected) {
         try {
           Logger.info('🌐 Attempting to sync user data with server...');
@@ -145,13 +130,11 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
             Logger.info('. Server sync returned false, will retry later');
           }
         } on NotFoundException catch (e) {
-          // FIXED: Handle 404 gracefully for development
           developer.log(
             'User data endpoint not available in development mode: ${e.message}',
             name: 'OnboardingRepository',
           );
         } on ServerException catch (e) {
-          // FIXED: Handle server errors gracefully
           if (e.message.contains('404')) {
             developer.log(
               'User data endpoint not available: ${e.message}',
@@ -162,7 +145,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
           }
         } catch (e) {
           Logger.warning('. Remote sync failed (data saved locally): $e');
-          // TODO: Add to sync queue for later retry
         }
       } else {
         Logger.info(
@@ -185,8 +167,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     try {
       Logger.info('🎯 Completing onboarding with offline-first approach...');
 
-      // **OFFLINE-FIRST STRATEGY**
-      // 1. Always complete locally first
       final localCompleted = await localDataSource.completeOnboarding();
 
       if (!localCompleted) {
@@ -197,10 +177,8 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
 
       Logger.info('. Onboarding marked as completed locally');
 
-      // 2. Get the completed user data for remote sync
       final userData = await localDataSource.getUserOnboardingData();
 
-      // 3. Try to sync completion with remote if connected
       if (await networkInfo.isConnected) {
         try {
           Logger.info('🌐 Attempting to complete onboarding on server...');
@@ -216,19 +194,16 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
             );
           }
         } on NotFoundException catch (e) {
-          // FIXED: Handle 404 gracefully for development
           developer.log(
             'Onboarding completion endpoint not available in development mode: ${e.message}',
             name: 'OnboardingRepository',
           );
         } on UnauthorizedException catch (e) {
-          // FIXED: Handle 401 gracefully - expected during onboarding
           developer.log(
             'Onboarding completion requires authentication - will sync after registration: ${e.message}',
             name: 'OnboardingRepository',
           );
         } on ServerException catch (e) {
-          // FIXED: Handle server errors gracefully
           if (e.message.contains('404')) {
             developer.log(
               'Onboarding completion endpoint not available: ${e.message}',
@@ -246,7 +221,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
           }
         } catch (e) {
           Logger.warning('. Remote completion failed (completed locally): $e');
-          // TODO: Add to sync queue for later retry
         }
       } else {
         Logger.info(
@@ -280,7 +254,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     }
   }
 
-  // FIXED: Add method to get user data with proper error handling
   @override
   Future<Either<Failure, UserOnboardingEntity>> getCurrentUserData() async {
     try {
@@ -293,7 +266,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     }
   }
 
-  // FIXED: Add method to clear onboarding data
   @override
   Future<Either<Failure, bool>> clearOnboardingData() async {
     try {
@@ -307,7 +279,6 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     }
   }
 
-  // FIXED: Add method to clear only pronouns data (for debugging)
   Future<Either<Failure, bool>> clearPronounsData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -320,13 +291,11 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
     }
   }
 
-  // FIXED: Add method to validate user data
   @override
   Future<Either<Failure, bool>> validateUserData(
     UserOnboardingEntity userData,
   ) async {
     try {
-      // Basic validation
       if (userData.pronouns == null || userData.pronouns!.isEmpty) {
         return const Left(ValidationFailure(message: 'Pronouns are required'));
       }
@@ -348,12 +317,10 @@ class OnboardingRepositoryImpl implements OnboardingRepository {
   }
 }
 
-// FIXED: Add the missing UnexpectedFailure class
 class UnexpectedFailure extends Failure {
   const UnexpectedFailure({required super.message});
 }
 
-// FIXED: Add the missing ValidationFailure class
 class ValidationFailure extends Failure {
   const ValidationFailure({required super.message});
 }

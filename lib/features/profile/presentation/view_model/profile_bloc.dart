@@ -1,4 +1,3 @@
-// lib/features/profile/presentation/view_model/profile_bloc.dart - COMPLETE VERSION MATCHING YOUR ACHIEVEMENT ENTITY
 import 'package:emora_mobile_app/core/use_case/use_case.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/features/auth/domain/use_case/get_current_user.dart';
@@ -41,7 +40,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
        _getCurrentUser = getCurrentUser,
        super(const ProfileInitial()) {
     
-    // Register all event handlers
     on<LoadProfile>(_onLoadProfile);
     on<RefreshProfile>(_onRefreshProfile);
     on<UpdateProfile>(_onUpdateProfile);
@@ -64,7 +62,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       Logger.info('🔄 Loading user profile...');
       emit(const ProfileLoading());
 
-      // Get current user first
       final currentUserResult = await _getCurrentUser(NoParams());
 
       await currentUserResult.fold(
@@ -74,7 +71,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         },
         (currentUser) async {
           try {
-            // Get profile using current user's profile method
             final profileResult = await _getUserProfile.getCurrentUserProfile();
 
             await profileResult.fold(
@@ -90,11 +86,9 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
                 Logger.info('✅ Profile loaded: ${profile.username}');
                 Logger.info('📊 Profile data: name="${profile.name}", email="${profile.email}", avatar="${profile.avatar}"');
 
-                // Load preferences and achievements in parallel
                 UserPreferencesEntity? preferences;
                 List<AchievementEntity> achievements = [];
 
-                // Load preferences
                 try {
                   final preferencesResult = await _getUserPreferences(
                     GetUserPreferencesParams(userId: currentUser.id),
@@ -115,7 +109,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
                   preferences = const UserPreferencesEntity();
                 }
 
-                // Load achievements
                 try {
                   final achievementsResult = await _getAchievements(
                     GetAchievementsParams(userId: currentUser.id),
@@ -136,7 +129,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
                   achievements = _createDefaultAchievements(profile);
                 }
 
-                // Emit loaded state with all data
                 emit(
                   ProfileLoaded(
                     profile: profile,
@@ -174,7 +166,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       if (state is ProfileLoaded) {
         final currentState = state as ProfileLoaded;
         
-        // Keep current data visible while refreshing
         emit(
           ProfileLoading(
             profile: currentState.profile,
@@ -184,7 +175,6 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
         );
       }
       
-      // Force reload the profile
     add(const LoadProfile());
     } catch (e) {
       Logger.error('💥 RefreshProfile error: $e');
@@ -199,7 +189,6 @@ Future<void> _onUpdateProfile(
   if (state is ProfileLoaded) {
     final currentState = state as ProfileLoaded;
 
-      // Show updating state
     emit(
       ProfileUpdating(
         profile: currentState.profile,
@@ -211,10 +200,8 @@ Future<void> _onUpdateProfile(
     try {
       Logger.info('🔄 Updating profile with data: ${event.profileData}');
 
-        // Create optimistic update first
         final optimisticProfile = _createOptimisticUpdate(currentState.profile, event.profileData);
         
-        // Show optimistic update immediately for better UX
         emit(
           ProfileLoaded(
             profile: optimisticProfile,
@@ -223,7 +210,6 @@ Future<void> _onUpdateProfile(
           ),
       );
 
-        // Perform actual API update
         final updateParams = UpdateUserProfileParams(profile: optimisticProfile);
       final result = await _updateUserProfile(updateParams);
 
@@ -231,7 +217,6 @@ Future<void> _onUpdateProfile(
         (failure) {
             Logger.error('❌ Profile update failed: ${failure.message}');
             
-            // Revert to original state
           emit(
             ProfileError(
               message: 'Failed to update profile. Please try again.',
@@ -244,7 +229,6 @@ Future<void> _onUpdateProfile(
         (updatedProfileFromServer) {
             Logger.info('✅ Profile updated successfully: ${updatedProfileFromServer.name}');
           
-            // Use server response as the final state
           emit(
             ProfileLoaded(
               profile: updatedProfileFromServer,
@@ -253,7 +237,6 @@ Future<void> _onUpdateProfile(
             ),
           );
           
-            // Optionally refresh after a delay to ensure we have the latest server state
             Future.delayed(const Duration(milliseconds: 1000), () {
             if (!isClosed) {
               add(const RefreshProfile());
@@ -296,19 +279,16 @@ Future<void> _onUpdateProfile(
 
       final currentState = state as ProfileLoaded;
       
-      // Create optimistic update for avatar
       final updatedProfile = currentState.profile.copyWith(
         avatar: event.avatarName,
       );
 
-      // Show optimistic update
       emit(ProfileLoaded(
         profile: updatedProfile,
         preferences: currentState.preferences,
         achievements: currentState.achievements,
       ));
 
-      // Prepare update data for API
       final updateData = {
         'avatar': event.avatarName,
         'selectedAvatar': event.avatarName,
@@ -320,7 +300,6 @@ Future<void> _onUpdateProfile(
         'themeColor': currentState.profile.themeColor,
       };
 
-      // Trigger full profile update
       add(UpdateProfile(profileData: updateData));
       
     } catch (error) {
@@ -593,7 +572,6 @@ Future<void> _onUpdateProfile(
               result.fold(
                 (failure) {
                   Logger.error('❌ Achievements loading failed: ${failure.message}');
-                  // Use default achievements if loading fails
                   final defaultAchievements = _createDefaultAchievements(currentState.profile);
                   emit(
                     ProfileLoaded(
@@ -605,7 +583,6 @@ Future<void> _onUpdateProfile(
                 },
                 (achievements) {
                   Logger.info('✅ ${achievements.length} achievements loaded successfully');
-                  // Merge with default achievements to ensure we have a complete set
                   final mergedAchievements = _mergeWithDefaultAchievements(achievements, currentState.profile);
                   emit(
                     ProfileLoaded(
@@ -764,9 +741,7 @@ Future<void> _onUpdateProfile(
     }
   }
 
-  // 🔧 HELPER METHODS
 
-  /// Create optimistic profile update for immediate UI feedback
   dynamic _createOptimisticUpdate(dynamic currentProfile, Map<String, dynamic> updateData) {
     Logger.info('🔄 Creating optimistic profile update with data: $updateData');
 
@@ -783,12 +758,10 @@ Future<void> _onUpdateProfile(
     );
   }
 
-  /// Create default achievements matching your exact AchievementEntity structure
   List<AchievementEntity> _createDefaultAchievements(dynamic profile) {
     final now = DateTime.now().toIso8601String();
     
     return [
-      // Welcome achievements
       AchievementEntity(
         id: 'welcome_aboard',
         title: 'Welcome Aboard! 🎉',
@@ -829,7 +802,6 @@ Future<void> _onUpdateProfile(
         earnedDate: _isProfileComplete(profile) ? now : null,
       ),
       
-      // Streak achievements
       AchievementEntity(
         id: 'three_day_streak',
         title: 'Three Day Streak 🔥',
@@ -870,7 +842,6 @@ Future<void> _onUpdateProfile(
         earnedDate: profile.currentStreak >= 30 ? now : null,
       ),
       
-      // Progress milestones
       AchievementEntity(
         id: 'getting_started',
         title: 'Getting Started 📈',
@@ -924,7 +895,6 @@ Future<void> _onUpdateProfile(
         earnedDate: profile.totalEntries >= 100 ? now : null,
       ),
       
-      // Social achievements
       AchievementEntity(
         id: 'social_butterfly',
         title: 'Social Butterfly 🦋',
@@ -952,7 +922,6 @@ Future<void> _onUpdateProfile(
         earnedDate: profile.helpedFriends >= 5 ? now : null,
       ),
       
-      // Special achievements
       AchievementEntity(
         id: 'early_adopter',
         title: 'Early Adopter 🚀',
@@ -982,7 +951,6 @@ Future<void> _onUpdateProfile(
     ];
   }
 
-  /// Merge API achievements with defaults to ensure complete set
   List<AchievementEntity> _mergeWithDefaultAchievements(
     List<AchievementEntity> apiAchievements, 
     dynamic profile,
@@ -990,7 +958,6 @@ Future<void> _onUpdateProfile(
     final defaultAchievements = _createDefaultAchievements(profile);
     final apiAchievementIds = apiAchievements.map((a) => a.id).toSet();
     
-    // Add default achievements that aren't in the API response
     final missingDefaults = defaultAchievements
         .where((defaultAch) => !apiAchievementIds.contains(defaultAch.id))
         .toList();
@@ -998,14 +965,12 @@ Future<void> _onUpdateProfile(
     return [...apiAchievements, ...missingDefaults];
   }
 
-  /// Check if profile is complete
   bool _isProfileComplete(dynamic profile) {
     return profile.name.isNotEmpty && 
            profile.email.isNotEmpty && 
            profile.avatar.isNotEmpty;
   }
 
-  /// Type-safe helper methods
   bool? _getSafeBool(dynamic value) {
     if (value is bool) return value;
     if (value is String) {

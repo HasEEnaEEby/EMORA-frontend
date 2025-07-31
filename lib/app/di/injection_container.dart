@@ -1,4 +1,3 @@
-// lib/app/di/injection_container.dart
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_bloc.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/view_model/bloc/emotion_bloc.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_bloc.dart';
@@ -18,26 +17,24 @@ import 'modules/splash_module.dart';
 
 final sl = GetIt.instance;
 
-// UPDATED: Feature Flag Service with profile and automated usernames support
 class FeatureFlagService {
   final bool isMoodEnabled;
   final bool isAnalyticsEnabled;
   final bool isSocialEnabled;
   final bool isEmotionEnabled;
-  final bool isProfileEnabled; // NEW: Added profile feature
-  final bool isAutomatedUsernamesEnabled; // Added automated usernames feature
+final bool isProfileEnabled; 
+final bool isAutomatedUsernamesEnabled; 
 
   const FeatureFlagService({
-    this.isMoodEnabled = true, // Enable mood feature
+this.isMoodEnabled = true, 
     this.isAnalyticsEnabled = false,
     this.isSocialEnabled = false,
-    this.isEmotionEnabled = true, // Enable emotion feature by default
-    this.isProfileEnabled = true, // Enable profile feature by default
+this.isEmotionEnabled = true, 
+this.isProfileEnabled = true, 
     this.isAutomatedUsernamesEnabled =
-        true, // Enable automated usernames by default
+true, 
   });
 
-  // Helper methods for checking feature availability
   bool get hasAnyFeatureEnabled =>
       isMoodEnabled ||
       isAnalyticsEnabled ||
@@ -64,17 +61,15 @@ class FeatureFlagService {
   String toString() => 'FeatureFlagService(${enabledFeatures.join(', ')})';
 }
 
-/// Initialize all dependency injection modules
 Future<void> init() async {
   Logger.info('🚀 Initializing dependency injection...');
 
   try {
-    // Initialize modules in dependency order
     await CoreModule.init(sl);
     await AuthModule.init(sl);
     await OnboardingModule.init(sl);
     await EmotionModule.init(sl);
-    await ProfileModule.init(sl); // NEW: Initialize profile module
+await ProfileModule.init(sl); 
     await HomeModule.init(sl);
     await SplashModule.init(sl);
 
@@ -88,7 +83,6 @@ Future<void> init() async {
   }
 }
 
-/// Verify that all required services are registered
 void _verifyRegistrations() {
   Logger.info('. Verifying service registrations...');
 
@@ -97,7 +91,7 @@ void _verifyRegistrations() {
     AuthModule.verify(sl),
     OnboardingModule.verify(sl),
     EmotionModule.verify(sl),
-    ProfileModule.verify(sl), // NEW: Verify profile module
+ProfileModule.verify(sl), 
     HomeModule.verify(sl),
     SplashModule.verify(sl),
   ];
@@ -137,32 +131,26 @@ void _verifyRegistrations() {
   _verifyCriticalServices();
 }
 
-/// Verify that critical services can be retrieved successfully
-/// FIXED: Lightweight verification without creating or closing bloc instances
 void _verifyCriticalServices() {
   Logger.info('. Testing critical service registrations...');
 
   final featureFlags = sl<FeatureFlagService>();
   Logger.info('. FeatureFlagService retrieved and tested successfully');
 
-  // Define critical services to verify based on feature flags
   final List<String> criticalServices = ['AuthBloc', 'HomeBloc', 'SplashCubit'];
 
-  // Add conditional services based on feature flags
   if (featureFlags.isEmotionEnabled) {
     criticalServices.add('EmotionBloc');
   }
 
   if (featureFlags.isProfileEnabled) {
-    criticalServices.add('ProfileBloc'); // NEW: Add ProfileBloc verification
+criticalServices.add('ProfileBloc'); 
   }
 
-  // Verify each service is registered using correct GetIt syntax
   for (final serviceName in criticalServices) {
     try {
       bool isRegistered = false;
 
-      // Use correct GetIt.isRegistered syntax for each service type
       switch (serviceName) {
         case 'AuthBloc':
           isRegistered = sl.isRegistered<AuthBloc>();
@@ -176,7 +164,7 @@ void _verifyCriticalServices() {
         case 'EmotionBloc':
           isRegistered = sl.isRegistered<EmotionBloc>();
           break;
-        case 'ProfileBloc': // NEW: ProfileBloc verification
+case 'ProfileBloc': 
           isRegistered = sl.isRegistered<ProfileBloc>();
           break;
       }
@@ -197,7 +185,6 @@ void _verifyCriticalServices() {
   Logger.info('🎯 Critical services verification completed successfully');
 }
 
-/// Log initialization summary with feature flags and module status
 void _logInitializationSummary() {
   try {
     final featureFlags = sl<FeatureFlagService>();
@@ -213,7 +200,7 @@ void _logInitializationSummary() {
       '   🎭 Emotion Services: ${featureFlags.isEmotionEnabled ? '. Available' : '⏭️ Disabled'}',
     );
     Logger.info(
-      '   . Profile Services: ${featureFlags.isProfileEnabled ? '. Available' : '⏭️ Disabled'}', // NEW: Profile services log
+'   . Profile Services: ${featureFlags.isProfileEnabled ? '. Available' : '⏭️ Disabled'}', 
     );
     Logger.info(
       '   🎯 Mood Services: ${featureFlags.isMoodEnabled ? '. Available' : '⏭️ Disabled'}',
@@ -231,28 +218,27 @@ void _logInitializationSummary() {
   }
 }
 
-/// Get total count of registered services
 int _getTotalServiceCount() {
   try {
-    int count = 6; // Base services (SharedPreferences, DioClient, etc.)
+int count = 6; 
 
     final featureFlags = sl<FeatureFlagService>();
-    count += 4; // Auth, Home, Onboarding, Splash
+count += 4; 
 
     if (featureFlags.isEmotionEnabled) {
-      count += 7; // Emotion services
+count += 7; 
     }
 
     if (featureFlags.isProfileEnabled) {
-      count += 9; // NEW: Profile services (from ProfileModule.verify)
+count += 9; 
     }
 
     if (featureFlags.isMoodEnabled) {
-      count += 11; // Mood services
+count += 11; 
     }
 
     if (featureFlags.isAutomatedUsernamesEnabled) {
-      count += 1; // Username service with automation
+count += 1; 
     }
 
     return count;
@@ -261,23 +247,19 @@ int _getTotalServiceCount() {
   }
 }
 
-/// Reset GetIt for testing purposes
 void resetForTesting() {
   Logger.info('🧪 Resetting GetIt for testing...');
 
   try {
-    // First, attempt to close any open blocs before resetting
     _closeExistingBlocs();
     sl.reset();
     Logger.info('. GetIt reset completed for testing');
   } catch (e) {
     Logger.error('. Error during testing reset', e);
-    // Force reset even if cleanup fails
     sl.reset();
   }
 }
 
-/// Validate the entire injection container
 void validateInjectionContainer() {
   Logger.info('. Validating injection container...');
 
@@ -294,30 +276,26 @@ void validateInjectionContainer() {
   }
 }
 
-/// Get feature flags service (convenience method)
 FeatureFlagService getFeatureFlags() {
   try {
     return sl<FeatureFlagService>();
   } catch (e) {
     Logger.error('. Failed to get feature flags', e);
-    // Return default feature flags as fallback
     return const FeatureFlagService(
       isMoodEnabled: false,
       isAnalyticsEnabled: false,
       isSocialEnabled: false,
       isEmotionEnabled: false,
-      isProfileEnabled: false, // NEW: Default profile feature flag
+isProfileEnabled: false, 
       isAutomatedUsernamesEnabled: false,
     );
   }
 }
 
-/// Check if a specific service is registered
 bool isServiceRegistered<T extends Object>() {
   return sl.isRegistered<T>();
 }
 
-/// Get service with error handling
 T? getServiceSafely<T extends Object>() {
   try {
     return sl<T>();
@@ -327,13 +305,10 @@ T? getServiceSafely<T extends Object>() {
   }
 }
 
-/// Safe method to get bloc instances only when needed
 T getBlocSafely<T extends Object>() {
   try {
     final bloc = sl<T>();
 
-    // Additional safety check for blocs that have isClosed property
-    // ✅ CRITICAL FIX: Remove HomeBloc check since it's now a factory
     if (bloc is AuthBloc && bloc.isClosed) {
       throw Exception('AuthBloc is already closed');
     }
@@ -341,7 +316,6 @@ T getBlocSafely<T extends Object>() {
       throw Exception('EmotionBloc is already closed');
     }
     if (bloc is ProfileBloc && bloc.isClosed) {
-      // NEW: ProfileBloc safety check
       throw Exception('ProfileBloc is already closed');
     }
     if (bloc is SplashCubit && bloc.isClosed) {
@@ -355,7 +329,6 @@ T getBlocSafely<T extends Object>() {
   }
 }
 
-/// Close existing bloc instances safely
 void _closeExistingBlocs() {
   Logger.info('🧹 Closing existing bloc instances...');
 
@@ -375,7 +348,6 @@ void _closeExistingBlocs() {
         }
       }
     },
-    // ✅ CRITICAL FIX: Remove HomeBloc cleanup since it's now a factory
     'EmotionBloc': () {
       if (sl.isRegistered<EmotionBloc>()) {
         try {
@@ -392,7 +364,6 @@ void _closeExistingBlocs() {
       }
     },
     'ProfileBloc': () {
-      // NEW: ProfileBloc cleanup
       if (sl.isRegistered<ProfileBloc>()) {
         try {
           final bloc = sl<ProfileBloc>();
@@ -433,7 +404,6 @@ void _closeExistingBlocs() {
   }
 }
 
-/// Debug method to print all registrations (only in debug mode)
 void debugPrintRegistrations() {
   if (kDebugMode) {
     Logger.info('🐛 DEBUG: Printing all registrations...');
@@ -444,7 +414,7 @@ void debugPrintRegistrations() {
 
       final services = <String, Type>{
         'AuthBloc': AuthBloc,
-        'HomeBloc': HomeBloc, // ✅ CRITICAL FIX: HomeBloc is now a factory
+'HomeBloc': HomeBloc, 
         'SplashCubit': SplashCubit,
       };
 
@@ -453,13 +423,12 @@ void debugPrintRegistrations() {
       }
 
       if (featureFlags.isProfileEnabled) {
-        // NEW: ProfileBloc debug print
         services['ProfileBloc'] = ProfileBloc;
       }
 
       if (featureFlags.isMoodEnabled) {
         services['MoodBloc'] =
-            Object; // Replace with actual MoodBloc type when available
+Object; 
       }
 
       for (final entry in services.entries) {
@@ -481,24 +450,19 @@ void debugPrintRegistrations() {
   }
 }
 
-/// Cleanup method for app shutdown
 Future<void> cleanup() async {
   Logger.info('🧹 Cleaning up dependency injection...');
 
   try {
-    // Close all blocs properly before resetting
     _closeExistingBlocs();
 
-    // Wait a bit for async cleanup to complete
     await Future.delayed(const Duration(milliseconds: 100));
 
-    // Reset the service locator
     sl.reset();
 
     Logger.info('. Dependency injection cleanup completed');
   } catch (e) {
     Logger.error('. Error during cleanup', e);
-    // Force reset even if cleanup fails
     try {
       sl.reset();
       Logger.info('. Forced cleanup completed');
@@ -508,7 +472,6 @@ Future<void> cleanup() async {
   }
 }
 
-/// Health check for the dependency injection system
 Map<String, dynamic> healthCheck() {
   final health = <String, dynamic>{
     'status': 'unknown',
@@ -520,14 +483,12 @@ Map<String, dynamic> healthCheck() {
   };
 
   try {
-    // Check feature flags
     final featureFlags = sl<FeatureFlagService>();
     health['features'] = featureFlags.allFeatures;
 
-    // Define services to check based on features
     final Map<String, Type> servicesToCheck = {
       'AuthBloc': AuthBloc,
-      'HomeBloc': HomeBloc, // ✅ CRITICAL FIX: HomeBloc is now a factory
+'HomeBloc': HomeBloc, 
       'SplashCubit': SplashCubit,
     };
 
@@ -536,15 +497,12 @@ Map<String, dynamic> healthCheck() {
     }
 
     if (featureFlags.isProfileEnabled) {
-      // NEW: ProfileBloc health check
       servicesToCheck['ProfileBloc'] = ProfileBloc;
     }
 
     if (featureFlags.isMoodEnabled) {
-      // servicesToCheck['MoodBloc'] = MoodBloc; // Add when available
     }
 
-    // Check each service
     bool allHealthy = true;
     int healthyCount = 0;
     int totalCount = servicesToCheck.length;
@@ -569,7 +527,6 @@ Map<String, dynamic> healthCheck() {
       }
     }
 
-    // Set overall status
     if (allHealthy) {
       health['status'] = 'healthy';
     } else if (healthyCount > 0) {
@@ -578,7 +535,6 @@ Map<String, dynamic> healthCheck() {
       health['status'] = 'unhealthy';
     }
 
-    // Add summary
     health['summary'] = {
       'healthy_services': healthyCount,
       'total_services': totalCount,
@@ -589,7 +545,7 @@ Map<String, dynamic> healthCheck() {
       'total_features': featureFlags.allFeatures.length,
       'automated_usernames_enabled': featureFlags.isAutomatedUsernamesEnabled,
       'profile_enabled':
-          featureFlags.isProfileEnabled, // NEW: Profile feature status
+featureFlags.isProfileEnabled, 
     };
   } catch (e) {
     health['status'] = 'unhealthy';
@@ -600,7 +556,6 @@ Map<String, dynamic> healthCheck() {
   return health;
 }
 
-/// Get detailed service information for debugging
 Map<String, dynamic> getServiceDetails() {
   final details = <String, dynamic>{
     'timestamp': DateTime.now().toIso8601String(),
@@ -611,7 +566,6 @@ Map<String, dynamic> getServiceDetails() {
   };
 
   try {
-    // Get feature flags
     final featureFlags = sl<FeatureFlagService>();
     details['feature_flags'] = {
       'enabled_features': featureFlags.enabledFeatures,
@@ -619,10 +573,9 @@ Map<String, dynamic> getServiceDetails() {
       'has_any_enabled': featureFlags.hasAnyFeatureEnabled,
       'automated_usernames_enabled': featureFlags.isAutomatedUsernamesEnabled,
       'profile_enabled':
-          featureFlags.isProfileEnabled, // NEW: Profile feature flag detail
+featureFlags.isProfileEnabled, 
     };
 
-    // Get automation status if automated usernames are enabled
     if (featureFlags.isAutomatedUsernamesEnabled) {
       try {
         details['automation_status'] = CoreModule.getAutomationStatus(sl);
@@ -633,13 +586,12 @@ Map<String, dynamic> getServiceDetails() {
       }
     }
 
-    // Count registered services by type
     final serviceTypes = <String, Type>{
       'AuthBloc': AuthBloc,
       'HomeBloc': HomeBloc,
       'SplashCubit': SplashCubit,
       'EmotionBloc': EmotionBloc,
-      'ProfileBloc': ProfileBloc, // NEW: ProfileBloc service detail
+'ProfileBloc': ProfileBloc, 
       'FeatureFlagService': FeatureFlagService,
     };
 
@@ -664,7 +616,6 @@ Map<String, dynamic> getServiceDetails() {
       }
     }
 
-    // Add statistics
     details['statistics'] = {
       'total_checked': serviceTypes.length,
       'registered_count': registeredCount,
@@ -681,18 +632,14 @@ Map<String, dynamic> getServiceDetails() {
   return details;
 }
 
-/// Force re-initialization of a specific service (for recovery scenarios)
 Future<bool> reinitializeService<T extends Object>() async {
   try {
     Logger.info('🔄 Attempting to reinitialize ${T.toString()}...');
 
-    // Unregister if exists
     if (sl.isRegistered<T>()) {
       sl.unregister<T>();
     }
 
-    // Note: This would require module-specific reinitialization logic
-    // For now, we'll just report the attempt
     Logger.info('. Service reinitialization requires module-specific logic');
     return false;
   } catch (e) {
@@ -701,7 +648,6 @@ Future<bool> reinitializeService<T extends Object>() async {
   }
 }
 
-/// Get username automation insights (convenience method)
 Future<Map<String, dynamic>> getUsernameAutomationInsights() async {
   try {
     final featureFlags = getFeatureFlags();
@@ -728,7 +674,6 @@ Future<Map<String, dynamic>> getUsernameAutomationInsights() async {
   }
 }
 
-/// Get profile module insights (convenience method)
 Future<Map<String, dynamic>> getProfileInsights() async {
   try {
     final featureFlags = getFeatureFlags();

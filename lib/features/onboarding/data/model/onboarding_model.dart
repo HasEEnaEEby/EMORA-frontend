@@ -1,4 +1,3 @@
-// lib/features/onboarding/data/model/onboarding_model.dart
 import '../../../../core/constants/backend_mapping.dart';
 import '../../domain/entity/onboarding_entity.dart';
 
@@ -119,7 +118,6 @@ class UserOnboardingModel {
   final DateTime? completedAt;
   final Map<String, dynamic>? additionalData;
 
-  // FIXED: Use the exact backend model values
   static const List<String> validBackendAgeGroups = [
     'Under 18',
     '18-24',
@@ -130,7 +128,6 @@ class UserOnboardingModel {
     '65+',
   ];
 
-  // Frontend display values that users see
   static const List<String> validFrontendAgeGroups = [
     'less than 20s',
     '20s',
@@ -148,7 +145,6 @@ class UserOnboardingModel {
     this.completedAt,
     this.additionalData,
   }) {
-    // FIXED: Validate age group using backend values
     if (ageGroup != null && !validBackendAgeGroups.contains(ageGroup)) {
       print(
         '. Warning: Invalid age group "$ageGroup". Valid backend options: $validBackendAgeGroups',
@@ -157,7 +153,6 @@ class UserOnboardingModel {
   }
 
   factory UserOnboardingModel.fromJson(Map<String, dynamic> json) {
-    // FIXED: Normalize age group from API using the mapping helper
     String? normalizedAgeGroup;
     final rawAgeGroup = json['ageGroup'] ?? json['age_group'];
     if (rawAgeGroup != null) {
@@ -184,7 +179,6 @@ class UserOnboardingModel {
   }
 
   Map<String, dynamic> toJson() {
-    // FIXED: Ensure we're sending valid backend values
     if (ageGroup != null) {
       final isValidBackendValue = validBackendAgeGroups.contains(ageGroup);
       if (!isValidBackendValue) {
@@ -253,7 +247,6 @@ class UserOnboardingModel {
     );
   }
 
-  // FIXED: Validation helpers using backend values
   bool get isAgeGroupValid =>
       ageGroup == null || validBackendAgeGroups.contains(ageGroup);
 
@@ -265,13 +258,11 @@ class UserOnboardingModel {
     return null;
   }
 
-  // FIXED: Helper methods using the mapping class
   String? get ageGroupDisplayValue {
     if (ageGroup == null) return null;
     return BackendValues.getFrontendAgeGroup(ageGroup);
   }
 
-  // Factory method to create with frontend values (converts internally)
   factory UserOnboardingModel.fromFrontendValues({
     String? username,
     String? frontendPronouns,
@@ -292,7 +283,6 @@ class UserOnboardingModel {
     );
   }
 
-  // Method to get all frontend values for display
   Map<String, String?> get frontendDisplayValues {
     return {
       'username': username,
@@ -309,7 +299,6 @@ class UserOnboardingModel {
         'isCompleted: $isCompleted, completedAt: $completedAt)';
   }
 
-  // Debug method to validate all fields
   Map<String, bool> get validationStatus {
     return {
       'ageGroup': isAgeGroupValid,

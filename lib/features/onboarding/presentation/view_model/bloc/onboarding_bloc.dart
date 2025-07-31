@@ -42,7 +42,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     on<ResetOnboarding>(_onResetOnboarding);
   }
 
-  // Default onboarding steps as fallback
   List<OnboardingStepEntity> _getDefaultSteps() {
     return [
       const OnboardingStepEntity(
@@ -111,7 +110,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
           Logger.info('Using default steps due to: ${failure.message}');
 
-          // DEBUG: Add logging to see what steps we have
           print('. DEBUG: Default steps count: ${defaultSteps.length}');
           for (int i = 0; i < defaultSteps.length; i++) {
             print(
@@ -122,7 +120,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           emit(
             OnboardingStepsLoaded(
               steps: defaultSteps,
-              currentStepIndex: 0, // FIXED: Start at 0, not 1
+currentStepIndex: 0, 
               userData: initialUserData,
               canGoNext: true,
               canGoPrevious: false,
@@ -133,7 +131,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           final stepsToUse = (steps.isEmpty) ? _getDefaultSteps() : steps;
           final initialUserData = const UserOnboardingEntity();
 
-          // DEBUG: Add logging to see what steps we received
           print('. DEBUG: Received ${steps.length} steps from API');
           for (int i = 0; i < steps.length; i++) {
             print('  API Step $i: ${steps[i].type} - "${steps[i].title}"');
@@ -151,7 +148,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           emit(
             OnboardingStepsLoaded(
               steps: stepsToUse,
-              currentStepIndex: 0, // FIXED: Start at 0 (first step), not 1
+currentStepIndex: 0, 
               userData: initialUserData,
               canGoNext: true,
               canGoPrevious: false,
@@ -171,7 +168,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       emit(
         OnboardingStepsLoaded(
           steps: defaultSteps,
-          currentStepIndex: 0, // FIXED: Start at 0, not 1
+currentStepIndex: 0, 
           userData: initialUserData,
           canGoNext: true,
           canGoPrevious: false,
@@ -180,7 +177,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     }
   }
 
-  // ALSO UPDATE: Make sure your _mapToDisplayIndex handles this correctly
   int _mapToDisplayIndex(
     int fullStepIndex,
     List<OnboardingStepEntity> allSteps,
@@ -189,18 +185,17 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
     final currentStep = allSteps[fullStepIndex];
 
-    // If the steps don't include welcome/completion, then the mapping is direct
     switch (currentStep.type) {
       case OnboardingStepType.welcome:
-        return 0; // First displayable step
+return 0; 
       case OnboardingStepType.pronouns:
-        return 0; // First displayable step
+return 0; 
       case OnboardingStepType.age:
-        return 1; // Second displayable step
+return 1; 
       case OnboardingStepType.avatar:
-        return 2; // Third displayable step
+return 2; 
       case OnboardingStepType.completion:
-        return 2; // Last displayable step
+return 2; 
     }
   }
 
@@ -213,19 +208,16 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
       Logger.info('Current step index: ${currentState.currentStepIndex}');
       Logger.info('Total steps: ${currentState.steps.length}');
 
-      // Check if we can move to next step
       if (currentState.currentStepIndex < currentState.steps.length - 1) {
         final newIndex = currentState.currentStepIndex + 1;
         final nextStep = currentState.steps[newIndex];
 
         Logger.info('Next step type: ${nextStep.type}');
 
-        // If next step is completion, trigger completion instead of navigation
         if (nextStep.type == OnboardingStepType.completion) {
           Logger.info('🎯 Reached completion step - completing onboarding');
           add(CompleteOnboardingEvent(currentState.userData));
         } else {
-          // Normal step progression
           Logger.info('Moving to step index: $newIndex');
 
           emit(
@@ -233,14 +225,13 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
               currentStepIndex: newIndex,
               canGoNext: newIndex < currentState.steps.length - 1,
               canGoPrevious:
-                  newIndex > 1, // Can go back if not at first displayable step
+newIndex > 1, 
             ),
           );
 
           Logger.info('. State updated - moved to step $newIndex');
         }
       } else {
-        // Reached the actual end
         Logger.info('🎯 Reached final step - completing onboarding');
         add(CompleteOnboardingEvent(currentState.userData));
       }
@@ -253,7 +244,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
 
-      // Don't go back to welcome step - minimum is pronouns (index 1)
       if (currentState.currentStepIndex > 1) {
         final newIndex = currentState.currentStepIndex - 1;
 
@@ -263,7 +253,7 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           currentState.copyWith(
             currentStepIndex: newIndex,
             canGoNext: true,
-            canGoPrevious: newIndex > 1, // Can only go back if not at pronouns
+canGoPrevious: newIndex > 1, 
           ),
         );
 
@@ -286,7 +276,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         pronouns: event.pronouns,
       );
 
-      // Save data gracefully
       await _saveUserDataGracefully(updatedUserData);
 
       Logger.info('Updated userData: ${updatedUserData.toString()}');
@@ -337,13 +326,11 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     }
   }
 
-  // Helper method to save data gracefully (handle 404/401 errors)
   Future<void> _saveUserDataGracefully(UserOnboardingEntity userData) async {
     try {
       final result = await saveUserData(SaveUserDataParams(userData: userData));
       result.fold(
         (failure) {
-          // Handle different failure types gracefully
           if (AppConfig.shouldHandleErrorGracefully(
             failure is NotFoundFailure ? 404 : null,
             failure.message,
@@ -360,7 +347,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         },
       );
     } catch (e) {
-      // Gracefully handle any save errors during development
       if (AppConfig.isDevelopmentMode) {
         Logger.info('. Save handled gracefully in development: $e');
       } else {
@@ -384,7 +370,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
       await _saveUserDataGracefully(updatedUserData);
 
-      // Always allow progression - username is optional during onboarding
       const canGoNext = true;
 
       emit(
@@ -399,9 +384,8 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
 
-      // Ensure we don't go to welcome step (index 0) or beyond bounds
       int targetIndex = event.stepIndex;
-      if (targetIndex < 1) targetIndex = 1; // Minimum is pronouns
+if (targetIndex < 1) targetIndex = 1; 
       if (targetIndex >= currentState.steps.length) {
         targetIndex = currentState.steps.length - 1;
       }
@@ -418,7 +402,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     }
   }
 
-  // Handle select events (used by individual pages for immediate UI updates)
   void _onSelectPronouns(SelectPronouns event, Emitter<OnboardingState> emit) {
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -493,7 +476,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
 
-      // Always allow progression since all fields are optional in onboarding
       const canGoNext = true;
 
       if (canGoNext != currentState.canGoNext) {
@@ -502,7 +484,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     }
   }
 
-  // Handle CompleteOnboardingEvent properly with better error handling
   Future<void> _onCompleteOnboarding(
     CompleteOnboardingEvent event,
     Emitter<OnboardingState> emit,
@@ -515,45 +496,35 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
       emit(OnboardingDataSaving());
 
-      // Ensure avatar is properly saved before completion
       final completedUserData = finalUserData.copyWith(
         isCompleted: true,
         completedAt: DateTime.now(),
-        // Ensure avatar is not lost during completion
         selectedAvatar:
             finalUserData.selectedAvatar ??
             currentState.userData.selectedAvatar ??
             AppConfig.defaultAvatar,
-        // Ensure other fields have defaults if missing
         pronouns: finalUserData.pronouns ?? AppConfig.defaultPronoun,
         ageGroup: finalUserData.ageGroup ?? AppConfig.defaultAgeGroup,
       );
 
-      // Log the final data being completed
       developer.log(
         'Completing onboarding with data: ${completedUserData.toString()}',
         name: 'OnboardingBloc',
       );
 
       try {
-        // First, save final user data gracefully
         await _saveUserDataGracefully(completedUserData);
 
-        // Check if emitter is still active before proceeding
         if (emit.isDone) return;
 
-        // Try to complete onboarding on server
         final completeResult = await completeOnboarding(NoParams());
 
-        // Check again if emitter is still active
         if (emit.isDone) return;
 
-        // Handle completion result gracefully
         bool remoteSync = false;
 
         completeResult.fold(
           (failure) {
-            // Handle different failure types gracefully
             if (AppConfig.shouldHandleErrorGracefully(
               failure is NotFoundFailure ? 404 : null,
               failure.message,
@@ -581,7 +552,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
           emit(OnboardingCompleted(completedUserData, remoteSync));
         }
       } catch (e) {
-        // Even if save fails, consider onboarding completed (offline-first approach)
         developer.log(
           'Onboarding completed offline: $e',
           name: 'OnboardingBloc',
@@ -594,7 +564,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     }
   }
 
-  // Handle skip onboarding properly
   Future<void> _onSkipOnboarding(
     SkipOnboarding event,
     Emitter<OnboardingState> emit,
@@ -603,11 +572,9 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
     emit(OnboardingDataSaving());
 
-    // Save minimal user data and mark as completed
     final skippedUserData = UserOnboardingEntity(
       isCompleted: true,
       completedAt: DateTime.now(),
-      // Set default values for skipped onboarding
       pronouns: AppConfig.defaultPronoun,
       ageGroup: AppConfig.defaultAgeGroup,
       selectedAvatar: AppConfig.defaultAvatar,
@@ -619,19 +586,14 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     );
 
     try {
-      // Save data gracefully
       await _saveUserDataGracefully(skippedUserData);
 
-      // Check if emitter is still active
       if (emit.isDone) return;
 
-      // Try to complete onboarding on server
       final completeResult = await completeOnboarding(NoParams());
 
-      // Check again if emitter is still active
       if (emit.isDone) return;
 
-      // Handle completion result gracefully
       bool remoteSync = false;
 
       completeResult.fold(
@@ -660,7 +622,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
         emit(OnboardingCompleted(skippedUserData, remoteSync));
       }
     } catch (e) {
-      // Even if save fails, consider onboarding skipped
       developer.log('Onboarding skipped offline: $e', name: 'OnboardingBloc');
 
       if (!emit.isDone) {
@@ -669,7 +630,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     }
   }
 
-  // Additional helper methods
   UserOnboardingEntity? getCurrentUserData() {
     if (state is OnboardingStepsLoaded) {
       return (state as OnboardingStepsLoaded).userData;
@@ -677,24 +637,21 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     return null;
   }
 
-  // Helper method to check if onboarding is valid
   bool isOnboardingDataValid() {
     final userData = getCurrentUserData();
     if (userData == null) return false;
 
-    // Check if essential data is present
     return userData.pronouns != null &&
         userData.ageGroup != null &&
         userData.selectedAvatar != null;
   }
 
-  // Helper method to get completion progress
   double getCompletionProgress() {
     final userData = getCurrentUserData();
     if (userData == null) return 0.0;
 
     int completedFields = 0;
-    const int totalOptionalFields = 4; // username, pronouns, ageGroup, avatar
+const int totalOptionalFields = 4; 
 
     if (userData.username != null && userData.username!.isNotEmpty) {
       completedFields++;
@@ -713,7 +670,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     return completedFields / totalOptionalFields;
   }
 
-  // Get current step type for UI logic
   OnboardingStepType? getCurrentStepType() {
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
@@ -725,13 +681,11 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     return null;
   }
 
-  // Check if we're on the last displayable step
   bool isOnLastDisplayableStep() {
     if (state is OnboardingStepsLoaded) {
       final currentState = state as OnboardingStepsLoaded;
       final currentStep = currentState.steps[currentState.currentStepIndex];
 
-      // Check if current step is avatar or if next step is completion
       if (currentStep.type == OnboardingStepType.avatar) {
         return true;
       }

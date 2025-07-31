@@ -7,11 +7,7 @@ abstract class CommunityEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// ============================================================================
-// FEED EVENTS
-// ============================================================================
 
-/// Load global community feed
 class LoadGlobalFeedEvent extends CommunityEvent {
   final int page;
   final int limit;
@@ -30,7 +26,6 @@ class LoadGlobalFeedEvent extends CommunityEvent {
   String toString() => 'LoadGlobalFeedEvent { page: $page, limit: $limit, forceRefresh: $forceRefresh }';
 }
 
-/// Load friends community feed
 class LoadFriendsFeedEvent extends CommunityEvent {
   final int page;
   final int limit;
@@ -49,7 +44,6 @@ class LoadFriendsFeedEvent extends CommunityEvent {
   String toString() => 'LoadFriendsFeedEvent { page: $page, limit: $limit, forceRefresh: $forceRefresh }';
 }
 
-/// Load trending posts
 class LoadTrendingPostsEvent extends CommunityEvent {
   final int timeRange;
   final int limit;
@@ -68,9 +62,8 @@ class LoadTrendingPostsEvent extends CommunityEvent {
   String toString() => 'LoadTrendingPostsEvent { timeRange: $timeRange, limit: $limit, forceRefresh: $forceRefresh }';
 }
 
-/// Switch feed type
 class SwitchFeedTypeEvent extends CommunityEvent {
-  final String feedType; // 'global', 'friends', 'trending'
+final String feedType; 
 
   const SwitchFeedTypeEvent({required this.feedType});
 
@@ -81,11 +74,7 @@ class SwitchFeedTypeEvent extends CommunityEvent {
   String toString() => 'SwitchFeedTypeEvent { feedType: $feedType }';
 }
 
-// ============================================================================
-// INTERACTION EVENTS
-// ============================================================================
 
-/// React to a post
 class ReactToPostEvent extends CommunityEvent {
   final String postId;
   final String emoji;
@@ -104,7 +93,6 @@ class ReactToPostEvent extends CommunityEvent {
   String toString() => 'ReactToPostEvent { postId: $postId, emoji: $emoji, type: $type }';
 }
 
-/// Remove reaction from post
 class RemoveReactionEvent extends CommunityEvent {
   final String postId;
 
@@ -117,7 +105,6 @@ class RemoveReactionEvent extends CommunityEvent {
   String toString() => 'RemoveReactionEvent { postId: $postId }';
 }
 
-/// Add comment to post
 class AddCommentEvent extends CommunityEvent {
   final String postId;
   final String message;
@@ -136,7 +123,6 @@ class AddCommentEvent extends CommunityEvent {
   String toString() => 'AddCommentEvent { postId: $postId, message: $message, isAnonymous: $isAnonymous }';
 }
 
-/// Create a new community post
 class CreateCommunityPostEvent extends CommunityEvent {
   final String emoji;
   final String note;
@@ -161,7 +147,6 @@ class CreateCommunityPostEvent extends CommunityEvent {
   String toString() => 'CreateCommunityPostEvent { emoji: $emoji, note: $note, isAnonymous: $isAnonymous }';
 }
 
-/// Load comments for a post
 class LoadCommentsEvent extends CommunityEvent {
   final String postId;
   final int page;
@@ -180,11 +165,7 @@ class LoadCommentsEvent extends CommunityEvent {
   String toString() => 'LoadCommentsEvent { postId: $postId, page: $page, limit: $limit }';
 }
 
-// ============================================================================
-// STATISTICS EVENTS
-// ============================================================================
 
-/// Load global mood statistics
 class LoadGlobalStatsEvent extends CommunityEvent {
   final String timeRange;
   final bool forceRefresh;
@@ -201,11 +182,7 @@ class LoadGlobalStatsEvent extends CommunityEvent {
   String toString() => 'LoadGlobalStatsEvent { timeRange: $timeRange, forceRefresh: $forceRefresh }';
 }
 
-// ============================================================================
-// REFRESH EVENTS
-// ============================================================================
 
-/// Refresh community data
 class RefreshCommunityDataEvent extends CommunityEvent {
   const RefreshCommunityDataEvent();
 
@@ -213,7 +190,6 @@ class RefreshCommunityDataEvent extends CommunityEvent {
   String toString() => 'RefreshCommunityDataEvent';
 }
 
-/// Refresh current feed
 class RefreshCurrentFeedEvent extends CommunityEvent {
   const RefreshCurrentFeedEvent();
 
@@ -221,11 +197,7 @@ class RefreshCurrentFeedEvent extends CommunityEvent {
   String toString() => 'RefreshCurrentFeedEvent';
 }
 
-// ============================================================================
-// ERROR HANDLING EVENTS
-// ============================================================================
 
-/// Clear community error state
 class ClearCommunityErrorEvent extends CommunityEvent {
   const ClearCommunityErrorEvent();
 
@@ -233,7 +205,6 @@ class ClearCommunityErrorEvent extends CommunityEvent {
   String toString() => 'ClearCommunityErrorEvent';
 }
 
-/// Reset community state to initial
 class ResetCommunityStateEvent extends CommunityEvent {
   const ResetCommunityStateEvent();
 

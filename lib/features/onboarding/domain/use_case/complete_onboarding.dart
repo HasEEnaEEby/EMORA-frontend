@@ -1,4 +1,3 @@
-// lib/features/onboarding/domain/use_case/complete_onboarding.dart
 import 'package:dartz/dartz.dart';
 
 import '../../../../core/errors/failures.dart';

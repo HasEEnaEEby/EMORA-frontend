@@ -1,19 +1,10 @@
-// lib/features/home/presentation/widget/dialogs/export_data_dialog.dart
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Data export dialog
-///
-/// Features:
-/// - Multiple export options
-/// - Progress indicators
-/// - File sharing capabilities
-/// - GDPR compliant notifications
 class ExportDataDialog {
-  /// Shows the export data dialog
   static void show(BuildContext context, {required VoidCallback onExport}) {
     showCupertinoDialog(
       context: context,
@@ -25,7 +16,6 @@ class ExportDataDialog {
     );
   }
 
-  /// Builds the dialog title
   static Widget _buildDialogTitle() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -36,7 +26,7 @@ class ExportDataDialog {
             shape: BoxShape.circle,
             color: const Color(
               0xFF8B5CF6,
-            ).withValues(alpha: 0.2), // Fixed: withValues
+).withValues(alpha: 0.2), 
           ),
           child: const Icon(
             CupertinoIcons.square_arrow_down,
@@ -49,7 +39,6 @@ class ExportDataDialog {
     );
   }
 
-  /// Builds the dialog content
   static Widget _buildDialogContent(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -62,7 +51,6 @@ class ExportDataDialog {
         ),
         const SizedBox(height: 20),
 
-        // Export options
         _buildExportOption(
           'Complete Profile',
           CupertinoIcons.person,
@@ -77,28 +65,27 @@ class ExportDataDialog {
         ),
         _buildExportOption(
           'Achievements & Stats',
-          CupertinoIcons.rosette, // Fixed: Use rosette instead of trophy
+CupertinoIcons.rosette, 
           'Progress, achievements, and insights',
           () => _exportSpecificData(context, 'achievements'),
         ),
         _buildExportOption(
           'Social Data',
           CupertinoIcons
-              .person_2, // Fixed: Use person_2 instead of person_2_circle
+.person_2, 
           'Friends, connections, and shared content',
           () => _exportSpecificData(context, 'social'),
         ),
 
         const SizedBox(height: 16),
 
-        // GDPR compliance notice
         Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             color: CupertinoColors.systemBlue.withValues(
               alpha: 0.1,
-            ), // Fixed: withValues
+), 
           ),
           child: Row(
             children: [
@@ -124,7 +111,6 @@ class ExportDataDialog {
     );
   }
 
-  /// Builds export option item
   static Widget _buildExportOption(
     String title,
     IconData icon,
@@ -151,7 +137,7 @@ class ExportDataDialog {
                   shape: BoxShape.circle,
                   color: const Color(
                     0xFF8B5CF6,
-                  ).withValues(alpha: 0.2), // Fixed: withValues
+).withValues(alpha: 0.2), 
                 ),
                 child: Icon(icon, color: const Color(0xFF8B5CF6), size: 16),
               ),
@@ -190,7 +176,6 @@ class ExportDataDialog {
     );
   }
 
-  /// Builds dialog action buttons
   static List<Widget> _buildDialogActions(
     BuildContext context,
     VoidCallback onExport,
@@ -211,19 +196,16 @@ class ExportDataDialog {
     ];
   }
 
-  /// Exports specific data type
   static void _exportSpecificData(BuildContext context, String dataType) {
     Navigator.pop(context);
     _showExportProgress(context, dataType);
   }
 
-  /// Exports all data
   static void _exportAllData(BuildContext context, VoidCallback onExport) {
     _showExportProgress(context, 'all');
     onExport();
   }
 
-  /// Shows export progress dialog
   static void _showExportProgress(BuildContext context, String dataType) {
     showCupertinoDialog(
       context: context,
@@ -253,23 +235,19 @@ class ExportDataDialog {
       ),
     );
 
-    // Simulate export process
     Future.delayed(const Duration(seconds: 3), () {
       if (context.mounted) {
-        // Fixed: Check mounted state
         Navigator.pop(context);
         _showExportComplete(context, dataType);
       }
     });
   }
 
-  /// Shows export completion dialog
   static void _showExportComplete(BuildContext context, String dataType) {
     final fileName =
         'emora_export_${dataType}_${DateTime.now().millisecondsSinceEpoch}.json';
 
     if (context.mounted) {
-      // Fixed: Check mounted state
       showCupertinoDialog(
         context: context,
         builder: (context) => CupertinoAlertDialog(
@@ -281,7 +259,6 @@ class ExportDataDialog {
     }
   }
 
-  /// Builds completion dialog title
   static Widget _buildCompletionTitle() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -292,7 +269,7 @@ class ExportDataDialog {
             shape: BoxShape.circle,
             color: CupertinoColors.systemGreen.withValues(
               alpha: 0.2,
-            ), // Fixed: withValues
+), 
           ),
           child: const Icon(
             CupertinoIcons.check_mark,
@@ -305,7 +282,6 @@ class ExportDataDialog {
     );
   }
 
-  /// Builds completion dialog content
   static Widget _buildCompletionContent(String dataType, String fileName) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -323,7 +299,7 @@ class ExportDataDialog {
             borderRadius: BorderRadius.circular(8),
             color: CupertinoColors.systemGreen.withValues(
               alpha: 0.1,
-            ), // Fixed: withValues
+), 
           ),
           child: Row(
             children: [
@@ -353,7 +329,7 @@ class ExportDataDialog {
             borderRadius: BorderRadius.circular(6),
             color: CupertinoColors.systemYellow.withValues(
               alpha: 0.1,
-            ), // Fixed: withValues
+), 
           ),
           child: Row(
             children: [
@@ -379,7 +355,6 @@ class ExportDataDialog {
     );
   }
 
-  /// Builds completion dialog actions
   static List<Widget> _buildCompletionActions(
     BuildContext context,
     String fileName,
@@ -407,9 +382,7 @@ class ExportDataDialog {
     ];
   }
 
-  /// Shares the exported file
   static void _shareExportedFile(BuildContext context, String fileName) {
-    // Fixed: Use Share.share instead of SharePlus.instance.share
     Share.share('Here\'s my EMORA data export file: $fileName');
     HapticFeedback.lightImpact();
     DialogUtils.showSuccessSnackBar(
@@ -418,14 +391,11 @@ class ExportDataDialog {
     );
   }
 
-  /// Downloads the exported file
   static void _downloadExportedFile(BuildContext context, String fileName) {
-    // In a real implementation, this would trigger the download
     HapticFeedback.lightImpact();
     DialogUtils.showSuccessSnackBar(context, 'Download started!');
   }
 
-  /// Shows detailed export options
   static void showDetailedExportOptions(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
@@ -437,7 +407,6 @@ class ExportDataDialog {
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 8),
               width: 40,
@@ -448,7 +417,6 @@ class ExportDataDialog {
               ),
             ),
 
-            // Header
             Container(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -476,7 +444,6 @@ class ExportDataDialog {
               ),
             ),
 
-            // Detailed options list
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -512,7 +479,7 @@ class ExportDataDialog {
                     'Social Connections',
                     'Friends, shared content, and interactions',
                     CupertinoIcons
-                        .person_2_fill, // Fixed: Use correct available icon
+.person_2_fill, 
                     ['Friend list', 'Shared posts', 'Messages', 'Interactions'],
                   ),
                   _buildDetailedOption(
@@ -531,7 +498,6 @@ class ExportDataDialog {
     );
   }
 
-  /// Builds detailed export option
   static Widget _buildDetailedOption(
     BuildContext context,
     String title,
@@ -558,7 +524,7 @@ class ExportDataDialog {
                   shape: BoxShape.circle,
                   color: const Color(
                     0xFF8B5CF6,
-                  ).withValues(alpha: 0.2), // Fixed: withValues
+).withValues(alpha: 0.2), 
                 ),
                 child: Icon(icon, color: const Color(0xFF8B5CF6), size: 20),
               ),
@@ -583,7 +549,7 @@ class ExportDataDialog {
                 ),
               ),
               CupertinoSwitch(
-                value: true, // In real app, this would be stateful
+value: true, 
                 onChanged: (value) {
                   HapticFeedback.selectionClick();
                 },
@@ -615,7 +581,7 @@ class ExportDataDialog {
                       borderRadius: BorderRadius.circular(8),
                       color: const Color(
                         0xFF8B5CF6,
-                      ).withValues(alpha: 0.1), // Fixed: withValues
+).withValues(alpha: 0.1), 
                     ),
                     child: Text(
                       item,

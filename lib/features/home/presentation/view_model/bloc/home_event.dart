@@ -1,4 +1,3 @@
-// lib/features/home/presentation/view_model/bloc/home_event.dart - COMPLETE FIXED VERSION
 import 'package:equatable/equatable.dart';
 
 abstract class HomeEvent extends Equatable {
@@ -8,11 +7,7 @@ abstract class HomeEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// ============================================================================
-// CORE DATA LOADING EVENTS
-// ============================================================================
 
-/// Load home data - primary event
 class LoadHomeDataEvent extends HomeEvent {
   final bool forceRefresh;
   
@@ -25,7 +20,6 @@ class LoadHomeDataEvent extends HomeEvent {
   String toString() => 'LoadHomeDataEvent { forceRefresh: $forceRefresh }';
 }
 
-/// Refresh home data - forces a refresh
 class RefreshHomeDataEvent extends HomeEvent {
   final bool forceRefresh;
   
@@ -38,7 +32,6 @@ class RefreshHomeDataEvent extends HomeEvent {
   String toString() => 'RefreshHomeDataEvent { forceRefresh: $forceRefresh }';
 }
 
-/// Load user statistics
 class LoadUserStatsEvent extends HomeEvent {
   final bool forceRefresh;
   final String? userId;
@@ -52,7 +45,6 @@ class LoadUserStatsEvent extends HomeEvent {
   String toString() => 'LoadUserStatsEvent { forceRefresh: $forceRefresh, userId: $userId }';
 }
 
-/// Refresh user statistics
 class RefreshUserStatsEvent extends HomeEvent {
   final bool forceRefresh;
   
@@ -65,11 +57,7 @@ class RefreshUserStatsEvent extends HomeEvent {
   String toString() => 'RefreshUserStatsEvent { forceRefresh: $forceRefresh }';
 }
 
-// ============================================================================
-// NAVIGATION EVENTS
-// ============================================================================
 
-/// Navigate to main application flow
 class NavigateToMainFlowEvent extends HomeEvent {
   final Map<String, dynamic>? userData;
   
@@ -82,7 +70,6 @@ class NavigateToMainFlowEvent extends HomeEvent {
   String toString() => 'NavigateToMainFlowEvent { userData: $userData }';
 }
 
-/// Mark first-time login as complete
 class MarkFirstTimeLoginCompleteEvent extends HomeEvent {
   final Map<String, dynamic>? additionalData;
   
@@ -95,11 +82,7 @@ class MarkFirstTimeLoginCompleteEvent extends HomeEvent {
   String toString() => 'MarkFirstTimeLoginCompleteEvent { additionalData: $additionalData }';
 }
 
-// ============================================================================
-// USER ACTIVITY EVENTS
-// ============================================================================
 
-/// Update last activity timestamp
 class UpdateLastActivityEvent extends HomeEvent {
   final DateTime? timestamp;
   
@@ -112,7 +95,6 @@ class UpdateLastActivityEvent extends HomeEvent {
   String toString() => 'UpdateLastActivityEvent { timestamp: $timestamp }';
 }
 
-/// Log emotion event (triggers stats update)
 class EmotionLoggedEvent extends HomeEvent {
   final String emotion;
   final double intensity;
@@ -133,7 +115,6 @@ class EmotionLoggedEvent extends HomeEvent {
   String toString() => 'EmotionLoggedEvent { emotion: $emotion, intensity: $intensity, timestamp: $timestamp }';
 }
 
-/// Load emotion history event
 class LoadEmotionHistoryEvent extends HomeEvent {
   final DateTime? startDate;
   final DateTime? endDate;
@@ -152,7 +133,6 @@ class LoadEmotionHistoryEvent extends HomeEvent {
   String toString() => 'LoadEmotionHistoryEvent { startDate: $startDate, endDate: $endDate, forceRefresh: $forceRefresh }';
 }
 
-/// Load weekly insights event
 class LoadWeeklyInsightsEvent extends HomeEvent {
   final bool forceRefresh;
   
@@ -165,7 +145,6 @@ class LoadWeeklyInsightsEvent extends HomeEvent {
   String toString() => 'LoadWeeklyInsightsEvent { forceRefresh: $forceRefresh }';
 }
 
-/// Load today's emotion journey
 class LoadTodaysJourneyEvent extends HomeEvent {
   final bool forceRefresh;
   
@@ -178,7 +157,6 @@ class LoadTodaysJourneyEvent extends HomeEvent {
   String toString() => 'LoadTodaysJourneyEvent { forceRefresh: $forceRefresh }';
 }
 
-/// Load emotion calendar data
 class LoadEmotionCalendarEvent extends HomeEvent {
   final DateTime month;
   final bool forceRefresh;
@@ -195,7 +173,6 @@ class LoadEmotionCalendarEvent extends HomeEvent {
   String toString() => 'LoadEmotionCalendarEvent { month: $month, forceRefresh: $forceRefresh }';
 }
 
-/// Select calendar date
 class SelectCalendarDateEvent extends HomeEvent {
   final DateTime selectedDate;
   
@@ -208,7 +185,6 @@ class SelectCalendarDateEvent extends HomeEvent {
   String toString() => 'SelectCalendarDateEvent { selectedDate: $selectedDate }';
 }
 
-/// Log new emotion
 class LogEmotionEvent extends HomeEvent {
   final String emotion;
   final int intensity;
@@ -233,11 +209,7 @@ class LogEmotionEvent extends HomeEvent {
   String toString() => 'LogEmotionEvent { emotion: $emotion, intensity: $intensity }';
 }
 
-// ============================================================================
-// DATA MANAGEMENT EVENTS
-// ============================================================================
 
-/// Clear all home data and reset to initial state
 class ClearHomeDataEvent extends HomeEvent {
   const ClearHomeDataEvent();
 
@@ -245,7 +217,6 @@ class ClearHomeDataEvent extends HomeEvent {
   String toString() => 'ClearHomeDataEvent';
 }
 
-/// Update specific home data fields
 class UpdateHomeDataEvent extends HomeEvent {
   final Map<String, dynamic> updates;
   
@@ -258,11 +229,7 @@ class UpdateHomeDataEvent extends HomeEvent {
   String toString() => 'UpdateHomeDataEvent { updates: $updates }';
 }
 
-// ============================================================================
-// AUTHENTICATION EVENTS
-// ============================================================================
 
-/// Logout user and clear all data
 class LogoutEvent extends HomeEvent {
   final bool clearCache;
   
@@ -275,11 +242,7 @@ class LogoutEvent extends HomeEvent {
   String toString() => 'LogoutEvent { clearCache: $clearCache }';
 }
 
-// ============================================================================
-// ERROR HANDLING EVENTS
-// ============================================================================
 
-/// Handle error that occurred during home operations
 class HomeErrorOccurredEvent extends HomeEvent {
   final String error;
   final String? operation;
@@ -298,7 +261,6 @@ class HomeErrorOccurredEvent extends HomeEvent {
   String toString() => 'HomeErrorOccurredEvent { error: $error, operation: $operation }';
 }
 
-/// Retry failed operation
 class RetryHomeOperationEvent extends HomeEvent {
   final String operation;
   
@@ -311,7 +273,6 @@ class RetryHomeOperationEvent extends HomeEvent {
   String toString() => 'RetryHomeOperationEvent { operation: $operation }';
 }
 
-/// Clear current error state
 class ClearHomeErrorEvent extends HomeEvent {
   const ClearHomeErrorEvent();
 
@@ -319,11 +280,7 @@ class ClearHomeErrorEvent extends HomeEvent {
   String toString() => 'ClearHomeErrorEvent';
 }
 
-// ============================================================================
-// COMPATIBILITY EVENTS (for backward compatibility)
-// ============================================================================
 
-/// Simple load home data event (for compatibility)
 class LoadHomeData extends HomeEvent {
   final bool forceRefresh;
   
@@ -336,7 +293,6 @@ class LoadHomeData extends HomeEvent {
   String toString() => 'LoadHomeData { forceRefresh: $forceRefresh }';
 }
 
-/// Simple refresh home data event (for compatibility)
 class RefreshHomeData extends HomeEvent {
   const RefreshHomeData();
 
@@ -344,7 +300,6 @@ class RefreshHomeData extends HomeEvent {
   String toString() => 'RefreshHomeData';
 }
 
-/// Simple load user stats event (for compatibility)
 class LoadUserStats extends HomeEvent {
   final String? userId;
   
@@ -357,7 +312,6 @@ class LoadUserStats extends HomeEvent {
   String toString() => 'LoadUserStats { userId: $userId }';
 }
 
-/// Simple navigate to main flow event (for compatibility)
 class NavigateToMainFlow extends HomeEvent {
   final Map<String, dynamic>? userData;
   
@@ -370,11 +324,7 @@ class NavigateToMainFlow extends HomeEvent {
   String toString() => 'NavigateToMainFlow { userData: $userData }';
 }
 
-// ============================================================================
-// UTILITY EVENTS
-// ============================================================================
 
-/// Force complete app refresh
 class ForceAppRefreshEvent extends HomeEvent {
   const ForceAppRefreshEvent();
 
@@ -382,7 +332,6 @@ class ForceAppRefreshEvent extends HomeEvent {
   String toString() => 'ForceAppRefreshEvent';
 }
 
-/// Sync local data with server
 class SyncDataEvent extends HomeEvent {
   final bool forceSync;
   
@@ -395,7 +344,6 @@ class SyncDataEvent extends HomeEvent {
   String toString() => 'SyncDataEvent { forceSync: $forceSync }';
 }
 
-/// Initialize home screen
 class InitializeHomeEvent extends HomeEvent {
   final Map<String, dynamic>? initialData;
   

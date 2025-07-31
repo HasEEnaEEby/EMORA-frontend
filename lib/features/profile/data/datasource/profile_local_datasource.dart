@@ -53,22 +53,18 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
   @override
   Future<UserProfileModel?> getLastUserProfile() async {
     try {
-      // First try to get cached profile
       final cachedProfile = await getCachedUserProfile();
       if (cachedProfile != null) {
         Logger.info('📱 Found cached profile for: ${cachedProfile.username}');
         return cachedProfile;
       }
 
-      // If no cached profile, try to get current user and create profile from it
       final currentUser = await getCurrentUser();
       if (currentUser != null) {
         Logger.info(
           '📱 Creating basic profile from current user: ${currentUser.username}',
         );
 
-        // Convert UserModel to UserProfileModel with minimal data
-        // Note: This should only be used as a fallback, real stats should come from API
         final profile = UserProfileModel(
           id: currentUser.id,
           name: currentUser.username,
@@ -76,20 +72,18 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
           email: currentUser.email,
           avatar: currentUser.selectedAvatar ?? 'fox',
           joinDate: currentUser.createdAt,
-          // 🔧 FIX: Don't set zero stats here - let the API provide real data
-          totalEntries: 0, // Will be updated by API call
-          currentStreak: 0, // Will be updated by API call
-          longestStreak: 0, // Will be updated by API call
-          favoriteEmotion: null, // Will be updated by API call
-          totalFriends: 0, // Will be updated by API call
-          helpedFriends: 0, // Will be updated by API call
-          level: 'New Explorer', // Will be updated by API call
-          badgesEarned: 0, // Will be updated by API call
+totalEntries: 0, 
+currentStreak: 0, 
+longestStreak: 0, 
+favoriteEmotion: null, 
+totalFriends: 0, 
+helpedFriends: 0, 
+level: 'New Explorer', 
+badgesEarned: 0, 
           lastActive: currentUser.updatedAt,
           isPrivate: false,
         );
 
-        // Cache this basic profile for future use
         await cacheUserProfile(profile);
         return profile;
       }
@@ -112,7 +106,6 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       Logger.info('. Cached user profile: ${profile.username}');
     } catch (e) {
       Logger.error('. Error caching profile: $e');
-      // Don't throw - cache errors are not critical
     }
   }
 
@@ -144,7 +137,6 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       Logger.info('. Cached user preferences');
     } catch (e) {
       Logger.error('. Error caching preferences: $e');
-      // Don't throw - cache errors are not critical
     }
   }
 
@@ -181,7 +173,6 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       Logger.info('. Cached ${achievements.length} achievements');
     } catch (e) {
       Logger.error('. Error caching achievements: $e');
-      // Don't throw - cache errors are not critical
     }
   }
 
@@ -196,14 +187,12 @@ class ProfileLocalDataSourceImpl implements ProfileLocalDataSource {
       Logger.info('🗑️ Profile cache cleared successfully');
     } catch (e) {
       Logger.error('. Error clearing cache: $e');
-      // Don't throw - cache errors are not critical
     }
   }
 
   @override
   Future<UserModel?> getCurrentUser() async {
     try {
-      // Get the current user from the auth data source
       final authDataSource = GetIt.instance<AuthLocalDataSource>();
       final currentUser = await authDataSource.getCurrentUser();
 

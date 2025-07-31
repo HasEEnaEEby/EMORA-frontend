@@ -1,4 +1,3 @@
-// lib/app/di/modules/auth_module.dart
 import 'package:emora_mobile_app/core/network/api_service.dart';
 import 'package:emora_mobile_app/core/network/dio_client.dart';
 import 'package:emora_mobile_app/core/network/network_info.dart';
@@ -38,12 +37,10 @@ class AuthModule {
   static void _initDataSources(GetIt sl) {
     Logger.info('📱 Initializing auth data sources...');
 
-    // Local Data Source
     sl.registerLazySingleton<AuthLocalDataSource>(
       () => AuthLocalDataSourceImpl(sharedPreferences: sl<SharedPreferences>()),
     );
 
-    // Remote Data Source - Fixed constructor parameters
     sl.registerLazySingleton<AuthRemoteDataSource>(
       () => AuthRemoteDataSourceImpl(
         apiService: sl<ApiService>(),
@@ -60,8 +57,8 @@ class AuthModule {
         remoteDataSource: sl<AuthRemoteDataSource>(),
         localDataSource: sl<AuthLocalDataSource>(),
         networkInfo: sl<NetworkInfo>(),
-        apiService: sl<ApiService>(), // . Added ApiService injection
-        dioClient: sl<DioClient>(), // . Added DioClient injection
+apiService: sl<ApiService>(), 
+dioClient: sl<DioClient>(), 
       ),
     );
   }

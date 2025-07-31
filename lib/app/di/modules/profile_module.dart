@@ -1,4 +1,3 @@
-// lib/app/di/modules/profile_module.dart
 import 'package:emora_mobile_app/features/auth/data/data_source/local/auth_local_data_source.dart';
 import 'package:emora_mobile_app/features/auth/domain/use_case/get_current_user.dart';
 import 'package:emora_mobile_app/features/profile/presentation/view_model/profile_bloc.dart';
@@ -20,21 +19,16 @@ import '../../../features/profile/domain/usecase/update_user_preferences.dart';
 import '../../../features/profile/domain/usecase/update_user_profile.dart';
 
 class ProfileModule {
-  /// Initialize Profile module dependencies
   static Future<void> init(GetIt sl) async {
     Logger.info('. Initializing profile module...');
 
     try {
-      // Data Sources
       _initDataSources(sl);
 
-      // Repository
       _initRepository(sl);
 
-      // Use Cases
       _initUseCases(sl);
 
-      // BLoC
       _initBloc(sl);
 
       Logger.info('. Profile module initialized successfully');
@@ -44,16 +38,13 @@ class ProfileModule {
     }
   }
 
-  /// Initialize data sources
   static void _initDataSources(GetIt sl) {
     Logger.info('📱 Initializing profile data sources...');
 
-    // Remote Data Source
     sl.registerLazySingleton<ProfileRemoteDataSource>(
       () => ProfileRemoteDataSourceImpl(apiService: sl<ApiService>()),
     );
 
-    // Local Data Source
     sl.registerLazySingleton<ProfileLocalDataSource>(
       () => ProfileLocalDataSourceImpl(
         sharedPreferences: sl<SharedPreferences>(),
@@ -63,7 +54,6 @@ class ProfileModule {
     Logger.info('. Profile data sources registered successfully');
   }
 
-  /// Initialize repository
   static void _initRepository(GetIt sl) {
     Logger.info('🗃️ Initializing profile repository...');
 
@@ -72,7 +62,7 @@ class ProfileModule {
         remoteDataSource: sl<ProfileRemoteDataSource>(),
         localDataSource: sl<ProfileLocalDataSource>(),
         authLocalDataSource:
-            sl<AuthLocalDataSource>(), // FIXED: Added missing auth data source
+sl<AuthLocalDataSource>(), 
         networkInfo: sl<NetworkInfo>(),
       ),
     );
@@ -80,11 +70,9 @@ class ProfileModule {
     Logger.info('. Profile repository registered successfully');
   }
 
-  /// Initialize use cases
   static void _initUseCases(GetIt sl) {
     Logger.info('⚙️ Initializing profile use cases...');
 
-    // FIXED: Added proper named parameters for all use cases
     sl.registerLazySingleton(
       () => GetUserProfile(
         repository: sl<ProfileRepository>(),
@@ -115,7 +103,6 @@ class ProfileModule {
     Logger.info('. Profile use cases registered successfully');
   }
 
-  /// Initialize BLoC
   static void _initBloc(GetIt sl) {
     Logger.info('🧩 Initializing profile bloc...');
 
@@ -134,7 +121,6 @@ class ProfileModule {
     Logger.info('. Profile bloc registered successfully');
   }
 
-  /// Verify all profile dependencies are registered correctly
   static Map<String, dynamic> verify(GetIt sl) {
     Logger.info('. Verifying profile module registrations...');
 
@@ -186,7 +172,6 @@ class ProfileModule {
     return result;
   }
 
-  /// Helper method to check if a service is registered
   static Map<String, dynamic> _checkService<T extends Object>(
     GetIt sl,
     String name,
@@ -200,7 +185,6 @@ class ProfileModule {
     }
   }
 
-  /// Get profile module specific information
   static Map<String, dynamic> getModuleInfo() {
     return {
       'name': 'Profile',
@@ -233,12 +217,10 @@ class ProfileModule {
     };
   }
 
-  /// Test profile module registration
   static Future<bool> testRegistration(GetIt sl) async {
     try {
       Logger.info('🧪 Testing profile module registration...');
 
-      // Test that we can retrieve all services without using them
       sl<ProfileRemoteDataSource>();
       sl<ProfileLocalDataSource>();
       sl<ProfileRepository>();
@@ -250,10 +232,8 @@ class ProfileModule {
       sl<ExportUserData>();
       sl<GetCurrentUser>();
 
-      // Test ProfileBloc creation (but don't keep the instance)
       final profileBloc = sl<ProfileBloc>();
 
-      // Clean up the test bloc
       if (!profileBloc.isClosed) {
         await profileBloc.close();
       }
@@ -266,12 +246,10 @@ class ProfileModule {
     }
   }
 
-  /// Clean up profile module (for testing)
   static Future<void> cleanup(GetIt sl) async {
     try {
       Logger.info('🧹 Cleaning up profile module...');
 
-      // Close ProfileBloc if it exists and is open
       if (sl.isRegistered<ProfileBloc>()) {
         try {
           final profileBloc = sl<ProfileBloc>();
@@ -284,7 +262,6 @@ class ProfileModule {
         }
       }
 
-      // Unregister services in reverse dependency order
       final servicesToUnregister = [
         ProfileBloc,
         ExportUserData,
@@ -317,7 +294,6 @@ class ProfileModule {
     }
   }
 
-  /// Get profile module health status
   static Map<String, dynamic> getHealthStatus(GetIt sl) {
     final health = <String, dynamic>{
       'module': 'Profile',

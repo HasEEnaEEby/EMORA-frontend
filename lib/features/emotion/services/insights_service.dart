@@ -1,4 +1,3 @@
-// lib/features/emotion/services/insights_service.dart - AI-Powered Emotion Insights
 import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/view/pages/models/emotion_map_models.dart';
@@ -9,7 +8,6 @@ class InsightsService {
 
   InsightsService(this._apiService);
 
-  /// Get AI-powered region insights
   Future<EmotionInsight> getRegionInsights({
     required String region,
     String timeRange = '7d',
@@ -41,7 +39,6 @@ class InsightsService {
     }
   }
 
-  /// Get global AI insights
   Future<EmotionInsight> getGlobalInsights({
     String timeRange = '7d',
   }) async {
@@ -69,7 +66,6 @@ class InsightsService {
     }
   }
 
-  /// Get emotion trends with AI analysis
   Future<EmotionTrendData> getEmotionTrends({
     String? region,
     String? emotion,
@@ -104,7 +100,6 @@ class InsightsService {
     }
   }
 
-  /// Get contextual insight for a specific emotion
   Future<String> getContextualInsight({
     required String emotion,
     required double intensity,
@@ -136,7 +131,6 @@ class InsightsService {
     }
   }
 
-  /// Get emotion prediction for a region
   Future<String> getEmotionPrediction({
     required String region,
     required List<Map<String, dynamic>> historicalData,
@@ -168,7 +162,6 @@ class InsightsService {
     }
   }
 
-  /// Get comparative insights between two regions
   Future<Map<String, dynamic>> getComparativeInsights({
     required String region1,
     required String region2,
@@ -205,7 +198,6 @@ class InsightsService {
     }
   }
 
-  /// Get wellness insights for a region
   Future<Map<String, dynamic>> getWellnessInsights({
     required String region,
     String timeRange = '7d',

@@ -70,11 +70,9 @@ class _InsightsPanelWidgetState extends State<InsightsPanelWidget>
       curve: Curves.elasticOut,
     ));
     
-    // Start animations
     _slideController.forward();
     _pulseController.repeat(reverse: true);
     
-    // Staggered card animation
     Future.delayed(const Duration(milliseconds: 300), () {
       _cardController.forward();
     });
@@ -128,10 +126,8 @@ class _InsightsPanelWidgetState extends State<InsightsPanelWidget>
               ),
               child: Stack(
                 children: [
-                  // Animated background particles
                   ...List.generate(6, (index) => _buildFloatingParticle(index)),
                   
-                  // Glass effect overlay
                   Container(
                     decoration: BoxDecoration(
                       border: Border.all(
@@ -142,7 +138,6 @@ class _InsightsPanelWidgetState extends State<InsightsPanelWidget>
                     ),
                   ),
                   
-                  // Content
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -441,7 +436,6 @@ class _InsightsPanelWidgetState extends State<InsightsPanelWidget>
             ],
           ),
           const SizedBox(height: 16),
-          // Progress bar
           Container(
             height: 6,
             decoration: BoxDecoration(
@@ -570,7 +564,6 @@ class _InsightsPanelWidgetState extends State<InsightsPanelWidget>
   }
 
   void _showAIAnalysis() {
-    // Enhanced AI analysis modal with better animations
     showDialog(
       context: context,
       barrierDismissible: true,
@@ -625,7 +618,6 @@ class _InsightsPanelWidgetState extends State<InsightsPanelWidget>
   }
 
   void _shareInsights() {
-    // Enhanced share functionality
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Sharing insights for ${widget.currentRegion}'),

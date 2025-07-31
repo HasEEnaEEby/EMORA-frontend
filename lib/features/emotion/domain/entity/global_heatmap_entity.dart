@@ -1,4 +1,3 @@
-// Create this file: lib/features/emotion/domain/entity/global_heatmap_entity.dart
 
 import 'package:equatable/equatable.dart';
 
@@ -43,7 +42,6 @@ class GlobalHeatmapEntity extends Equatable {
         ')';
   }
 
-  // Helper methods for easier data access
   int get locationCount => locations.length;
 
   bool get hasLocations => locations.isNotEmpty;
@@ -62,7 +60,6 @@ class GlobalHeatmapEntity extends Equatable {
     return 0;
   }
 
-  // Copy with method for state management
   GlobalHeatmapEntity copyWith({
     List<Map<String, dynamic>>? locations,
     Map<String, dynamic>? summary,

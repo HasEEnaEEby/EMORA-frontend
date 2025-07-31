@@ -62,7 +62,7 @@ class _EnhancedBottomNavigationState extends State<EnhancedBottomNavigation>
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 95, // Increased from 90 to 95
+height: 95, 
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           colors: [Color(0xFF1A1A2E), Color(0xFF0F0F1A)],
@@ -79,20 +79,18 @@ class _EnhancedBottomNavigationState extends State<EnhancedBottomNavigation>
       ),
       child: Stack(
         children: [
-          // Main Navigation Bar
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
             child: Container(
-              height: 75, // Increased from 70 to 75
+height: 75, 
               padding: const EdgeInsets.symmetric(
                 horizontal: 16,
-              ), // Reduced from 20 to 16
+), 
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Atlas (Map)
                   Expanded(
                     child: _buildNavItem(
                       index: 0,
@@ -103,7 +101,6 @@ class _EnhancedBottomNavigationState extends State<EnhancedBottomNavigation>
                     ),
                   ),
 
-                  // Friends
                   Expanded(
                     child: _buildNavItem(
                       index: 1,
@@ -114,10 +111,8 @@ class _EnhancedBottomNavigationState extends State<EnhancedBottomNavigation>
                     ),
                   ),
 
-                  // Space for floating mood button
                   const SizedBox(width: 70),
 
-                  // Insights
                   Expanded(
                     child: _buildNavItem(
                       index: 2,
@@ -128,7 +123,6 @@ class _EnhancedBottomNavigationState extends State<EnhancedBottomNavigation>
                     ),
                   ),
 
-                  // Profile
                   Expanded(
                     child: _buildNavItem(
                       index: 3,
@@ -143,9 +137,8 @@ class _EnhancedBottomNavigationState extends State<EnhancedBottomNavigation>
             ),
           ),
 
-          // Floating Mood Button
           Positioned(
-            top: 5, // Increased from 0 to 5
+top: 5, 
             left: MediaQuery.of(context).size.width / 2 - 35,
             child: _buildFloatingMoodButton(),
           ),
@@ -169,9 +162,9 @@ class _EnhancedBottomNavigationState extends State<EnhancedBottomNavigation>
         padding: const EdgeInsets.symmetric(
           horizontal: 8,
           vertical: 6,
-        ), // Reduced padding
+), 
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16), // Reduced from 20 to 16
+borderRadius: BorderRadius.circular(16), 
           color: isActive
               ? const Color(0xFF8B5CF6).withOpacity(0.15)
               : Colors.transparent,
@@ -182,7 +175,7 @@ class _EnhancedBottomNavigationState extends State<EnhancedBottomNavigation>
             AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               curve: Curves.easeOutCubic,
-              padding: const EdgeInsets.all(6), // Reduced from 8 to 6
+padding: const EdgeInsets.all(6), 
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isActive
@@ -192,23 +185,22 @@ class _EnhancedBottomNavigationState extends State<EnhancedBottomNavigation>
               child: Icon(
                 isActive ? activeIcon : icon,
                 color: isActive ? const Color(0xFF8B5CF6) : Colors.grey[400],
-                size: 22, // Reduced from 24 to 22
+size: 22, 
               ),
             ),
-            const SizedBox(height: 2), // Reduced from 4 to 2
+const SizedBox(height: 2), 
             Flexible(
-              // Wrapped in Flexible to prevent overflow
               child: Text(
                 label,
                 style: TextStyle(
                   color: isActive ? const Color(0xFF8B5CF6) : Colors.grey[500],
-                  fontSize: 10, // Reduced from 12 to 10
+fontSize: 10, 
                   fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                  height: 1.2, // Added line height
+height: 1.2, 
                 ),
-                maxLines: 1, // Added max lines
-                overflow: TextOverflow.ellipsis, // Added overflow handling
-                textAlign: TextAlign.center, // Center align text
+maxLines: 1, 
+overflow: TextOverflow.ellipsis, 
+textAlign: TextAlign.center, 
               ),
             ),
           ],
@@ -291,7 +283,6 @@ class _EnhancedBottomNavigationState extends State<EnhancedBottomNavigation>
   }
 }
 
-// Enhanced Mood Selector Modal
 class MoodSelectorModal extends StatefulWidget {
   final String currentMood;
   final Function(String) onMoodSelected;
@@ -378,7 +369,6 @@ class _MoodSelectorModalState extends State<MoodSelectorModal>
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                // Handle
                 Container(
                   width: 40,
                   height: 4,
@@ -390,7 +380,6 @@ class _MoodSelectorModalState extends State<MoodSelectorModal>
 
                 const SizedBox(height: 24),
 
-                // Title
                 const Text(
                   'How was your day?',
                   style: TextStyle(
@@ -402,7 +391,6 @@ class _MoodSelectorModalState extends State<MoodSelectorModal>
 
                 const SizedBox(height: 32),
 
-                // Mood Options
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
@@ -476,7 +464,6 @@ class _MoodSelectorModalState extends State<MoodSelectorModal>
   }
 }
 
-// Usage Helper Extension
 extension BottomNavHelper on BuildContext {
   void showMoodSelector({
     required String currentMood,

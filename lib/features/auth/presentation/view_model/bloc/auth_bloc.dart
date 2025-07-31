@@ -1,4 +1,3 @@
-// lib/features/auth/presentation/view_model/bloc/auth_bloc.dart
 import 'package:emora_mobile_app/core/config/app_config.dart';
 import 'package:emora_mobile_app/core/errors/failures.dart';
 import 'package:emora_mobile_app/core/use_case/use_case.dart';
@@ -29,11 +28,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.getCurrentUser,
     required this.checkAuthStatus,
   }) : super(const AuthInitial()) {
-    // CRITICAL: Register ALL event handlers properly
     Logger.info('. Initializing AuthBloc event handlers...');
 
     try {
-      // Register each event handler with proper error handling
       on<AuthCheckStatus>(_onCheckStatus);
       Logger.info('. AuthCheckStatus handler registered');
 
@@ -46,7 +43,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       on<AuthLogin>(_onLogin);
       Logger.info('. AuthLogin handler registered');
 
-      // CRITICAL: This is the key handler for logout that was missing
       on<AuthLogout>(_onLogout);
       Logger.info('. AuthLogout handler registered');
 
@@ -66,32 +62,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  // CRITICAL: This method handles the logout - FIXED VERSION
   Future<void> _onLogout(AuthLogout event, Emitter<AuthState> emit) async {
     try {
       Logger.info('🚪 Processing logout request');
       emit(const AuthLoading());
 
-      // Call the logout use case
       final result = await logoutUser(NoParams());
 
       result.fold(
         (failure) {
           Logger.error('. Logout failed on server: ${failure.message}');
-          // CRITICAL: Even if server logout fails, emit AuthUnauthenticated
-          // This ensures UI navigation works properly
           emit(const AuthUnauthenticated());
         },
         (_) {
           Logger.info('. Logout successful');
-          // CRITICAL: Emit AuthUnauthenticated for successful logout
           emit(const AuthUnauthenticated());
         },
       );
     } catch (e) {
       Logger.error('. Logout error: $e');
-      // CRITICAL: Always emit AuthUnauthenticated on logout, even on error
-      // This ensures user gets logged out locally regardless of server issues
       emit(const AuthUnauthenticated());
     }
   }
@@ -110,14 +99,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     Logger.warning('🔄 Token refresh failed, forcing logout: ${event.message}');
     
-    // Clear all auth data
     try {
       await logoutUser(NoParams());
     } catch (e) {
       Logger.error('. Error during forced logout after token refresh failure', e);
     }
     
-    // Emit session expired state to trigger proper UI handling
     emit(AuthSessionExpired(message: event.message));
   }
 
@@ -133,9 +120,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       (failure) {
         Logger.error('. Auth status check failed: ${failure.message}');
         
-        // . Check if this is a token refresh failure
         if (failure is AuthFailure && failure.statusCode == 401) {
-          // Token refresh failed - emit session expired
           emit(AuthSessionExpired(message: failure.message));
         } else {
           emit(const AuthUnauthenticated());
@@ -162,7 +147,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Logger.info('. Checking username availability: ${event.username}');
     emit(AuthCheckingUsername(event.username));
 
-    // Client-side validation first
     final validationError = AppConfig.validateUsername(event.username);
     if (validationError != null) {
       emit(
@@ -218,7 +202,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Logger.info('📝 Starting user registration: ${event.username}');
     emit(const AuthLoading());
 
-    // . Password confirmation validation
     if (event.password != event.confirmPassword) {
       emit(
         AuthError(
@@ -230,7 +213,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return;
     }
 
-    // Validate input
     final usernameError = AppConfig.validateUsername(event.username);
     if (usernameError != null) {
       emit(
@@ -272,7 +254,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         username: event.username,
         email: event.email,
         password: event.password,
-        confirmPassword: event.confirmPassword, // . Added confirmPassword for backend validation
+confirmPassword: event.confirmPassword, 
         pronouns: event.pronouns,
         ageGroup: event.ageGroup,
         selectedAvatar: event.selectedAvatar,

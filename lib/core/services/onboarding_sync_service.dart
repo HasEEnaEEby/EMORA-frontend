@@ -26,11 +26,9 @@ class OnboardingSyncService {
     required this.sharedPreferences,
   });
 
-  /// Initialize the sync service
   void initialize() {
     Logger.info('🔄 Initializing onboarding sync service...');
 
-    // Listen to network changes
     _networkSubscription = networkInfo.connectionStream.listen((status) {
       if (status.name == 'connected') {
         Logger.info('🌐 Network connected - starting onboarding sync...');
@@ -38,27 +36,23 @@ class OnboardingSyncService {
       }
     });
 
-    // Start immediate sync if connected
     networkInfo.isConnected.then((isConnected) {
       if (isConnected) {
         _performSync();
       }
     });
 
-    // Schedule periodic sync every 10 minutes
     _syncTimer = Timer.periodic(const Duration(minutes: 10), (_) {
       _performSync();
     });
   }
 
-  /// Queue user data for sync
   Future<void> queueUserDataSync(UserOnboardingModel userData) async {
     try {
       final userDataJson = json.encode(userData.toJson());
       await sharedPreferences.setString(_pendingUserDataKey, userDataJson);
       Logger.info('📝 Queued user data for sync');
 
-      // Try immediate sync if connected
       if (await networkInfo.isConnected) {
         _performSync();
       }
@@ -67,14 +61,12 @@ class OnboardingSyncService {
     }
   }
 
-  /// Queue onboarding completion for sync
   Future<void> queueCompletionSync(UserOnboardingModel userData) async {
     try {
       final userDataJson = json.encode(userData.toJson());
       await sharedPreferences.setString(_pendingCompletionKey, userDataJson);
       Logger.info('📝 Queued onboarding completion for sync');
 
-      // Try immediate sync if connected
       if (await networkInfo.isConnected) {
         _performSync();
       }
@@ -83,7 +75,6 @@ class OnboardingSyncService {
     }
   }
 
-  /// Perform sync of all pending operations
   Future<void> _performSync() async {
     try {
       if (!await networkInfo.isConnected) {
@@ -99,7 +90,6 @@ class OnboardingSyncService {
       bool hasPendingOperations = false;
       int successfulSyncs = 0;
 
-      // Sync pending user data
       final pendingUserData = sharedPreferences.getString(_pendingUserDataKey);
       if (pendingUserData != null) {
         hasPendingOperations = true;
@@ -110,7 +100,6 @@ class OnboardingSyncService {
         }
       }
 
-      // Sync pending completion
       final pendingCompletion = sharedPreferences.getString(
         _pendingCompletionKey,
       );
@@ -135,7 +124,6 @@ class OnboardingSyncService {
     }
   }
 
-  /// Sync user data to server
   Future<bool> _syncUserData(String userDataJson) async {
     try {
       final userData = UserOnboardingModel.fromJson(json.decode(userDataJson));
@@ -154,7 +142,6 @@ class OnboardingSyncService {
     }
   }
 
-  /// Sync onboarding completion to server
   Future<bool> _syncCompletion(String userDataJson) async {
     try {
       final userData = UserOnboardingModel.fromJson(json.decode(userDataJson));
@@ -173,7 +160,6 @@ class OnboardingSyncService {
     }
   }
 
-  /// Get sync status information
   Future<OnboardingSyncStatus> getSyncStatus() async {
     final hasPendingUserData =
         sharedPreferences.getString(_pendingUserDataKey) != null;
@@ -193,13 +179,11 @@ class OnboardingSyncService {
     );
   }
 
-  /// Force sync now (useful for manual retry)
   Future<void> forceSyncNow() async {
     Logger.info('🔄 Force sync requested...');
     await _performSync();
   }
 
-  /// Clear all pending operations (use with caution)
   Future<void> clearPendingOperations() async {
     await Future.wait([
       sharedPreferences.remove(_pendingUserDataKey),
@@ -208,7 +192,6 @@ class OnboardingSyncService {
     Logger.info('🗑️ Cleared all pending onboarding sync operations');
   }
 
-  /// Dispose resources
   void dispose() {
     _syncTimer?.cancel();
     _networkSubscription?.cancel();

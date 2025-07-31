@@ -142,7 +142,6 @@ class WeeklyInsightsPreviewWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Progress indicator
         Row(
           children: [
             Expanded(
@@ -198,7 +197,6 @@ class WeeklyInsightsPreviewWidget extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         
-        // Stats row
         Row(
           children: [
             Expanded(
@@ -231,7 +229,6 @@ class WeeklyInsightsPreviewWidget extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         
-        // Insights list
         if (insights.insights.isNotEmpty) ...[
           Text(
             'This Week\'s Insights',

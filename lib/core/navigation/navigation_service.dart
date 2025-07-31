@@ -1,29 +1,22 @@
-// lib/core/navigation/navigation_service.dart - ENHANCED VERSION
 import 'package:flutter/material.dart';
 
 import '../utils/logger.dart';
 
-/// Centralized navigation service with comprehensive error handling and debugging
 class NavigationService {
   static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
-  // Navigation state tracking
   static bool _isNavigating = false;
   static String? _lastRoute;
   static DateTime? _lastNavigationTime;
   static const Duration _navigationDebounce = Duration(milliseconds: 500);
   static final List<String> _navigationHistory = [];
 
-  /// Get the current context
   static BuildContext? get currentContext => navigatorKey.currentContext;
 
-  /// Get the current navigator state
   static NavigatorState? get currentState => navigatorKey.currentState;
 
-  /// Convenience getter for context
   static BuildContext? get context => currentContext;
 
-  /// Enhanced safe navigation with comprehensive error handling
   static Future<T?> safeNavigate<T extends Object?>(
     String routeName, {
     Object? arguments,
@@ -36,7 +29,6 @@ class NavigationService {
         '🚀 SafeNavigate: $routeName (replacement: $replacement, clearStack: $clearStack)',
       );
 
-      // Prevent rapid duplicate navigation
       if (!allowDuplicates && _isDuplicateNavigation(routeName)) {
         Logger.warning('🔄 Preventing duplicate navigation to: $routeName');
         return null;
@@ -47,7 +39,6 @@ class NavigationService {
         return null;
       }
 
-      // Handle navigation queue
       if (_isNavigating) {
         Logger.info('⏳ Navigation in progress, queuing: $routeName');
         await Future.delayed(const Duration(milliseconds: 100));
@@ -56,7 +47,7 @@ class NavigationService {
           arguments: arguments,
           replacement: replacement,
           clearStack: clearStack,
-          allowDuplicates: true, // Allow on retry
+allowDuplicates: true, 
         );
       }
 
@@ -88,7 +79,6 @@ class NavigationService {
         Logger.info('. Navigation completed successfully to: $routeName');
         return result;
       } finally {
-        // Reset navigation flag after a delay
         Future.delayed(_navigationDebounce, () {
           _isNavigating = false;
         });
@@ -101,13 +91,11 @@ class NavigationService {
       );
       _isNavigating = false;
 
-      // Show user-friendly error
       showErrorSnackBar('Navigation failed: Please try again');
       return null;
     }
   }
 
-  /// Check for duplicate navigation
   static bool _isDuplicateNavigation(String routeName) {
     final now = DateTime.now();
 
@@ -120,19 +108,16 @@ class NavigationService {
     return false;
   }
 
-  /// Update navigation history
   static void _updateNavigationHistory(String routeName) {
     _lastRoute = routeName;
     _lastNavigationTime = DateTime.now();
 
-    // Add to history (keep last 10 entries)
     _navigationHistory.add('${DateTime.now().toIso8601String()}: $routeName');
     if (_navigationHistory.length > 10) {
       _navigationHistory.removeAt(0);
     }
   }
 
-  /// Push a named route
   static Future<T?> pushNamed<T extends Object?>(
     String routeName, {
     Object? arguments,
@@ -155,7 +140,6 @@ class NavigationService {
     }
   }
 
-  /// Push a named route and remove all previous routes
   static Future<T?> pushNamedAndRemoveUntil<T extends Object?>(
     String routeName,
     bool Function(Route<dynamic>) predicate, {
@@ -183,7 +167,6 @@ class NavigationService {
     }
   }
 
-  /// Push a named route and clear the entire stack (convenience method)
   static Future<T?> pushNamedAndClearStack<T extends Object?>(
     String routeName, {
     Object? arguments,
@@ -191,12 +174,11 @@ class NavigationService {
     Logger.info('🗑️ Clearing entire navigation stack for: $routeName');
     return await pushNamedAndRemoveUntil<T>(
       routeName,
-      (route) => false, // Remove all previous routes
+(route) => false, 
       arguments: arguments,
     );
   }
 
-  /// Replace the current route with a named route
   static Future<T?> pushReplacementNamed<T extends Object?, TO extends Object?>(
     String routeName, {
     Object? arguments,
@@ -224,7 +206,6 @@ class NavigationService {
     }
   }
 
-  /// Pop the current route
   static void pop<T extends Object?>([T? result]) {
     try {
       if (currentState != null && currentState!.canPop()) {
@@ -240,7 +221,6 @@ class NavigationService {
     }
   }
 
-  /// Pop until a specific route
   static void popUntil(bool Function(Route<dynamic>) predicate) {
     try {
       if (currentState != null) {
@@ -256,7 +236,6 @@ class NavigationService {
     }
   }
 
-  /// Show a snackbar with enhanced styling
   static void showSnackBar(
     String message, {
     Color? backgroundColor,
@@ -297,7 +276,6 @@ class NavigationService {
     }
   }
 
-  /// Show a success snackbar
   static void showSuccessSnackBar(String message) {
     showSnackBar(
       message,
@@ -306,7 +284,6 @@ class NavigationService {
     );
   }
 
-  /// Show an error snackbar
   static void showErrorSnackBar(String message) {
     showSnackBar(
       message,
@@ -316,7 +293,6 @@ class NavigationService {
     );
   }
 
-  /// Show an info snackbar
   static void showInfoSnackBar(String message) {
     showSnackBar(
       message,
@@ -325,7 +301,6 @@ class NavigationService {
     );
   }
 
-  /// Show a warning snackbar
   static void showWarningSnackBar(String message) {
     showSnackBar(
       message,
@@ -334,7 +309,6 @@ class NavigationService {
     );
   }
 
-  /// Show a custom dialog
   static Future<T?> showCustomDialog<T>({
     required Widget dialog,
     bool barrierDismissible = true,
@@ -358,7 +332,6 @@ class NavigationService {
     }
   }
 
-  /// Show a confirmation dialog with enhanced styling
   static Future<bool?> showConfirmationDialog({
     required String title,
     required String message,
@@ -445,7 +418,6 @@ class NavigationService {
     }
   }
 
-  /// Show an error dialog with enhanced styling
   static Future<void> showErrorDialog({
     required String title,
     required String message,
@@ -521,7 +493,6 @@ class NavigationService {
     }
   }
 
-  /// Show a loading dialog
   static void showLoadingDialog({String message = 'Loading...'}) {
     try {
       if (currentContext != null) {
@@ -565,7 +536,6 @@ class NavigationService {
     }
   }
 
-  /// Hide the current dialog
   static void hideDialog() {
     try {
       if (currentContext != null) {
@@ -580,7 +550,6 @@ class NavigationService {
     }
   }
 
-  /// Get the current route name
   static String? getCurrentRouteName() {
     try {
       if (currentContext != null) {
@@ -593,7 +562,6 @@ class NavigationService {
     }
   }
 
-  /// Check if we can pop the current route
   static bool canPop() {
     try {
       return currentState?.canPop() ?? false;
@@ -603,7 +571,6 @@ class NavigationService {
     }
   }
 
-  /// Navigate with fallback options
   static Future<void> navigateWithFallback({
     required String primaryRoute,
     String? fallbackRoute,
@@ -615,7 +582,6 @@ class NavigationService {
         '🎯 Attempting navigation with fallback: $primaryRoute -> $fallbackRoute',
       );
 
-      // Try primary route
       final result = await safeNavigate(
         primaryRoute,
         arguments: arguments,
@@ -636,7 +602,6 @@ class NavigationService {
     }
   }
 
-  /// Reset navigation stack and go to route
   static Future<void> resetAndNavigateTo(
     String routeName, {
     Object? arguments,
@@ -652,7 +617,6 @@ class NavigationService {
     }
   }
 
-  /// Clear all snackbars
   static void clearSnackBars() {
     try {
       if (currentContext != null) {
@@ -663,7 +627,6 @@ class NavigationService {
     }
   }
 
-  /// Show bottom sheet
   static Future<T?> showBottomSheet<T>({
     required Widget child,
     bool isScrollControlled = false,
@@ -692,7 +655,6 @@ class NavigationService {
     }
   }
 
-  /// Get navigation statistics for debugging
   static Map<String, dynamic> getNavigationStats() {
     return {
       'isNavigating': _isNavigating,
@@ -706,7 +668,6 @@ class NavigationService {
     };
   }
 
-  /// Debug method to print navigation statistics
   static void debugPrintNavigationStats() {
     final stats = getNavigationStats();
     Logger.info('. Navigation Statistics:');
@@ -715,7 +676,6 @@ class NavigationService {
     });
   }
 
-  /// Clear navigation history (for testing/debugging)
   static void clearNavigationHistory() {
     _navigationHistory.clear();
     _lastRoute = null;
@@ -723,12 +683,10 @@ class NavigationService {
     Logger.info('🗑️ Navigation history cleared');
   }
 
-  /// Check if navigation service is properly initialized
   static bool isInitialized() {
     return navigatorKey.currentContext != null;
   }
 
-  /// Get a health check of the navigation service
   static Map<String, dynamic> healthCheck() {
     return {
       'initialized': isInitialized(),

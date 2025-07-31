@@ -1,4 +1,3 @@
-// lib/features/home/data/data_source/remote/recommendations_remote_data_source.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:get_it/get_it.dart';
@@ -8,7 +7,6 @@ import 'package:emora_mobile_app/core/utils/logger.dart';
 class RecommendationsRemoteDataSource {
   final ApiService _apiService = GetIt.instance<ApiService>();
 
-  /// Get Spotify playlist recommendation based on mood
   Future<Map<String, dynamic>?> getSpotifyPlaylistForMood(String mood) async {
     try {
       Logger.info('🎵 Fetching Spotify playlist for mood: $mood');
@@ -31,7 +29,6 @@ class RecommendationsRemoteDataSource {
     return null;
   }
 
-  /// Get comprehensive recommendations including music, activities, and wellness
   Future<Map<String, dynamic>?> getComprehensiveRecommendations({
     required String emotion,
     int intensity = 5,
@@ -66,7 +63,6 @@ class RecommendationsRemoteDataSource {
     return null;
   }
 
-  /// Get featured playlists from Spotify
   Future<List<Map<String, dynamic>>> getFeaturedPlaylists() async {
     try {
       Logger.info('🎵 Fetching featured playlists');
@@ -84,7 +80,6 @@ class RecommendationsRemoteDataSource {
     return [];
   }
 
-  /// Search tracks by mood
   Future<List<Map<String, dynamic>>> searchTracksByMood(String mood, {int limit = 20}) async {
     try {
       Logger.info('🔍 Searching tracks for mood: $mood');
@@ -108,7 +103,6 @@ class RecommendationsRemoteDataSource {
     return [];
   }
 
-  /// Get music recommendations only
   Future<Map<String, dynamic>?> getMusicRecommendations(String emotion) async {
     try {
       Logger.info('🎵 Fetching music recommendations for: $emotion');
@@ -128,7 +122,6 @@ class RecommendationsRemoteDataSource {
     return null;
   }
 
-  /// Get activity recommendations
   Future<Map<String, dynamic>?> getActivityRecommendations({
     required String emotion,
     String? timeOfDay,
@@ -156,7 +149,6 @@ class RecommendationsRemoteDataSource {
     return null;
   }
 
-  /// Get wellness recommendations
   Future<Map<String, dynamic>?> getWellnessRecommendations({
     required String emotion,
     int intensity = 5,
@@ -182,7 +174,6 @@ class RecommendationsRemoteDataSource {
     return null;
   }
 
-  /// Get mood characteristics (energy, valence) for a given emotion
   Map<String, double> getMoodCharacteristics(String emotion, int intensity) {
     final intensityFloat = intensity / 10.0;
     
@@ -210,7 +201,6 @@ class RecommendationsRemoteDataSource {
     };
   }
 
-  /// Get Spotify search terms for a given emotion
   List<String> getSpotifySearchTerms(String emotion) {
     final termMap = {
       'happy': ['happy hits', 'feel good music', 'upbeat pop', 'positive vibes'],
@@ -230,7 +220,6 @@ class RecommendationsRemoteDataSource {
            ['mood music', 'emotional songs', '${emotion} playlist'];
   }
 
-  /// Get local fallback recommendations when API is unavailable
   Map<String, dynamic> getFallbackRecommendations(String emotion) {
     return {
       'music': _getFallbackMusicRecs(emotion),
@@ -343,7 +332,6 @@ class RecommendationsRemoteDataSource {
     ];
   }
 
-  /// Validate internet connection and API availability
   Future<bool> isServiceAvailable() async {
     try {
       final response = await _apiService.get('/api/health');
@@ -354,16 +342,11 @@ class RecommendationsRemoteDataSource {
     }
   }
 
-  /// Get cached recommendations if available
   Map<String, dynamic>? getCachedRecommendations(String emotion) {
-    // Implement caching logic here if needed
-    // For now, return null to always fetch fresh data
     return null;
   }
 
-  /// Cache recommendations for offline use
   void cacheRecommendations(String emotion, Map<String, dynamic> recommendations) {
-    // Implement caching logic here
     Logger.info('💾 Caching recommendations for $emotion');
   }
 } 

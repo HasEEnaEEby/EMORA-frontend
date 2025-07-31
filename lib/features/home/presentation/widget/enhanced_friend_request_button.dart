@@ -1,5 +1,3 @@
-// Enhanced Friend Request Button with Emotional Themes
-// lib/features/home/presentation/widget/enhanced_friend_request_button.dart
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -49,7 +47,6 @@ class _EnhancedFriendRequestButtonState extends State<EnhancedFriendRequestButto
   }
 
   void _setupAnimations() {
-    // Pulse animation for sending state
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -58,7 +55,6 @@ class _EnhancedFriendRequestButtonState extends State<EnhancedFriendRequestButto
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // Success animation for accepted state
     _successController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -67,7 +63,6 @@ class _EnhancedFriendRequestButtonState extends State<EnhancedFriendRequestButto
       CurvedAnimation(parent: _successController, curve: Curves.elasticOut),
     );
 
-    // Shimmer animation for requested state
     _shimmerController = AnimationController(
       duration: const Duration(milliseconds: 2000),
       vsync: this,
@@ -84,7 +79,6 @@ class _EnhancedFriendRequestButtonState extends State<EnhancedFriendRequestButto
   }
 
   void _handleStatusChange(FriendRequestStatus oldStatus, FriendRequestStatus newStatus) {
-    // Stop all animations first
     _pulseController.stop();
     _successController.stop();
     _shimmerController.stop();
@@ -180,7 +174,7 @@ class _EnhancedFriendRequestButtonState extends State<EnhancedFriendRequestButto
                 color: Colors.white,
               ),
             ),
-            onTap: null, // Disabled while sending
+onTap: null, 
           ),
         );
       },
@@ -210,9 +204,8 @@ class _EnhancedFriendRequestButtonState extends State<EnhancedFriendRequestButto
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                onTap: null, // Disabled when pending
+onTap: null, 
               ),
-              // Shimmer overlay
               Positioned.fill(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(widget.isCompact ? 8 : 12),
@@ -255,7 +248,7 @@ class _EnhancedFriendRequestButtonState extends State<EnhancedFriendRequestButto
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            onTap: null, // Informational only
+onTap: null, 
           ),
         );
       },
@@ -271,7 +264,7 @@ class _EnhancedFriendRequestButtonState extends State<EnhancedFriendRequestButto
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
       ),
-      onTap: null, // Informational only
+onTap: null, 
     );
   }
 
@@ -352,7 +345,6 @@ class _EnhancedFriendRequestButtonState extends State<EnhancedFriendRequestButto
   }
 }
 
-// Status notification widget for showing friend request updates
 class FriendRequestStatusNotification extends StatelessWidget {
   final String message;
   final FriendRequestStatus status;

@@ -6,7 +6,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/view/pages/models/emotion_map_models.dart';
 
 class WebSocketService {
-  static const String _wsUrl = 'ws://localhost:8000';
+  static const String _wsUrl = 'ws:////////localhost:8000';
   
   WebSocketChannel? _channel;
   StreamController<MapEvent>? _eventController;
@@ -17,10 +17,8 @@ class WebSocketService {
   Timer? _heartbeatTimer;
   Timer? _reconnectTimer;
   
-  // Connection state
   bool get isConnected => _isConnected;
   
-  // Streams for different event types
   Stream<MapEvent> get eventStream => _eventController!.stream;
   Stream<GlobalEmotionStats> get statsStream => _statsController!.stream;
   Stream<GlobalEmotionPoint> get emotionStream => _emotionController!.stream;
@@ -31,20 +29,17 @@ class WebSocketService {
     _emotionController = StreamController<GlobalEmotionPoint>.broadcast();
   }
 
-  /// Connect to WebSocket server
   Future<void> connect() async {
     try {
       _channel = IOWebSocketChannel.connect(_wsUrl);
       _isConnected = true;
       
-      // Listen for messages
       _channel!.stream.listen(
         _handleMessage,
         onError: _handleError,
         onDone: _handleDisconnect,
       );
 
-      // Start heartbeat
       _startHeartbeat();
       
       print('WebSocket connected successfully');
@@ -55,7 +50,6 @@ class WebSocketService {
     }
   }
 
-  /// Disconnect from WebSocket server
   void disconnect() {
     _stopHeartbeat();
     _stopReconnect();
@@ -64,7 +58,6 @@ class WebSocketService {
     print('WebSocket disconnected');
   }
 
-  /// Join a room for specific updates
   void joinRoom(String room) {
     if (_isConnected) {
       _sendMessage({
@@ -74,7 +67,6 @@ class WebSocketService {
     }
   }
 
-  /// Leave a room
   void leaveRoom(String room) {
     if (_isConnected) {
       _sendMessage({
@@ -84,7 +76,6 @@ class WebSocketService {
     }
   }
 
-  /// Submit emotion to global map
   Future<bool> submitEmotion({
     required double latitude,
     required double longitude,
@@ -121,7 +112,6 @@ class WebSocketService {
     }
   }
 
-  /// Update map view (for analytics)
   void updateMapView({
     required Map<String, dynamic> bounds,
     required double zoom,
@@ -139,7 +129,6 @@ class WebSocketService {
     }
   }
 
-  /// Update filters
   void updateFilters(Map<String, dynamic> filters) {
     if (_isConnected) {
       _sendMessage({
@@ -149,7 +138,6 @@ class WebSocketService {
     }
   }
 
-  /// Handle incoming messages
   void _handleMessage(dynamic message) {
     try {
       final data = json.decode(message);
@@ -189,7 +177,6 @@ class WebSocketService {
     }
   }
 
-  /// Handle connection established
   void _handleConnected(Map<String, dynamic> data) {
     print('WebSocket connection established: ${data['clientId']}');
     _eventController?.add(MapEvent(
@@ -198,7 +185,6 @@ class WebSocketService {
     ));
   }
 
-  /// Handle new emotion from other users
   void _handleNewEmotion(Map<String, dynamic> data) {
     try {
       final emotion = GlobalEmotionPoint(
@@ -225,7 +211,6 @@ class WebSocketService {
     }
   }
 
-  /// Handle global stats update
   void _handleGlobalStatsUpdate(Map<String, dynamic> data) {
     try {
       final stats = GlobalEmotionStats(
@@ -255,7 +240,6 @@ class WebSocketService {
     }
   }
 
-  /// Handle regional stats update
   void _handleRegionalStatsUpdate(Map<String, dynamic> data) {
     _eventController?.add(MapEvent(
       type: MapEventType.regionalStatsUpdated,
@@ -263,7 +247,6 @@ class WebSocketService {
     ));
   }
 
-  /// Handle room stats update
   void _handleRoomStatsUpdate(Map<String, dynamic> data) {
     _eventController?.add(MapEvent(
       type: MapEventType.roomStatsUpdated,
@@ -271,7 +254,6 @@ class WebSocketService {
     ));
   }
 
-  /// Handle heartbeat
   void _handleHeartbeat(Map<String, dynamic> data) {
     _eventController?.add(MapEvent(
       type: MapEventType.heartbeat,
@@ -279,7 +261,6 @@ class WebSocketService {
     ));
   }
 
-  /// Handle server shutdown
   void _handleServerShutdown(Map<String, dynamic> data) {
     print('Server shutdown notification received');
     _eventController?.add(MapEvent(
@@ -289,7 +270,6 @@ class WebSocketService {
     _scheduleReconnect();
   }
 
-  /// Handle server error
   void _handleServerError(Map<String, dynamic> data) {
     print('Server error: ${data['message']}');
     _eventController?.add(MapEvent(
@@ -298,7 +278,6 @@ class WebSocketService {
     ));
   }
 
-  /// Handle connection error
   void _handleError(error) {
     print('WebSocket error: $error');
     _isConnected = false;
@@ -309,7 +288,6 @@ class WebSocketService {
     _scheduleReconnect();
   }
 
-  /// Handle disconnection
   void _handleDisconnect() {
     print('WebSocket disconnected');
     _isConnected = false;
@@ -320,7 +298,6 @@ class WebSocketService {
     _scheduleReconnect();
   }
 
-  /// Send message to server
   void _sendMessage(Map<String, dynamic> message) {
     if (_isConnected && _channel != null) {
       try {
@@ -331,7 +308,6 @@ class WebSocketService {
     }
   }
 
-  /// Start heartbeat timer
   void _startHeartbeat() {
     _heartbeatTimer?.cancel();
     _heartbeatTimer = Timer.periodic(Duration(seconds: 30), (timer) {
@@ -344,13 +320,11 @@ class WebSocketService {
     });
   }
 
-  /// Stop heartbeat timer
   void _stopHeartbeat() {
     _heartbeatTimer?.cancel();
     _heartbeatTimer = null;
   }
 
-  /// Schedule reconnection
   void _scheduleReconnect() {
     _stopReconnect();
     _reconnectTimer = Timer(Duration(seconds: 5), () {
@@ -361,13 +335,11 @@ class WebSocketService {
     });
   }
 
-  /// Stop reconnection timer
   void _stopReconnect() {
     _reconnectTimer?.cancel();
     _reconnectTimer = null;
   }
 
-  /// Parse double value safely
   double _parseDouble(dynamic value) {
     if (value == null) return 0.0;
     if (value is num) return value.toDouble();
@@ -381,7 +353,6 @@ class WebSocketService {
     return 0.0;
   }
 
-  /// Dispose resources
   void dispose() {
     disconnect();
     _eventController?.close();
@@ -390,7 +361,6 @@ class WebSocketService {
   }
 }
 
-/// WebSocket event types
 enum MapEventType {
   connected,
   disconnected,
@@ -403,7 +373,6 @@ enum MapEventType {
   error,
 }
 
-/// WebSocket event wrapper
 class MapEvent {
   final MapEventType type;
   final dynamic data;

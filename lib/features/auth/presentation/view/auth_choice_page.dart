@@ -1,4 +1,3 @@
-// lib/features/auth/presentation/view/auth_choice_page.dart
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -30,7 +29,7 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
 
   bool _hasOnboardingData = false;
   bool _isFromLogout = false;
-  bool _isNavigating = false; // ADD: Prevent double navigation
+bool _isNavigating = false; 
 
   @override
   void initState() {
@@ -41,10 +40,8 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
   }
 
   void _checkOnboardingData() {
-    // Check if this is from logout (no onboarding data)
     _isFromLogout = widget.onboardingData == null || widget.onboardingData!.isEmpty;
     
-    // Only show onboarding data if not from logout
     _hasOnboardingData = !_isFromLogout &&
         widget.onboardingData != null &&
         widget.onboardingData!.isNotEmpty &&
@@ -119,7 +116,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
     super.dispose();
   }
 
-  // FIX: Enhanced navigation methods with better error handling
   Future<void> _navigateToRegister() async {
     if (_isNavigating) return;
     
@@ -131,7 +127,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
       Logger.info('📝 Navigating to registration with onboarding data');
       Logger.info('📝 Data being passed: ${widget.onboardingData}');
       
-      // Use Navigator.pushNamed instead of NavigationService for better reliability
       await Navigator.of(context).pushNamed(
         AppRouter.register,
         arguments: widget.onboardingData,
@@ -165,7 +160,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
     try {
       Logger.info('🔐 Navigating to login');
       
-      // Use Navigator.pushNamed instead of NavigationService for better reliability
       await Navigator.of(context).pushNamed(AppRouter.login);
     } catch (e, stackTrace) {
       Logger.error('❌ Failed to navigate to login: $e', e, stackTrace);
@@ -229,7 +223,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
           children: [
             _buildAnimatedBackground(), 
             _buildMainContent(),
-            // ADD: Loading overlay when navigating
             if (_isNavigating) _buildLoadingOverlay(),
           ],
         ),
@@ -237,7 +230,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
     );
   }
 
-  // ADD: Loading overlay to show navigation is happening
   Widget _buildLoadingOverlay() {
     return Container(
       color: Colors.black.withOpacity(0.5),
@@ -478,7 +470,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
   Widget _buildActionButtons() {
     return Column(
       children: [
-        // Register Button - FIXED: Added debug logging and better error handling
         Container(
           width: double.infinity,
           height: 56,
@@ -537,7 +528,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
 
         const SizedBox(height: 16),
 
-        // Login Button - FIXED: Added debug logging and better error handling
         Container(
           width: double.infinity,
           height: 56,
@@ -590,7 +580,6 @@ class _AuthChoiceViewState extends State<AuthChoiceView>
 
         const SizedBox(height: 24),
 
-        // Divider
         Row(
           children: [
             Expanded(

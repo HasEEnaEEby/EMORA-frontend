@@ -84,7 +84,6 @@ class _CustomMoodSelectorModalState extends State<CustomMoodSelectorModal>
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                // Handle
                 Container(
                   width: 40,
                   height: 4,
@@ -96,7 +95,6 @@ class _CustomMoodSelectorModalState extends State<CustomMoodSelectorModal>
 
                 const SizedBox(height: 24),
 
-                // Title
                 ShaderMask(
                   shaderCallback: (bounds) => const LinearGradient(
                     colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
@@ -113,7 +111,6 @@ class _CustomMoodSelectorModalState extends State<CustomMoodSelectorModal>
 
                 const SizedBox(height: 32),
 
-                // Mood Options
                 Wrap(
                   spacing: 20,
                   runSpacing: 20,

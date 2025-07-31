@@ -16,7 +16,6 @@ class SolarSystem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Solar system center (Sun)
         AnimatedBuilder(
           animation: fadeAnimation,
           builder: (context, child) {
@@ -30,9 +29,9 @@ class SolarSystem extends StatelessWidget {
                     shape: BoxShape.circle,
                     gradient: const RadialGradient(
                       colors: [
-                        Color(0xFFFFD700), // Gold center
-                        Color(0xFFFF8C00), // Orange
-                        Color(0xFFFF4500), // Red-orange edge
+Color(0xFFFFD700), 
+Color(0xFFFF8C00), 
+Color(0xFFFF4500), 
                       ],
                     ),
                     boxShadow: [
@@ -54,7 +53,6 @@ class SolarSystem extends StatelessWidget {
           },
         ),
 
-        // Orbiting planets (except Earth)
         AnimatedBuilder(
           animation: Listenable.merge([orbitController, fadeAnimation]),
           builder: (context, child) {
@@ -63,7 +61,6 @@ class SolarSystem extends StatelessWidget {
               child: Center(
                 child: Stack(
                   children: [
-                    // Venus orbit
                     _buildPlanet(
                       angle: orbitController.value * 2 * math.pi * 1.6,
                       distance: 120,
@@ -72,7 +69,6 @@ class SolarSystem extends StatelessWidget {
                       glowColor: const Color(0xFFFFC649),
                     ),
 
-                    // Mars orbit
                     _buildPlanet(
                       angle: orbitController.value * 2 * math.pi * 0.5,
                       distance: 280,
@@ -81,7 +77,6 @@ class SolarSystem extends StatelessWidget {
                       glowColor: const Color(0xFFCD5C5C),
                     ),
 
-                    // Jupiter orbit (distant)
                     _buildPlanet(
                       angle: orbitController.value * 2 * math.pi * 0.3,
                       distance: 360,

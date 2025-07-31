@@ -276,7 +276,6 @@ class _MapHeaderWidgetState extends State<MapHeaderWidget>
   }
 
   Widget _buildSearchResults() {
-    // This would be populated with actual search results
     return Container(
       constraints: const BoxConstraints(maxHeight: 200),
       decoration: BoxDecoration(
@@ -289,7 +288,7 @@ class _MapHeaderWidgetState extends State<MapHeaderWidget>
       ),
       child: ListView.builder(
         shrinkWrap: true,
-        itemCount: 3, // Example results
+itemCount: 3, 
         itemBuilder: (context, index) {
           final cities = ['New York', 'London', 'Tokyo'];
           return ListTile(

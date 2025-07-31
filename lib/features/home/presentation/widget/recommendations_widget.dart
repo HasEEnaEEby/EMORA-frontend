@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/recommendations_widget.dart
 import 'package:emora_mobile_app/features/home/data/mock_insights_data.dart';
 import 'package:emora_mobile_app/features/home/data/model/insights_models.dart';
 import 'package:flutter/material.dart';
@@ -73,7 +72,6 @@ class RecommendationsWidget extends StatelessWidget {
 
     final recommendations = <RecommendationItem>[];
     
-    // Generate recommendations based on analytics data
     final totalEntries = analyticsData!['totalEntries'] as int? ?? 0;
     final dominantEmotion = analyticsData!['dominantEmotion'] as String?;
     final moodTrend = analyticsData!['moodTrend'] as String?;

@@ -34,14 +34,12 @@ class _RegisterViewState extends State<RegisterView>
   bool _isCheckingUsername = false;
   Timer? _usernameDebounceTimer;
 
-  // Location data
   String? _currentLocation;
   double? _currentLatitude;
   double? _currentLongitude;
   bool _isLoadingLocation = true;
   bool _locationPermissionDenied = false;
 
-  // Animation controllers
   late AnimationController _slideController;
   late AnimationController _fadeController;
   late AnimationController _errorController;
@@ -50,13 +48,11 @@ class _RegisterViewState extends State<RegisterView>
   late Animation<Offset> _errorSlideAnimation;
   late Animation<double> _errorFadeAnimation;
 
-  // . Error handling state
   String? _currentError;
   String? _errorCode;
   bool _showError = false;
   Timer? _errorTimer;
 
-  // . Onboarding data extraction
   String? _pronouns;
   String? _ageGroup;
   String? _selectedAvatar;
@@ -74,7 +70,6 @@ class _RegisterViewState extends State<RegisterView>
     _initializeLocation();
     _usernameController.addListener(_onUsernameChanged);
 
-    // Start animations
     _slideController.forward();
     _fadeController.forward();
   }
@@ -112,7 +107,6 @@ void didChangeDependencies() {
       vsync: this,
     );
 
-    // . Error animation controller
     _errorController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -128,7 +122,6 @@ void didChangeDependencies() {
       end: 1.0,
     ).animate(CurvedAnimation(parent: _fadeController, curve: Curves.easeOut));
 
-    // . Error animations
     _errorSlideAnimation =
         Tween<Offset>(begin: const Offset(0, -1), end: Offset.zero).animate(
           CurvedAnimation(parent: _errorController, curve: Curves.easeOutBack),
@@ -140,9 +133,7 @@ void didChangeDependencies() {
     ).animate(CurvedAnimation(parent: _errorController, curve: Curves.easeOut));
   }
 
-  // . Show error with animation
   void _showErrorMessage(String message, String? errorCode) {
-    // Cancel any existing error timer
     _errorTimer?.cancel();
 
     setState(() {
@@ -153,7 +144,6 @@ void didChangeDependencies() {
 
     _errorController.forward();
 
-    // Auto-hide after 8 seconds
     _errorTimer = Timer(const Duration(seconds: 8), () {
       if (mounted) {
         _hideErrorMessage();
@@ -161,7 +151,6 @@ void didChangeDependencies() {
     });
   }
 
-  // . Hide error with animation
   void _hideErrorMessage() {
     _errorTimer?.cancel();
     _errorController.reverse().then((_) {
@@ -175,7 +164,6 @@ void didChangeDependencies() {
     });
   }
 
-  // . Get user-friendly error message
   String _getUserFriendlyErrorMessage(String message, String? errorCode) {
     switch (errorCode) {
       case 'EMAIL_EXISTS':
@@ -201,7 +189,6 @@ void didChangeDependencies() {
     }
   }
 
-  // . Get action button text based on error
   String _getErrorActionText(String? errorCode) {
     switch (errorCode) {
       case 'EMAIL_EXISTS':
@@ -215,7 +202,6 @@ void didChangeDependencies() {
     }
   }
 
-  // . Handle error action
   void _handleErrorAction(String? errorCode) {
     switch (errorCode) {
       case 'EMAIL_EXISTS':
@@ -230,7 +216,6 @@ void didChangeDependencies() {
         break;
       case 'NETWORK_ERROR':
         _hideErrorMessage();
-        // Optionally retry the registration
         break;
       default:
         _hideErrorMessage();
@@ -238,7 +223,6 @@ void didChangeDependencies() {
     }
   }
 
-  // . Error banner widget
   Widget _buildErrorBanner() {
     if (!_showError || _currentError == null) {
       return const SizedBox.shrink();
@@ -437,7 +421,6 @@ void _extractOnboardingData() {
     }
   }
 
-  // . Get final onboarding values
   Map<String, String?> _getFinalOnboardingValues() {
     if (!_hasCompletedOnboarding) {
       Logger.info('📝 User did not complete onboarding - using null values');
@@ -459,14 +442,12 @@ void _extractOnboardingData() {
     });
 
     try {
-      // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         _setDefaultLocation();
         return;
       }
 
-      // Check location permissions
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -481,13 +462,11 @@ void _extractOnboardingData() {
         return;
       }
 
-      // Get current position
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
         timeLimit: const Duration(seconds: 15),
       );
 
-      // Get address from coordinates
       await _getAddressFromCoordinates(position.latitude, position.longitude);
 
       if (mounted) {
@@ -572,13 +551,12 @@ void _extractOnboardingData() {
     final originalText = _usernameController.text;
     final normalizedText = _normalizeUsername(originalText);
 
-    // If the text is different from normalized, update the controller
     if (originalText != normalizedText && originalText.isNotEmpty) {
       _usernameController.value = _usernameController.value.copyWith(
         text: normalizedText,
         selection: TextSelection.collapsed(offset: normalizedText.length),
       );
-      return; // Exit early to avoid double processing
+return; 
     }
 
     _usernameDebounceTimer?.cancel();
@@ -614,22 +592,18 @@ void _extractOnboardingData() {
       return 'Password must be less than 128 characters';
     }
 
-    // Check for uppercase letter
     if (!value.contains(RegExp(r'[A-Z]'))) {
       return 'Password must contain at least one uppercase letter';
     }
 
-    // Check for lowercase letter
     if (!value.contains(RegExp(r'[a-z]'))) {
       return 'Password must contain at least one lowercase letter';
     }
 
-    // Check for number
     if (!value.contains(RegExp(r'[0-9]'))) {
       return 'Password must contain at least one number';
     }
 
-    // Check for special character
     if (!value.contains(RegExp(r'[!@#\$%^&*(),.?":{}|<>]'))) {
       return 'Password must contain at least one special character';
     }
@@ -637,9 +611,7 @@ void _extractOnboardingData() {
     return null;
   }
 
-  // . Registration handler with proper data extraction
   void _handleRegistration() async {
-    // Hide any existing errors
     if (_showError) {
       _hideErrorMessage();
     }
@@ -664,7 +636,7 @@ void _extractOnboardingData() {
       AuthRegister(
         username: normalizedUsername,
         password: _passwordController.text,
-        confirmPassword: _confirmPasswordController.text, // . Added confirmPassword
+confirmPassword: _confirmPasswordController.text, 
         email: _emailController.text.trim(),
         pronouns: finalValues['pronouns'],
         ageGroup: finalValues['ageGroup'],
@@ -698,7 +670,6 @@ void _extractOnboardingData() {
               Logger.info('. Registration successful, navigating to home');
               Navigator.pushReplacementNamed(context, AppRouter.home);
             } else if (state is AuthError) {
-              // . Enhanced error handling
               _showErrorMessage(state.message, state.errorCode);
             }
           },
@@ -719,7 +690,6 @@ void _extractOnboardingData() {
                       const SizedBox(height: 40),
                       _buildHeader(),
                       const SizedBox(height: 32),
-                      // . Error banner at the top
                       _buildErrorBanner(),
                       _buildLocationCard(),
                       const SizedBox(height: 24),
@@ -998,7 +968,6 @@ void _extractOnboardingData() {
   }
 
   Widget _buildOnboardingDataPreview() {
-    // Don't show if no onboarding data was completed
     if (!_hasCompletedOnboarding ||
         (_pronouns == null && _ageGroup == null && _selectedAvatar == null)) {
       return const SizedBox.shrink();

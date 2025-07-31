@@ -1,4 +1,3 @@
-// lib/features/auth/presentation/view_model/bloc/auth_state.dart
 import 'package:emora_mobile_app/features/auth/domain/entity/user_entity.dart';
 import 'package:equatable/equatable.dart';
 
@@ -10,7 +9,6 @@ abstract class AuthState extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Initial state when AuthBloc is first created
 class AuthInitial extends AuthState {
   const AuthInitial();
 
@@ -18,7 +16,6 @@ class AuthInitial extends AuthState {
   String toString() => 'AuthInitial()';
 }
 
-/// State when authentication operations are in progress
 class AuthLoading extends AuthState {
   final String? message;
 
@@ -31,7 +28,6 @@ class AuthLoading extends AuthState {
   String toString() => 'AuthLoading(message: $message)';
 }
 
-/// State when user is successfully authenticated
 class AuthAuthenticated extends AuthState {
   final UserEntity user;
   final String? token;
@@ -50,7 +46,6 @@ class AuthAuthenticated extends AuthState {
   String toString() => 'AuthAuthenticated(user: ${user.username})';
 }
 
-/// State when user is not authenticated
 class AuthUnauthenticated extends AuthState {
   final String? message;
 
@@ -63,7 +58,6 @@ class AuthUnauthenticated extends AuthState {
   String toString() => 'AuthUnauthenticated(message: $message)';
 }
 
-/// State when registration is successful but user might need email verification
 class AuthRegistrationSuccess extends AuthState {
   final UserEntity user;
   final String message;
@@ -82,7 +76,6 @@ class AuthRegistrationSuccess extends AuthState {
   String toString() => 'AuthRegistrationSuccess(user: ${user.username}, verificationRequired: $requiresEmailVerification)';
 }
 
-/// State when login is successful
 class AuthLoginSuccess extends AuthState {
   final UserEntity user;
   final String message;
@@ -101,7 +94,6 @@ class AuthLoginSuccess extends AuthState {
   String toString() => 'AuthLoginSuccess(user: ${user.username})';
 }
 
-/// State when checking username availability
 class AuthCheckingUsername extends AuthState {
   final String username;
 
@@ -114,7 +106,6 @@ class AuthCheckingUsername extends AuthState {
   String toString() => 'AuthCheckingUsername(username: $username)';
 }
 
-/// State when username availability check is complete
 class AuthUsernameChecked extends AuthState {
   final String username;
   final bool isAvailable;
@@ -135,7 +126,6 @@ class AuthUsernameChecked extends AuthState {
   String toString() => 'AuthUsernameChecked(username: $username, available: $isAvailable)';
 }
 
-/// State when user session has expired
 class AuthSessionExpired extends AuthState {
   final String message;
 
@@ -150,7 +140,6 @@ class AuthSessionExpired extends AuthState {
   String toString() => 'AuthSessionExpired(message: $message)';
 }
 
-/// State when password reset email has been sent
 class AuthPasswordResetSent extends AuthState {
   final String email;
   final String message;
@@ -167,7 +156,6 @@ class AuthPasswordResetSent extends AuthState {
   String toString() => 'AuthPasswordResetSent(email: $email)';
 }
 
-/// State when password has been successfully reset
 class AuthPasswordResetSuccess extends AuthState {
   final String message;
 
@@ -182,7 +170,6 @@ class AuthPasswordResetSuccess extends AuthState {
   String toString() => 'AuthPasswordResetSuccess(message: $message)';
 }
 
-/// State when password has been successfully changed
 class AuthPasswordChanged extends AuthState {
   final String message;
 
@@ -197,7 +184,6 @@ class AuthPasswordChanged extends AuthState {
   String toString() => 'AuthPasswordChanged(message: $message)';
 }
 
-/// State when email verification is sent
 class AuthEmailVerificationSent extends AuthState {
   final String email;
   final String message;
@@ -214,7 +200,6 @@ class AuthEmailVerificationSent extends AuthState {
   String toString() => 'AuthEmailVerificationSent(email: $email)';
 }
 
-/// State when email has been successfully verified
 class AuthEmailVerified extends AuthState {
   final UserEntity user;
   final String message;
@@ -231,7 +216,6 @@ class AuthEmailVerified extends AuthState {
   String toString() => 'AuthEmailVerified(user: ${user.username})';
 }
 
-/// State when two-factor authentication is required
 class AuthTwoFactorRequired extends AuthState {
   final String sessionToken;
   final String message;
@@ -248,7 +232,6 @@ class AuthTwoFactorRequired extends AuthState {
   String toString() => 'AuthTwoFactorRequired()';
 }
 
-/// State when two-factor authentication is successfully verified
 class AuthTwoFactorVerified extends AuthState {
   final UserEntity user;
   final String message;
@@ -265,7 +248,6 @@ class AuthTwoFactorVerified extends AuthState {
   String toString() => 'AuthTwoFactorVerified(user: ${user.username})';
 }
 
-/// State when two-factor authentication has been enabled/disabled
 class AuthTwoFactorToggled extends AuthState {
   final bool enabled;
   final String message;
@@ -284,7 +266,6 @@ class AuthTwoFactorToggled extends AuthState {
   String toString() => 'AuthTwoFactorToggled(enabled: $enabled)';
 }
 
-/// State when account deletion is in progress
 class AuthAccountDeleting extends AuthState {
   final String message;
 
@@ -299,7 +280,6 @@ class AuthAccountDeleting extends AuthState {
   String toString() => 'AuthAccountDeleting(message: $message)';
 }
 
-/// State when account has been successfully deleted
 class AuthAccountDeleted extends AuthState {
   final String message;
 
@@ -314,7 +294,6 @@ class AuthAccountDeleted extends AuthState {
   String toString() => 'AuthAccountDeleted(message: $message)';
 }
 
-/// State when authentication token is being refreshed
 class AuthTokenRefreshing extends AuthState {
   const AuthTokenRefreshing();
 
@@ -322,7 +301,6 @@ class AuthTokenRefreshing extends AuthState {
   String toString() => 'AuthTokenRefreshing()';
 }
 
-/// State when authentication token has been successfully refreshed
 class AuthTokenRefreshed extends AuthState {
   final String token;
   final DateTime expiresAt;
@@ -339,7 +317,6 @@ class AuthTokenRefreshed extends AuthState {
   String toString() => 'AuthTokenRefreshed(expiresAt: $expiresAt)';
 }
 
-/// State when there's an authentication error
 class AuthError extends AuthState {
   final String message;
   final String? errorCode;
@@ -359,7 +336,6 @@ class AuthError extends AuthState {
   @override
   String toString() => 'AuthError(message: $message, type: $type, code: $errorCode)';
 
-  /// Named constructors for common error types
   const AuthError.invalidCredentials({
     this.message = 'Invalid username or password. Please try again.',
     this.errorCode = 'INVALID_CREDENTIALS',
@@ -427,7 +403,6 @@ class AuthError extends AuthState {
   }) : type = AuthErrorType.twoFactorInvalid;
 }
 
-/// Enum for different types of authentication errors
 enum AuthErrorType {
   general,
   invalidCredentials,

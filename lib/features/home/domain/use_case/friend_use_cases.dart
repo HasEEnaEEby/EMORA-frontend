@@ -5,9 +5,6 @@ import 'package:emora_mobile_app/core/use_case/use_case.dart';
 import '../entity/friend_entity.dart';
 import '../repository/friend_repository.dart';
 
-// ============================================================================
-// SEARCH USERS USE CASE
-// ============================================================================
 class SearchUsersParams {
   final String query;
   final int page;
@@ -35,9 +32,6 @@ class SearchUsers implements UseCase<Map<String, dynamic>, SearchUsersParams> {
   }
 }
 
-// ============================================================================
-// SEARCH ALL USERS USE CASE
-// ============================================================================
 class SearchAllUsersParams {
   final String query;
   final int page;
@@ -65,9 +59,6 @@ class SearchAllUsers implements UseCase<Map<String, dynamic>, SearchAllUsersPara
   }
 }
 
-// ============================================================================
-// SEND FRIEND REQUEST USE CASE
-// ============================================================================
 class SendFriendRequestParams {
   final String userId;
 
@@ -85,12 +76,9 @@ class SendFriendRequest implements UseCase<bool, SendFriendRequestParams> {
   }
 }
 
-// ============================================================================
-// RESPOND TO FRIEND REQUEST USE CASE
-// ============================================================================
 class RespondToFriendRequestParams {
   final String requestUserId;
-  final String action; // 'accept' or 'reject'
+final String action; 
 
   const RespondToFriendRequestParams({
     required this.requestUserId,
@@ -112,9 +100,6 @@ class RespondToFriendRequest implements UseCase<bool, RespondToFriendRequestPara
   }
 }
 
-// ============================================================================
-// GET FRIENDS USE CASE
-// ============================================================================
 class GetFriendsParams {
   final int page;
   final int limit;
@@ -139,9 +124,6 @@ class GetFriends implements UseCase<List<FriendEntity>, GetFriendsParams> {
   }
 }
 
-// ============================================================================
-// GET PENDING REQUESTS USE CASE
-// ============================================================================
 class GetPendingRequests implements UseCase<Map<String, List<FriendRequestEntity>>, NoParams> {
   final FriendRepository repository;
 
@@ -153,9 +135,6 @@ class GetPendingRequests implements UseCase<Map<String, List<FriendRequestEntity
   }
 }
 
-// ============================================================================
-// REMOVE FRIEND USE CASE
-// ============================================================================
 class RemoveFriendParams {
   final String friendUserId;
 
@@ -173,9 +152,6 @@ class RemoveFriend implements UseCase<bool, RemoveFriendParams> {
   }
 }
 
-// ============================================================================
-// CANCEL FRIEND REQUEST USE CASE
-// ============================================================================
 class CancelFriendRequestParams {
   final String userId;
 
@@ -193,9 +169,6 @@ class CancelFriendRequest implements UseCase<bool, CancelFriendRequestParams> {
   }
 }
 
-// ============================================================================
-// GET FRIEND SUGGESTIONS USE CASE
-// ============================================================================
 class GetFriendSuggestionsParams {
   final int limit;
 

@@ -137,7 +137,6 @@ class _EnhancedStatsWidgetState extends State<EnhancedStatsWidget> {
   }
 
   Widget _buildStatsGrid() {
-    // Use backend data when available, fallback to calculated values
     final totalLogs = _statsData?['totalEntries'] ?? widget.emotionEntries.length;
     final currentStreak = _statsData?['currentStreak'] ?? _calculateCurrentStreak();
     final averageMood = _statsData?['averageIntensity']?.toStringAsFixed(1) ?? _calculateAverageMood().toStringAsFixed(1);
@@ -145,7 +144,6 @@ class _EnhancedStatsWidgetState extends State<EnhancedStatsWidget> {
     Logger.info('. Stats Data: $_statsData');
     Logger.info('. Total Logs: $totalLogs, Current Streak: $currentStreak, Average Mood: $averageMood');
 
-    // Ensure we have valid data to display
     if (totalLogs == 0 && widget.emotionEntries.isEmpty) {
       return _buildEmptyState();
     }
@@ -156,7 +154,7 @@ class _EnhancedStatsWidgetState extends State<EnhancedStatsWidget> {
       mainAxisSpacing: 8,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.2, // More compact aspect ratio
+childAspectRatio: 1.2, 
       children: [
         _buildStatCard(
           icon: Icons.timeline,
@@ -280,14 +278,13 @@ class _EnhancedStatsWidgetState extends State<EnhancedStatsWidget> {
     );
   }
 
-  // Helper methods to calculate statistics from emotion entries
   int _calculateCurrentStreak() {
     if (widget.emotionEntries.isEmpty) return 0;
     
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final sortedEntries = List<EmotionEntryModel>.from(widget.emotionEntries)
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt)); // Sort descending
+..sort((a, b) => b.createdAt.compareTo(a.createdAt)); 
     
     int streak = 0;
     DateTime currentDate = today;

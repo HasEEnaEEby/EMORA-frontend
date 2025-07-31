@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/dialogs/enhanced_theme_selector_dialog.dart
 import 'dart:math' as math;
 
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
@@ -10,17 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Enhanced theme selection dialog with cool animations and backend integration
-///
-/// Features:
-/// - Glassmorphic design with blur effects
-/// - Smooth animations and particle effects
-/// - Real-time theme preview
-/// - Backend integration for theme persistence
-/// - Haptic feedback and sound effects
-/// - Color gradient animations
 class ThemeSelectorDialog {
-  /// Shows the enhanced theme selector dialog
   static void show(
     BuildContext context,
     String selectedTheme,
@@ -35,7 +24,6 @@ class ThemeSelectorDialog {
     );
   }
 
-  /// Shows theme preview dialog with particle effects
   static void showThemePreview(
     BuildContext context,
     Map<String, dynamic> theme,
@@ -80,7 +68,6 @@ class ThemeSelectorDialog {
             ),
             child: Stack(
               children: [
-                // Animated particles
                 ...List.generate(
                   5,
                   (index) => TweenAnimationBuilder<double>(
@@ -105,7 +92,6 @@ class ThemeSelectorDialog {
                   ),
                 ),
 
-                // Theme icon
                 Center(
                   child: TweenAnimationBuilder<double>(
                     duration: const Duration(milliseconds: 800),
@@ -189,7 +175,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
       vsync: this,
     );
 
-    // Start particle animation
     _particleController.repeat();
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -401,7 +386,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
       child: Column(
         children: [
-          // Animated handle bar
           TweenAnimationBuilder<double>(
             duration: const Duration(milliseconds: 600),
             tween: Tween(begin: 0.0, end: 1.0),
@@ -423,10 +407,8 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
           ),
           const SizedBox(height: 24),
 
-          // Enhanced header content
           Row(
             children: [
-              // Animated icon container
               TweenAnimationBuilder<double>(
                 duration: const Duration(milliseconds: 1000),
                 tween: Tween(begin: 0.0, end: 1.0),
@@ -468,7 +450,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Animated title
                     TweenAnimationBuilder<double>(
                       duration: const Duration(milliseconds: 800),
                       tween: Tween(begin: 0.0, end: 1.0),
@@ -504,7 +485,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
                 ),
               ),
 
-              // Enhanced close button
               CupertinoButton(
                 padding: EdgeInsets.zero,
                 onPressed: () => Navigator.pop(context),
@@ -604,7 +584,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
             : Matrix4.identity(),
         child: Stack(
           children: [
-            // Animated background particles
             if (isSelected)
               ...List.generate(
                 3,
@@ -627,13 +606,11 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
                 ),
               ),
 
-            // Main content
             Container(
               padding: const EdgeInsets.all(20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Enhanced theme icon
                   TweenAnimationBuilder<double>(
                     duration: const Duration(milliseconds: 800),
                     tween: Tween(begin: 0.0, end: isSelected ? 1.2 : 0.8),
@@ -676,7 +653,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
                     },
                   ),
 
-                  // Enhanced theme info
                   Column(
                     children: [
                       Text(
@@ -704,7 +680,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 6),
-                      // Mood indicator
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -726,7 +701,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
                     ],
                   ),
 
-                  // Enhanced selection indicator
                   AnimatedContainer(
                     duration: const Duration(milliseconds: 300),
                     width: isSelected ? 50 : 0,
@@ -776,7 +750,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
       ),
       child: Row(
         children: [
-          // Enhanced preview info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -830,7 +803,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
             ),
           ),
 
-          // Enhanced apply button
           TweenAnimationBuilder<double>(
             duration: const Duration(milliseconds: 600),
             tween: Tween(begin: 0.0, end: 1.0),
@@ -946,11 +918,9 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
     });
 
     try {
-      // Update preferences via ProfileBloc
       if (mounted) {
         final profileBloc = context.read<ProfileBloc>();
 
-        // Get current preferences and update theme
         final currentState = profileBloc.state;
         if (currentState is ProfileLoaded) {
           final updatedPreferences = {
@@ -958,7 +928,7 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
                 currentState.preferences?.notificationsEnabled ?? true,
             'sharingEnabled': currentState.preferences?.sharingEnabled ?? false,
             'language': currentState.preferences?.language ?? 'English',
-            'theme': _currentSelection, // Apply new theme
+'theme': _currentSelection, 
             'darkModeEnabled':
                 currentState.preferences?.darkModeEnabled ?? true,
             'privacySettings': {
@@ -975,18 +945,14 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
             'customSettings': currentState.preferences?.customSettings ?? {},
           };
 
-          // Dispatch update event - Using correct event class
           profileBloc.add(UpdatePreferences(preferences: updatedPreferences));
 
-          // Wait for update to complete
           await Future.delayed(const Duration(milliseconds: 500));
 
-          // Close dialog and trigger callback
           if (mounted) {
             Navigator.pop(context);
             widget.onThemeChanged(_currentSelection);
 
-            // Show success with enhanced feedback
             HapticFeedback.lightImpact();
 
             final theme = _themes.firstWhere(
@@ -1000,7 +966,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
             );
           }
         } else {
-          // Handle case where ProfileLoaded state is not available
           if (mounted) {
             Navigator.pop(context);
             widget.onThemeChanged(_currentSelection);
@@ -1018,7 +983,6 @@ class _ThemeSelectorContentState extends State<_ThemeSelectorContent>
         }
       }
     } catch (e) {
-      // Fallback success message
       if (mounted) {
         Navigator.pop(context);
         widget.onThemeChanged(_currentSelection);

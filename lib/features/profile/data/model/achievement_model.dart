@@ -27,7 +27,6 @@ class AchievementModel {
     this.rarity = 'common',
   });
 
-  // FIXED: Remove null-aware operators where not needed
   factory AchievementModel.fromJson(Map<String, dynamic> json) {
     try {
       return AchievementModel(
@@ -66,7 +65,6 @@ class AchievementModel {
     }
   }
 
-  // FIXED: Remove null-aware operators and make safe
   static String _safeString(dynamic value) {
     if (value == null) return '';
     return value.toString();
@@ -112,7 +110,6 @@ class AchievementModel {
     };
   }
 
-  // FIXED: Correct mapping for entity conversion
   AchievementEntity toEntity() {
     return AchievementEntity(
       id: id,

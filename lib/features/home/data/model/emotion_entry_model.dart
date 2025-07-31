@@ -1,4 +1,3 @@
-// lib/features/home/data/model/enhanced_emotion_entry_model.dart
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -69,7 +68,6 @@ class EmotionEntryModel extends Equatable {
     metadata,
   ];
 
-  // Helper getters
   String get formattedTime => DateFormat('HH:mm').format(createdAt.toLocal());
   String get formattedDate => DateFormat('MMM dd, yyyy').format(createdAt.toLocal());
   String get formattedDateTime => DateFormat('MMM dd, yyyy HH:mm').format(createdAt.toLocal());
@@ -192,7 +190,7 @@ class EmotionEntryModel extends Equatable {
       case 'enthusiasm':
       case 'serenity':
       case 'bliss':
-        return const Color(0xFF4CAF50); // Green for positive
+return const Color(0xFF4CAF50); 
       case 'sadness':
       case 'anger':
       case 'fear':
@@ -205,7 +203,7 @@ class EmotionEntryModel extends Equatable {
       case 'shame':
       case 'jealousy':
       case 'regret':
-        return const Color(0xFFFF6B6B); // Red for negative
+return const Color(0xFFFF6B6B); 
       case 'calm':
       case 'peaceful':
       case 'neutral':
@@ -216,9 +214,9 @@ class EmotionEntryModel extends Equatable {
       case 'reflective':
       case 'alert':
       case 'balanced':
-        return const Color(0xFFFFD700); // Yellow for neutral
+return const Color(0xFFFFD700); 
       default:
-        return const Color(0xFF8B5CF6); // Purple for unknown
+return const Color(0xFF8B5CF6); 
     }
   }
 
@@ -246,7 +244,6 @@ class EmotionEntryModel extends Equatable {
     return neutralEmotions.contains(emotion.toLowerCase());
   }
 
-  // Factory constructor from JSON (backend format)
   factory EmotionEntryModel.fromJson(Map<String, dynamic> json) {
     return EmotionEntryModel(
       id: json['id'] ?? json['_id'] ?? '',
@@ -279,7 +276,6 @@ class EmotionEntryModel extends Equatable {
     );
   }
 
-  // Convert to JSON for backend
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -304,7 +300,6 @@ class EmotionEntryModel extends Equatable {
     };
   }
 
-  // Copy with method
 EmotionEntryModel copyWith({
     String? id,
     String? userId,
@@ -363,7 +358,6 @@ EmotionEntryModel copyWith({
   }
 }
 
-// Enhanced Emotion Card Widget
 class EnhancedEmotionCard extends StatelessWidget {
   final EmotionEntryModel emotion;
   final VoidCallback? onTap;
@@ -673,7 +667,6 @@ class EnhancedEmotionCard extends StatelessWidget {
   }
 }
 
-// Enhanced Today's Journey Widget
 class EnhancedTodaysJourneyWidget extends StatelessWidget {
   final List<EmotionEntryModel> todaysEmotions;
   final Function(EmotionEntryModel)? onEmotionTap;
@@ -773,7 +766,6 @@ class EnhancedTodaysJourneyWidget extends StatelessWidget {
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Timeline indicator
             Column(
               children: [
                 Container(
@@ -794,7 +786,6 @@ class EnhancedTodaysJourneyWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(width: 16),
-            // Emotion content
             Expanded(
               child: GestureDetector(
                 onTap: () => onEmotionTap?.call(emotion),
@@ -918,7 +909,6 @@ class EnhancedTodaysJourneyWidget extends StatelessWidget {
   }
 }
 
-// String extension for capitalize
 extension StringCapitalization on String {
   String capitalize() {
     if (isEmpty) return this;

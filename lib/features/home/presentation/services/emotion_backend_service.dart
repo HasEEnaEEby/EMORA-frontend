@@ -7,7 +7,6 @@ class EmotionBackendService {
 
   const EmotionBackendService(this.dioClient);
 
-  /// Log a new emotion to the backend
   Future<Map<String, dynamic>> logEmotion({
     required String userId,
     required String emotion,
@@ -21,7 +20,6 @@ class EmotionBackendService {
     try {
       Logger.info('🎭 Logging emotion: $emotion with intensity: $intensity');
 
-      // FIX: Use emotionData parameter that matches DioClient signature
       final emotionData = {
         'emotion': emotion,
         'intensity': intensity,
@@ -43,11 +41,10 @@ class EmotionBackendService {
         intensity: intensity,
         context: context != null
             ? {'trigger': context}
-            : null, // FIX: Convert to Map
+: null, 
         memory: memory != null
             ? {'description': memory, 'isPrivate': true}
-            : null, // FIX: Convert to Map
-        // FIX: Remove individual latitude/longitude, use emotionData instead
+: null, 
         emotionData: emotionData,
       );
 
@@ -73,7 +70,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Get emotion feed from the backend
   Future<List<Map<String, dynamic>>> getEmotionFeed({
     int limit = 20,
     int offset = 0,
@@ -89,7 +85,6 @@ class EmotionBackendService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        // Backend returns: { success: true, message: "...", data: emotionsArray, meta: pagination }
         final emotions = data['data'] ?? [];
 
         return List<Map<String, dynamic>>.from(
@@ -109,7 +104,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Get global emotion statistics
   Future<Map<String, dynamic>> getGlobalEmotionStats({
     String timeframe = '24h',
   }) async {
@@ -146,7 +140,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Get global emotion heatmap data
   Future<Map<String, dynamic>> getGlobalHeatmap() async {
     try {
       Logger.info('🗺️ Fetching global emotion heatmap...');
@@ -183,7 +176,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Check backend connectivity
   Future<bool> checkBackendHealth() async {
     try {
       Logger.info('. Checking backend health...');
@@ -201,7 +193,6 @@ class EmotionBackendService {
     }
   }
 
-  // Private helper methods
   Map<String, dynamic> _normalizeEmotionData(Map<String, dynamic> emotion) {
     return {
       'id': emotion['_id'] ?? emotion['id'],
@@ -216,7 +207,6 @@ class EmotionBackendService {
   }
 
   Map<String, dynamic> _normalizeLocationData(Map<String, dynamic> location) {
-    // Safely extract coordinates
     double latitude = 0.0;
     double longitude = 0.0;
     
@@ -225,7 +215,6 @@ class EmotionBackendService {
       if (locationData is Map) {
         final coordinates = locationData['coordinates'];
         if (coordinates is List && coordinates.length >= 2) {
-          // Handle both string and integer indices
           final lat = coordinates[1];
           final lng = coordinates[0];
           
@@ -249,7 +238,6 @@ class EmotionBackendService {
     };
   }
 
-  // Fallback data for development mode
   Map<String, dynamic> _getFallbackEmotionResponse(
     String emotion,
     double intensity,

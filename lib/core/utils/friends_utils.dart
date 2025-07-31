@@ -200,7 +200,6 @@ class FriendsUtils {
             duration: const Duration(milliseconds: 1000),
             child: Stack(
               children: [
-                // Celebration particles effect
                 ...List.generate(20, (index) => Positioned(
                   left: MediaQuery.of(context).size.width * (index * 0.05),
                   top: MediaQuery.of(context).size.height * 0.3 + (index * 20),
@@ -222,7 +221,6 @@ class FriendsUtils {
                   ),
                 )),
                 
-                // Central celebration message
                 Center(
                   child: TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0.0, end: 1.0),
@@ -272,7 +270,6 @@ class FriendsUtils {
     
     overlay.insert(overlayEntry);
     
-    // Remove after animation
     Future.delayed(const Duration(milliseconds: 2000), () {
       if (overlayEntry.mounted) {
         overlayEntry.remove();

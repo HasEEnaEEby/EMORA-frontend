@@ -1,4 +1,3 @@
-// lib/core/network/api_service.dart - Fixed with PATCH method
 import 'dart:async';
 import 'dart:convert';
 
@@ -11,27 +10,22 @@ class ApiService {
   late Dio _dio;
   String? _authToken;
 
-  // Cache for ongoing requests to prevent duplicates
   static final Map<String, Future<Response>> _ongoingRequests = {};
 
-  // Cache for completed requests
   static final Map<String, CachedResponse> _responseCache = {};
 
-  // Default cache duration
   static const Duration _defaultCacheDuration = Duration(minutes: 2);
 
   ApiService({required Dio dio}) {
     _dio = dio;
     _setupInterceptors();
     
-    // . UPDATED: Optimized timeout configuration
     _dio.options.connectTimeout = Duration(seconds: 10);
-    _dio.options.receiveTimeout = Duration(seconds: 45); // Increased for friend requests
+_dio.options.receiveTimeout = Duration(seconds: 45); 
     _dio.options.sendTimeout = Duration(seconds: 30);
   }
 
   void _setupInterceptors() {
-    // Add interceptors
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -60,7 +54,6 @@ class ApiService {
           Logger.error('. API Error: ${error.requestOptions.path}', error);
 
           if (error.response?.statusCode == 401) {
-            // Token expired or invalid
             _authToken = null;
             Logger.warning('🔑 Token expired, user needs to re-authenticate');
           }
@@ -90,7 +83,6 @@ class ApiService {
       Logger.info('. Profile data received successfully');
       Logger.info('📊 Profile response structure: ${data.keys}');
       
-      // Log the actual data structure for debugging
       if (data['data'] != null) {
         final profileData = data['data'] as Map<String, dynamic>;
         Logger.info('📊 Profile data keys: ${profileData.keys}');
@@ -107,7 +99,6 @@ class ApiService {
     }
   }
 
-  /// Update user profile
   Future<Map<String, dynamic>> updateUserProfile(
     Map<String, dynamic> profileData,
   ) async {
@@ -124,14 +115,12 @@ class ApiService {
     }
   }
 
-  /// Update user preferences - CRITICAL: This matches your backend endpoint
   Future<Map<String, dynamic>> updateUserPreferences(
     Map<String, dynamic> preferences,
   ) async {
     try {
       Logger.info('⚙️ Updating user preferences...', preferences);
 
-      // Use PUT method as per your backend route
       final data = await putData('/api/user/preferences', data: preferences);
 
       Logger.info('. Preferences updated successfully');
@@ -178,7 +167,6 @@ class ApiService {
     return '$method:$path?$paramString';
   }
 
-  /// Export user data
   Future<Map<String, dynamic>> exportUserData([List<String>? dataTypes]) async {
     try {
       Logger.info('📤 Exporting user data...', {'dataTypes': dataTypes});
@@ -198,28 +186,23 @@ class ApiService {
     }
   }
 
-  /// Logout user - CRITICAL: This calls your backend logout endpoint
   Future<Map<String, dynamic>> logoutUser() async {
     try {
       Logger.info('🚪 Logging out user...');
 
-      // Send empty JSON object to satisfy the backend's JSON validation
       final data = await postData('/api/auth/logout', data: {});
 
-      // Clear the auth token after successful logout
       clearAuthToken();
 
       Logger.info('. User logged out successfully');
       return data;
     } catch (e) {
       Logger.error('. Logout failed', e);
-      // Even if logout fails on server, clear local token
       clearAuthToken();
       rethrow;
     }
   }
 
-  /// GET request with proper response handling and data extraction
   Future<Map<String, dynamic>> getData(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -239,7 +222,6 @@ class ApiService {
     }
   }
 
-  /// POST request with proper response handling and data extraction
   Future<Map<String, dynamic>> postData(
     String path, {
     dynamic data,
@@ -257,7 +239,6 @@ class ApiService {
     }
   }
 
-  /// PUT request with proper response handling and data extraction
   Future<Map<String, dynamic>> putData(
     String path, {
     dynamic data,
@@ -275,7 +256,6 @@ class ApiService {
     }
   }
 
-  /// PATCH request with proper response handling and data extraction
   Future<Map<String, dynamic>> patchData(
     String path, {
     dynamic data,
@@ -293,7 +273,6 @@ class ApiService {
     }
   }
 
-  /// DELETE request with proper response handling and data extraction
   Future<Map<String, dynamic>> deleteData(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -306,9 +285,7 @@ class ApiService {
     }
   }
 
-  // RAW HTTP METHODS (return Response objects directly)
 
-  /// Raw GET request (returns Response directly)
   Future<Response> get(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -324,7 +301,6 @@ class ApiService {
     );
   }
 
-  /// Raw POST request (returns Response directly)
   Future<Response> post(
     String path, {
     dynamic data,
@@ -338,7 +314,6 @@ class ApiService {
     );
   }
 
-  /// Raw PUT request (returns Response directly)
   Future<Response> put(
     String path, {
     dynamic data,
@@ -352,7 +327,6 @@ class ApiService {
     );
   }
 
-  /// Raw PATCH request (returns Response directly) - ADDED THIS METHOD
   Future<Response> patch(
     String path, {
     dynamic data,
@@ -366,7 +340,6 @@ class ApiService {
     );
   }
 
-  /// Raw DELETE request (returns Response directly)
   Future<Response> delete(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -384,7 +357,6 @@ class ApiService {
   }) async {
     final cacheKey = _generateCacheKey(method, path, queryParameters);
 
-    // Check cache first (unless force refresh or not GET request)
     if (method.toUpperCase() == 'GET' &&
         !forceRefresh &&
         _responseCache.containsKey(cacheKey)) {
@@ -395,36 +367,28 @@ class ApiService {
         Logger.info('📱 Using cached response for: $path');
         return cached.response;
       } else {
-        // Remove expired cache
         _responseCache.remove(cacheKey);
       }
     }
 
-    // Check if request is already in progress
     if (_ongoingRequests.containsKey(cacheKey)) {
       Logger.info('🔄 Request already in progress for: $path');
       return await _ongoingRequests[cacheKey]!;
     }
 
-    // . REMOVED: Mock fallback logic that was intercepting real errors
-    // Real authentication errors must propagate to the auth layer
 
-    // Make new request
     final requestFuture = _performRequest(method, path, queryParameters, data);
     _ongoingRequests[cacheKey] = requestFuture;
 
     try {
       final response = await requestFuture;
 
-      // Cache successful GET responses
       if (method.toUpperCase() == 'GET' && response.statusCode == 200) {
         _responseCache[cacheKey] = CachedResponse(response, DateTime.now());
       }
 
       return response;
     } catch (e) {
-      // . CRITICAL FIX: Always propagate real errors to auth layer
-      // No more mock fallback that hides 401 authentication errors
       rethrow;
     } finally {
       _ongoingRequests.remove(cacheKey);
@@ -452,7 +416,7 @@ class ApiService {
           data: data,
           queryParameters: queryParameters,
         );
-      case 'PATCH': // ADDED PATCH SUPPORT
+case 'PATCH': 
         return await _dio.patch(
           path,
           data: data,
@@ -466,8 +430,6 @@ class ApiService {
   }
 
   bool _shouldMockEndpoint(String path) {
-    // . CRITICAL FIX: Never mock authentication registration or login
-    // These must show real errors to users for proper UX
     final criticalEndpoints = [
       '/api/auth/register',
       '/api/auth/login', 
@@ -476,7 +438,6 @@ class ApiService {
       '/onboarding/register',
     ];
     
-    // If it's a critical auth endpoint, never mock it
     if (criticalEndpoints.any((endpoint) => path.contains(endpoint))) {
       return false;
     }
@@ -486,17 +447,9 @@ class ApiService {
       '/onboarding/steps',
       '/onboarding/user-data',
       '/onboarding/complete',
-      // . CRITICAL: Remove profile endpoints from mock list
-      // '/api/user/profile', 
-      // '/api/user/preferences', 
       '/api/user/achievements', 
       '/api/user/export-data', 
       '/api/health',
-      // . CRITICAL: NEVER mock these endpoints - they must use real database data
-      // '/api/user/home-data',
-      // '/api/user/statistics', 
-      // '/api/emotions/global-stats',
-      // '/api/emotions/insights',
     ];
 
     return mockEndpoints.any((endpoint) => path.contains(endpoint));
@@ -506,7 +459,6 @@ class ApiService {
     Map<String, dynamic> mockData = {};
 
     try {
-      // . CRITICAL: Remove profile mock data - always use real API calls
       if (path.contains('/api/user/achievements')) {
         mockData = {
           'status': 'success',
@@ -550,11 +502,9 @@ class ApiService {
           },
         };
       } else if (path.contains('/onboarding/check-username')) {
-        // Extract username from path
         final usernameMatch = RegExp(r'/onboarding/check-username/(.+)').firstMatch(path);
         final username = usernameMatch?.group(1) ?? 'unknown';
         
-        // Check if username is in reserved list or matches common test patterns
         final reservedUsernames = [
           'admin', 'administrator', 'root', 'moderator', 'support', 'help',
           'api', 'www', 'mail', 'email', 'system', 'service', 'emora',
@@ -581,7 +531,6 @@ class ApiService {
           },
         };
       } else {
-        // Call existing mock logic for other endpoints
         mockData = {
           'status': 'success',
           'message': 'Mock response for development',
@@ -626,7 +575,6 @@ class ApiService {
     );
   }
 
-  // Get cache statistics
   Map<String, int> getCacheStats() {
     return {
       'cachedResponses': _responseCache.length,
@@ -634,7 +582,6 @@ class ApiService {
     };
   }
 
-  /// 🔧 NEW: Get user's emotion entries for stats calculation
   Future<Map<String, dynamic>> getUserEmotionEntries(String userId) async {
     try {
       final response = await _dio.get(
@@ -652,7 +599,6 @@ class ApiService {
     }
   }
 
-  /// 🔧 NEW: Get user's friends for stats calculation
   Future<Map<String, dynamic>> getUserFriends(String userId) async {
     try {
       final response = await _dio.get(
@@ -669,7 +615,6 @@ class ApiService {
     }
   }
 
-  /// 🔧 NEW: Get support given by user for stats calculation
   Future<Map<String, dynamic>> getUserSupportGiven(String userId) async {
     try {
       final response = await _dio.get(
@@ -689,7 +634,6 @@ class ApiService {
     }
   }
 
-  /// 🔧 NEW: Get comprehensive user stats in a single call
   Future<Map<String, dynamic>> getUserComprehensiveStats(String userId) async {
     try {
       final response = await _dio.get(
@@ -715,18 +659,15 @@ class ApiService {
     }
   }
 
-  /// 🔧 NEW: Get user profile with comprehensive stats
   Future<Map<String, dynamic>> getUserProfileWithStats() async {
     try {
       Logger.info('🔄 Fetching user profile with stats from backend...');
 
-      // Use the same endpoint as getUserProfile since the backend already includes stats
       final data = await getData('/api/user/profile', forceRefresh: true);
 
       Logger.info('✅ Profile with stats data received successfully');
       Logger.info('📊 Full response structure: ${data.keys}');
       
-      // Log the stats data for debugging
       if (data['data'] != null) {
         final profileData = data['data'] as Map<String, dynamic>;
         Logger.info('📊 Profile data keys: ${profileData.keys}');
@@ -749,7 +690,6 @@ class ApiService {
     }
   }
 
-  /// 🔧 NEW: Get comprehensive user stats
   Future<Map<String, dynamic>> getComprehensiveStats() async {
     try {
       Logger.info('🔄 Fetching comprehensive stats from backend...');

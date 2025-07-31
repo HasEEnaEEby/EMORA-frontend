@@ -1,17 +1,12 @@
-// lib/core/constants/backend_mapping.dart
-// FIXED: Aligned with backend model schema
 
 class BackendValues {
-  // FIXED: Backend expects these exact age group values (from user.model.js)
   static const Map<String, String> _frontendToBackendAgeMapping = {
-    // Frontend display values -> Backend database values
     'less than 20s': 'Under 18',
     '20s': '18-24',
     '30s': '25-34',
     '40s': '35-44',
     '50s and above': '45-54',
 
-    // Additional mappings for edge cases
     'Under 18': 'Under 18',
     '18-24': '18-24',
     '25-34': '25-34',
@@ -20,100 +15,89 @@ class BackendValues {
     '55-64': '55-64',
     '65+': '65+',
 
-    // Legacy mappings (if any old data exists)
     'Under 25': '18-24',
-    '55+': '55-64', // Map old 55+ to 55-64
+'55+': '55-64', 
   };
 
-  // Reverse mapping for displaying backend values
   static const Map<String, String> _backendToFrontendAgeMapping = {
     'Under 18': 'less than 20s',
     '18-24': '20s',
     '25-34': '30s',
     '35-44': '40s',
     '45-54': '50s and above',
-    '55-64': '50s and above', // Group both 45-54 and 55-64 as "50s and above"
-    '65+': '50s and above', // Group 65+ also as "50s and above"
+'55-64': '50s and above', 
+'65+': '50s and above', 
   };
 
-  // . FIXED: Backend expects pronouns with spaces (from user.model.js)
   static const Map<String, String> _pronounMapping = {
     'She / Her': 'She / Her',
     'He / Him': 'He / Him', 
     'They / Them': 'They / Them',
     'Other': 'Other',
-    // Legacy mappings for migration (old format -> new format)
     'she/her': 'She / Her',
     'he/him': 'He / Him',
     'they/them': 'They / Them',
     'other': 'Other',
   };
 
-  // FIXED: All valid avatars from backend model
   static const Map<String, String> _avatarMapping = {
     'panda': 'panda',
-    'elephant': 'elephant', // Keep as-is since it's valid in backend
-    'horse': 'horse', // Keep as-is since it's valid in backend
+'elephant': 'elephant', 
+'horse': 'horse', 
     'rabbit': 'rabbit',
     'fox': 'fox',
-    'zebra': 'zebra', // Keep as-is since it's valid in backend
+'zebra': 'zebra', 
     'bear': 'bear',
-    'pig': 'pig', // Keep as-is since it's valid in backend
-    'raccoon': 'raccoon', // Keep as-is since it's valid in backend
+'pig': 'pig', 
+'raccoon': 'raccoon', 
     'cat': 'cat',
     'dog': 'dog',
     'owl': 'owl',
     'penguin': 'penguin',
   };
 
-  // Public methods for age group conversion
   static String getBackendAgeGroup(String? frontendAgeGroup) {
     if (frontendAgeGroup == null || frontendAgeGroup.isEmpty) {
-      return '18-24'; // Default fallback
+return '18-24'; 
     }
     return _frontendToBackendAgeMapping[frontendAgeGroup] ?? '18-24';
   }
 
   static String getFrontendAgeGroup(String? backendAgeGroup) {
     if (backendAgeGroup == null || backendAgeGroup.isEmpty) {
-      return '20s'; // Default fallback
+return '20s'; 
     }
     return _backendToFrontendAgeMapping[backendAgeGroup] ?? '20s';
   }
 
-  // Public methods for pronoun conversion
   static String getBackendPronouns(String? frontendPronouns) {
     if (frontendPronouns == null || frontendPronouns.isEmpty) {
-      return 'They / Them'; // Default fallback
+return 'They / Them'; 
     }
     return _pronounMapping[frontendPronouns] ?? 'They / Them';
   }
 
   static String getFrontendPronouns(String? backendPronouns) {
     if (backendPronouns == null || backendPronouns.isEmpty) {
-      return 'They / Them'; // Default fallback
+return 'They / Them'; 
     }
-    // Pronouns are the same for both frontend and backend
     return _pronounMapping[backendPronouns] ?? 'They / Them';
   }
 
-  // Public methods for avatar conversion
   static String getBackendAvatar(String? frontendAvatar) {
     if (frontendAvatar == null || frontendAvatar.isEmpty) {
-      return 'panda'; // Default fallback
+return 'panda'; 
     }
     return _avatarMapping[frontendAvatar] ?? 'panda';
   }
 
   static String getFrontendAvatar(String? backendAvatar) {
     if (backendAvatar == null || backendAvatar.isEmpty) {
-      return 'panda'; // Default fallback
+return 'panda'; 
     }
-    // Avatars are the same for both frontend and backend
     return _avatarMapping[backendAvatar] ?? 'panda';
   }
 
-  // Validation methods
   static bool isValidBackendAgeGroup(String? ageGroup) {
     if (ageGroup == null) return false;
     return _backendToFrontendAgeMapping.containsKey(ageGroup);
@@ -134,7 +118,6 @@ class BackendValues {
     return _avatarMapping.containsKey(avatar);
   }
 
-  // Get all valid values
   static List<String> get validBackendAgeGroups =>
       _backendToFrontendAgeMapping.keys.toList();
 
@@ -145,21 +128,17 @@ class BackendValues {
 
   static List<String> get validAvatars => _avatarMapping.keys.toList();
 
-  // Helper method to validate and convert age group from API response
   static String normalizeAgeGroupFromApi(String? apiValue) {
     if (apiValue == null) return '18-24';
 
-    // If it's already a valid backend value, return it
     if (_backendToFrontendAgeMapping.containsKey(apiValue)) {
       return apiValue;
     }
 
-    // If it's a frontend value, convert to backend
     if (_frontendToBackendAgeMapping.containsKey(apiValue)) {
       return _frontendToBackendAgeMapping[apiValue]!;
     }
 
-    // Handle common variations
     switch (apiValue.toLowerCase().replaceAll(' ', '').replaceAll('-', '')) {
       case 'under18':
       case 'lessthan20s':
@@ -182,11 +161,10 @@ class BackendValues {
       case '65plus':
         return '65+';
       default:
-        return '18-24'; // Safe default
+return '18-24'; 
     }
   }
 
-  // Debug helper methods
   static void printAllMappings() {
     print('. Frontend to Backend Age Mappings:');
     _frontendToBackendAgeMapping.forEach((key, value) {

@@ -18,7 +18,7 @@ class CommunityPostEntity extends Equatable {
   final String moodColor;
   final String activityType;
   final bool isFriend;
-  final String privacy; // 'public', 'friends', 'private'
+final String privacy; 
   final bool isAnonymous;
 
   const CommunityPostEntity({
@@ -99,7 +99,6 @@ class CommunityPostEntity extends Equatable {
       activityType: json['activityType']?.toString() ?? 'General',
       privacy: json['privacy']?.toString() ?? 'public',
       isAnonymous: json['isAnonymous'] ?? false,
-      // For friend card, reactions/comments/view/share are not needed
     );
   }
 
@@ -143,7 +142,6 @@ class CommunityPostEntity extends Equatable {
         isAnonymous,
       ];
 
-  // Helper getters for UI compatibility
   Color get color {
     switch (moodColor.toLowerCase()) {
       case '#4caf50':
@@ -173,7 +171,7 @@ class ReactionEntity extends Equatable {
   final String username;
   final String displayName;
   final String emoji;
-  final String type; // 'comfort', 'support', 'love', etc.
+final String type; 
   final DateTime createdAt;
 
   const ReactionEntity({

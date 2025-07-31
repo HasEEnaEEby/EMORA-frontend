@@ -1,4 +1,3 @@
-// lib/core/services/bloc_manager.dart
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/features/auth/data/data_source/local/auth_local_data_source.dart';
 import 'package:emora_mobile_app/features/auth/domain/use_case/check_auth_status.dart';
@@ -41,14 +40,12 @@ class BlocManager {
   static int _onboardingBlocCreationCount = 0;
   static int _splashCubitCreationCount = 0;
 
-  // Creation timestamps
   static DateTime? _homeBlocCreatedAt;
   static DateTime? _authBlocCreatedAt;
   static DateTime? _emotionBlocCreatedAt;
   static DateTime? _onboardingBlocCreatedAt;
   static DateTime? _splashCubitCreatedAt;
 
-  /// Get or create HomeBloc instance
   static HomeBloc getHomeBloc() {
     if (_homeBloc == null || _homeBloc!.isClosed) {
       Logger.info(
@@ -78,7 +75,6 @@ class BlocManager {
     return _homeBloc!;
   }
 
-  /// Get or create AuthBloc instance
   static AuthBloc getAuthBloc() {
     if (_authBloc == null || _authBloc!.isClosed) {
       Logger.info(
@@ -93,7 +89,7 @@ class BlocManager {
           getCurrentUser: _sl<GetCurrentUser>(),
           logoutUser: _sl<LogoutUser>(),
           checkAuthStatus:
-              _sl<CheckAuthStatus>(), // Fixed: Proper use case injection
+_sl<CheckAuthStatus>(), 
         );
 
         _authBlocCreationCount++;
@@ -112,7 +108,6 @@ class BlocManager {
     return _authBloc!;
   }
 
-  /// Get or create EmotionBloc instance
   static EmotionBloc getEmotionBloc() {
     if (_emotionBloc == null || _emotionBloc!.isClosed) {
       Logger.info(
@@ -127,11 +122,11 @@ class BlocManager {
           getGlobalHeatmap:
               _sl<
                 GetGlobalEmotionHeatmap
-              >(), // Fixed: Corrected parameter name from getGlobalEmotionHeatmap
+>(), 
           emotionRepository:
               _sl<
                 EmotionRepository
-              >(), // Fixed: Added missing emotionRepository parameter
+>(), 
         );
 
         _emotionBlocCreationCount++;
@@ -150,7 +145,6 @@ class BlocManager {
     return _emotionBloc!;
   }
 
-  /// Get or create OnboardingBloc instance
   static OnboardingBloc getOnboardingBloc() {
     if (_onboardingBloc == null || _onboardingBloc!.isClosed) {
       Logger.info(
@@ -180,7 +174,6 @@ class BlocManager {
     return _onboardingBloc!;
   }
 
-  /// Get or create SplashCubit instance
   static SplashCubit getSplashCubit() {
     if (_splashCubit == null || _splashCubit!.isClosed) {
       Logger.info(
@@ -192,11 +185,11 @@ class BlocManager {
           sharedPreferences:
               _sl<
                 SharedPreferences
-              >(), // Fixed: Added missing sharedPreferences
+>(), 
           authLocalDataSource:
               _sl<
                 AuthLocalDataSource
-              >(), // Fixed: Added missing authLocalDataSource
+>(), 
         );
 
         _splashCubitCreationCount++;
@@ -215,7 +208,6 @@ class BlocManager {
     return _splashCubit!;
   }
 
-  /// Dispose HomeBloc
   static void disposeHomeBloc() {
     if (_homeBloc != null && !_homeBloc!.isClosed) {
       Logger.info(
@@ -227,7 +219,6 @@ class BlocManager {
     _homeBlocCreatedAt = null;
   }
 
-  /// Dispose AuthBloc
   static void disposeAuthBloc() {
     if (_authBloc != null && !_authBloc!.isClosed) {
       Logger.info(
@@ -239,7 +230,6 @@ class BlocManager {
     _authBlocCreatedAt = null;
   }
 
-  /// Dispose EmotionBloc
   static void disposeEmotionBloc() {
     if (_emotionBloc != null && !_emotionBloc!.isClosed) {
       Logger.info(
@@ -251,7 +241,6 @@ class BlocManager {
     _emotionBlocCreatedAt = null;
   }
 
-  /// Dispose OnboardingBloc
   static void disposeOnboardingBloc() {
     if (_onboardingBloc != null && !_onboardingBloc!.isClosed) {
       Logger.info(
@@ -263,7 +252,6 @@ class BlocManager {
     _onboardingBlocCreatedAt = null;
   }
 
-  /// Dispose SplashCubit
   static void disposeSplashCubit() {
     if (_splashCubit != null && !_splashCubit!.isClosed) {
       Logger.info(
@@ -275,7 +263,6 @@ class BlocManager {
     _splashCubitCreatedAt = null;
   }
 
-  /// Dispose all BLoCs and Cubits
   static void disposeAll() {
     Logger.info('🧹 Disposing all BLoCs and Cubits...');
     disposeHomeBloc();
@@ -286,7 +273,6 @@ class BlocManager {
     Logger.info('. All BLoCs and Cubits disposed');
   }
 
-  /// Check if a specific BLoC is active
   static bool isHomeBlocActive() {
     return _homeBloc != null && !_homeBloc!.isClosed;
   }
@@ -307,7 +293,6 @@ class BlocManager {
     return _splashCubit != null && !_splashCubit!.isClosed;
   }
 
-  /// Get BLoC status map
   static Map<String, bool> getBlocStatus() {
     return {
       'homeBloc': isHomeBlocActive(),
@@ -318,7 +303,6 @@ class BlocManager {
     };
   }
 
-  /// Get detailed BLoC information
   static Map<String, dynamic> getBlocInfo() {
     return {
       'homeBloc': {
@@ -364,13 +348,11 @@ class BlocManager {
     };
   }
 
-  /// Get count of active BLoCs
   static int getActiveBlocCount() {
     final status = getBlocStatus();
     return status.values.where((isActive) => isActive).length;
   }
 
-  /// Get total creation count across all BLoCs
   static int getTotalCreationCount() {
     return _homeBlocCreationCount +
         _authBlocCreationCount +
@@ -379,7 +361,6 @@ class BlocManager {
         _splashCubitCreationCount;
   }
 
-  /// Get creation statistics
   static Map<String, int> getCreationStats() {
     return {
       'homeBloc': _homeBlocCreationCount,
@@ -391,7 +372,6 @@ class BlocManager {
     };
   }
 
-  /// Force refresh a specific BLoC (dispose and recreate)
   static HomeBloc refreshHomeBloc() {
     Logger.info('🔄 Force refreshing HomeBloc');
     disposeHomeBloc();
@@ -422,7 +402,6 @@ class BlocManager {
     return getSplashCubit();
   }
 
-  /// Cleanup old BLoCs (dispose inactive ones)
   static void cleanupInactiveBloCs() {
     Logger.info('🧹 Cleaning up inactive BLoCs...');
 
@@ -461,12 +440,10 @@ class BlocManager {
     Logger.info('. Cleaned up $cleanedCount inactive BLoCs');
   }
 
-  /// Validate all BLoCs are properly configured
   static bool validateBloCs() {
     try {
       Logger.info('. Validating BLoC configurations...');
 
-      // Test creation of each BLoC type
       final testResults = <String, bool>{};
 
       try {
@@ -528,7 +505,6 @@ class BlocManager {
     }
   }
 
-  /// Get health status of all BLoCs
   static Map<String, dynamic> getHealthStatus() {
     return {
       'timestamp': DateTime.now().toIso8601String(),
@@ -542,7 +518,6 @@ class BlocManager {
     };
   }
 
-  /// Log current BLoC status
   static void logBlocStatus() {
     final status = getBlocStatus();
     final activeCount = getActiveBlocCount();
@@ -560,7 +535,6 @@ class BlocManager {
     Logger.info('   SplashCubit: ${status['splashCubit'] == true ? '.' : '.'}');
   }
 
-  /// Reset all statistics (for testing)
   static void resetStatistics() {
     _homeBlocCreationCount = 0;
     _authBlocCreationCount = 0;
@@ -570,7 +544,6 @@ class BlocManager {
     Logger.info('🔄 BLoC statistics reset');
   }
 
-  /// Helper method to calculate time ago
   static String _getTimeAgo(DateTime? dateTime) {
     if (dateTime == null) return 'unknown';
 
@@ -588,6 +561,5 @@ class BlocManager {
     }
   }
 
-  /// Private constructor to prevent instantiation
   BlocManager._();
 }

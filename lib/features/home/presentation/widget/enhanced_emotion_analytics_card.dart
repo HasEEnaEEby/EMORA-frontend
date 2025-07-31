@@ -25,7 +25,6 @@ class EnhancedEmotionAnalyticsCard extends StatefulWidget {
 
 class _EnhancedEmotionAnalyticsCardState extends State<EnhancedEmotionAnalyticsCard>
     with TickerProviderStateMixin {
-  // final RecommendationService _recommendationService = GetIt.instance<RecommendationService>();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   late AnimationController _chartController;
@@ -81,39 +80,6 @@ class _EnhancedEmotionAnalyticsCardState extends State<EnhancedEmotionAnalyticsC
     });
   }
 
-  // void _loadRecommendations() async {
-  //   if (widget.isNewUser || widget.dominantMood.isEmpty) return;
-  //   setState(() => _isLoading = true);
-  //   try {
-  //     final isAvailable = await _recommendationService.isServiceAvailable();
-  //     if (isAvailable) {
-  //       final results = await Future.wait([
-  //         _recommendationService.getSpotifyPlaylistForMood(widget.dominantMood),
-  //         _recommendationService.getComprehensiveRecommendations(
-  //           emotion: widget.dominantMood,
-  //           intensity: 7,
-  //           timeOfDay: _getCurrentTimeOfDay(),
-  //         ),
-  //       ]);
-  //       setState(() {
-  //         _spotifyPlaylist = results[0];
-  //         _comprehensiveRecs = results[1];
-  //         _isLoading = false;
-  //       });
-  //     } else {
-  //       final fallbackRecs = _recommendationService.getFallbackRecommendations(widget.dominantMood);
-  //       setState(() {
-  //         _comprehensiveRecs = fallbackRecs;
-  //         _isLoading = false;
-  //       });
-  //       Logger.info('🔄 Using fallback recommendations due to service unavailability');
-  //     }
-  //   } catch (e) {
-  //     setState(() => _isLoading = false);
-  //     Logger.error('❌ Error loading recommendations: $e');
-  //     _showSnackBar('Failed to load recommendations');
-  //   }
-  // }
 
   String _getCurrentTimeOfDay() {
     final hour = DateTime.now().hour;
@@ -929,7 +895,6 @@ class _EnhancedEmotionAnalyticsCardState extends State<EnhancedEmotionAnalyticsC
     );
   }
 
-  // Helper methods
   IconData _getActivityIcon(String? category) {
     switch (category) {
       case 'physical': return Icons.directions_run;
@@ -995,7 +960,6 @@ class _EnhancedEmotionAnalyticsCardState extends State<EnhancedEmotionAnalyticsC
     }
   }
 
-  // Placeholder methods for functionality
   void _showPlaylistTracks(Map<String, dynamic> playlist) {
     _showSnackBar('Playlist tracks view coming soon!');
   }

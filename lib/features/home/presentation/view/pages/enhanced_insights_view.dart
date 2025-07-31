@@ -1,6 +1,3 @@
-// ============================================================================
-// REAL DATA ONLY - ENHANCED INSIGHTS UI
-// ============================================================================
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -22,11 +19,9 @@ class _EnhancedInsightsViewState extends State<EnhancedInsightsView>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   
-  // Core data
   String _selectedPeriod = 'week';
   String _chartType = 'line'; 
   
-  // Real data state - NO FALLBACKS
   Map<String, dynamic> _summary = {};
   Map<String, dynamic> _patterns = {};
   Map<String, dynamic> _trends = {};
@@ -75,7 +70,6 @@ class _EnhancedInsightsViewState extends State<EnhancedInsightsView>
       Logger.info('✅ Real insights received: ${response.keys}');
         
               setState(() {
-        // Extract real data directly from your backend response
         _summary = response['summary'] as Map<String, dynamic>? ?? {};
         _patterns = response['patterns'] as Map<String, dynamic>? ?? {};
         _trends = response['trends'] as Map<String, dynamic>? ?? {};
@@ -355,25 +349,18 @@ class _EnhancedInsightsViewState extends State<EnhancedInsightsView>
       color: const Color(0xFF8B5CF6),
       child: CustomScrollView(
         slivers: [
-          // Period Selector
           SliverToBoxAdapter(child: _buildPeriodSelector()),
           
-          // Chart Type Selector
           SliverToBoxAdapter(child: _buildChartTypeSelector()),
           
-          // Real Data Chart
           SliverToBoxAdapter(child: _buildRealDataChart()),
           
-          // Quick Stats from Real Data
           SliverToBoxAdapter(child: _buildRealQuickStats()),
           
-          // Patterns from Real Data
           SliverToBoxAdapter(child: _buildRealPatterns()),
           
-          // Trends from Real Data
           SliverToBoxAdapter(child: _buildRealTrends()),
           
-          // Real Recommendations
           SliverToBoxAdapter(child: _buildRealRecommendations()),
           
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -936,7 +923,6 @@ class _EnhancedInsightsViewState extends State<EnhancedInsightsView>
           _buildSectionHeader('Real Patterns', Icons.insights, const Color(0xFF4CAF50)),
           const SizedBox(height: 16),
           
-          // Time of day patterns
           if (timeOfDayData.isNotEmpty) ...[
             Text(
               'Time of Day Patterns',
@@ -955,7 +941,6 @@ class _EnhancedInsightsViewState extends State<EnhancedInsightsView>
             const SizedBox(height: 16),
           ],
           
-          // Day of week patterns
           if (dayOfWeekData.isNotEmpty) ...[
             Text(
               'Day of Week Patterns',
@@ -974,7 +959,6 @@ class _EnhancedInsightsViewState extends State<EnhancedInsightsView>
             const SizedBox(height: 16),
           ],
           
-          // Emotion transitions
           if (emotionTransitions.isNotEmpty) ...[
                 Text(
               'Emotion Transitions',
@@ -1164,9 +1148,6 @@ class _EnhancedInsightsViewState extends State<EnhancedInsightsView>
     );
   }
 
-  // ============================================================================
-  // EVENT HANDLERS AND UTILITY METHODS
-  // ============================================================================
 
   void _onPeriodChanged(String period) {
     setState(() => _selectedPeriod = period);
@@ -1223,9 +1204,6 @@ class _EnhancedInsightsViewState extends State<EnhancedInsightsView>
   }
 }
 
-// ============================================================================
-// REAL DATA ONLY SERVICE
-// ============================================================================
 
 class EnhancedInsightsService {
   final DioClient _dioClient;
@@ -1251,7 +1229,6 @@ class EnhancedInsightsService {
         final data = response.data;
         Logger.info('✅ Real insights retrieved successfully');
         
-        // Return ONLY real data from backend - NO FALLBACKS
         final responseData = data['data'] as Map<String, dynamic>? ?? {};
         
         return {
@@ -1267,14 +1244,11 @@ class EnhancedInsightsService {
       }
     } catch (e) {
       Logger.error('❌ Failed to fetch real insights', e);
-      rethrow; // Re-throw to show error state instead of fallback
+rethrow; 
     }
   }
 }
 
-// ============================================================================
-// DATA MODELS
-// ============================================================================
 
 class Period {
   final String id;
@@ -1293,47 +1267,3 @@ class ChartType {
   ChartType(this.id, this.label, this.icon);
 }
 
-// ============================================================================
-// USAGE INSTRUCTIONS FOR REAL DATA ONLY
-// ============================================================================
-
-/*
-REAL DATA ONLY - NO FALLBACKS
-
-This implementation:
-✅ ONLY shows data from your actual backend API
-✅ Shows appropriate empty states when no data exists
-✅ No mock/fallback data generation
-✅ Clean error handling with retry options
-✅ Professional UI that scales with real data
-✅ Proper data visualization of actual patterns
-✅ Real insights based on your actual emotion logs
-
-Key Features:
-- Displays real summary data (totalEntries, dominantEmotion, averageIntensity)
-- Shows actual patterns from timeOfDay, dayOfWeek, emotionTransitions
-- Charts built from real backend data
-- Proper empty states when no data exists
-- Clean error handling without fallbacks
-- Real recommendations from your backend
-
-Data Flow:
-1. Calls your existing /api/emotions/comprehensive-insights endpoint
-2. Extracts real data directly from response
-3. Displays actual patterns, trends, and insights
-4. Shows "No data available" when appropriate
-5. Never generates fake/mock data
-
-Integration:
-1. Replace your current enhanced_insights_view.dart with this code
-2. Update your enhanced_insights_service.dart with the new getRealInsights method
-3. Your backend API structure remains the same
-4. All data comes from your real emotion logs
-
-The UI will now show:
-- Your actual 6 emotions logged
-- Real time-of-day and day-of-week patterns
-- Actual emotion transitions
-- Real dominant emotions and averages
-- True recommendations from your backend
-*/

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
-// Mood Types Enum
 enum MoodType { amazing, good, okay, down, awful }
 
-// Custom Mood Face Widget
 class CustomMoodFace extends StatelessWidget {
   final MoodType mood;
   final double size;
@@ -58,15 +56,15 @@ class CustomMoodFace extends StatelessWidget {
   Color _getMoodColor(MoodType mood) {
     switch (mood) {
       case MoodType.amazing:
-        return const Color(0xFFFFD700); // Gold
+return const Color(0xFFFFD700); 
       case MoodType.good:
-        return const Color(0xFF6EE7B7); // Light Green
+return const Color(0xFF6EE7B7); 
       case MoodType.okay:
-        return const Color(0xFF9CA3AF); // Gray
+return const Color(0xFF9CA3AF); 
       case MoodType.down:
-        return const Color(0xFF6366F1); // Blue
+return const Color(0xFF6366F1); 
       case MoodType.awful:
-        return const Color(0xFF6B7280); // Dark Gray
+return const Color(0xFF6B7280); 
     }
   }
 
@@ -86,7 +84,6 @@ class CustomMoodFace extends StatelessWidget {
   }
 }
 
-// Custom Painter for Mood Faces
 class MoodFacePainter extends CustomPainter {
   final MoodType mood;
   final Color faceColor;
@@ -105,16 +102,14 @@ class MoodFacePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth =
           size.width *
-          0.04 // Responsive stroke width
+0.04 
       ..strokeCap = StrokeCap.round;
 
     final center = Offset(size.width / 2, size.height / 2);
     final radius = size.width / 2;
 
-    // Draw eyes
     _drawEyes(canvas, center, radius, paint, strokePaint, mood);
 
-    // Draw mouth based on mood
     _drawMouth(canvas, center, radius, strokePaint, mood);
   }
 
@@ -132,14 +127,12 @@ class MoodFacePainter extends CustomPainter {
 
     switch (mood) {
       case MoodType.amazing:
-        // Happy closed eyes (curved lines)
         final eyePaint = Paint()
           ..color = fillPaint.color
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokePaint.strokeWidth
           ..strokeCap = StrokeCap.round;
 
-        // Left eye - happy curve
         final leftEyePath = Path();
         leftEyePath.moveTo(center.dx - eyeSpacing - eyeRadius, eyeY);
         leftEyePath.quadraticBezierTo(
@@ -150,7 +143,6 @@ class MoodFacePainter extends CustomPainter {
         );
         canvas.drawPath(leftEyePath, eyePaint);
 
-        // Right eye - happy curve
         final rightEyePath = Path();
         rightEyePath.moveTo(center.dx + eyeSpacing - eyeRadius, eyeY);
         rightEyePath.quadraticBezierTo(
@@ -163,7 +155,6 @@ class MoodFacePainter extends CustomPainter {
         break;
 
       case MoodType.good:
-        // Normal round eyes
         canvas.drawCircle(
           Offset(center.dx - eyeSpacing, eyeY),
           eyeRadius,
@@ -177,7 +168,6 @@ class MoodFacePainter extends CustomPainter {
         break;
 
       case MoodType.okay:
-        // Neutral eyes (slightly smaller dots)
         final neutralEyeRadius = eyeRadius * 0.7;
         canvas.drawCircle(
           Offset(center.dx - eyeSpacing, eyeY),
@@ -192,14 +182,12 @@ class MoodFacePainter extends CustomPainter {
         break;
 
       case MoodType.down:
-        // Sad eyes (droopy curves)
         final eyePaint = Paint()
           ..color = fillPaint.color
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokePaint.strokeWidth
           ..strokeCap = StrokeCap.round;
 
-        // Left eye - sad droop
         final leftEyePath = Path();
         leftEyePath.moveTo(center.dx - eyeSpacing - eyeRadius, eyeY);
         leftEyePath.quadraticBezierTo(
@@ -210,7 +198,6 @@ class MoodFacePainter extends CustomPainter {
         );
         canvas.drawPath(leftEyePath, eyePaint);
 
-        // Right eye - sad droop
         final rightEyePath = Path();
         rightEyePath.moveTo(center.dx + eyeSpacing - eyeRadius, eyeY);
         rightEyePath.quadraticBezierTo(
@@ -223,14 +210,12 @@ class MoodFacePainter extends CustomPainter {
         break;
 
       case MoodType.awful:
-        // X eyes (crossed out)
         final xPaint = Paint()
           ..color = fillPaint.color
           ..style = PaintingStyle.stroke
           ..strokeWidth = strokePaint.strokeWidth
           ..strokeCap = StrokeCap.round;
 
-        // Left X
         canvas.drawLine(
           Offset(
             center.dx - eyeSpacing - eyeRadius * 0.8,
@@ -254,7 +239,6 @@ class MoodFacePainter extends CustomPainter {
           xPaint,
         );
 
-        // Right X
         canvas.drawLine(
           Offset(
             center.dx + eyeSpacing - eyeRadius * 0.8,
@@ -293,7 +277,6 @@ class MoodFacePainter extends CustomPainter {
 
     switch (mood) {
       case MoodType.amazing:
-        // Big smile
         final path = Path();
         path.moveTo(center.dx - mouthWidth, mouthY);
         path.quadraticBezierTo(
@@ -306,7 +289,6 @@ class MoodFacePainter extends CustomPainter {
         break;
 
       case MoodType.good:
-        // Small smile
         final path = Path();
         path.moveTo(center.dx - mouthWidth * 0.7, mouthY);
         path.quadraticBezierTo(
@@ -319,7 +301,6 @@ class MoodFacePainter extends CustomPainter {
         break;
 
       case MoodType.okay:
-        // Straight line
         canvas.drawLine(
           Offset(center.dx - mouthWidth * 0.5, mouthY),
           Offset(center.dx + mouthWidth * 0.5, mouthY),
@@ -328,7 +309,6 @@ class MoodFacePainter extends CustomPainter {
         break;
 
       case MoodType.down:
-        // Small frown
         final path = Path();
         path.moveTo(center.dx - mouthWidth * 0.7, mouthY);
         path.quadraticBezierTo(
@@ -341,7 +321,6 @@ class MoodFacePainter extends CustomPainter {
         break;
 
       case MoodType.awful:
-        // Big frown
         final path = Path();
         path.moveTo(center.dx - mouthWidth, mouthY);
         path.quadraticBezierTo(
@@ -359,9 +338,7 @@ class MoodFacePainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
-// Utility class for mood operations
 class MoodUtils {
-  // Convert string mood to MoodType
   static MoodType stringToMoodType(String moodString) {
     switch (moodString.toLowerCase()) {
       case 'amazing':
@@ -394,7 +371,6 @@ class MoodUtils {
     }
   }
 
-  // Convert MoodType to string
   static String moodTypeToString(MoodType mood) {
     switch (mood) {
       case MoodType.amazing:
@@ -410,7 +386,6 @@ class MoodUtils {
     }
   }
 
-  // Convert MoodType to emoji (if you still need emoji strings)
   static String moodTypeToEmoji(MoodType mood) {
     switch (mood) {
       case MoodType.amazing:
@@ -426,7 +401,6 @@ class MoodUtils {
     }
   }
 
-  // Get mood color
   static Color getMoodColor(MoodType mood) {
     switch (mood) {
       case MoodType.amazing:
@@ -442,7 +416,6 @@ class MoodUtils {
     }
   }
 
-  // Get mood intensity (1 to 5 scale for backend API)
   static int getMoodIntensity(MoodType mood) {
     switch (mood) {
       case MoodType.amazing:
@@ -458,7 +431,6 @@ class MoodUtils {
     }
   }
 
-  // Get mood intensity as double (0.0 to 1.0 for UI purposes)
   static double getMoodIntensityDouble(MoodType mood) {
     switch (mood) {
       case MoodType.amazing:
@@ -474,7 +446,6 @@ class MoodUtils {
     }
   }
 
-  // Get mood label
   static String getMoodLabel(MoodType mood) {
     switch (mood) {
       case MoodType.amazing:
@@ -490,7 +461,6 @@ class MoodUtils {
     }
   }
 
-  // Get all mood options for selectors
   static List<MoodType> getAllMoods() {
     return [
       MoodType.amazing,
@@ -502,7 +472,6 @@ class MoodUtils {
   }
 }
 
-// Example usage widget
 class MoodFaceExample extends StatefulWidget {
   const MoodFaceExample({super.key});
 
@@ -521,7 +490,6 @@ class _MoodFaceExampleState extends State<MoodFaceExample> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Display current mood
             CustomMoodFace(mood: selectedMood, size: 120, showBorder: true),
 
             const SizedBox(height: 20),
@@ -537,7 +505,6 @@ class _MoodFaceExampleState extends State<MoodFaceExample> {
 
             const SizedBox(height: 40),
 
-            // Mood selector row
             Wrap(
               spacing: 16,
               children: MoodUtils.getAllMoods().map((mood) {

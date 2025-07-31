@@ -1,4 +1,3 @@
-// lib/features/onboarding/data/data_source/remote/onboarding_remote_data_source.dart
 import '../../../../../core/errors/exceptions.dart';
 import '../../../../../core/network/api_response_handler.dart';
 import '../../../../../core/network/api_service.dart';
@@ -23,12 +22,10 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
 
       final response = await apiService.get('/onboarding/steps');
 
-      // Use the new response handler
       final data = ApiResponseHandler.handleResponse(response);
 
       Logger.debug('📥 Onboarding steps data received', data);
 
-      // Handle both formats: direct steps array or nested in 'steps' key
       List<dynamic> stepsData;
       if (data['steps'] != null) {
         stepsData = data['steps'] as List<dynamic>? ?? [];
@@ -61,7 +58,6 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
       rethrow;
     } on NetworkException catch (e) {
       Logger.error('. Network error fetching onboarding steps', e);
-      // Convert to ServerException for consistency
       throw ServerException(
         message: 'Network error: ${e.message}',
         code: e.code,
@@ -83,7 +79,6 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
         data: userData.toJson(),
       );
 
-      // Use the new response handler
       final data = ApiResponseHandler.handleResponse(response);
 
       Logger.info('. User onboarding data saved to server');
@@ -93,7 +88,6 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
     } on ValidationException catch (e) {
       Logger.error('. Validation error saving user data', e);
 
-      // Check for specific age group validation error
       if (e.message.contains('ageGroup')) {
         Logger.error(
           '. Age group validation failed - check frontend age options',
@@ -101,8 +95,6 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
         Logger.error('. Current user data: ${userData.ageGroup}');
       }
 
-      // Return false for validation errors but don't throw
-      // This allows the app to continue working offline
       return false;
     } on UnauthorizedException catch (e) {
       Logger.error('. Authentication error saving user data', e);
@@ -112,11 +104,9 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
       rethrow;
     } on ServerException catch (e) {
       Logger.error('. Server error saving user data', e);
-      // Return false for server errors but don't throw
       return false;
     } on NetworkException catch (e) {
       Logger.error('. Network error saving user data', e);
-      // Return false for network errors but don't throw
       return false;
     } catch (e) {
       Logger.error('. Unexpected error saving user data', e);
@@ -135,7 +125,6 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
         data: userData.toJson(),
       );
 
-      // Use the new response handler
       final data = ApiResponseHandler.handleResponse(response);
 
       Logger.info('. Onboarding completed on server');
@@ -145,13 +134,11 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
     } on ValidationException catch (e) {
       Logger.error('. Validation error completing onboarding', e);
 
-      // Check for specific age group validation error
       if (e.message.contains('ageGroup')) {
         Logger.error('. Age group validation failed during completion');
         Logger.error('. Current user data: ${userData.ageGroup}');
       }
 
-      // Return false for validation errors but don't throw
       return false;
     } on UnauthorizedException catch (e) {
       Logger.error('. Authentication error completing onboarding', e);
@@ -161,11 +148,9 @@ class OnboardingRemoteDataSourceImpl implements OnboardingRemoteDataSource {
       rethrow;
     } on ServerException catch (e) {
       Logger.error('. Server error completing onboarding', e);
-      // Return false for server errors but don't throw
       return false;
     } on NetworkException catch (e) {
       Logger.error('. Network error completing onboarding', e);
-      // Return false for network errors but don't throw
       return false;
     } catch (e) {
       Logger.error('. Unexpected error completing onboarding', e);

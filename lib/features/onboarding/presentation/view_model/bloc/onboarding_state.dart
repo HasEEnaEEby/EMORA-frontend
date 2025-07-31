@@ -1,4 +1,3 @@
-// lib/features/onboarding/presentation/view_model/bloc/onboarding_state.dart
 import 'package:equatable/equatable.dart';
 
 import '../../../domain/entity/onboarding_entity.dart';
@@ -31,7 +30,6 @@ class OnboardingStepsLoaded extends OnboardingState {
     required this.canGoPrevious,
   });
 
-  // Convenience getters
   bool get isFirstStep => currentStepIndex == 0;
   bool get isLastStep => currentStepIndex >= steps.length - 1;
   OnboardingStepEntity get currentStep => steps[currentStepIndex];
@@ -73,7 +71,7 @@ class OnboardingStepsLoaded extends OnboardingState {
 
 class OnboardingCompleted extends OnboardingState {
   final UserOnboardingEntity userData;
-  final bool remoteSync; // FIXED: Track if remote sync was successful
+final bool remoteSync; 
 
   const OnboardingCompleted(this.userData, [this.remoteSync = false]);
 

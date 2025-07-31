@@ -41,12 +41,10 @@ class EmotionModule {
   static void _initDataSources(GetIt sl) {
     Logger.info('📱 Initializing emotion data sources...');
 
-    // Local Data Source
     sl.registerLazySingleton<EmotionLocalDataSource>(
       () => EmotionLocalDataSourceImpl(),
     );
 
-    // Remote Data Source
     sl.registerLazySingleton<EmotionRemoteDataSource>(
       () => EmotionRemoteDataSourceImpl(
         dioClient: sl<DioClient>(),
@@ -82,7 +80,6 @@ class EmotionModule {
       () => GetGlobalEmotionStats(sl<EmotionRepository>()),
     );
 
-    // Register GetGlobalEmotionHeatmap for emotion module
     sl.registerLazySingleton<GetGlobalEmotionHeatmap>(
       () => GetGlobalEmotionHeatmap(sl<EmotionRepository>()),
     );

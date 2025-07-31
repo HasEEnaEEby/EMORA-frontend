@@ -1,4 +1,3 @@
-// lib/features/friends/data/data_source/remote/friend_remote_data_source.dart
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:emora_mobile_app/core/network/api_service.dart';
@@ -11,7 +10,6 @@ class FriendRemoteDataSource {
   FriendRemoteDataSource({required ApiService apiService}) 
       : _apiService = apiService;
 
-  /// Send friend request with proper error handling
   Future<Map<String, dynamic>> sendFriendRequest({
     required String recipientId,
     String? message,
@@ -33,14 +31,12 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// FIXED: Accept friend request - Updated to match your backend API
   Future<Map<String, dynamic>> acceptFriendRequest({
     required String requestUserId,
   }) async {
     try {
       Logger.info('✅ Accepting friend request from: $requestUserId');
       
-      // CRITICAL FIX: Use the correct endpoint that matches your logs
       final response = await _apiService.postData(
         '/api/friends/accept/$requestUserId',
         data: {
@@ -55,7 +51,6 @@ class FriendRemoteDataSource {
     } on DioException catch (e) {
       Logger.error('❌ Accept friend request failed', e);
       
-      // ALTERNATIVE METHOD: If the above fails, try with different endpoint
       if (e.response?.statusCode == 400) {
         Logger.info('🔄 Trying alternative accept method...');
         return await _acceptFriendRequestAlternative(requestUserId);
@@ -65,10 +60,8 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// ALTERNATIVE: Accept friend request using different approach
   Future<Map<String, dynamic>> _acceptFriendRequestAlternative(String requestUserId) async {
     try {
-      // Method 1: Try with /respond endpoint
       Logger.info('🔄 Method 1: Using /api/friends/respond endpoint');
       final response = await _apiService.postData(
         '/api/friends/respond',
@@ -85,11 +78,10 @@ class FriendRemoteDataSource {
       Logger.warning('⚠️ Method 1 failed, trying Method 2...');
       
       try {
-        // Method 2: Try with empty body
         Logger.info('🔄 Method 2: Using empty JSON body');
         final response = await _apiService.postData(
           '/api/friends/accept/$requestUserId',
-          data: {}, // Empty JSON object
+data: {}, 
         );
         
         Logger.info('✅ Method 2 successful');
@@ -99,7 +91,6 @@ class FriendRemoteDataSource {
         Logger.warning('⚠️ Method 2 failed, trying Method 3...');
         
         try {
-          // Method 3: Try without any data
           Logger.info('🔄 Method 3: Using no body');
           final response = await _apiService.postData(
             '/api/friends/accept/$requestUserId',
@@ -116,14 +107,12 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// FIXED: Decline friend request - Updated to match your backend API
   Future<Map<String, dynamic>> declineFriendRequest({
     required String requestUserId,
   }) async {
     try {
       Logger.info('❌ Declining friend request from: $requestUserId');
       
-      // CRITICAL FIX: Use the correct endpoint
       final response = await _apiService.postData(
         '/api/friends/reject/$requestUserId',
         data: {
@@ -138,7 +127,6 @@ class FriendRemoteDataSource {
     } on DioException catch (e) {
       Logger.error('❌ Decline friend request failed', e);
       
-      // ALTERNATIVE METHOD: If the above fails, try with /respond endpoint
       if (e.response?.statusCode == 400) {
         Logger.info('🔄 Trying alternative decline method...');
         return await _declineFriendRequestAlternative(requestUserId);
@@ -148,7 +136,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// ALTERNATIVE: Decline friend request using /respond endpoint
   Future<Map<String, dynamic>> _declineFriendRequestAlternative(String requestUserId) async {
     try {
       final response = await _apiService.postData(
@@ -168,7 +155,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get pending friend requests
   Future<Map<String, dynamic>> getPendingRequests() async {
     try {
       Logger.info('📋 Fetching pending friend requests');
@@ -184,7 +170,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get friends list
   Future<Map<String, dynamic>> getFriendsList({
     int page = 1,
     int limit = 20,
@@ -209,7 +194,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get friend suggestions
   Future<Map<String, dynamic>> getFriendSuggestions({
     int limit = 10,
     String criteria = 'all',
@@ -234,7 +218,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Search users
   Future<Map<String, dynamic>> searchUsers({
     required String query,
     int page = 1,
@@ -261,7 +244,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Search all users globally (including friends, excluding self)
   Future<Map<String, dynamic>> searchAllUsers({
     required String query,
     int page = 1,
@@ -279,7 +261,6 @@ class FriendRemoteDataSource {
         },
       );
 
-      // Robust null/empty check for users list
       final data = response['data'] ?? {};
       final usersList = data['users'];
       final users = (usersList is List ? usersList : []) as List;
@@ -297,7 +278,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Cancel sent friend request
   Future<Map<String, dynamic>> cancelFriendRequest({
     required String userId,
   }) async {
@@ -317,7 +297,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Remove friend
   Future<Map<String, dynamic>> removeFriend({
     required String friendId,
   }) async {
@@ -337,7 +316,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Block user
   Future<Map<String, dynamic>> blockUser({
     required String userId,
   }) async {
@@ -361,7 +339,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get friendship statistics
   Future<Map<String, dynamic>> getFriendshipStats() async {
     try {
       Logger.info('📊 Fetching friendship statistics');
@@ -379,11 +356,7 @@ class FriendRemoteDataSource {
     }
   }
 
-  // ============================================================================
-  // ENHANCED FRIEND MOOD ACTIVITY APIs
-  // ============================================================================
 
-  /// Get friend's moods with reactions
   Future<Map<String, dynamic>> getFriendMoods({
     required String friendId,
     int limit = 10,
@@ -409,7 +382,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get friend mood activity feed
   Future<Map<String, dynamic>> getFriendMoodActivityFeed({
     int page = 1,
     int limit = 20,
@@ -434,7 +406,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Send mood reaction (hug, music, message, anonymous support)
   Future<Map<String, dynamic>> sendMoodReaction({
     required String moodId,
     required String reactionType,
@@ -462,7 +433,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get friend mood insights and patterns
   Future<Map<String, dynamic>> getFriendMoodInsights({
     required String friendId,
     int days = 30,
@@ -486,11 +456,7 @@ class FriendRemoteDataSource {
     }
   }
 
-  // ============================================================================
-  // EMOTION STORY SHARING APIs
-  // ============================================================================
 
-  /// Create emotion story
   Future<Map<String, dynamic>> createEmotionStory({
     required String title,
     required String description,
@@ -525,7 +491,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get user's emotion stories
   Future<Map<String, dynamic>> getEmotionStories({
     int page = 1,
     int limit = 10,
@@ -552,7 +517,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Invite friends to emotion story
   Future<Map<String, dynamic>> inviteToEmotionStory({
     required String storyId,
     required List<String> friendIds,
@@ -576,10 +540,9 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Respond to emotion story invitation
   Future<Map<String, dynamic>> respondToEmotionStoryInvitation({
     required String storyId,
-    required String action, // 'accept' or 'decline'
+required String action, 
   }) async {
     try {
       Logger.info('📝 Responding to emotion story invitation: $storyId ($action)');
@@ -600,7 +563,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Add contribution to emotion story
   Future<Map<String, dynamic>> addEmotionStoryContribution({
     required String storyId,
     required String emotion,
@@ -636,7 +598,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get emotion story contributions
   Future<Map<String, dynamic>> getEmotionStoryContributions({
     required String storyId,
     int page = 1,
@@ -662,11 +623,7 @@ class FriendRemoteDataSource {
     }
   }
 
-  // ============================================================================
-  // COMFORT REACTION APIs
-  // ============================================================================
 
-  /// Send comfort reaction to emotion
   Future<Map<String, dynamic>> sendComfortReaction({
     required String emotionId,
     required String reactionType,
@@ -692,7 +649,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get reactions for emotion
   Future<Map<String, dynamic>> getEmotionReactions({
     required String emotionId,
   }) async {
@@ -712,7 +668,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get user's reactions
   Future<Map<String, dynamic>> getUserReactions({
     int page = 1,
     int limit = 20,
@@ -737,7 +692,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Mark reactions as read
   Future<Map<String, dynamic>> markReactionsAsRead({
     required List<String> reactionIds,
   }) async {
@@ -760,7 +714,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get unread reactions count
   Future<Map<String, dynamic>> getUnreadReactionsCount() async {
     try {
       Logger.info('📊 Fetching unread reactions count');
@@ -778,12 +731,10 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// DEBUGGING: Get detailed request info (for troubleshooting)
   Future<void> debugAcceptRequest(String requestUserId) async {
     try {
       Logger.info('🔍 DEBUG: Testing accept request for: $requestUserId');
       
-      // Test different approaches
       final approaches = [
         {
           'method': 'POST',
@@ -814,7 +765,7 @@ class FriendRemoteDataSource {
           );
           
           Logger.info('✅ Approach ${i + 1} SUCCESS: $response');
-          return; // Success, stop testing
+return; 
           
         } catch (e) {
           Logger.warning('❌ Approach ${i + 1} FAILED: $e');
@@ -828,7 +779,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Handle DioException with proper error mapping
   Exception _handleDioException(DioException error, String operation) {
     Logger.error('💥 Dio error during $operation', error);
     Logger.error('📊 Status Code: ${error.response?.statusCode}');
@@ -867,7 +817,6 @@ class FriendRemoteDataSource {
             message: 'Forbidden access during $operation',
           );
         } else if (statusCode == 400) {
-          // Enhanced 400 error handling
           String errorMessage = 'Bad request during $operation';
           
           if (responseData is Map && responseData['message'] != null) {
@@ -898,7 +847,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get friend's profile
   Future<Map<String, dynamic>> getFriendProfile({required String friendId}) async {
     try {
       Logger.info('👤 Fetching profile for friend: $friendId');
@@ -914,7 +862,6 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Get friend's last known location (from moods)
   Future<Map<String, dynamic>?> getFriendLocation({required String friendId}) async {
     try {
       Logger.info('📍 Fetching last known location for friend: $friendId');
@@ -935,11 +882,9 @@ class FriendRemoteDataSource {
     }
   }
 
-  /// Send a message to a friend (if messaging API exists)
   Future<Map<String, dynamic>> sendMessageToFriend({required String friendId, required String message}) async {
     try {
       Logger.info('💬 Sending message to friend: $friendId');
-      // If you have a messaging API, use it here. Example:
       final response = await _apiService.postData(
         '/api/messages/send',
         data: {

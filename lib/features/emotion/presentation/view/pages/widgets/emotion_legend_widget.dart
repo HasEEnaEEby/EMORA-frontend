@@ -168,7 +168,6 @@ class _EmotionLegendWidgetState extends State<EmotionLegendWidget>
           ),
           const SizedBox(height: 16),
           
-          // Time Filter
           _buildFilterRow(
             'Time Range',
             ['1h', '6h', '24h', '7d', '30d'],
@@ -179,7 +178,6 @@ class _EmotionLegendWidgetState extends State<EmotionLegendWidget>
           
           const SizedBox(height: 12),
           
-          // Emotion Filter
           _buildFilterRow(
             'Emotion Type',
             ['all', 'joy', 'calm', 'sadness', 'anger', 'anxiety'],
@@ -190,7 +188,6 @@ class _EmotionLegendWidgetState extends State<EmotionLegendWidget>
           
           const SizedBox(height: 12),
           
-          // Heatmap Toggle
           _buildToggleRow(
             'Show Heatmap',
             widget.showHeatmap,
@@ -562,7 +559,6 @@ class _EmotionLegendWidgetState extends State<EmotionLegendWidget>
   }
 
   void _shareMap() {
-    // Implement share functionality
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(
@@ -595,7 +591,6 @@ class _EmotionLegendWidgetState extends State<EmotionLegendWidget>
       ),
       child: Column(
         children: [
-          // Handle
           Container(
             margin: const EdgeInsets.symmetric(vertical: 12),
             width: 40,
@@ -606,7 +601,6 @@ class _EmotionLegendWidgetState extends State<EmotionLegendWidget>
             ),
           ),
           
-          // Header
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -656,7 +650,6 @@ class _EmotionLegendWidgetState extends State<EmotionLegendWidget>
             ),
           ),
           
-          // Content
           const Expanded(
             child: Center(
               child: Text(

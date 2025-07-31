@@ -248,7 +248,6 @@ class LoadingOverlayWidget extends StatelessWidget {
   }
 
   void _openLocationSettings() {
-    // Open location settings
     print('Open location settings');
   }
 } 

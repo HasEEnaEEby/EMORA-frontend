@@ -1,4 +1,3 @@
-// lib/core/utils/dialog_utils.dart
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_bloc.dart';
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_event.dart';
 import 'package:emora_mobile_app/features/profile/presentation/view_model/profile_bloc.dart';
@@ -8,9 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Enhanced DialogUtils class with all required methods for Emora app
 class DialogUtils {
-  // MARK: - SnackBar Methods
 
   static void showSuccessSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -35,7 +32,7 @@ class DialogUtils {
             ),
           ],
         ),
-        backgroundColor: const Color(0xFF10B981), // Better green color
+backgroundColor: const Color(0xFF10B981), 
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 3),
@@ -67,10 +64,10 @@ class DialogUtils {
             ),
           ],
         ),
-        backgroundColor: const Color(0xFFEF4444), // Better red color
+backgroundColor: const Color(0xFFEF4444), 
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 4), // Longer for errors
+duration: const Duration(seconds: 4), 
         margin: const EdgeInsets.all(16),
       ),
     );
@@ -99,7 +96,7 @@ class DialogUtils {
             ),
           ],
         ),
-        backgroundColor: const Color(0xFF3B82F6), // Better blue color
+backgroundColor: const Color(0xFF3B82F6), 
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 3),
@@ -131,7 +128,7 @@ class DialogUtils {
             ),
           ],
         ),
-        backgroundColor: const Color(0xFFF59E0B), // Orange color
+backgroundColor: const Color(0xFFF59E0B), 
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         duration: const Duration(seconds: 3),
@@ -140,7 +137,6 @@ class DialogUtils {
     );
   }
 
-  // MARK: - Avatar Methods
 
   static String getEmojiForAvatar(String avatar) {
     const avatarMap = {
@@ -252,7 +248,6 @@ class DialogUtils {
     ];
   }
 
-  // MARK: - Language Methods
 
   static List<Map<String, String>> getAvailableLanguages() {
     return [
@@ -282,7 +277,6 @@ class DialogUtils {
     ];
   }
 
-  // MARK: - Theme Methods
 
   static List<Map<String, dynamic>> getAvailableThemes() {
     return [
@@ -349,37 +343,36 @@ class DialogUtils {
     ];
   }
 
-  // MARK: - Achievement Methods
 
   static Color getAchievementColor(String category) {
     switch (category.toLowerCase()) {
       case 'milestone':
-        return const Color(0xFFFFD700); // Gold
+return const Color(0xFFFFD700); 
       case 'streak':
-        return const Color(0xFFFF6B35); // Orange
+return const Color(0xFFFF6B35); 
       case 'social':
-        return const Color(0xFF8B5CF6); // Purple
+return const Color(0xFF8B5CF6); 
       case 'discovery':
-        return const Color(0xFF06D6A0); // Teal
+return const Color(0xFF06D6A0); 
       case 'wellness':
-        return const Color(0xFF118AB2); // Blue
+return const Color(0xFF118AB2); 
       case 'insights':
-        return const Color(0xFFEF476F); // Pink
+return const Color(0xFFEF476F); 
       case 'emotions':
-        return const Color(0xFFFF8E53); // Coral
+return const Color(0xFFFF8E53); 
       case 'journal':
-        return const Color(0xFF9B59B6); // Purple
+return const Color(0xFF9B59B6); 
       case 'mindfulness':
-        return const Color(0xFF1ABC9C); // Turquoise
+return const Color(0xFF1ABC9C); 
       case 'progress':
-        return const Color(0xFF3498DB); // Blue
+return const Color(0xFF3498DB); 
       case 'community':
-        return const Color(0xFFE74C3C); // Red
+return const Color(0xFFE74C3C); 
       case 'growth':
-        return const Color(0xFF27AE60); // Green
+return const Color(0xFF27AE60); 
       case 'general':
       default:
-        return const Color(0xFF6C757D); // Gray
+return const Color(0xFF6C757D); 
     }
   }
 
@@ -432,7 +425,6 @@ class DialogUtils {
     }
   }
 
-  // MARK: - Validation Methods
 
   static bool isValidEmail(String email) {
     if (email.isEmpty) return false;
@@ -510,7 +502,6 @@ class DialogUtils {
     return null;
   }
 
-  // MARK: - Date Methods
 
   static String formatDate(DateTime date) {
     final now = DateTime.now();
@@ -570,7 +561,6 @@ class DialogUtils {
     return text.split(' ').map((word) => capitalizeFirst(word)).join(' ');
   }
 
-  // MARK: - Format and Helper Methods
 
   static String formatDisplayName(String? displayName, String fallbackName) {
     if (displayName?.isNotEmpty == true) {
@@ -594,7 +584,7 @@ class DialogUtils {
     try {
       return Color(int.parse(hexColor.replaceAll('#', '0xFF')));
     } catch (e) {
-      return const Color(0xFF8B5CF6); // Default purple
+return const Color(0xFF8B5CF6); 
     }
   }
 
@@ -613,7 +603,6 @@ class DialogUtils {
     return '${(number / 1000000).toStringAsFixed(1)}M';
   }
 
-  // MARK: - Dialog Methods
 
   static void showLoadingDialog(BuildContext context, {String? message}) {
     showDialog(
@@ -802,9 +791,7 @@ class DialogUtils {
     );
   }
 
-  // MARK: - BLoC Integration Methods
 
-  /// Update profile using ProfileBloc
   static void updateProfileWithBloc(
     BuildContext context,
     Map<String, dynamic> profileData,
@@ -817,7 +804,6 @@ class DialogUtils {
     }
   }
 
-  /// Update preferences using ProfileBloc
   static void updatePreferencesWithBloc(
     BuildContext context,
     Map<String, dynamic> preferences,
@@ -830,7 +816,6 @@ class DialogUtils {
     }
   }
 
-  /// Update settings using ProfileBloc
   static void updateSettingsWithBloc(
     BuildContext context,
     Map<String, dynamic> settings,
@@ -843,7 +828,6 @@ class DialogUtils {
     }
   }
 
-  /// Export user data using ProfileBloc
   static void exportDataWithBloc(BuildContext context) {
     try {
       final profileBloc = context.read<ProfileBloc>();
@@ -854,7 +838,6 @@ class DialogUtils {
     }
   }
 
-  /// Sign out user using AuthBloc
   static void signOutWithBloc(BuildContext context) {
     try {
       final authBloc = context.read<AuthBloc>();
@@ -864,7 +847,6 @@ class DialogUtils {
     }
   }
 
-  /// Delete account with confirmation
   static Future<void> deleteAccountWithBloc(BuildContext context) async {
     final confirmed = await showConfirmationDialog(
       context,
@@ -876,7 +858,6 @@ class DialogUtils {
 
     if (confirmed) {
       try {
-        // Account deletion functionality can be implemented later
         showInfoSnackBar(context, 'Account deletion feature coming soon...');
       } catch (e) {
         showErrorSnackBar(context, 'Failed to delete account: ${e.toString()}');
@@ -884,7 +865,6 @@ class DialogUtils {
     }
   }
 
-  /// Load profile using ProfileBloc
   static void loadProfileWithBloc(BuildContext context) {
     try {
       final profileBloc = context.read<ProfileBloc>();
@@ -894,7 +874,6 @@ class DialogUtils {
     }
   }
 
-  /// Refresh profile using ProfileBloc
   static void refreshProfileWithBloc(BuildContext context) {
     try {
       final profileBloc = context.read<ProfileBloc>();
@@ -904,7 +883,6 @@ class DialogUtils {
     }
   }
 
-  // MARK: - Haptic Feedback Methods
 
   static void lightHaptic() {
     HapticFeedback.lightImpact();
@@ -922,7 +900,6 @@ class DialogUtils {
     HapticFeedback.selectionClick();
   }
 
-  // MARK: - Navigation Helpers
 
   static void navigateToProfile(BuildContext context) {
     Navigator.pushNamed(context, '/profile');
@@ -940,7 +917,6 @@ class DialogUtils {
     Navigator.pop(context);
   }
 
-  // MARK: - Error Handling
 
   static String getFriendlyErrorMessage(String error) {
     final errorLower = error.toLowerCase();
@@ -962,7 +938,6 @@ class DialogUtils {
     }
   }
 
-  // MARK: - Constants
 
   static const List<String> defaultPronouns = [
     'They / Them',

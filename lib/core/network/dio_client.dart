@@ -1,4 +1,3 @@
-// lib/core/network/dio_client.dart
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -16,7 +15,6 @@ class DioClient {
   static const Duration _receiveTimeout = Duration(seconds: 60);
   static const Duration _sendTimeout = Duration(seconds: 60);
 
-  // Cache for responses
   final Map<String, CachedResponse> _cache = {};
   static const Duration _defaultCacheDuration = Duration(minutes: 5);
 
@@ -36,7 +34,6 @@ class DioClient {
 
   Dio get dio => _dio;
 
-  // . FIXED: Ensure proper async initialization
   Future<void> _initializeAsync() async {
     try {
       await _initPrefs();
@@ -52,7 +49,6 @@ class DioClient {
     }
   }
 
-  // . FIXED: Wait for initialization before any operations
   Future<void> _ensureInitialized() async {
     if (!_isInitialized) {
       await _initializeAsync();
@@ -75,7 +71,6 @@ class DioClient {
       },
     );
 
-    // Add interceptors
     _dio.interceptors.addAll([
       _createAuthInterceptor(),
       _createLoggingInterceptor(),
@@ -84,14 +79,11 @@ class DioClient {
     ]);
   }
 
-  // Auth Interceptor - adds JWT token to requests
   Interceptor _createAuthInterceptor() {
     return InterceptorsWrapper(
       onRequest: (options, handler) async {
-        // . FIXED: Ensure initialization before token operations
         await _ensureInitialized();
         
-        // Add auth token if available
         final token = _getStoredToken();
         if (kDebugMode) {
           print('🔑 Auth interceptor - Token available: ${token != null}');
@@ -106,7 +98,6 @@ class DioClient {
       },
       onError: (error, handler) async {
         if (error.response?.statusCode == 401) {
-          // Token expired or invalid - clear stored token
           await _clearStoredToken();
           if (kDebugMode) {
             print('🔑 Token expired or invalid, cleared stored token');
@@ -117,7 +108,6 @@ class DioClient {
     );
   }
 
-  // Logging Interceptor - logs requests and responses in debug mode
   Interceptor _createLoggingInterceptor() {
     return InterceptorsWrapper(
       onRequest: (options, handler) {
@@ -156,11 +146,9 @@ class DioClient {
     );
   }
 
-  // Error Interceptor - handles common errors
   Interceptor _createErrorInterceptor() {
     return InterceptorsWrapper(
       onError: (error, handler) {
-        // Handle common errors
         if (error.type == DioExceptionType.connectionTimeout ||
             error.type == DioExceptionType.receiveTimeout ||
             error.type == DioExceptionType.sendTimeout) {
@@ -184,7 +172,6 @@ class DioClient {
     );
   }
 
-  // Retry Interceptor - retries failed requests
   Interceptor _createRetryInterceptor() {
     return InterceptorsWrapper(
       onError: (error, handler) async {
@@ -194,15 +181,12 @@ class DioClient {
           }
 
           try {
-            // Wait before retry
             await Future.delayed(const Duration(milliseconds: 1000));
 
-            // Retry the request
             final response = await _dio.fetch(error.requestOptions);
             handler.resolve(response);
             return;
           } catch (e) {
-            // If retry fails, continue with original error
             if (kDebugMode) {
               print('. Retry failed: $e');
             }
@@ -221,7 +205,6 @@ class DioClient {
         error.response?.statusCode == 504;
   }
 
-  // Cache management methods
   String _getCacheKey(
     String method,
     String path,
@@ -260,9 +243,7 @@ class DioClient {
     return null;
   }
 
-  // Enhanced API Methods
 
-  // Auth endpoints
   Future<Response> checkUsernameAvailability(String username) async {
     return await _makeRequest(
       'POST',
@@ -312,7 +293,6 @@ class DioClient {
     );
   }
 
-  // Emotion endpoints with caching
   Future<Response> logEmotion({
     required String userId,
     required String emotion,
@@ -512,7 +492,6 @@ class DioClient {
     return await _makeRequest('DELETE', '/api/emotions/$emotionId');
   }
 
-  // Health and monitoring endpoints
   Future<Response> healthCheck() async {
     return await _makeRequest(
       'GET',
@@ -537,7 +516,6 @@ class DioClient {
     );
   }
 
-  // Core request method
   Future<Response> _makeRequest(
     String method,
     String path, {
@@ -548,7 +526,6 @@ class DioClient {
     Options? options,
     CancelToken? cancelToken,
   }) async {
-    // Check cache for GET requests
     if (method.toUpperCase() == 'GET' && cacheDuration != null) {
       final cacheKey = _getCacheKey(method, path, queryParameters);
       final cachedResponse = _getCachedResponse(cacheKey, forceRefresh);
@@ -557,7 +534,6 @@ class DioClient {
       }
     }
 
-    // Make the request
     late Response response;
 
     switch (method.toUpperCase()) {
@@ -609,7 +585,6 @@ class DioClient {
         throw ArgumentError('Unsupported HTTP method: $method');
     }
 
-    // Cache successful GET responses
     if (method.toUpperCase() == 'GET' &&
         cacheDuration != null &&
         response.statusCode == 200) {
@@ -620,7 +595,6 @@ class DioClient {
     return response;
   }
 
-  // Enhanced Generic HTTP methods
   Future<Response> get(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -708,8 +682,6 @@ class DioClient {
     );
   }
 
-  // Token management
-  // . FIXED: Make token operations async and wait for initialization
   String? _getStoredToken() {
     try {
       return _prefs?.getString(AppConfig.authTokenKey);
@@ -763,7 +735,6 @@ class DioClient {
     return _getStoredToken() != null;
   }
 
-  // Cache management methods
   void clearCache() {
     _cache.clear();
     if (kDebugMode) {
@@ -787,7 +758,6 @@ class DioClient {
     return {'total': _cache.length, 'valid': valid, 'expired': expired};
   }
 
-  // Connection testing methods
   Future<bool> testConnection() async {
     try {
       final response = await healthCheck();
@@ -829,7 +799,6 @@ class DioClient {
     }
   }
 
-  // Configuration methods
   void updateBaseUrl(String newBaseUrl) {
     _dio.options.baseUrl = newBaseUrl;
     if (kDebugMode) {
@@ -870,7 +839,6 @@ class DioClient {
     }
   }
 
-  // Debug and monitoring methods
   Map<String, dynamic> getClientInfo() {
     return {
       'baseUrl': _dio.options.baseUrl,
@@ -890,7 +858,6 @@ class DioClient {
     }
   }
 
-  // Cleanup method
   void dispose() {
     _dio.close();
     clearCache();
@@ -899,14 +866,12 @@ class DioClient {
     }
   }
 
-  // Singleton cleanup for testing
   static void resetInstance() {
     _instance?.dispose();
     _instance = null;
   }
 }
 
-// Helper class for caching responses
 class CachedResponse {
   final Response response;
   final DateTime expiresAt;

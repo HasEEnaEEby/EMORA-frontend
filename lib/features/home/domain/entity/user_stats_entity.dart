@@ -11,7 +11,6 @@ class UserStatsEntity extends Equatable {
   final Map<String, dynamic> weeklyStats;
   final Map<String, dynamic> monthlyStats;
   
-  // Enhanced fields for journey analytics
   final int longestStreak;
   final int totalFriends;
   final int helpedFriends;

@@ -1,10 +1,8 @@
-// lib/features/home/presentation/widget/dashboard_modals.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../../core/navigation/navigation_service.dart';
 import '../../../../../core/utils/logger.dart';
 
-// MoodCapsule Model Class
 class MoodCapsule {
   final String emotion;
   final Color color;
@@ -21,7 +19,6 @@ class MoodCapsule {
   });
 }
 
-// Mood Update Modal
 class MoodUpdateModal extends StatefulWidget {
   final String currentMood;
   final Function(String) onMoodUpdated;
@@ -122,31 +119,24 @@ class _MoodUpdateModalState extends State<MoodUpdateModal>
       selectedMood = mood;
     });
     
-    // Add haptic feedback
     HapticFeedback.lightImpact();
     
-    // Log selection
     Logger.info('Mood selected: $mood');
   }
 
   void _updateMood() {
     if (selectedMood.isEmpty) return;
 
-    // Add haptic feedback
     HapticFeedback.mediumImpact();
 
-    // Update mood
     widget.onMoodUpdated(selectedMood);
     
-    // Close modal
     Navigator.pop(context);
     
-    // Show success message
     NavigationService.showSuccessSnackBar(
       'Mood updated to "$selectedMood" 💜',
     );
     
-    // Log update
     Logger.info('Mood updated to: $selectedMood');
   }
 
@@ -182,7 +172,6 @@ class _MoodUpdateModalState extends State<MoodUpdateModal>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Handle Bar
                   Center(
                     child: Container(
                       width: 40,
@@ -195,7 +184,6 @@ class _MoodUpdateModalState extends State<MoodUpdateModal>
                   ),
                   const SizedBox(height: 20),
                   
-                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -240,7 +228,6 @@ class _MoodUpdateModalState extends State<MoodUpdateModal>
                   
                   const SizedBox(height: 32),
                   
-                  // Mood Options
                   Expanded(
                     child: ListView.builder(
                       itemCount: moods.length,
@@ -285,7 +272,6 @@ class _MoodUpdateModalState extends State<MoodUpdateModal>
                             ),
                             child: Row(
                               children: [
-                                // Mood Icon
                                 Container(
                                   width: 50,
                                   height: 50,
@@ -303,7 +289,6 @@ class _MoodUpdateModalState extends State<MoodUpdateModal>
                                 
                                 const SizedBox(width: 16),
                                 
-                                // Mood Text
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,7 +315,6 @@ class _MoodUpdateModalState extends State<MoodUpdateModal>
                                   ),
                                 ),
                                 
-                                // Selection Indicator
                                 if (isSelected)
                                   Container(
                                     width: 24,
@@ -355,7 +339,6 @@ class _MoodUpdateModalState extends State<MoodUpdateModal>
                   
                   const SizedBox(height: 24),
                   
-                  // Update Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -393,7 +376,6 @@ class _MoodUpdateModalState extends State<MoodUpdateModal>
   }
 }
 
-// Mood Capsule Detail Dialog
 class MoodCapsuleDetailDialog extends StatefulWidget {
   final MoodCapsule capsule;
 
@@ -478,7 +460,6 @@ class _MoodCapsuleDetailDialogState extends State<MoodCapsuleDetailDialog>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Animated Capsule
                     Container(
                       width: 100,
                       height: 100,
@@ -519,7 +500,6 @@ class _MoodCapsuleDetailDialogState extends State<MoodCapsuleDetailDialog>
                     
                     const SizedBox(height: 20),
                     
-                    // Emotion Title
                     Text(
                       widget.capsule.emotion.toUpperCase(),
                       style: TextStyle(
@@ -532,7 +512,6 @@ class _MoodCapsuleDetailDialogState extends State<MoodCapsuleDetailDialog>
                     
                     const SizedBox(height: 8),
                     
-                    // Time
                     Text(
                       widget.capsule.time,
                       style: TextStyle(
@@ -544,7 +523,6 @@ class _MoodCapsuleDetailDialogState extends State<MoodCapsuleDetailDialog>
                     
                     const SizedBox(height: 20),
                     
-                    // Note
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -568,7 +546,6 @@ class _MoodCapsuleDetailDialogState extends State<MoodCapsuleDetailDialog>
                     
                     const SizedBox(height: 24),
                     
-                    // Intensity Display
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -618,7 +595,6 @@ class _MoodCapsuleDetailDialogState extends State<MoodCapsuleDetailDialog>
                     
                     const SizedBox(height: 28),
                     
-                    // Close Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -653,7 +629,6 @@ class _MoodCapsuleDetailDialogState extends State<MoodCapsuleDetailDialog>
   }
 }
 
-// Venting Modal
 class VentingModal extends StatefulWidget {
   const VentingModal({super.key});
 
@@ -689,7 +664,6 @@ class _VentingModalState extends State<VentingModal>
     );
     _animationController.forward();
     
-    // Auto-focus text field after a brief delay
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         _focusNode.requestFocus();
@@ -723,14 +697,11 @@ class _VentingModalState extends State<VentingModal>
       _isSubmitting = true;
     });
 
-    // Add haptic feedback
     HapticFeedback.mediumImpact();
 
     try {
-      // Simulate API call
       await Future.delayed(const Duration(milliseconds: 1500));
       
-      // Log the vent
       Logger.info('Vent submitted: $selectedEmotion - ${_controller.text.length} characters');
       
       if (mounted) {
@@ -772,7 +743,6 @@ class _VentingModalState extends State<VentingModal>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle Bar
               Center(
                 child: Container(
                   width: 40,
@@ -785,7 +755,6 @@ class _VentingModalState extends State<VentingModal>
               ),
               const SizedBox(height: 20),
               
-              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -830,7 +799,6 @@ class _VentingModalState extends State<VentingModal>
               
               const SizedBox(height: 28),
               
-              // Emotion Selection
               Text(
                 'How are you feeling?',
                 style: TextStyle(
@@ -906,7 +874,6 @@ class _VentingModalState extends State<VentingModal>
               
               const SizedBox(height: 24),
               
-              // Text Input
               Text(
                 'What\'s on your mind?',
                 style: TextStyle(
@@ -955,7 +922,6 @@ class _VentingModalState extends State<VentingModal>
               
               const SizedBox(height: 20),
               
-              // Character Count
               if (_controller.text.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -968,7 +934,6 @@ class _VentingModalState extends State<VentingModal>
                   ),
                 ),
               
-              // Submit Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -1004,7 +969,6 @@ class _VentingModalState extends State<VentingModal>
               
               const SizedBox(height: 8),
               
-              // Privacy Note
               Text(
                 '🔒 Your words are anonymous and secure. You\'re not alone in this.',
                 textAlign: TextAlign.center,
@@ -1022,7 +986,6 @@ class _VentingModalState extends State<VentingModal>
   }
 }
 
-// Journal Modal
 class JournalModal extends StatefulWidget {
   const JournalModal({super.key});
 
@@ -1080,7 +1043,6 @@ class _JournalModalState extends State<JournalModal>
     );
     _animationController.forward();
     
-    // Auto-focus text field after a brief delay
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         _focusNode.requestFocus();
@@ -1114,14 +1076,11 @@ class _JournalModalState extends State<JournalModal>
       _isSubmitting = true;
     });
 
-    // Add haptic feedback
     HapticFeedback.mediumImpact();
 
     try {
-      // Simulate API call
       await Future.delayed(const Duration(milliseconds: 1500));
       
-      // Log the journal entry
       Logger.info('Journal entry saved: $selectedPrompt - ${_controller.text.length} characters');
       
       if (mounted) {
@@ -1163,7 +1122,6 @@ class _JournalModalState extends State<JournalModal>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle Bar
               Center(
                 child: Container(
                   width: 40,
@@ -1176,7 +1134,6 @@ class _JournalModalState extends State<JournalModal>
               ),
               const SizedBox(height: 20),
               
-              // Header
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1221,7 +1178,6 @@ class _JournalModalState extends State<JournalModal>
               
               const SizedBox(height: 28),
               
-              // Prompt Selection
               Text(
                 'Choose a reflection prompt:',
                 style: TextStyle(
@@ -1313,7 +1269,6 @@ class _JournalModalState extends State<JournalModal>
               
               const SizedBox(height: 24),
               
-              // Selected Prompt Display
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
@@ -1344,7 +1299,6 @@ class _JournalModalState extends State<JournalModal>
               
               const SizedBox(height: 16),
               
-              // Text Input
               Expanded(
                 child: Container(
                   padding: const EdgeInsets.all(16),
@@ -1383,7 +1337,6 @@ class _JournalModalState extends State<JournalModal>
               
               const SizedBox(height: 20),
               
-              // Word Count
               if (_controller.text.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -1396,7 +1349,6 @@ class _JournalModalState extends State<JournalModal>
                   ),
                 ),
               
-              // Save Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -1432,7 +1384,6 @@ class _JournalModalState extends State<JournalModal>
               
               const SizedBox(height: 8),
               
-              // Privacy Note
               Text(
                 '💝 Your journal entries are private and secure. Keep growing!',
                 textAlign: TextAlign.center,

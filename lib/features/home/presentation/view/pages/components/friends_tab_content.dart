@@ -1,6 +1,3 @@
-// ============================================================================
-// FRIENDS TAB CONTENT - components/friends_tab_content.dart
-// ============================================================================
 
 import 'package:emora_mobile_app/core/utils/friends_utils.dart';
 import 'package:emora_mobile_app/features/home/presentation/view/pages/friends_view.dart';
@@ -19,13 +16,10 @@ import 'package:emora_mobile_app/features/friends/domain/entity/friend_mood_data
 import 'package:emora_mobile_app/core/network/dio_client.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/core/navigation/navigation_service.dart';
-// import 'package:emora_mobile_app/features/user/presentation/view/user_profile_page.dart';
 
 class FriendsTabContent {
-  // Service instance for mood reactions
   static final MoodReactionService _moodReactionService = MoodReactionService(DioClient.instance);
 
-  // Global Feed Tab
   static Widget globalFeed(Future<void> Function() onRefresh) {
     return BlocBuilder<CommunityBloc, CommunityState>(
       builder: (context, state) {
@@ -41,7 +35,6 @@ class FriendsTabContent {
     );
   }
 
-  // My Friends Tab
   static Widget myFriends(Future<void> Function() onRefresh, TabController tabController) {
     return BlocBuilder<FriendBloc, FriendState>(
       builder: (context, state) {
@@ -58,7 +51,6 @@ class FriendsTabContent {
     );
   }
 
-  // Sent Requests Tab
   static Widget sentRequests(Future<void> Function() onRefresh, Function(String) onCancel) {
     return BlocBuilder<FriendBloc, FriendState>(
       builder: (context, state) {
@@ -74,7 +66,6 @@ class FriendsTabContent {
     );
   }
 
-  // Received Requests Tab
   static Widget receivedRequests(Future<void> Function() onRefresh, Function(String, String) onRespond) {
     return BlocBuilder<FriendBloc, FriendState>(
       builder: (context, state) {
@@ -90,7 +81,6 @@ class FriendsTabContent {
     );
   }
 
-  // Discover Tab
   static Widget discover(Function(String) onSendRequest) {
     return BlocBuilder<FriendBloc, FriendState>(
       builder: (context, state) {
@@ -108,9 +98,6 @@ class FriendsTabContent {
     );
   }
 
-  // ============================================================================
-  // PRIVATE CONTENT BUILDERS
-  // ============================================================================
 
   static Widget _buildGlobalFeedContent(CommunityFeedLoaded state, Future<void> Function() onRefresh) {
     return RefreshIndicator(
@@ -132,9 +119,7 @@ class FriendsTabContent {
       return _buildEmptyFriendsState(tabController);
     }
 
-    // DEBUG: Print all friends and their recentMood
     for (final friend in state.friends) {
-      // ignore: avoid_print
       print('[DEBUG] Friend: ${friend.username} (id: ${friend.id}) recentMood: ${friend.recentMood}');
     }
 
@@ -231,19 +216,15 @@ class FriendsTabContent {
   }
 
   static Widget _buildDiscoverContent(FriendsLoaded state, Function(String) onSendRequest) {
-    // Filter out suggestions that already have pending requests
     final availableSuggestions = state.suggestions.where((suggestion) {
-      // Check if user is already a friend
       if (state.friends.any((friend) => friend.id == suggestion.id)) {
         return false;
       }
       
-      // Check if there's already a sent request for this user
       if (state.sentRequests.any((request) => request.userId == suggestion.id)) {
         return false;
       }
       
-      // Check if there's already a received request from this user
       if (state.receivedRequests.any((request) => request.userId == suggestion.id)) {
         return false;
       }
@@ -278,9 +259,6 @@ class FriendsTabContent {
     );
   }
 
-  // ============================================================================
-  // WIDGET BUILDERS
-  // ============================================================================
 
 
 
@@ -417,7 +395,6 @@ class FriendsTabContent {
       ),
       child: Column(
         children: [
-          // Header with friend info
           Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
@@ -524,10 +501,8 @@ class FriendsTabContent {
             ),
           ),
           
-          // Mood Activity Section
           _buildMoodActivitySection(friend, context),
           
-          // Action Buttons
           _buildFriendActionButtons(friend, context),
         ],
       ),
@@ -535,7 +510,6 @@ class FriendsTabContent {
   }
 
   static Widget _buildMoodActivitySection(FriendEntity friend, BuildContext context) {
-    // Use real mood data from friend entity
     final recentMood = friend.recentMood;
     final recentCommunityPost = friend.recentCommunityPost;
     
@@ -1001,7 +975,6 @@ class FriendsTabContent {
             print('. _buildCancelRequestButton - userId length: ${userId.length}');
             print('. _buildCancelRequestButton - userId isEmpty: ${userId.isEmpty}');
             
-            // Validate userId before calling onCancel
             if (userId.isEmpty) {
               print('. _buildCancelRequestButton - userId is empty, not calling onCancel');
               ScaffoldMessenger.of(NavigationService.navigatorKey.currentContext!).showSnackBar(
@@ -1407,7 +1380,6 @@ class FriendsTabContent {
           const SizedBox(width: 12),
           BlocBuilder<FriendBloc, FriendState>(
             builder: (context, state) {
-              // . Use centralized status check from BLoC
               final friendBloc = context.read<FriendBloc>();
               FriendRequestStatus buttonStatus = friendBloc.getFriendRequestStatus(suggestion.id) as FriendRequestStatus;
               
@@ -1508,7 +1480,7 @@ class FriendsTabContent {
             'Find Friends',
             Icons.person_add,
             const Color(0xFF8B5CF6),
-            () => tabController.animateTo(3), // Go to discover tab
+() => tabController.animateTo(3), 
           ),
         ],
       ),
@@ -1597,7 +1569,6 @@ class FriendsTabContent {
 
       if (success) {
         Logger.info('✅ Reaction sent successfully');
-        // Show success feedback to user
         ScaffoldMessenger.of(NavigationService.navigatorKey.currentContext!).showSnackBar(
           SnackBar(
             content: Text('$reactionType sent! 💝'),
@@ -1705,7 +1676,6 @@ class FriendsTabContent {
   static void _viewFriendProfile(FriendEntity friend, BuildContext context) {
     print('Viewing profile for ${friend.username}');
     HapticFeedback.lightImpact();
-    // Placeholder: Show a simple profile page
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1719,7 +1689,6 @@ class FriendsTabContent {
                 Text('Display Name: ${friend.displayName}', style: TextStyle(fontSize: 16)),
                 Text('Avatar: ${friend.selectedAvatar}', style: TextStyle(fontSize: 16)),
                 if (friend.location != null) Text('Location: ${friend.location}', style: TextStyle(fontSize: 16)),
-                // Add more friend info as needed
               ],
             ),
           ),
@@ -1785,13 +1754,10 @@ class FriendsTabContent {
   static void _viewFriendOnMap(FriendEntity friend, BuildContext context) {
     print('Viewing ${friend.username} on map');
     HapticFeedback.mediumImpact();
-    // TODO: Navigate to map with friend filter
   }
 
   static void _viewCommunityPost(CommunityPostEntity post, BuildContext context) {
     print('📝 Viewing community post: ${post.id}');
     HapticFeedback.lightImpact();
-    // TODO: Implement navigation to a detailed post page
-    // No SnackBar or message for now
   }
 }

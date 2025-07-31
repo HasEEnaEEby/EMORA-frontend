@@ -1,4 +1,3 @@
-// lib/features/home/data/repository/home_repository_impl.dart
 
 import 'package:dartz/dartz.dart';
 
@@ -6,10 +5,8 @@ import '../../../../core/errors/exceptions.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/network_info.dart';
 import '../../../../core/utils/logger.dart';
-// Domain imports
 import '../../domain/entity/home_data_entity.dart';
 import '../../domain/repository/home_repository.dart';
-// Import with aliases to avoid conflicts
 import '../data_source/local/home_local_data_source.dart';
 import '../data_source/remote/home_remote_data_source.dart' as remote_source;
 import '../model/home_data_model.dart' as local_model;
@@ -34,13 +31,10 @@ class HomeRepositoryImpl implements HomeRepository {
       if (await networkInfo.isConnected) {
         Logger.info('🌐 Network available - fetching fresh data');
 
-        // Get data from remote source
         final remoteHomeData = await remoteDataSource.getHomeData();
 
-        // Convert remote model to local model format
         final localHomeData = _convertRemoteToLocalModel(remoteHomeData);
 
-        // Cache the converted data
         await localDataSource.cacheHomeData(localHomeData);
 
         Logger.info('. Fresh home data retrieved and cached');
@@ -64,7 +58,6 @@ class HomeRepositoryImpl implements HomeRepository {
     } on ServerException catch (e) {
       Logger.error('. Server error getting home data', e);
 
-      // Try to get cached data as fallback
       try {
         final cachedHomeData = await localDataSource.getLastHomeData();
         Logger.info('. Using cached data as fallback');
@@ -87,12 +80,10 @@ class HomeRepositoryImpl implements HomeRepository {
       Logger.info('👋 Marking first-time login as complete...');
 
       if (await networkInfo.isConnected) {
-        // Update on server first
         await remoteDataSource.markFirstTimeLoginComplete();
         Logger.info('. First-time login marked complete on server');
       }
 
-      // Update local cache
       final updatedHomeData = await localDataSource
           .markFirstTimeLoginComplete();
 
@@ -101,7 +92,6 @@ class HomeRepositoryImpl implements HomeRepository {
     } on ServerException catch (e) {
       Logger.error('. Server error marking first-time login complete', e);
 
-      // Still update locally even if server fails
       try {
         final updatedHomeData = await localDataSource
             .markFirstTimeLoginComplete();
@@ -123,7 +113,6 @@ class HomeRepositoryImpl implements HomeRepository {
     try {
       Logger.info('👋 Checking first-time login status...');
 
-      // Check local cache first for better performance
       if (await localDataSource.hasHomeData()) {
         final cachedHomeData = await localDataSource.getLastHomeData();
         final isFirstTime = cachedHomeData.isFirstTimeLogin;
@@ -132,7 +121,6 @@ class HomeRepositoryImpl implements HomeRepository {
         return Right(isFirstTime);
       }
 
-      // If no cache and network available, get from server
       if (await networkInfo.isConnected) {
         final homeData = await getHomeData();
         return homeData.fold(
@@ -141,7 +129,6 @@ class HomeRepositoryImpl implements HomeRepository {
         );
       }
 
-      // No cache and no network - assume first time
       Logger.warning('. No cache and no network - assuming first time login');
       return const Right(true);
     } catch (e) {
@@ -154,12 +141,10 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-  // Helper method to create mock data for testing
   Future<Either<Failure, HomeDataEntity>> getMockHomeData() async {
     try {
       Logger.info('🧪 Creating mock home data...');
 
-      // Create mock data using the proper constructor with all required parameters
       final mockData = local_model.HomeDataModel(
         username: 'testuser',
         currentMood: 'neutral',
@@ -181,27 +166,21 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-  // Helper method to convert remote model to local model
   local_model.HomeDataModel _convertRemoteToLocalModel(dynamic remoteModel) {
     try {
-      // If it's already the correct type, return as is
       if (remoteModel is local_model.HomeDataModel) {
         return remoteModel;
       }
 
-      // If it's from remote source, convert it
-      // Assuming the remote model has similar structure but might be missing some fields
       if (remoteModel is Map<String, dynamic>) {
         return local_model.HomeDataModel.fromJson(remoteModel);
       }
 
-      // If it's an object with toJson method
       if (remoteModel.runtimeType.toString().contains('HomeDataModel')) {
         final json = remoteModel.toJson();
         return local_model.HomeDataModel.fromJson(json);
       }
 
-      // Fallback - create from basic properties
       return local_model.HomeDataModel(
         username: remoteModel.username ?? 'Unknown',
         currentMood: remoteModel.currentMood,
@@ -215,7 +194,6 @@ class HomeRepositoryImpl implements HomeRepository {
     } catch (e) {
       Logger.error('. Error converting remote model to local model', e);
 
-      // Return safe default
       return local_model.HomeDataModel(
         username: 'Unknown',
         currentMood: 'neutral',
@@ -229,7 +207,6 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-  // Helper method to convert remote user stats to local user stats
   local_model.UserStatsModel _convertRemoteUserStats(dynamic remoteUserStats) {
     try {
       if (remoteUserStats == null) {
@@ -244,13 +221,11 @@ class HomeRepositoryImpl implements HomeRepository {
         return local_model.UserStatsModel.fromJson(remoteUserStats);
       }
 
-      // If it's an object with toJson method
       if (remoteUserStats.runtimeType.toString().contains('UserStatsModel')) {
         final json = remoteUserStats.toJson();
         return local_model.UserStatsModel.fromJson(json);
       }
 
-      // Fallback
       return local_model.UserStatsModel.empty();
     } catch (e) {
       Logger.error('. Error converting remote user stats', e);
@@ -258,9 +233,7 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-  // Additional helper methods for better error handling and data management
 
-  /// Refresh home data from server
   Future<Either<Failure, HomeDataEntity>> refreshHomeData() async {
     try {
       Logger.info('🔄 Refreshing home data from server...');
@@ -284,7 +257,6 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-  /// Clear local cache
   Future<Either<Failure, void>> clearCache() async {
     try {
       Logger.info('🗑️ Clearing home data cache...');
@@ -299,7 +271,6 @@ class HomeRepositoryImpl implements HomeRepository {
     }
   }
 
-  /// Check if cached data is stale
   Future<bool> isCacheStale({
     Duration maxAge = const Duration(hours: 1),
   }) async {
@@ -314,7 +285,7 @@ class HomeRepositoryImpl implements HomeRepository {
       return age > maxAge;
     } catch (e) {
       Logger.error('. Error checking cache staleness', e);
-      return true; // Assume stale on error
+return true; 
     }
   }
 }

@@ -1,13 +1,9 @@
-// lib/widgets/music_player_widget.dart
 import 'package:emora_mobile_app/core/services/spotify_service.dart';
 import 'package:emora_mobile_app/features/home/data/model/spotify_model.dart';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
 
-// =======================================================================
-// Main Music Player Widget (Bottom Player)
-// =======================================================================
 
 class MusicPlayerWidget extends StatefulWidget {
   final SpotifyService spotifyService;
@@ -77,7 +73,7 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget>
       if (mounted) {
         setState(() {
           _isPlaying = state == PlayerState.playing;
-          _isLoading = state == PlayerState.paused; // Simplified state
+_isLoading = state == PlayerState.paused; 
         });
       }
     });
@@ -128,10 +124,8 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget>
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Progress bar
             _buildProgressBar(),
             
-            // Main player content
             _buildPlayerContent(currentTrack),
           ],
         ),
@@ -160,15 +154,12 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget>
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            // Album art with animation
             _buildAlbumArt(track),
             
             const SizedBox(width: 16),
             
-            // Track info
             Expanded(child: _buildTrackInfo(track)),
             
-            // Control buttons
             _buildControlButtons(),
           ],
         ),
@@ -197,7 +188,6 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget>
                       )
                     : _buildDefaultAlbumArt(),
                 
-                // Playing indicator overlay
                 if (_isPlaying)
                   Container(
                     width: 60,
@@ -328,9 +318,6 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget>
   }
 }
 
-// =======================================================================
-// Full Screen Music Player
-// =======================================================================
 
 class FullScreenMusicPlayer extends StatefulWidget {
   final SpotifyService spotifyService;
@@ -755,7 +742,6 @@ class _FullScreenMusicPlayerState extends State<FullScreenMusicPlayer>
     setState(() {
       _isRepeating = !_isRepeating;
     });
-    // Implement repeat logic in SpotifyService if needed
   }
 
   void _showOptions() {
@@ -801,16 +787,12 @@ class _FullScreenMusicPlayerState extends State<FullScreenMusicPlayer>
   }
 
   void _shareTrack() {
-    // Implement share functionality
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Share functionality coming soon!')),
     );
   }
 }
 
-// =======================================================================
-// Queue Screen
-// =======================================================================
 
 class QueueScreen extends StatelessWidget {
   final SpotifyService spotifyService;
@@ -876,9 +858,6 @@ class QueueScreen extends StatelessWidget {
   }
 }
 
-// =======================================================================
-// Mini Player Widget (for other screens)
-// =======================================================================
 
 class MiniMusicPlayer extends StatefulWidget {
   final SpotifyService spotifyService;

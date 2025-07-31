@@ -184,27 +184,22 @@ class EmotionConstants {
     },
   };
 
-  /// Get emotion data by key
   static Map<String, dynamic> getEmotion(String emotionKey) {
     return emotions[emotionKey.toLowerCase()] ?? emotions['joy']!;
   }
 
-  /// Get emoji for emotion
   static String getEmotionEmoji(String emotionKey) {
     return getEmotion(emotionKey)['emoji'] ?? '😊';
   }
 
-  /// Get character for emotion
   static String getEmotionCharacter(String emotionKey) {
     return getEmotion(emotionKey)['character'] ?? '😊';
   }
 
-  /// Get color for emotion
   static Color getEmotionColor(String emotionKey) {
     return getEmotion(emotionKey)['color'] ?? const Color(0xFFFFD700);
   }
 
-  /// Get background gradient for emotion
   static List<Color> getEmotionGradient(String emotionKey) {
     return List<Color>.from(
       getEmotion(emotionKey)['bgGradient'] ??
@@ -212,17 +207,14 @@ class EmotionConstants {
     );
   }
 
-  /// Get emotion name
   static String getEmotionName(String emotionKey) {
     return getEmotion(emotionKey)['name'] ?? 'Joy';
   }
 
-  /// Get emotion description
   static String getEmotionDescription(String emotionKey) {
     return getEmotion(emotionKey)['description'] ?? 'Feeling happy';
   }
 
-  /// Get global percentage (mock data for now)
   static int getGlobalPercentage(String emotionKey) {
     final percentages = {
       'joy': 42,
@@ -242,7 +234,6 @@ class EmotionConstants {
     return percentages[emotionKey.toLowerCase()] ?? 25;
   }
 
-  /// Get emotions by intensity
   static List<String> getEmotionsByIntensity(String intensity) {
     return emotions.entries
         .where((entry) => entry.value['intensity'] == intensity)
@@ -250,39 +241,32 @@ class EmotionConstants {
         .toList();
   }
 
-  /// Get positive emotions
   static List<String> getPositiveEmotions() {
     return getEmotionsByIntensity('positive');
   }
 
-  /// Get negative emotions
   static List<String> getNegativeEmotions() {
     return getEmotionsByIntensity('negative');
   }
 
-  /// Get neutral emotions
   static List<String> getNeutralEmotions() {
     return getEmotionsByIntensity('neutral');
   }
 
-  /// Check if emotion exists
   static bool hasEmotion(String emotionKey) {
     return emotions.containsKey(emotionKey.toLowerCase());
   }
 
-  /// Get all emotion keys
   static List<String> getAllEmotionKeys() {
     return emotions.keys.toList();
   }
 
-  /// Get random emotion
   static String getRandomEmotion() {
     final keys = getAllEmotionKeys();
     keys.shuffle();
     return keys.first;
   }
 
-  /// Get emotions for mood suggestions
   static List<Map<String, dynamic>> getMoodSuggestions() {
     return [
       emotions['joy']!,
@@ -294,7 +278,6 @@ class EmotionConstants {
     ];
   }
 
-  /// Get complementary emotions (opposite feelings)
   static String getComplementaryEmotion(String emotionKey) {
     final complementary = {
       'joy': 'sad',

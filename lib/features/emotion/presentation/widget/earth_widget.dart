@@ -40,7 +40,6 @@ class EarthWidget extends StatelessWidget {
           earthRotationAnimation,
         ]),
         builder: (context, child) {
-          // Calculate Earth's orbital position
           final orbitAngle = orbitController.value * 2 * math.pi;
           final baseOffset = isTransitioning
               ? earthPositionAnimation.value
@@ -61,14 +60,12 @@ class EarthWidget extends StatelessWidget {
                       );
                       onTap();
                     },
-                    // Add behavior to make sure tap is detected
                     behavior: HitTestBehavior.opaque,
                     child: Container(
-                      width: 80, // Increased size for better tap area
-                      height: 80, // Increased size for better tap area
+width: 80, 
+height: 80, 
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        // Add a subtle border to show the tap area
                         border: Border.all(
                           color: Colors.blue.withValues(alpha: 0.2),
                           width: 2,
@@ -101,7 +98,6 @@ class EarthWidget extends StatelessWidget {
                       child: ClipOval(
                         child: Stack(
                           children: [
-                            // 3D Earth Model
                             AnimatedBuilder(
                               animation: earthRotationController,
                               builder: (context, child) {
@@ -126,7 +122,6 @@ class EarthWidget extends StatelessWidget {
                                 );
                               },
                             ),
-                            // Invisible overlay to ensure tap detection
                             Positioned.fill(
                               child: Container(
                                 decoration: BoxDecoration(

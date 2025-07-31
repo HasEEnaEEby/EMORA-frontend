@@ -16,7 +16,6 @@ class SpaceBackground extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Deep space background with nebula
         AnimatedBuilder(
           animation: fadeAnimation,
           builder: (context, child) {
@@ -28,9 +27,9 @@ class SpaceBackground extends StatelessWidget {
                     center: Alignment(-0.3, -0.5),
                     radius: 2.0,
                     colors: [
-                      Color(0xFF1a0033), // Deep purple nebula
-                      Color(0xFF0a0015), // Dark purple
-                      Color(0xFF000000), // Pure black
+Color(0xFF1a0033), 
+Color(0xFF0a0015), 
+Color(0xFF000000), 
                     ],
                   ),
                 ),
@@ -39,7 +38,6 @@ class SpaceBackground extends StatelessWidget {
           },
         ),
 
-        // Rotating starfield
         AnimatedBuilder(
           animation: Listenable.merge([rotationController, fadeAnimation]),
           builder: (context, child) {
@@ -56,7 +54,6 @@ class SpaceBackground extends StatelessWidget {
           },
         ),
 
-        // Distant galaxies and nebulae
         AnimatedBuilder(
           animation: fadeAnimation,
           builder: (context, child) {
@@ -71,16 +68,13 @@ class SpaceBackground extends StatelessWidget {
   }
 }
 
-// Realistic starfield painter
 class RealisticStarFieldPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint();
 
-    // Create different star types
     final stars = <Map<String, dynamic>>[];
 
-    // Generate main sequence stars (white/blue)
     for (int i = 0; i < 150; i++) {
       stars.add({
         'x': (i * 37.5) % size.width,
@@ -91,7 +85,6 @@ class RealisticStarFieldPainter extends CustomPainter {
       });
     }
 
-    // Add some red giants
     for (int i = 0; i < 20; i++) {
       stars.add({
         'x': (i * 127.3) % size.width,
@@ -102,7 +95,6 @@ class RealisticStarFieldPainter extends CustomPainter {
       });
     }
 
-    // Add blue giants
     for (int i = 0; i < 15; i++) {
       stars.add({
         'x': (i * 97.1) % size.width,
@@ -113,13 +105,11 @@ class RealisticStarFieldPainter extends CustomPainter {
       });
     }
 
-    // Draw all stars
     for (final star in stars) {
       paint.color = (star['color'] as Color).withValues(
         alpha: star['opacity'] as double,
       );
 
-      // Add subtle glow for larger stars
       if (star['size'] > 1.0) {
         paint.maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.0);
       } else {
@@ -138,22 +128,18 @@ class RealisticStarFieldPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// Nebulae painter for distant background
 class NebulaePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 50.0);
 
-    // Purple nebula
     paint.color = const Color(0xFF8A2BE2).withValues(alpha: 0.1);
     canvas.drawCircle(Offset(size.width * 0.8, size.height * 0.2), 100, paint);
 
-    // Blue nebula
     paint.color = const Color(0xFF4169E1).withValues(alpha: 0.08);
     canvas.drawCircle(Offset(size.width * 0.2, size.height * 0.7), 80, paint);
 
-    // Pink nebula
     paint.color = const Color(0xFFFF1493).withValues(alpha: 0.06);
     canvas.drawCircle(Offset(size.width * 0.1, size.height * 0.3), 60, paint);
   }

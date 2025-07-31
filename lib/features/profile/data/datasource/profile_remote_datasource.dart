@@ -1,4 +1,3 @@
-// lib/features/profile/data/data_source/remote/profile_remote_data_source.dart - FIXED VERSION
 import 'package:emora_mobile_app/core/utils/logger.dart';
 import 'package:emora_mobile_app/features/auth/data/data_source/local/auth_local_data_source.dart';
 import 'package:emora_mobile_app/features/profile/data/model/achievement_model.dart';
@@ -31,12 +30,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     try {
       Logger.info('🔄 Fetching profile from API for user: $userId');
 
-      // Fetch both profile and comprehensive stats
       final profileResponse = await apiService.getUserProfileWithStats();
       
       Logger.info('✅ Profile API response received');
       
-      // Try to get comprehensive stats, but don't fail if endpoint doesn't exist
       Map<String, dynamic> statsResponse = {};
       try {
         statsResponse = await apiService.getComprehensiveStats();
@@ -55,8 +52,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         };
       }
 
-      // 🔧 FIX: Handle the correct backend response structure
-      // The backend returns: { success: true, message: "...", data: { user: { ... } } }
       final responseData = profileResponse['data'] as Map<String, dynamic>? ?? profileResponse;
       final userData = responseData['user'] as Map<String, dynamic>? ?? responseData;
       
@@ -65,7 +60,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       Logger.info('📊 User data: $userData');
       Logger.info('📊 Stats response: $statsResponse');
 
-      // Extract user data and stats
       final profileData = userData['profile'] as Map<String, dynamic>? ?? {};
       final preferencesData = userData['preferences'] as Map<String, dynamic>? ?? {};
       final statsData = userData['stats'] as Map<String, dynamic>? ?? {};
@@ -73,14 +67,12 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       Logger.info('📊 Backend profileData: $profileData');
       Logger.info('📊 Backend statsData: $statsData');
 
-      // 🔧 FIX 1: Use backend-calculated stats instead of local calculation
       final displayName = profileData['displayName']?.toString() ?? 
                          userData['displayName']?.toString() ?? 
                          userData['name']?.toString() ?? 
                          userData['username']?.toString() ?? 
                          'User';
 
-      // 🔧 FIX 2: Get email from userData
       String email = userData['email']?.toString() ?? '';
       if (email.isEmpty) {
         try {
@@ -93,15 +85,12 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         }
       }
 
-      // 🔧 FIX 3: Properly extract bio
       final bio = profileData['bio']?.toString();
       final bioText = (bio != null && bio.isNotEmpty) ? bio : null;
 
-      // 🔧 FIX 4: Properly extract avatar with fallbacks
       final selectedAvatar = userData['selectedAvatar']?.toString();
       final avatar = selectedAvatar ?? userData['avatar']?.toString() ?? 'fox';
 
-      // 🔧 FIX 5: Use comprehensive stats from the dedicated stats endpoint
       final comprehensiveStats = statsResponse as Map<String, dynamic>;
       
       final totalEntries = comprehensiveStats['totalEntries'] ?? 
@@ -175,7 +164,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
             : userData['createdAt'] != null
             ? DateTime.parse(userData['createdAt'])
             : DateTime.now(),
-        // 🔧 FIX 6: Use comprehensive stats
         totalEntries: totalEntries,
         currentStreak: currentStreak,
         longestStreak: longestStreak,
@@ -206,7 +194,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     try {
       Logger.info('📝 Updating profile via API');
 
-      // 🔧 FIX 7: Enhanced update data structure to match your API
       final updateData = {
         'pronouns': profile.pronouns ?? 'They / Them',
         'ageGroup': profile.ageGroup ?? '18-24',
@@ -224,13 +211,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       Logger.info('✅ Profile updated successfully');
       Logger.info('📥 Update response: $response');
       
-      // 🔧 FIX 8: Clear cache and fetch fresh data
       apiService.clearCache();
       
-      // Wait a bit for server to process
       await Future.delayed(const Duration(milliseconds: 500));
       
-      // Fetch the updated profile to ensure we have the latest data
       final updatedProfile = await getUserProfile(profile.id);
       Logger.info('✅ Fresh profile data fetched after update');
       
@@ -321,7 +305,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       final achievementsList = await apiService.getUserAchievements();
 
       if (achievementsList.isEmpty) {
-        // Return engaging starter achievements if none exist
         return _createEngagingStarterAchievements(userId);
       }
 
@@ -363,7 +346,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   Future<bool> deleteUserAccount(String userId) async {
     try {
       Logger.info('🗑️ Deleting user account');
-      // This would be implemented when the endpoint is ready
       return false;
     } catch (e) {
       Logger.error('❌ Error deleting account: $e');
@@ -371,7 +353,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     }
   }
 
-  // 🔧 FIX 9: Remove local calculation methods since we're using backend stats
   String _mapAchievementIcon(String? category) {
     final iconMap = {
       'milestone': 'emoji_events',
@@ -415,10 +396,8 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     return rarityMap[category] ?? 'common';
   }
 
-  // 🔧 FIX 10: More engaging and comprehensive starter achievements
   List<AchievementModel> _createEngagingStarterAchievements(String userId) {
     return [
-      // Welcome & First Steps
       const AchievementModel(
         id: 'welcome_aboard',
         title: 'Welcome Aboard! 🎉',
@@ -456,7 +435,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         rarity: 'common',
       ),
       
-      // Streak Achievements
       const AchievementModel(
         id: 'three_day_streak',
         title: 'Three Day Streak 🔥',
@@ -494,7 +472,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         rarity: 'epic',
       ),
       
-      // Progress Milestones
       const AchievementModel(
         id: 'getting_started',
         title: 'Getting Started 📈',
@@ -532,7 +509,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         rarity: 'epic',
       ),
       
-      // Mindfulness & Growth
       const AchievementModel(
         id: 'mindful_moments',
         title: 'Mindful Moments 🧘',
@@ -570,7 +546,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         rarity: 'common',
       ),
       
-      // Social & Community (for future features)
       const AchievementModel(
         id: 'social_butterfly',
         title: 'Social Butterfly 🦋',
@@ -596,7 +571,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
         rarity: 'rare',
       ),
       
-      // Special Recognition
       const AchievementModel(
         id: 'early_adopter',
         title: 'Early Adopter 🚀',

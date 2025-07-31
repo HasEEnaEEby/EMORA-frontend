@@ -1,10 +1,8 @@
-// lib/features/home/data/data_source/remote/home_remote_data_source.dart
 import 'package:emora_mobile_app/core/network/dio_client.dart';
 
 import '../../../../../core/errors/exceptions.dart';
 import '../../../../../core/network/api_service.dart';
 import '../../../../../core/utils/logger.dart';
-// ✅ IMPORT THE REAL MODELS FROM YOUR MODEL FILES
 import '../../model/home_data_model.dart';
 import '../../model/user_stats_model.dart';
 
@@ -38,7 +36,6 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         print('🔍 Raw API Response in Remote Source: $responseData');
 
         if (responseData['success'] == true && responseData['data'] != null) {
-          // ✅ FIXED: Pass the FULL response to the real HomeDataModel
           final homeData = HomeDataModel.fromJson(responseData);
           Logger.info('. Home data retrieved successfully');
           return homeData;
@@ -255,8 +252,6 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   }
 }
 
-// ✅ KEEP ONLY THE MODELS THAT YOU DON'T HAVE PROPER IMPLEMENTATIONS FOR
-// If you have proper model files for these, import them instead and remove these
 
 class GlobalEmotionModel {
   final String city;

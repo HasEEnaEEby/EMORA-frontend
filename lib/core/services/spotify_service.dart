@@ -9,13 +9,11 @@ class SpotifyService {
   final ApiService _apiService = GetIt.instance<ApiService>();
   final AudioPlayer _audioPlayer = AudioPlayer();
   
-  // Current playlist state
   List<SpotifyTrack> _currentPlaylist = [];
   int _currentTrackIndex = 0;
   bool _isPlaying = false;
   bool _isLoading = false;
   
-  // Getters for state
   List<SpotifyTrack> get currentPlaylist => _currentPlaylist;
   int get currentTrackIndex => _currentTrackIndex;
   bool get isPlaying => _isPlaying;
@@ -23,12 +21,10 @@ class SpotifyService {
   SpotifyTrack? get currentTrack => 
     _currentPlaylist.isNotEmpty ? _currentPlaylist[_currentTrackIndex] : null;
 
-  // Stream controllers for UI updates
   Stream<PlayerState> get playerStateStream => _audioPlayer.onPlayerStateChanged;
   Stream<Duration> get positionStream => _audioPlayer.onPositionChanged;
   Stream<Duration?> get durationStream => _audioPlayer.onDurationChanged;
 
-  /// Get mood-based playlist from backend
   Future<SpotifyPlaylist?> getPlaylistForMood(String mood) async {
     try {
       Logger.info('🎵 Fetching playlist for mood: $mood');
@@ -47,7 +43,6 @@ class SpotifyService {
         
         Logger.info('✅ Playlist fetched: ${playlist.name} (${playlist.tracks.length} tracks)');
         
-        // Set as current playlist
         _currentPlaylist = playlist.tracks;
         _currentTrackIndex = 0;
         
@@ -62,7 +57,6 @@ class SpotifyService {
     return null;
   }
 
-  /// Search tracks by mood
   Future<List<SpotifyTrack>> searchTracksByMood(String mood, {int limit = 20}) async {
     try {
       Logger.info('🔍 Searching tracks for mood: $mood');
@@ -90,7 +84,6 @@ class SpotifyService {
     return [];
   }
 
-  /// Get featured playlists
   Future<List<SpotifyPlaylist>> getFeaturedPlaylists() async {
     try {
       Logger.info('🎵 Fetching featured playlists');
@@ -112,7 +105,6 @@ class SpotifyService {
     return [];
   }
 
-  /// Play a track preview (30-second preview)
   Future<void> playTrack(SpotifyTrack track) async {
     try {
       if (track.preview == null || track.preview!.isEmpty) {
@@ -126,7 +118,6 @@ class SpotifyService {
       await _audioPlayer.play(UrlSource(track.preview!));
       _isPlaying = true;
       
-      // Update current track if it's in the playlist
       final trackIndex = _currentPlaylist.indexWhere((t) => t.id == track.id);
       if (trackIndex != -1) {
         _currentTrackIndex = trackIndex;
@@ -139,7 +130,6 @@ class SpotifyService {
     }
   }
 
-  /// Play current playlist
   Future<void> playPlaylist({int startIndex = 0}) async {
     if (_currentPlaylist.isEmpty) {
       throw Exception('No playlist loaded');
@@ -149,7 +139,6 @@ class SpotifyService {
     await playTrack(_currentPlaylist[_currentTrackIndex]);
   }
 
-  /// Play next track in playlist
   Future<void> playNext() async {
     if (_currentPlaylist.isEmpty) return;
     
@@ -157,7 +146,6 @@ class SpotifyService {
     await playTrack(_currentPlaylist[_currentTrackIndex]);
   }
 
-  /// Play previous track in playlist
   Future<void> playPrevious() async {
     if (_currentPlaylist.isEmpty) return;
     
@@ -167,33 +155,28 @@ class SpotifyService {
     await playTrack(_currentPlaylist[_currentTrackIndex]);
   }
 
-  /// Pause current track
   Future<void> pause() async {
     await _audioPlayer.pause();
     _isPlaying = false;
     Logger.info('⏸️ Track paused');
   }
 
-  /// Resume current track
   Future<void> resume() async {
     await _audioPlayer.resume();
     _isPlaying = true;
     Logger.info('▶️ Track resumed');
   }
 
-  /// Stop current track
   Future<void> stop() async {
     await _audioPlayer.stop();
     _isPlaying = false;
     Logger.info('⏹️ Track stopped');
   }
 
-  /// Seek to position
   Future<void> seek(Duration position) async {
     await _audioPlayer.seek(position);
   }
 
-  /// Open track in Spotify app or web
   Future<void> openInSpotify(String spotifyUrl) async {
     try {
       final uri = Uri.parse(spotifyUrl);
@@ -209,7 +192,6 @@ class SpotifyService {
     }
   }
 
-  /// Get Spotify authorization URL
   Future<String?> getSpotifyAuthUrl() async {
     try {
       final response = await _apiService.get('/api/spotify/auth-url');
@@ -223,7 +205,6 @@ class SpotifyService {
     return null;
   }
 
-  /// Handle Spotify authorization
   Future<bool> handleSpotifyAuth(String authCode) async {
     try {
       final response = await _apiService.post(
@@ -241,14 +222,12 @@ class SpotifyService {
     return false;
   }
 
-  /// Shuffle current playlist
   void shufflePlaylist() {
     if (_currentPlaylist.isEmpty) return;
     
     final currentTrack = _currentPlaylist[_currentTrackIndex];
     _currentPlaylist.shuffle();
     
-    // Keep current track at the beginning after shuffle
     final newIndex = _currentPlaylist.indexWhere((t) => t.id == currentTrack.id);
     if (newIndex != -1 && newIndex != 0) {
       _currentPlaylist.removeAt(newIndex);
@@ -259,7 +238,6 @@ class SpotifyService {
     Logger.info('🔀 Playlist shuffled');
   }
 
-  /// Clear current playlist
   void clearPlaylist() {
     _currentPlaylist.clear();
     _currentTrackIndex = 0;
@@ -267,7 +245,6 @@ class SpotifyService {
     Logger.info('🗑️ Playlist cleared');
   }
 
-  /// Dispose resources
   void dispose() {
     _audioPlayer.dispose();
   }

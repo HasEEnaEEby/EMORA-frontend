@@ -1,19 +1,10 @@
-// lib/features/home/presentation/widget/dialogs/language_selector_dialog.dart
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 
-/// Language selection dialog
-///
-/// Features:
-/// - List of supported languages with flags
-/// - Current selection highlighting
-/// - iOS-style presentation
-/// - Haptic feedback on selection
 class LanguageSelectorDialog {
-  /// Shows the language selector dialog
   static void show(
     BuildContext context,
     String selectedLanguage,
@@ -31,13 +22,10 @@ class LanguageSelectorDialog {
         ),
         child: Column(
           children: [
-            // Handle bar
             _buildHandleBar(),
 
-            // Header
             _buildHeader(context),
 
-            // Language list
             _buildLanguageList(
               context,
               languages,
@@ -50,7 +38,6 @@ class LanguageSelectorDialog {
     );
   }
 
-  /// Builds the handle bar
   static Widget _buildHandleBar() {
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -63,7 +50,6 @@ class LanguageSelectorDialog {
     );
   }
 
-  /// Builds the header
   static Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -90,7 +76,6 @@ class LanguageSelectorDialog {
     );
   }
 
-  /// Builds the language list
   static Widget _buildLanguageList(
     BuildContext context,
     List<Map<String, String>> languages,
@@ -114,7 +99,6 @@ class LanguageSelectorDialog {
     );
   }
 
-  /// Builds individual language item
   static Widget _buildLanguageItem(
     BuildContext context,
     Map<String, String> language,
@@ -151,11 +135,9 @@ class LanguageSelectorDialog {
           ),
           child: Row(
             children: [
-              // Flag
               Text(language['flag']!, style: const TextStyle(fontSize: 24)),
               const SizedBox(width: 16),
 
-              // Language name
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +162,6 @@ class LanguageSelectorDialog {
                 ),
               ),
 
-              // Selection indicator
               if (isSelected) ...[
                 const Icon(CupertinoIcons.check_mark, color: Color(0xFF8B5CF6)),
               ] else ...[

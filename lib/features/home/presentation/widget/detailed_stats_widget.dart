@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/detailed_stats_widget.dart
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 
@@ -294,7 +293,6 @@ class _DetailedStatsWidgetState extends State<DetailedStatsWidget> {
     );
   }
 
-  // Helper methods to calculate statistics from emotion entries
   int _calculateBestStreak() {
     if (widget.emotionEntries.isEmpty) return 0;
     
@@ -356,7 +354,6 @@ class _DetailedStatsWidgetState extends State<DetailedStatsWidget> {
     final total = widget.emotionEntries.length;
     final distribution = <Map<String, dynamic>>[];
 
-    // Categorize emotions
     final positiveEmotions = ['joy', 'happiness', 'excitement', 'love', 'gratitude', 'contentment', 'pride', 'relief', 'hope', 'enthusiasm', 'serenity', 'bliss'];
     final negativeEmotions = ['sadness', 'anger', 'fear', 'anxiety', 'frustration', 'disappointment', 'loneliness', 'stress', 'guilt', 'shame', 'jealousy', 'regret'];
     final neutralEmotions = ['calm', 'peaceful', 'neutral', 'focused', 'curious', 'thoughtful', 'contemplative', 'reflective', 'alert', 'balanced'];

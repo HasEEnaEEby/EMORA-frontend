@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/profile_achievements_widget.dart - COMPLETE ENHANCED VERSION
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:emora_mobile_app/features/profile/domain/entity/achievement_entity.dart';
@@ -9,7 +8,7 @@ import 'profile_dialogs.dart';
 class ProfileAchievementsWidget extends StatelessWidget {
   final List<dynamic> achievements;
   final bool isLoading;
-  final dynamic profile; // Add profile for dynamic achievement calculation
+final dynamic profile; 
 
   const ProfileAchievementsWidget({
     super.key,
@@ -69,7 +68,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
       ),
       child: Column(
         children: [
-          // Header row
           Row(
             children: [
               Container(
@@ -165,7 +163,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
           
           const SizedBox(height: 16),
           
-          // Progress section
           Column(
             children: [
               Row(
@@ -373,10 +370,8 @@ class ProfileAchievementsWidget extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            // Main content
             Column(
               children: [
-                // Icon container
                 Container(
                   width: 50,
                   height: 50,
@@ -401,7 +396,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
                 
                 const Spacer(),
                 
-                // Title
                 Text(
                   achievement['title'] ?? 'Achievement',
                   style: TextStyle(
@@ -417,7 +411,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
                 
                 const SizedBox(height: 4),
                 
-                // Progress or completion indicator
                 if (!isEarned && requirement > 1) ...[
                   Container(
                     height: 3,
@@ -446,7 +439,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
               ],
             ),
             
-            // Rarity indicator
             Positioned(
               top: 0,
               right: 0,
@@ -464,7 +456,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
               ),
             ),
             
-            // Lock overlay for unearned achievements
             if (!isEarned)
               Positioned(
                 top: 0,
@@ -488,10 +479,8 @@ class ProfileAchievementsWidget extends StatelessWidget {
     );
   }
 
-  // Helper methods for achievement data
   List<Map<String, dynamic>> _getMergedAchievements() {
     try {
-      // Convert AchievementEntity objects to maps if needed
       final processedAchievements = achievements.map((achievement) {
         if (achievement is AchievementEntity) {
           return _achievementEntityToMap(achievement);
@@ -503,12 +492,10 @@ class ProfileAchievementsWidget extends StatelessWidget {
         }
       }).where((map) => map.isNotEmpty).toList();
 
-      // Merge with static achievements if we have profile data
       if (profile != null) {
         final staticAchievements = _getStaticAchievements();
         final processedIds = processedAchievements.map((a) => a['id']).toSet();
         
-        // Add static achievements that aren't in the processed list
         final missingStatic = staticAchievements
             .where((staticAch) => !processedIds.contains(staticAch['id']))
             .toList();
@@ -516,7 +503,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
         processedAchievements.addAll(missingStatic);
       }
 
-      // Sort by earned status and then by rarity
       processedAchievements.sort((a, b) {
         final aEarned = a['earned'] ?? false;
         final bEarned = b['earned'] ?? false;
@@ -524,7 +510,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
         if (aEarned && !bEarned) return -1;
         if (!aEarned && bEarned) return 1;
         
-        // If both earned or both not earned, sort by rarity
         final rarityOrder = {'legendary': 0, 'epic': 1, 'rare': 2, 'common': 3};
         final aRarity = rarityOrder[a['rarity']] ?? 3;
         final bRarity = rarityOrder[b['rarity']] ?? 3;
@@ -556,13 +541,11 @@ class ProfileAchievementsWidget extends StatelessWidget {
   }
 
   List<Map<String, dynamic>> _getStaticAchievements() {
-    // Calculate dynamic values based on profile if available
     final totalEntries = profile?.totalEntries ?? 0;
     final currentStreak = profile?.currentStreak ?? 0;
     final isProfileComplete = _isProfileComplete();
 
     return [
-      // Welcome & First Steps
       {
         'id': 'welcome_aboard',
         'title': 'Welcome! 🎉',
@@ -603,7 +586,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
         'earnedDate': isProfileComplete ? DateTime.now().toIso8601String() : null,
       },
       
-      // Streak Achievements
       {
         'id': 'three_day_streak',
         'title': 'Three Day Fire 🔥',
@@ -644,7 +626,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
         'earnedDate': currentStreak >= 30 ? DateTime.now().toIso8601String() : null,
       },
       
-      // Progress Milestones
       {
         'id': 'getting_started',
         'title': 'Getting Started 📈',
@@ -685,7 +666,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
         'earnedDate': totalEntries >= 30 ? DateTime.now().toIso8601String() : null,
       },
       
-      // Special Achievements
       {
         'id': 'early_adopter',
         'title': 'Early Adopter 🚀',
@@ -784,7 +764,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
     return categoryColorMap[category] ?? '#6B7280';
   }
 
-  // Dialog methods
   void _showAllAchievements(BuildContext context) {
     try {
       ProfileDialogs.showAllAchievements(context, _getMergedAchievements());
@@ -814,7 +793,6 @@ class ProfileAchievementsWidget extends StatelessWidget {
   }
 }
 
-// Extension for additional functionality
 extension ProfileAchievementsWidgetExtensions on ProfileAchievementsWidget {
   static List<Map<String, dynamic>> getStaticAchievements() {
     return const ProfileAchievementsWidget(achievements: [])._getStaticAchievements();

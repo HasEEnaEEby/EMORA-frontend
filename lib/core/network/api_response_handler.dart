@@ -1,18 +1,15 @@
-// lib/core/network/api_response_handler.dart
 import 'package:dio/dio.dart';
 
 import '../errors/exceptions.dart';
 import '../utils/logger.dart';
 
 class ApiResponseHandler {
-  /// Handle API response and extract data correctly with proper type conversion
   static Map<String, dynamic> handleResponse(Response response) {
     try {
       Logger.info(
         '. API Response: ${response.statusCode} ${response.requestOptions.path}',
       );
 
-      // CRITICAL FIX: Handle response.data type conversion properly
       final rawData = response.data;
       Map<String, dynamic> data;
 
@@ -23,11 +20,9 @@ class ApiResponseHandler {
         );
       }
 
-      // FIXED: Convert Map<dynamic, dynamic> to Map<String, dynamic>
       if (rawData is Map<String, dynamic>) {
         data = rawData;
       } else if (rawData is Map) {
-        // Convert Map<dynamic, dynamic> to Map<String, dynamic>
         data = Map<String, dynamic>.from(rawData);
         Logger.info(
           '. Converted Map<dynamic, dynamic> to Map<String, dynamic>',
@@ -40,15 +35,10 @@ class ApiResponseHandler {
         );
       }
 
-      // Extract response indicators
       final status = data['status'] as String?;
       final success = data['success'] as bool?;
       final message = data['message'] as String? ?? '';
 
-      // Success conditions:
-      // 1. HTTP 2xx status codes
-      // 2. status == 'success' OR success == true
-      // 3. NOT status == 'error'
 
       final isHttpSuccess =
           response.statusCode != null &&
@@ -58,7 +48,6 @@ class ApiResponseHandler {
       final isDataSuccess = status == 'success' || success == true;
       final isDataError = status == 'error';
 
-      // Log detailed response info for debugging
       Logger.debug('📥 Response Details', {
         'status': status,
         'success': success,
@@ -72,7 +61,6 @@ class ApiResponseHandler {
       if (isHttpSuccess && (isDataSuccess || !isDataError)) {
         Logger.info('. Successful API response: $message');
 
-        // FIXED: Properly handle nested data with type conversion
         final responseData = data['data'];
         if (responseData != null) {
           if (responseData is Map<String, dynamic>) {
@@ -80,20 +68,16 @@ class ApiResponseHandler {
           } else if (responseData is Map) {
             return Map<String, dynamic>.from(responseData);
           } else {
-            // If data is not a Map, return the full response
             return data;
           }
         } else {
-          // No nested data, return full response
           return data;
         }
       }
 
-      // Handle error responses
       if (isDataError || !isHttpSuccess) {
         Logger.error('. API Error Response: $message');
 
-        // Handle validation errors specifically
         if (data['errors'] != null) {
           final errors = data['errors'] as List<dynamic>?;
           if (errors != null && errors.isNotEmpty) {
@@ -115,7 +99,6 @@ class ApiResponseHandler {
           }
         }
 
-        // Determine the appropriate exception type based on status code
         final statusCode = response.statusCode ?? 500;
         if (statusCode == 401) {
           throw UnauthorizedException(
@@ -141,12 +124,10 @@ class ApiResponseHandler {
         }
       }
 
-      // If we get here, treat as successful but log a warning
       Logger.warning(
         '. Ambiguous API response, treating as success: $message',
       );
 
-      // FIXED: Ensure we return properly typed Map
       final responseData = data['data'];
       if (responseData != null) {
         if (responseData is Map<String, dynamic>) {
@@ -172,7 +153,6 @@ class ApiResponseHandler {
     }
   }
 
-  /// Handle DioException and convert to appropriate exception
   static Exception handleDioException(DioException error) {
     Logger.error('. DioException: ${error.type}', error);
 
@@ -189,7 +169,6 @@ class ApiResponseHandler {
         final statusCode = error.response?.statusCode;
         final responseData = error.response?.data;
 
-        // FIXED: Handle response data type conversion
         Map<String, dynamic>? processedData;
         if (responseData is Map<String, dynamic>) {
           processedData = responseData;
@@ -198,11 +177,9 @@ class ApiResponseHandler {
         }
 
         if (statusCode == 400 && processedData != null) {
-          // Handle validation errors
           final message =
               processedData['message']?.toString() ?? 'Validation failed';
 
-          // Log validation errors for debugging
           if (processedData['errors'] != null) {
             Logger.error('. Validation Errors from server:');
             final errors = processedData['errors'] as List<dynamic>?;

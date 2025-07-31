@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/profile_settings_widget.dart
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
 import 'package:emora_mobile_app/core/services/logout_service.dart';
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_bloc.dart';
@@ -17,13 +16,13 @@ class ProfileSettingsWidget extends StatelessWidget {
   final String selectedLanguage;
   final String selectedTheme;
   final bool isUpdating;
-  final dynamic userProfile; // Added user profile for edit functionality
+final dynamic userProfile; 
   final Function(bool) onNotificationsChanged;
   final Function(bool) onSharingChanged;
   final Function(String) onLanguageChanged;
   final Function(String) onThemeChanged;
   final Function(Map<String, dynamic>)?
-  onProfileUpdated; // Added profile update callback
+onProfileUpdated; 
 
   const ProfileSettingsWidget({
     super.key,
@@ -113,16 +112,16 @@ class ProfileSettingsWidget extends StatelessWidget {
           colors: [
             const Color(
               0xFF1A1A2E,
-            ).withOpacity(0.8), // FIXED: withValues -> withOpacity
+).withOpacity(0.8), 
             const Color(
               0xFF16213E,
-            ).withOpacity(0.6), // FIXED: withValues -> withOpacity
+).withOpacity(0.6), 
           ],
         ),
         border: Border.all(
           color: const Color(
             0xFF8B5CF6,
-          ).withOpacity(0.2), // FIXED: withValues -> withOpacity
+).withOpacity(0.2), 
           width: 1,
         ),
       ),
@@ -158,7 +157,7 @@ class ProfileSettingsWidget extends StatelessWidget {
               shape: BoxShape.circle,
               color: const Color(
                 0xFF8B5CF6,
-              ).withOpacity(0.2), // FIXED: withValues -> withOpacity
+).withOpacity(0.2), 
             ),
             child: const Icon(
               Icons.edit_outlined,
@@ -202,7 +201,7 @@ class ProfileSettingsWidget extends StatelessWidget {
             shape: BoxShape.circle,
             color: const Color(
               0xFF8B5CF6,
-            ).withOpacity(0.2), // FIXED: withValues -> withOpacity
+).withOpacity(0.2), 
           ),
           child: const Icon(
             Icons.notifications_outlined,
@@ -230,7 +229,6 @@ class ProfileSettingsWidget extends StatelessWidget {
             ],
           ),
         ),
-        // FIXED: Wrap Switch with Material
         Material(
           color: Colors.transparent,
           child: Switch(
@@ -260,7 +258,7 @@ class ProfileSettingsWidget extends StatelessWidget {
             shape: BoxShape.circle,
             color: const Color(
               0xFF8B5CF6,
-            ).withOpacity(0.2), // FIXED: withValues -> withOpacity
+).withOpacity(0.2), 
           ),
           child: const Icon(
             Icons.share_outlined,
@@ -288,7 +286,6 @@ class ProfileSettingsWidget extends StatelessWidget {
             ],
           ),
         ),
-        // FIXED: Wrap Switch with Material
         Material(
           color: Colors.transparent,
           child: Switch(
@@ -320,7 +317,7 @@ class ProfileSettingsWidget extends StatelessWidget {
               shape: BoxShape.circle,
               color: const Color(
                 0xFF8B5CF6,
-              ).withOpacity(0.2), // FIXED: withValues -> withOpacity
+).withOpacity(0.2), 
             ),
             child: const Icon(
               Icons.language_outlined,
@@ -371,7 +368,7 @@ class ProfileSettingsWidget extends StatelessWidget {
               shape: BoxShape.circle,
               color: selectedThemeData['color'].withOpacity(
                 0.2,
-              ), // FIXED: withValues -> withOpacity
+), 
             ),
             child: Icon(
               Icons.palette_outlined,
@@ -451,7 +448,7 @@ class ProfileSettingsWidget extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: Colors.red.withOpacity(
                   0.1,
-                ), // FIXED: withValues -> withOpacity
+), 
               ),
               child: const Icon(
                 Icons.logout_outlined,

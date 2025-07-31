@@ -25,10 +25,8 @@ class EnhancedInsightsService {
         final data = response.data;
         Logger.info('✅ Comprehensive insights retrieved successfully');
         
-        // ✅ SAFE DATA EXTRACTION - This fixes the Map<String,dynamic> vs List<dynamic> error
         final responseData = data['data'] as Map<String, dynamic>? ?? {};
         
-        // Extract all sections safely
         final summary = responseData['summary'] as Map<String, dynamic>? ?? {};
         final patterns = responseData['patterns'] as Map<String, dynamic>? ?? {};
         final trends = responseData['trends'] as Map<String, dynamic>? ?? {};
@@ -36,13 +34,11 @@ class EnhancedInsightsService {
         final achievements = responseData['achievements'] as List<dynamic>? ?? [];
         final weeklyData = responseData['weeklyData'] as List<dynamic>? ?? [];
         
-        // Process patterns data safely
         final timeOfDayData = patterns['timeOfDay'] as List<dynamic>? ?? [];
         final dayOfWeekData = patterns['dayOfWeek'] as List<dynamic>? ?? [];
         final emotionTransitions = patterns['emotionTransitions'] as List<dynamic>? ?? [];
         final intensityPatterns = patterns['intensityPatterns'] as Map<String, dynamic>? ?? {};
 
-        // Generate mock weekly data if empty (for chart display)
         List<Map<String, dynamic>> processedWeeklyData = [];
         if (weeklyData.isEmpty) {
           processedWeeklyData = _generateMockWeeklyData(timeframe);
@@ -50,13 +46,10 @@ class EnhancedInsightsService {
           processedWeeklyData = weeklyData.map((item) => Map<String, dynamic>.from(item as Map)).toList();
         }
 
-        // Generate AI insights from patterns
         List<Map<String, dynamic>> aiInsights = _generateAIInsights(summary, patterns, trends);
 
-        // Generate pattern insights
         List<Map<String, dynamic>> patternInsights = _generatePatternInsights(timeOfDayData, dayOfWeekData, emotionTransitions);
 
-        // Generate predictions
         List<Map<String, dynamic>> predictions = _generatePredictions(summary, trends);
 
         return {
@@ -81,12 +74,10 @@ class EnhancedInsightsService {
       }
     } catch (e) {
       Logger.error('❌ Failed to fetch insights', e);
-      // Return fallback data instead of throwing
       return _getFallbackInsights(timeframe);
     }
   }
 
-  /// Get emotion analytics for charts
   Future<Map<String, dynamic>> getEmotionAnalytics({
     required String timeframe,
     String? userId,
@@ -115,7 +106,6 @@ class EnhancedInsightsService {
     }
   }
 
-  /// Get AI-powered insights and patterns
   Future<Map<String, dynamic>> getAIInsights({
     required String timeframe,
     String? userId,
@@ -144,7 +134,6 @@ class EnhancedInsightsService {
     }
   }
 
-  /// Get predictive analytics
   Future<Map<String, dynamic>> getPredictiveAnalytics({
     required String timeframe,
     String? userId,
@@ -173,7 +162,6 @@ class EnhancedInsightsService {
     }
   }
 
-  /// Get pattern analysis
   Future<Map<String, dynamic>> getPatternAnalysis({
     required String timeframe,
     String? userId,
@@ -202,7 +190,6 @@ class EnhancedInsightsService {
     }
   }
 
-  /// Get recommendations based on emotion data
   Future<Map<String, dynamic>> getRecommendations({
     required String timeframe,
     String? userId,
@@ -231,7 +218,6 @@ class EnhancedInsightsService {
     }
   }
 
-  /// Get emotion history for a specific period
   Future<List<Map<String, dynamic>>> getEmotionHistory({
     required String timeframe,
     String? userId,

@@ -1,4 +1,3 @@
-// lib/features/splash/presentation/view_model/cubit/splash_cubit.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,7 +10,6 @@ class SplashCubit extends Cubit<SplashState> {
   final SharedPreferences sharedPreferences;
   final AuthLocalDataSource authLocalDataSource;
 
-  // Keys for persistent storage
   static const String _keyHasSeenOnboarding = 'has_seen_onboarding';
   static const String _keyLastUserSession = 'last_user_session';
   static const String _keySessionExpiredAt = 'session_expired_at';
@@ -39,18 +37,15 @@ class SplashCubit extends Cubit<SplashState> {
       if (isClosed) return;
       emit(const SplashLoading());
 
-      // Minimum splash time for UX
       await Future.delayed(AppConfig.splashDuration);
       if (isClosed) return;
 
       Logger.info('🔄 Enhanced authentication flow check...');
 
-      // Step 1: Check authentication status with session validation
       final authStatus = await _validateAuthenticationStatus();
 
       if (isClosed) return;
 
-      // Step 2: Handle navigation based on auth status
       await _handleNavigationFlow(authStatus);
     } catch (e, stackTrace) {
       Logger.error('. Initialization failed: $e', e, stackTrace);
@@ -60,17 +55,14 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  /// Enhanced authentication status validation
   Future<AuthenticationStatus> _validateAuthenticationStatus() async {
     try {
-      // Check if user has valid authentication token
       final authToken = await authLocalDataSource.getAuthToken();
       final isLoggedIn = authToken != null && authToken.isNotEmpty;
 
       Logger.info('🔐 Authentication check - isLoggedIn: $isLoggedIn');
 
       if (!isLoggedIn) {
-        // Check if this is a returning user using multiple indicators
         final hadPreviousSession = sharedPreferences.getString(
           _keyLastUserSession,
         );
@@ -79,7 +71,6 @@ class SplashCubit extends Cubit<SplashState> {
         final hasCompletedOnboarding =
             sharedPreferences.getBool(_keyOnboardingCompleted) ?? false;
 
-        // User is returning if they have ANY of these indicators
         final isReturningUser =
             hadPreviousSession != null ||
             hasSeenOnboarding ||
@@ -100,7 +91,6 @@ class SplashCubit extends Cubit<SplashState> {
         }
       }
 
-      // User appears to be logged in, validate user data
       final user = await authLocalDataSource.getUserData();
 
       if (user == null) {
@@ -109,11 +99,9 @@ class SplashCubit extends Cubit<SplashState> {
         return AuthenticationStatus.newUser;
       }
 
-      // Check onboarding completion status
       final onboardingCompleted = _getOnboardingCompletionStatus(user);
       Logger.info('. User onboarding status: completed=$onboardingCompleted');
 
-      // Update last session tracking
       final userId = user.username ?? user.id;
       await _updateLastSession(userId);
 
@@ -129,38 +117,30 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  /// Get onboarding completion status with multiple fallbacks
   bool _getOnboardingCompletionStatus(dynamic user) {
     try {
-      // Primary: Check user entity property
-      // Note: Replace 'isOnboardingCompleted' with the actual property name in your UserEntity
       try {
         final hasCompleted = user.hasCompleted;
         if (hasCompleted != null) {
           return hasCompleted;
         }
       } catch (e) {
-        // Property doesn't exist, continue to fallback
       }
 
-      // Try alternative property names that might exist in your UserEntity
       try {
         final isOnboardingCompleted = user.isOnboardingCompleted;
         if (isOnboardingCompleted != null) {
           return isOnboardingCompleted;
         }
       } catch (e) {
-        // Property doesn't exist, continue to fallback
       }
 
-      // Fallback: Check SharedPreferences
       final storedStatus = sharedPreferences.getBool(_keyOnboardingCompleted);
       if (storedStatus != null) {
         Logger.info('. Using stored onboarding status: $storedStatus');
         return storedStatus;
       }
 
-      // Default: Incomplete
       Logger.info('. No onboarding status found, defaulting to incomplete');
       return false;
     } catch (e) {
@@ -169,7 +149,6 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  /// Handle navigation flow based on authentication status
   Future<void> _handleNavigationFlow(AuthenticationStatus status) async {
     switch (status) {
       case AuthenticationStatus.authenticatedComplete:
@@ -197,13 +176,11 @@ class SplashCubit extends Cubit<SplashState> {
         break;
 
       case AuthenticationStatus.newUser:
-        // Double-check if user has seen onboarding before
         final hasSeenOnboarding =
             sharedPreferences.getBool(_keyHasSeenOnboarding) ?? false;
         final hasCompletedOnboarding =
             sharedPreferences.getBool(_keyOnboardingCompleted) ?? false;
 
-        // If user has ANY onboarding history, they're not truly new
         if (hasSeenOnboarding || hasCompletedOnboarding) {
           Logger.info(
             '🔄 User has onboarding history -> Auth Choice (not truly new)',
@@ -216,7 +193,6 @@ class SplashCubit extends Cubit<SplashState> {
         break;
 
       case AuthenticationStatus.error:
-        // For errors, check if user has history to avoid unnecessary onboarding
         final hasSeenOnboarding =
             sharedPreferences.getBool(_keyHasSeenOnboarding) ?? false;
         final hasCompletedOnboarding =
@@ -240,7 +216,6 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  /// Mark session as expired for proper user experience
   Future<void> _markSessionExpired() async {
     try {
       await sharedPreferences.setString(
@@ -253,7 +228,6 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  /// Update last session tracking
   Future<void> _updateLastSession(String userId) async {
     try {
       await sharedPreferences.setString(_keyLastUserSession, userId);
@@ -263,22 +237,18 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  /// Clear corrupted authentication data
   Future<void> _clearCorruptedAuth() async {
     try {
       await authLocalDataSource.clearAuthData();
-      // Don't clear onboarding status - user may have seen onboarding before
       Logger.info('🧹 Cleared corrupted auth data');
     } catch (clearError) {
       Logger.warning('. Could not clear auth data: $clearError');
     }
   }
 
-  /// Handle initialization errors with smart fallbacks
   void _handleInitializationError() {
     Logger.info('🔄 Error recovery with intelligent fallback');
 
-    // Check if user has seen onboarding before
     final hasSeenOnboarding =
         sharedPreferences.getBool(_keyHasSeenOnboarding) ?? false;
 
@@ -291,14 +261,12 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  // Public methods for external use
 
   Future<void> retryInitialization() async {
     Logger.info('🔄 Retrying initialization...');
     await initializeApp();
   }
 
-  /// Mark that user has successfully authenticated - call this after login/register
   Future<void> markUserAuthenticated(String userId) async {
     try {
       await sharedPreferences.setString(_keyLastUserSession, userId);
@@ -308,7 +276,6 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  /// Mark onboarding as completed - call this when user completes onboarding
   Future<void> markOnboardingCompleted() async {
     try {
       await sharedPreferences.setBool(_keyHasSeenOnboarding, true);
@@ -319,7 +286,6 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  /// Mark that user has seen onboarding (but may not have completed it)
   Future<void> markOnboardingSeen() async {
     try {
       await sharedPreferences.setBool(_keyHasSeenOnboarding, true);
@@ -329,21 +295,18 @@ class SplashCubit extends Cubit<SplashState> {
     }
   }
 
-  /// Clear all user session data - use for complete logout
   Future<void> clearAllUserData() async {
     try {
       await authLocalDataSource.clearAuthData();
       await sharedPreferences.remove(_keyLastUserSession);
       await sharedPreferences.remove(_keySessionExpiredAt);
       await sharedPreferences.remove(_keyOnboardingCompleted);
-      // Keep _keyHasSeenOnboarding so user doesn't see onboarding again
       Logger.info('🧹 Cleared all user session data');
     } catch (e) {
       Logger.warning('. Failed to clear user data: $e');
     }
   }
 
-  // Force navigation methods for testing
   void forceNavigateToOnboarding() {
     Logger.info('🔄 Force navigate to onboarding');
     emit(const SplashNavigateToOnboarding());
@@ -360,20 +323,14 @@ class SplashCubit extends Cubit<SplashState> {
   }
 }
 
-/// Enhanced authentication status enumeration
 enum AuthenticationStatus {
-  /// User is authenticated and has completed onboarding
   authenticatedComplete,
 
-  /// User is authenticated but hasn't completed onboarding
   authenticatedIncomplete,
 
-  /// User had a session before but it expired
   sessionExpired,
 
-  /// Complete new user
   newUser,
 
-  /// Authentication check failed
   error,
 }

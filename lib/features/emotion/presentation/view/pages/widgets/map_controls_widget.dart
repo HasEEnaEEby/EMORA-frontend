@@ -26,7 +26,6 @@ class MapControlsWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // My Location Button
           _buildControlButton(
             icon: Icons.my_location_rounded,
             onTap: () => _goToMyLocation(),
@@ -36,7 +35,6 @@ class MapControlsWidget extends StatelessWidget {
           
           const SizedBox(height: 12),
           
-          // Zoom In Button
           _buildControlButton(
             icon: Icons.add_rounded,
             onTap: () => _zoomIn(),
@@ -45,7 +43,6 @@ class MapControlsWidget extends StatelessWidget {
           
           const SizedBox(height: 12),
           
-          // Zoom Out Button
           _buildControlButton(
             icon: Icons.remove_rounded,
             onTap: () => _zoomOut(),
@@ -54,7 +51,6 @@ class MapControlsWidget extends StatelessWidget {
           
           const SizedBox(height: 16),
           
-          // AI Insights Button
           _buildControlButton(
             icon: Icons.psychology_rounded,
             onTap: onAIInsights,
@@ -64,7 +60,6 @@ class MapControlsWidget extends StatelessWidget {
           
           const SizedBox(height: 12),
           
-          // Hub Toggle Button
           _buildControlButton(
             icon: Icons.hub_rounded,
             onTap: onToggleHub,
@@ -74,7 +69,6 @@ class MapControlsWidget extends StatelessWidget {
           
           const SizedBox(height: 12),
           
-          // Insights Toggle Button
           _buildControlButton(
             icon: Icons.insights_rounded,
             onTap: onToggleInsights,

@@ -1,4 +1,3 @@
-// lib/features/home/presentation/view_model/bloc/home_bloc.dart - COMPLETE FIXED VERSION
 import 'package:emora_mobile_app/core/config/app_config.dart';
 import 'package:emora_mobile_app/core/navigation/app_router.dart';
 import 'package:emora_mobile_app/core/navigation/navigation_service.dart';
@@ -29,7 +28,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   final nav_use_case.NavigateToMainFlow navigateToMainFlow;
   late final EmotionApiService _emotionApiService;
 
-  // Add these fields to prevent duplicate requests
   bool _isLoadingHomeData = false;
   bool _isLoadingUserStats = false;
   bool _isLoadingEmotionHistory = false;
@@ -39,7 +37,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   DateTime? _lastEmotionHistoryLoad;
   DateTime? _lastWeeklyInsightsLoad;
 
-  // Cache duration for API calls
   static const Duration _cacheDuration = Duration(minutes: 2);
   static const Duration _userStatsCacheDuration = Duration(minutes: 5);
 
@@ -48,23 +45,21 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     required this.getUserStats,
     required this.navigateToMainFlow,
   }) : super(const HomeInitial()) {
-    // Initialize emotion API service
     _emotionApiService = EmotionApiService(DioClient.instance);
-    // Register all event handlers
     on<LoadHomeDataEvent>(_onLoadHomeData);
-    on<LoadHomeData>(_onLoadHomeDataCompatibility); // Compatibility handler
+on<LoadHomeData>(_onLoadHomeDataCompatibility); 
     on<RefreshHomeDataEvent>(_onRefreshHomeData);
     on<RefreshHomeData>(
       _onRefreshHomeDataCompatibility,
-    ); // Compatibility handler
+); 
     on<MarkFirstTimeLoginCompleteEvent>(_onMarkFirstTimeLoginComplete);
     on<NavigateToMainFlowEvent>(_onNavigateToMainFlow);
     on<NavigateToMainFlow>(
       _onNavigateToMainFlowCompatibility,
-    ); // Compatibility handler
+); 
     on<RefreshUserStatsEvent>(_onRefreshUserStats);
     on<LoadUserStatsEvent>(_onLoadUserStats);
-    on<LoadUserStats>(_onLoadUserStatsCompatibility); // Compatibility handler
+on<LoadUserStats>(_onLoadUserStatsCompatibility); 
     on<UpdateLastActivityEvent>(_onUpdateLastActivity);
     on<ClearHomeDataEvent>(_onClearHomeData);
     on<LogoutEvent>(_onLogout);
@@ -82,9 +77,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     on<InitializeHomeEvent>(_onInitializeHome);
   }
 
-  // ============================================================================
-  // MAIN EVENT HANDLERS
-  // ============================================================================
 
   Future<void> _onLoadHomeData(
     LoadHomeDataEvent event,
@@ -93,7 +85,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _loadHomeDataImpl(event.forceRefresh, emit);
   }
 
-  // Compatibility handler for LoadHomeData
   Future<void> _onLoadHomeDataCompatibility(
     LoadHomeData event,
     Emitter<HomeState> emit,
@@ -108,7 +99,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _loadHomeDataImpl(true, emit);
   }
 
-  // Compatibility handler for RefreshHomeData
   Future<void> _onRefreshHomeDataCompatibility(
     RefreshHomeData event,
     Emitter<HomeState> emit,
@@ -126,12 +116,10 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       if (state is HomeWelcomeState) {
         final welcomeState = state as HomeWelcomeState;
 
-        // Update home data to mark first-time login as complete
         final updatedHomeData = welcomeState.homeData.copyWith(
           isFirstTimeLogin: false,
         );
 
-        // Transition to dashboard
         _loadUserStatsForDashboard(updatedHomeData, emit);
         Logger.info('. First-time login marked complete');
       } else {
@@ -152,7 +140,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _navigateToMainFlowImpl(event.userData, emit);
   }
 
-  // Compatibility handler for NavigateToMainFlow
   Future<void> _onNavigateToMainFlowCompatibility(
     NavigateToMainFlow event,
     Emitter<HomeState> emit,
@@ -174,7 +161,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     await _loadUserStatsImpl(event.forceRefresh, emit);
   }
 
-  // Compatibility handler for LoadUserStats
   Future<void> _onLoadUserStatsCompatibility(
     LoadUserStats event,
     Emitter<HomeState> emit,
@@ -192,7 +178,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
         final currentState = state as HomeDashboardState;
         final updatedHomeData = currentState.homeData.copyWith();
 
-        // Emit updated state with new last active time
         emit(
           HomeDashboardState(
             homeData: updatedHomeData,
@@ -204,7 +189,6 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       Logger.info('. Last activity updated');
     } catch (e) {
       Logger.error('. Error updating last activity', e);
-      // Don't emit error state for this non-critical operation
     }
   }
 
@@ -215,13 +199,11 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     try {
       Logger.info('🗑️ Clearing home data...');
 
-      // Clear cache timestamps
       _lastHomeDataLoad = null;
       _lastUserStatsLoad = null;
       _isLoadingHomeData = false;
       _isLoadingUserStats = false;
 
-      // Clear any cached data and reset to initial state
       emit(const HomeInitial());
 
       Logger.info('. Home data cleared');
@@ -236,21 +218,17 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       Logger.info('👋 Logging out user...');
       emit(const HomeLogoutLoading());
 
-      // Clear cache
       _lastHomeDataLoad = null;
       _lastUserStatsLoad = null;
       _isLoadingHomeData = false;
       _isLoadingUserStats = false;
 
-      // Simulate logout process
       await Future.delayed(const Duration(milliseconds: 500));
 
-      // Clear home data
       add(const ClearHomeDataEvent());
 
       Logger.info('. Logout successful');
 
-      // Navigate to auth screen
       NavigationService.safeNavigate(AppRouter.auth, clearStack: true);
       NavigationService.showSuccessSnackBar('You have been logged out');
     } catch (e) {
@@ -270,10 +248,8 @@ Future<void> _onEmotionLogged(
     if (state is HomeDashboardState) {
       final currentState = state as HomeDashboardState;
       
-      // Check if this is the user's first emotion
       final wasNewUser = currentState.userStats?.totalMoodEntries == 0;
       
-      // Create new emotion entry
       final newEmotion = EmotionEntryModel(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         userId: currentState.homeData.username,
@@ -287,19 +263,15 @@ Future<void> _onEmotionLogged(
         timeOfDay: _determineTimeOfDay(),
       );
 
-      // Add to current emotion entries
       final updatedEmotions = [newEmotion, ...currentState.emotionEntries];
 
-      // Update user stats to reflect the new emotion
       final updatedStats = currentState.userStats?.copyWith(
         totalMoodEntries: (currentState.userStats?.totalMoodEntries ?? 0) + 1,
         moodCheckins: (currentState.userStats?.moodCheckins ?? 0) + 1,
         lastMoodLog: event.timestamp ?? DateTime.now(),
-        // Update streak if this is a new day
         streakDays: _shouldUpdateStreak(currentState.userStats?.lastMoodLog)
             ? (currentState.userStats?.streakDays ?? 0) + 1
             : (currentState.userStats?.streakDays ?? 1),
-        // Update most frequent mood and average score
         mostFrequentMood: event.emotion,
         averageMoodScore: _calculateNewAverageScore(
           currentState.userStats?.averageMoodScore ?? 0.0,
@@ -320,7 +292,6 @@ Future<void> _onEmotionLogged(
         monthlyStats: {},
       );
 
-      // Update home data if this was the first emotion (transition from new user)
       HomeDataModel updatedHomeData = currentState.homeData;
       if (wasNewUser) {
         Logger.info('🎉 First emotion logged! Transitioning user from new to existing state');
@@ -330,21 +301,18 @@ Future<void> _onEmotionLogged(
         );
       }
 
-      // Emit updated state with new emotion and stats
       emit(currentState.copyWith(
         homeData: updatedHomeData,
         userStats: updatedStats,
         emotionEntries: updatedEmotions,
       ));
 
-      // Show celebration for first emotion
       if (wasNewUser) {
         Logger.info('🎊 Showing first emotion celebration');
         NavigationService.showSuccessSnackBar(
           'Congratulations! You\'ve logged your first emotion! 🎉',
         );
         
-        // Optional: Add a brief delay then refresh data
         Future.delayed(const Duration(seconds: 1), () {
           if (!isClosed) {
             add(const LoadEmotionHistoryEvent(forceRefresh: true));
@@ -356,18 +324,14 @@ Future<void> _onEmotionLogged(
     }
   } catch (e) {
     Logger.error('❌ Error updating stats after emotion logged', e);
-    // Don't emit error state, just log the error
-    // The emotion logging itself succeeded, this is just a UI update issue
   }
 }
 
-// Helper method to calculate new average mood score
 double _calculateNewAverageScore(double currentAvg, int currentCount, double newScore) {
   if (currentCount == 0) return newScore;
   return ((currentAvg * currentCount) + newScore) / (currentCount + 1);
 }
 
-// Helper method to determine if streak should be updated
 bool _shouldUpdateStreak(DateTime? lastMoodLog) {
   if (lastMoodLog == null) return true;
 
@@ -379,7 +343,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
   );
   final today = DateTime(now.year, now.month, now.day);
 
-  // Update streak if it's a new day
   return today.difference(lastLog).inDays >= 1;
 }
 
@@ -388,13 +351,11 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     Emitter<HomeState> emit,
   ) async {
     try {
-      // Prevent duplicate requests
       if (_isLoadingEmotionHistory) {
         Logger.info('⏳ Emotion history already loading, skipping...');
         return;
       }
 
-      // Check cache first (unless forcing refresh)
       if (!event.forceRefresh && _lastEmotionHistoryLoad != null) {
         final timeSinceLastLoad = DateTime.now().difference(_lastEmotionHistoryLoad!);
         if (timeSinceLastLoad < _cacheDuration) {
@@ -406,7 +367,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       _isLoadingEmotionHistory = true;
       Logger.info('🎭 Loading emotion history...');
 
-      // Try to get cached data first
       List<EmotionEntryModel> cachedEmotions = [];
       try {
         final localDataSource = GetIt.instance<HomeLocalDataSource>();
@@ -419,7 +379,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
         Logger.warning('⚠️ Could not load cached emotions: $e');
       }
 
-      // If we have cached data and not forcing refresh, use it
       if (!event.forceRefresh && cachedEmotions.isNotEmpty) {
         Logger.info('📦 Using cached emotion data');
         if (state is HomeDashboardState) {
@@ -433,7 +392,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
         return;
       }
 
-      // Load fresh data from backend
       Logger.info('🌐 Fetching fresh emotion data from backend...');
       final emotions = await _emotionApiService.getUserEmotions(
         limit: 100,
@@ -442,7 +400,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
         endDate: DateTime.now(),
       );
 
-      // Cache the fresh data
       try {
         final localDataSource = GetIt.instance<HomeLocalDataSource>();
         final emotionData = emotions.map((e) => e.toJson()).toList();
@@ -457,17 +414,14 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
 
       Logger.info('. Loaded ${emotions.length} emotion entries from backend');
 
-      // Debug logging for emotion entries
       if (emotions.isNotEmpty) {
         Logger.info('🔍 DEBUG: First emotion entry: ${emotions.first.emotion} (${emotions.first.intensity}) at ${emotions.first.createdAt}');
         Logger.info('🔍 DEBUG: Last emotion entry: ${emotions.last.emotion} (${emotions.last.intensity}) at ${emotions.last.createdAt}');
       }
 
-      // Update current state with emotion history
       if (state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
         
-        // Update userStats with the real emotion count
         final updatedUserStats = currentState.userStats?.copyWith(
           totalMoodEntries: emotions.length,
         );
@@ -483,7 +437,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       _isLoadingEmotionHistory = false;
       Logger.error('. Failed to load emotion history', e);
       
-      // Try to use cached data as fallback
       try {
         final localDataSource = GetIt.instance<HomeLocalDataSource>();
         final cachedData = await localDataSource.getCachedEmotionFeed();
@@ -509,13 +462,11 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     Emitter<HomeState> emit,
   ) async {
     try {
-      // Prevent duplicate requests
       if (_isLoadingWeeklyInsights) {
         Logger.info('⏳ Weekly insights already loading, skipping...');
         return;
       }
 
-      // Check cache
       if (!event.forceRefresh && _lastWeeklyInsightsLoad != null) {
         final timeSinceLastLoad = DateTime.now().difference(_lastWeeklyInsightsLoad!);
         if (timeSinceLastLoad < _cacheDuration) {
@@ -530,10 +481,8 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       if (state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
 
-        // Get weekly insights from backend
         final weeklyInsightsData = await _emotionApiService.getWeeklyInsights();
 
-        // Create weekly insights model from backend data
         final weeklyInsights = WeeklyInsightsModel(
           mostCommonMood: weeklyInsightsData['mostCommonEmotion'] ?? 'neutral',
           averageMoodScore: (weeklyInsightsData['averageIntensity'] ?? 3.0).toDouble(),
@@ -562,8 +511,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       _isLoadingWeeklyInsights = false;
       Logger.error('. Failed to load weekly insights', e);
       
-      // Don't emit error state for weekly insights loading
-      // Just log the error and continue
     }
   }
 
@@ -577,7 +524,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       if (state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
 
-        // Get today's emotions from backend
         final todaysEmotions = await _emotionApiService.getTodaysJourney();
 
         emit(
@@ -590,7 +536,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       }
     } catch (e) {
       Logger.error('. Failed to load today\'s journey', e);
-      // Don't emit error state, just log the error
     }
   }
 
@@ -604,7 +549,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       if (state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
 
-        // Get calendar data from backend
         final calendarData = await _emotionApiService.getEmotionCalendar(
           month: event.month,
         );
@@ -620,7 +564,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       }
     } catch (e) {
       Logger.error('. Failed to load calendar data', e);
-      // Don't emit error state, just log the error
     }
   }
 
@@ -640,7 +583,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
           ),
         );
 
-        // Optionally load emotions for the selected date
         final dateKey = '${event.selectedDate.year}-${event.selectedDate.month.toString().padLeft(2, '0')}-${event.selectedDate.day.toString().padLeft(2, '0')}';
         final emotionsForDate = currentState.emotionCalendarData?[dateKey] ?? [];
 
@@ -664,7 +606,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     try {
       Logger.info('🎭 Logging new emotion: ${event.emotion}');
 
-      // Log emotion to backend
       final result = await _emotionApiService.logEmotion(
         emotion: event.emotion,
         intensity: event.intensity,
@@ -677,10 +618,9 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       if (state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
 
-        // Create new emotion entry
         final newEmotion = EmotionEntryModel(
           id: result['data']?['emotion']?['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-          userId: '', // Will be set by backend
+userId: '', 
           type: event.emotion,
           emotion: event.emotion,
           intensity: event.intensity.toInt(),
@@ -691,7 +631,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
           timeOfDay: _determineTimeOfDay(),
         );
 
-        // Add to current emotion entries
         final updatedEmotions = [newEmotion, ...currentState.emotionEntries];
 
         emit(
@@ -704,7 +643,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       }
     } catch (e) {
       Logger.error('. Failed to log emotion', e);
-      // Don't emit error state, just log the error
     }
   }
 
@@ -739,7 +677,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     Emitter<HomeState> emit,
   ) async {
     if (state is HomeError) {
-      // Return to previous valid state or initial state
       emit(const HomeInitial());
     }
   }
@@ -752,10 +689,7 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       if (state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
 
-        // Create updated home data with new values
         final updatedHomeData = currentState.homeData.copyWith(
-          // Apply updates from the event
-          // Note: You'll need to implement copyWith with dynamic updates
         );
 
         emit(
@@ -779,10 +713,8 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     try {
       Logger.info('🏠 Initializing home with emotion data persistence...');
       
-      // Load cached emotion data immediately for better UX
       await _loadCachedEmotionData(emit);
       
-      // Then load fresh data from backend
       add(const LoadEmotionHistoryEvent(forceRefresh: false));
       add(const LoadWeeklyInsightsEvent(forceRefresh: false));
       
@@ -793,7 +725,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     }
   }
 
-  /// Load cached emotion data for immediate display
   Future<void> _loadCachedEmotionData(Emitter<HomeState> emit) async {
     try {
       Logger.info('📦 Loading cached emotion data for immediate display...');
@@ -819,9 +750,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     }
   }
 
-  // ============================================================================
-  // HELPER METHODS
-  // ============================================================================
 
   List<String> _generateInsightsFromData(Map<String, dynamic> emotionSummary) {
     final insights = <String>[];
@@ -863,11 +791,9 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
              emotion.createdAt.isBefore(weekEnd.add(const Duration(days: 1)));
     }).length;
     
-    // Assume 7 emotions per week is 100% progress
     return (weekEmotions / 7.0).clamp(0.0, 1.0);
   }
 
-  // Helper method to determine time of day
   String _determineTimeOfDay() {
     final hour = DateTime.now().hour;
     if (hour >= 5 && hour < 12) return 'morning';
@@ -876,21 +802,16 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     return 'night';
   }
 
-  // ============================================================================
-  // IMPLEMENTATION METHODS - FIXED
-  // ============================================================================
 
   Future<void> _loadHomeDataImpl(
     bool forceRefresh,
     Emitter<HomeState> emit,
   ) async {
-    // Prevent duplicate requests
     if (_isLoadingHomeData && !forceRefresh) {
       Logger.info('🔄 Home data already loading, ignoring duplicate request');
       return;
     }
 
-    // Check if we have recent data
     if (_lastHomeDataLoad != null &&
         DateTime.now().difference(_lastHomeDataLoad!) < _cacheDuration &&
         !forceRefresh) {
@@ -915,14 +836,12 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
             failure.message,
           );
 
-          // . Check for authentication failures and redirect to login
           if (_isAuthenticationFailure(failure)) {
             Logger.warning('🔑 Authentication failure detected, redirecting to login');
             _handleAuthenticationFailure(emit);
             return;
           }
 
-          // . Proper error handling with user-friendly messages and retry options
           emit(HomeError(
             message: _getFriendlyErrorMessage(failure.message),
             canRetry: true,
@@ -935,7 +854,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
 
           final homeData = HomeDataModel.fromEntity(homeDataEntity);
 
-          // CRITICAL FIX: Always go to dashboard
           Logger.info('🚀 Calling _loadUserStatsForDashboard');
           _loadUserStatsForDashboard(homeData, emit);
         },
@@ -943,7 +861,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     } catch (e, stack) {
       Logger.error('. Unexpected error loading home data', e, stack);
 
-      // . Emit proper error state instead of mock data
       emit(HomeError(
         message: 'Unable to load your dashboard. Please check your connection and try again.',
         canRetry: true,
@@ -955,14 +872,12 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     }
   }
 
-  // CRITICAL FIX: Completely rewritten method to ensure dashboard state is always emitted
   Future<void> _loadUserStatsForDashboard(
     HomeDataModel homeData,
     Emitter<HomeState> emit,
   ) async {
     Logger.info('. Starting _loadUserStatsForDashboard');
 
-    // CRITICAL: ALWAYS emit dashboard state immediately with default stats
     final defaultUserStats = _createNewUserStats();
 
     if (!emit.isDone) {
@@ -970,7 +885,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       emit(HomeDashboardState(homeData: homeData, userStats: defaultUserStats));
     }
 
-    // Now try to load actual user stats in the background
     if (_isLoadingUserStats) {
       Logger.info('. User stats already loading, dashboard already shown');
       return;
@@ -986,7 +900,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       result.fold(
         (failure) {
           Logger.warning('. Failed to load user stats: ${failure.message}');
-          // Don't emit error - dashboard is already shown with default stats
           Logger.info(
             '. Keeping dashboard with default stats due to user stats failure',
           );
@@ -1006,7 +919,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
             
             Logger.info('✅ UserStatsModel created successfully');
 
-            // Update dashboard with real stats
             if (!emit.isDone) {
               Logger.info('🔄 Updating dashboard with real user stats');
               emit(HomeDashboardState(homeData: homeData, userStats: userStats));
@@ -1014,7 +926,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
           } catch (e) {
             Logger.error('❌ Error creating UserStatsModel from entity: $e');
             Logger.error('❌ Entity data: ${userStatsEntity.toString()}');
-            // Use default stats instead
             final defaultStats = _createNewUserStats();
             if (!emit.isDone) {
               emit(HomeDashboardState(homeData: homeData, userStats: defaultStats));
@@ -1024,7 +935,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       );
     } catch (e) {
       Logger.error('. Error loading user stats in background', e);
-      // Don't emit error - dashboard is already shown with default stats
       Logger.info('. Keeping dashboard with default stats due to exception');
     } finally {
       _isLoadingUserStats = false;
@@ -1048,10 +958,8 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
         (failure) {
           Logger.error('. Navigation failed', failure.message);
 
-          // Handle navigation gracefully in development
           if (AppConfig.isDevelopmentMode) {
             Logger.info('. Navigation handled gracefully in development');
-            // Just transition to dashboard state if possible
             if (state is HomeWelcomeState) {
               final welcomeState = state as HomeWelcomeState;
               final updatedHomeData = welcomeState.homeData.copyWith(
@@ -1065,13 +973,11 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
         },
         (_) {
           Logger.info('. Navigation successful');
-          // The state change will be handled by subsequent events
         },
       );
     } catch (e) {
       Logger.error('. Unexpected error during navigation', e);
 
-      // Handle navigation error gracefully in development
       if (AppConfig.isDevelopmentMode) {
         Logger.info('. Navigation exception handled in development');
         if (state is HomeWelcomeState) {
@@ -1091,7 +997,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     bool forceRefresh,
     Emitter<HomeState> emit,
   ) async {
-    // Prevent duplicate requests
     if (_isLoadingUserStats && !forceRefresh) {
       Logger.info('. User stats already loading, ignoring duplicate request');
       return;
@@ -1157,7 +1062,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     } catch (e) {
       Logger.error('. Unexpected error refreshing user stats', e);
 
-      // Only show error snackbar in production
       if (!AppConfig.isDevelopmentMode) {
         NavigationService.showErrorSnackBar('Failed to refresh statistics');
       }
@@ -1170,13 +1074,11 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     bool forceRefresh,
     Emitter<HomeState> emit,
   ) async {
-    // Prevent duplicate requests
     if (_isLoadingUserStats && !forceRefresh) {
       Logger.info('. User stats already loading, ignoring duplicate request');
       return;
     }
 
-    // Check if we have recent data
     if (_lastUserStatsLoad != null &&
         DateTime.now().difference(_lastUserStatsLoad!) <
             _userStatsCacheDuration &&
@@ -1232,7 +1134,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     } catch (e) {
       Logger.error('. Unexpected error loading user stats', e);
 
-      // In development mode, provide fallback mock stats
       if (AppConfig.isDevelopmentMode && state is HomeDashboardState) {
         final currentState = state as HomeDashboardState;
         final userStats = _createMockUserStats();
@@ -1244,15 +1145,11 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
           ),
         );
       }
-      // Don't emit error state for stats loading failure
     } finally {
       _isLoadingUserStats = false;
     }
   }
 
-  // ============================================================================
-  // HELPER METHODS
-  // ============================================================================
 
   UserStatsModel _createNewUserStats() {
     return UserStatsModel(
@@ -1306,11 +1203,7 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     return AppConfig.getFriendlyErrorMessage(originalError);
   }
 
-  // ============================================================================
-  // PUBLIC UTILITY METHODS
-  // ============================================================================
 
-  // Helper method to get current home data
   HomeDataModel? getCurrentHomeData() {
     if (state is HomeDashboardState) {
       return (state as HomeDashboardState).homeData;
@@ -1324,7 +1217,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     return null;
   }
 
-  // Helper method to get current user stats
   UserStatsModel? getCurrentUserStats() {
     if (state is HomeDashboardState) {
       return (state as HomeDashboardState).userStats;
@@ -1336,19 +1228,16 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     return null;
   }
 
-  // Helper method to check if user is new
   bool isNewUser() {
     final userStats = getCurrentUserStats();
     return userStats?.totalMoodEntries == 0;
   }
 
-  // Helper method to check if user is on first login
   bool isFirstTimeLogin() {
     final homeData = getCurrentHomeData();
     return homeData?.isFirstTimeLogin ?? false;
   }
 
-  // Helper method to get user's display name
   String getUserDisplayName() {
     final homeData = getCurrentHomeData();
     return homeData?.username ?? 'User';
@@ -1371,7 +1260,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     return state is HomeError;
   }
 
-  // Helper method to get error message if any
   String? getErrorMessage() {
     if (state is HomeError) {
       return (state as HomeError).message;
@@ -1379,7 +1267,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     return null;
   }
 
-  // Get cache status for debugging
   Map<String, dynamic> getCacheStatus() {
     final now = DateTime.now();
     return {
@@ -1402,18 +1289,12 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     };
   }
 
-  // ============================================================================
-  // AUTHENTICATION HELPER METHODS
-  // ============================================================================
 
-  /// Check if the failure is related to authentication (401, token expired, etc.)
   bool _isAuthenticationFailure(Failure failure) {
-    // Check for explicit authentication failures
     if (failure is AuthFailure) {
       return true;
     }
 
-    // Check for server failures with 401 status code
     if (failure is ServerFailure) {
       final message = failure.message.toLowerCase();
       return message.contains('unauthorized') ||
@@ -1424,7 +1305,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
           message.contains('authentication');
     }
 
-    // Check the message for authentication-related keywords
     final message = failure.message.toLowerCase();
     return message.contains('unauthorized') ||
         message.contains('401') ||
@@ -1434,24 +1314,20 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
         message.contains('session expired');
   }
 
-  /// Handle authentication failure by clearing data and redirecting to login
   void _handleAuthenticationFailure(Emitter<HomeState> emit) {
     try {
       Logger.warning('🔑 Handling authentication failure - clearing session');
 
-      // Clear cache
       _lastHomeDataLoad = null;
       _lastUserStatsLoad = null;
       _isLoadingHomeData = false;
       _isLoadingUserStats = false;
 
-      // Emit authentication error state using existing HomeError
       emit(const HomeError(
         message: 'Your session has expired. Please sign in again.',
-        canRetry: false, // Don't allow retry for auth errors
+canRetry: false, 
       ));
 
-      // Navigate to auth screen with delay to ensure state is emitted
       Future.delayed(const Duration(milliseconds: 500), () {
         if (!isClosed) {
           Logger.info('🔄 Redirecting to auth screen due to authentication failure');
@@ -1466,7 +1342,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
       });
     } catch (e) {
       Logger.error('. Error handling authentication failure', e);
-      // Fallback - still try to navigate to auth
       NavigationService.safeNavigate(
         AppRouter.authChoice,
         clearStack: true,
@@ -1474,13 +1349,9 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
     }
   }
 
-  // ============================================================================
-  // OVERRIDE METHODS
-  // ============================================================================
 
   @override
   void add(HomeEvent event) {
-    // ✅ CRITICAL FIX: Add safety check before adding events
     if (isClosed) {
       Logger.warning('🏠 Home BLoC: Cannot add event after close: ${event.runtimeType}');
       return;
@@ -1493,7 +1364,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
   void onTransition(Transition<HomeEvent, HomeState> transition) {
     super.onTransition(transition);
     
-    // ✅ CRITICAL FIX: Add safety check to prevent events after close
     if (isClosed) {
       Logger.warning('🏠 Home BLoC: Attempted to add event after close: ${transition.event.runtimeType}');
       return;
@@ -1512,7 +1382,6 @@ bool _shouldUpdateStreak(DateTime? lastMoodLog) {
 
   @override
   Future<void> close() {
-    // Clear any ongoing operations
     _isLoadingHomeData = false;
     _isLoadingUserStats = false;
     return super.close();

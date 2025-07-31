@@ -1,5 +1,3 @@
-// lib/features/home/presentation/view/pages/enhanced_emotions_view.dart
-// import 'package:emora_mobile_app/features/emotion/presentation/widget/emotion_detail_view_modal.dart';
 import 'package:emora_mobile_app/features/emotion/presentation/widget/emotion_list_view_widget.dart';
 import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart';
 import 'package:emora_mobile_app/features/home/presentation/view_model/bloc/home_bloc.dart';
@@ -328,7 +326,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
   }
 
   Widget _buildAnalyticsView(List<EmotionEntryModel> emotions) {
-    // Convert to EnhancedEmotionEntryModel if needed
     final enhancedEmotions = emotions.map((e) {
       return EmotionEntryModel.fromJson(e.toJson());
     }).toList();
@@ -483,7 +480,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
             ),
           ),
           const SizedBox(height: 8),
-          // Simple bar chart representation
           ...List.generate(7, (index) {
             final date = DateTime.now().subtract(Duration(days: 6 - index));
             final dayEmotions = emotions.where((e) {
@@ -600,7 +596,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
     );
   }
 
-  // Helper methods
   List<EmotionEntryModel> _getFilteredEmotions(List<dynamic> emotions) {
     var filtered = emotions.map((e) {
       if (e is EmotionEntryModel) return e;
@@ -681,7 +676,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
   }
 
   Color _getEmotionColor(String emotion) {
-    // Simple color mapping
     switch (emotion.toLowerCase()) {
       case 'joy':
       case 'happiness':
@@ -708,7 +702,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
     return Colors.red;
   }
 
-  // Event handlers
   void _handleEmotionTap(EmotionEntryModel emotion) {
     showModalBottomSheet(
       context: context,
@@ -726,7 +719,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
             ),
             child: Column(
               children: [
-                // Handle bar
                 Container(
                   margin: const EdgeInsets.only(top: 8),
                   width: 40,
@@ -743,7 +735,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header
                         Row(
                           children: [
                             Container(
@@ -785,7 +776,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
                         ),
                         const SizedBox(height: 24),
                         
-                        // Intensity
                         Text(
                           'Intensity: ${emotion.intensityLabel}',
                           style: const TextStyle(
@@ -812,7 +802,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
                         ),
                         const SizedBox(height: 24),
                         
-                        // Note
                         if (emotion.note.isNotEmpty) ...[
                           Text(
                             'Note',
@@ -840,7 +829,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
                           const SizedBox(height: 24),
                         ],
                         
-                        // Actions
                         Row(
                           children: [
                             Expanded(
@@ -887,7 +875,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
   }
 
   void _handleEmotionEdit(EmotionEntryModel emotion) {
-    // Implementation would show edit modal
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Edit ${emotion.emotion}'),
@@ -914,7 +901,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // Implementation would delete from backend
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('Emotion deleted')),
               );
@@ -952,7 +938,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
     }
   }
 
-  // Dialog methods
   void _showSearchDialog() {
     showDialog(
       context: context,
@@ -1047,7 +1032,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
   }
 
   void _showAddEmotionModal() {
-    // Implementation would show the enhanced emotion entry modal
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Add emotion modal would open here'),
@@ -1056,7 +1040,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
     );
   }
 
-  // Action methods
   void _exitSelectionMode() {
     setState(() {
       _isSelectionMode = false;
@@ -1065,10 +1048,8 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
   }
 
   void _selectAll() {
-    // Implementation would select all visible emotions
     setState(() {
-      // This would need access to current filtered emotions
-      _selectedEmotionIds = ['all']; // Placeholder
+_selectedEmotionIds = ['all']; 
     });
   }
 
@@ -1092,7 +1073,6 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // Implementation would delete selected emotions
               _exitSelectionMode();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text('${_selectedEmotionIds.length} emotions deleted')),
@@ -1107,21 +1087,18 @@ class _EnhancedEmotionsViewState extends State<EnhancedEmotionsView>
   }
 
   void _exportSelected() {
-    // Implementation would export selected emotions
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Exporting ${_selectedEmotionIds.length} emotions...')),
     );
   }
 
   void _shareSelected() {
-    // Implementation would share selected emotions
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Sharing ${_selectedEmotionIds.length} emotions...')),
     );
   }
 
   void _exportAllEmotions() {
-    // Implementation would export all emotions
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Exporting all emotions...')),
     );

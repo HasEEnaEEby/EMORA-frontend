@@ -21,7 +21,6 @@ class UserPreferencesModel {
     this.customSettings = const {},
   });
 
-  // FIXED: Remove problematic null-aware operators
   factory UserPreferencesModel.fromJson(Map<String, dynamic> json) {
     return UserPreferencesModel(
       notificationsEnabled: json['notificationsEnabled'] ?? true,

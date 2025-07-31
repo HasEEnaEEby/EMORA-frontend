@@ -7,7 +7,6 @@ class WeeklyInsightsModel {
   final List<String> insights;
   final double weekProgress;
   
-  // Enhanced fields for journey analytics
   final int longestStreak;
   final int totalFriends;
   final int helpedFriends;

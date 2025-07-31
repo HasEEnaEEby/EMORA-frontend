@@ -13,7 +13,7 @@ import 'package:emora_mobile_app/app/di/injection_container.dart' as di;
 import 'package:emora_mobile_app/core/network/api_service.dart';
 
 class EnhancedAtlasView extends StatefulWidget {
-  final EmotionBloc? emotionBloc; // Optional parameter
+  final EmotionBloc? emotionBloc; 
 
   const EnhancedAtlasView({super.key, this.emotionBloc});
 
@@ -29,21 +29,18 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
   
   final MapController _mapController = MapController();
   
-  // Map state
   bool _showHeatmap = true;
   bool _showClusters = true;
   bool _showPredictions = false;
   String _timeFilter = '24h';
   String _emotionFilter = 'all';
   
-  // Real data from API
   List<GlobalEmotionPoint> _emotionPoints = [];
   List<EmotionCluster> _emotionClusters = [];
   GlobalEmotionStats? _globalStats;
   bool _isLoadingEmotions = true;
   String? _errorMessage;
 
-  // AI Insights
   EmotionInsight? _globalInsight;
   EmotionInsight? _selectedRegionInsight;
   bool _isLoadingInsights = false;
@@ -58,14 +55,12 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
   void initState() {
     super.initState();
     _initializeAnimations();
-    // Use the passed bloc or try to find it in context
     if (widget.emotionBloc != null) {
       _emotionBloc = widget.emotionBloc!;
     } else {
       _emotionBloc = context.read<EmotionBloc>();
     }
     
-    // Initialize insights service
     try {
       _insightsService = InsightsService(di.sl<ApiService>());
       print('✅ InsightsService initialized successfully');
@@ -76,7 +71,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     
     _loadGlobalEmotionData();
     
-    // Load AI insights
     _loadGlobalInsights();
   }
 
@@ -98,7 +92,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     _fadeController.forward();
   }
 
-  // API Methods
   Future<void> _loadGlobalEmotionData() async {
           setState(() {
       _isLoadingEmotions = true;
@@ -106,13 +99,10 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     });
 
     try {
-      // Load emotion data points
       await _loadEmotionData();
       
-      // Load emotion clusters
       await _loadEmotionClusters();
       
-      // Load global stats
       await _loadGlobalStats();
       
       setState(() {
@@ -156,7 +146,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
         print('✅ Loaded ${apiResponse.data.length} emotion clusters');
         print('📊 Cluster data: ${apiResponse.data.map((c) => '${c.country ?? c.displayName}: ${c.count} emotions (${c.coreEmotion})').join(', ')}');
         
-        // Debug: Print each cluster details
         for (int i = 0; i < apiResponse.data.length; i++) {
           final cluster = apiResponse.data[i];
           print('📍 Cluster $i: ${cluster.country} - ${cluster.coreEmotion} (${cluster.count} emotions, intensity: ${cluster.avgIntensity})');
@@ -196,7 +185,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     }
   }
 
-  // AI Insights Methods
   Future<void> _loadGlobalInsights() async {
     if (_insightsService == null) {
       print('⚠️ InsightsService not initialized');
@@ -281,7 +269,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
             ),
             child: Column(
               children: [
-                // Handle bar
                 Container(
                   margin: const EdgeInsets.only(top: 8),
                   width: 40,
@@ -324,11 +311,9 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                         ),
                         const SizedBox(height: 20),
                         
-                        // Time range selector
                         _buildTimeRangeSelector(),
                         const SizedBox(height: 20),
                         
-                        // Global Insights
                         if (_globalInsight != null) ...[
                           Text(
                             'Global Insights',
@@ -372,7 +357,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                           ),
                         ],
                         
-                        // Region Insights (if available)
                         if (_selectedRegionInsight != null) ...[
                           Text(
                             '${_selectedRegionInsight!.region} Insights',
@@ -389,7 +373,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                           ),
                         ],
                         
-                        // Loading state
                         if (_isLoadingInsights)
                           const Center(
                             child: Padding(
@@ -400,7 +383,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                             ),
                           ),
                         
-                        // Error state
                         if (_insightsErrorMessage != null)
                           Container(
                             padding: const EdgeInsets.all(16),
@@ -620,31 +602,23 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
   Widget build(BuildContext context) {
     return BlocListener<EmotionBloc, EmotionState>(
       listener: (context, state) {
-        // Handle emotion bloc state changes if needed
       },
       child: Scaffold(
         backgroundColor: const Color(0xFF0A0A0F),
         body: Stack(
           children: [
-            // Enhanced Leaflet Map
             _buildEnhancedMap(),
             
-            // Gradient Overlay
             _buildGradientOverlay(),
             
-            // Enhanced Header
             _buildEnhancedHeader(),
             
-            // Live Stats Panel
             if (_globalStats != null) _buildLiveStatsPanel(),
             
-            // Floating Action Buttons
             _buildFloatingActions(),
             
-            // Loading Overlay
             if (_isLoadingEmotions) _buildLoadingOverlay(),
             
-            // Error Overlay
             if (_errorMessage != null) _buildErrorOverlay(),
           ],
         ),
@@ -656,7 +630,7 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     return FlutterMap(
       mapController: _mapController,
       options: MapOptions(
-        initialCenter: LatLng(20.0, 0.0), // Center on world
+initialCenter: LatLng(20.0, 0.0), 
         initialZoom: 2.0,
         minZoom: 1.0,
         maxZoom: 18.0,
@@ -667,19 +641,17 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
         },
       ),
       children: [
-        // Dark theme map tiles
         TileLayer(
           urlTemplate: 'https://cartodb-basemaps-{s}.global.ssl.fastly.net/dark_all/{z}/{x}/{y}.png',
           subdomains: const ['a', 'b', 'c', 'd'],
           userAgentPackageName: 'com.emora.atlas',
         ),
         
-        // Emotion Clusters
         if (_showClusters && _emotionClusters.isNotEmpty) MarkerLayer(
           markers: _emotionClusters.map((cluster) => Marker(
             point: cluster.center,
-            width: (cluster.size * 0.8).clamp(15.0, 40.0), // Smaller size
-            height: (cluster.size * 0.8).clamp(15.0, 40.0), // Smaller size
+width: (cluster.size * 0.8).clamp(15.0, 40.0), 
+height: (cluster.size * 0.8).clamp(15.0, 40.0), 
             child: EmotionClusterMarker(
               cluster: cluster,
               animation: _pulseAnimation,
@@ -688,12 +660,11 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
           )).toList(),
         ),
         
-        // Individual Emotion Points
         if (_emotionPoints.isNotEmpty) MarkerLayer(
           markers: _emotionPoints.map((point) => Marker(
             point: point.coordinates,
-            width: 20, // Smaller size
-            height: 20, // Smaller size
+width: 20, 
+height: 20, 
             child: GlobalEmotionMarker(
               point: point,
               animation: _pulseAnimation,
@@ -746,7 +717,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                // Back button
                 _buildGlassButton(
                   icon: Icons.arrow_back_ios_new,
                   onTap: () => Navigator.pop(context),
@@ -754,7 +724,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                 
                 const SizedBox(width: 16),
                 
-                // Title with live indicator
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -793,7 +762,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                   ),
                 ),
                 
-                // Filter button
                 _buildGlassButton(
                   icon: Icons.filter_list,
                   onTap: _showFilterModal,
@@ -854,7 +822,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
               
               const SizedBox(height: 16),
               
-              // Global stats grid
               IntrinsicHeight(
                 child: Row(
                   children: [
@@ -981,7 +948,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     );
   }
 
-  // Helper methods
   Widget _buildGlassButton({
     required IconData icon,
     required VoidCallback onTap,
@@ -1054,7 +1020,7 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min, // FIX: Add mainAxisSize.min
+mainAxisSize: MainAxisSize.min, 
       children: [
         Text(
           title,
@@ -1064,7 +1030,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
           ),
         ),
         SizedBox(height: 4),
-        // FIX: Replace problematic Row with Wrap for better overflow handling
         Wrap(
           spacing: 8,
           runSpacing: 4,
@@ -1135,7 +1100,7 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // FIX: Add mainAxisSize.min
+mainAxisSize: MainAxisSize.min, 
         children: [
           Icon(icon, color: color, size: 20),
           SizedBox(height: 8),
@@ -1160,14 +1125,12 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     );
   }
 
-  // Action methods
   void _showFilterModal() {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => FilterModal(
         onFiltersChanged: (filters) {
-          // Apply filters and reload data
           _loadGlobalEmotionData();
         },
       ),
@@ -1191,8 +1154,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
 
 
   void _showClusterDetails(EmotionCluster cluster) {
-    // Load region insights for this cluster
-    // Use country name for better matching, fallback to city, then display name
     final regionName = cluster.country ?? cluster.city ?? cluster.displayName;
     print('🔍 Loading insights for region: $regionName (cluster: ${cluster.displayName})');
     _loadRegionInsights(regionName);
@@ -1266,12 +1227,10 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                         ),
                         const SizedBox(height: 20),
                         
-                        // Cluster statistics
                         _buildClusterStats(cluster),
                         
                         const SizedBox(height: 20),
                         
-                        // AI Insights for this region
                         if (_selectedRegionInsight != null) ...[
                           Text(
                             'AI Insights for ${cluster.displayName}',
@@ -1289,7 +1248,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
                           const SizedBox(height: 20),
                         ],
                         
-                        // Loading state for insights
                         if (_isLoadingInsights)
                           const Center(
                             child: Padding(
@@ -1319,7 +1277,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
     );
   }
 
-  // Utility methods
   String _formatTimeAgo(DateTime dateTime) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
@@ -1359,9 +1316,6 @@ class _EnhancedAtlasViewState extends State<EnhancedAtlasView>
   }
 }
 
-// ============================================================================
-// CUSTOM MARKERS
-// ============================================================================
 
 class EmotionClusterMarker extends StatelessWidget {
   final EmotionCluster cluster;
@@ -1385,7 +1339,6 @@ class EmotionClusterMarker extends StatelessWidget {
           return Stack(
             alignment: Alignment.center,
             children: [
-              // Blurred pulsing ring
               Container(
                 width: (cluster.size * 0.6 * animation.value).clamp(8.0, 25.0),
                 height: (cluster.size * 0.6 * animation.value).clamp(8.0, 25.0),
@@ -1403,7 +1356,6 @@ class EmotionClusterMarker extends StatelessWidget {
                 ),
               ),
               
-              // Main cluster marker - smaller with blur
               Container(
                 width: (cluster.size * 0.4).clamp(6.0, 18.0),
                 height: (cluster.size * 0.4).clamp(6.0, 18.0),
@@ -1464,7 +1416,6 @@ class GlobalEmotionMarker extends StatelessWidget {
           return Stack(
             alignment: Alignment.center,
             children: [
-              // Blurred pulsing effect
               Container(
                 width: (15 * animation.value).clamp(8.0, 20.0),
                 height: (15 * animation.value).clamp(8.0, 20.0),
@@ -1482,7 +1433,6 @@ class GlobalEmotionMarker extends StatelessWidget {
                 ),
               ),
               
-              // Main marker - smaller with blur
               Container(
                 width: 12,
                 height: 12,
@@ -1521,9 +1471,6 @@ class GlobalEmotionMarker extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// MODAL COMPONENTS
-// ============================================================================
 
 class FilterModal extends StatelessWidget {
   final Function(EmotionMapFilters) onFiltersChanged;
@@ -1556,7 +1503,6 @@ class FilterModal extends StatelessWidget {
               style: TextStyle(color: Colors.grey[400]),
               textAlign: TextAlign.center,
             ),
-            // Add filter controls here
           ],
         ),
       ),

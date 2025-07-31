@@ -1,4 +1,3 @@
-// lib/features/profile/presentation/view_model/profile_event.dart - COMPLETE VERSION
 import 'package:equatable/equatable.dart';
 
 abstract class ProfileEvent extends Equatable {
@@ -8,7 +7,6 @@ abstract class ProfileEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Load user profile data
 class LoadProfile extends ProfileEvent {
   const LoadProfile();
 
@@ -16,7 +14,6 @@ class LoadProfile extends ProfileEvent {
   String toString() => 'LoadProfile';
 }
 
-/// Refresh profile data (force reload)
 class RefreshProfile extends ProfileEvent {
   const RefreshProfile();
 
@@ -24,7 +21,6 @@ class RefreshProfile extends ProfileEvent {
   String toString() => 'RefreshProfile';
 }
 
-/// Update user profile with new data
 class UpdateProfile extends ProfileEvent {
   final Map<String, dynamic> profileData;
 
@@ -37,7 +33,6 @@ class UpdateProfile extends ProfileEvent {
   String toString() => 'UpdateProfile { profileData: $profileData }';
 }
 
-/// Update user preferences
 class UpdatePreferences extends ProfileEvent {
   final Map<String, dynamic> preferences;
 
@@ -50,7 +45,6 @@ class UpdatePreferences extends ProfileEvent {
   String toString() => 'UpdatePreferences { preferences: $preferences }';
 }
 
-/// Update user settings (similar to preferences but different use case)
 class UpdateSettings extends ProfileEvent {
   final Map<String, dynamic> settings;
 
@@ -63,7 +57,6 @@ class UpdateSettings extends ProfileEvent {
   String toString() => 'UpdateSettings { settings: $settings }';
 }
 
-/// Update user avatar specifically
 class UpdateAvatar extends ProfileEvent {
   final String avatarName;
 
@@ -76,7 +69,6 @@ class UpdateAvatar extends ProfileEvent {
   String toString() => 'UpdateAvatar { avatarName: $avatarName }';
 }
 
-/// Load user achievements
 class LoadAchievements extends ProfileEvent {
   const LoadAchievements();
 
@@ -84,7 +76,6 @@ class LoadAchievements extends ProfileEvent {
   String toString() => 'LoadAchievements';
 }
 
-/// Export user data
 class ExportData extends ProfileEvent {
   final List<String> dataTypes;
 
@@ -97,7 +88,6 @@ class ExportData extends ProfileEvent {
   String toString() => 'ExportData { dataTypes: $dataTypes }';
 }
 
-/// Clear profile error state
 class ClearProfileError extends ProfileEvent {
   const ClearProfileError();
 
@@ -105,7 +95,6 @@ class ClearProfileError extends ProfileEvent {
   String toString() => 'ClearProfileError';
 }
 
-/// Clear profile cache
 class ClearProfileCache extends ProfileEvent {
   const ClearProfileCache();
 
@@ -113,7 +102,6 @@ class ClearProfileCache extends ProfileEvent {
   String toString() => 'ClearProfileCache';
 }
 
-/// Update specific profile field
 class UpdateProfileField extends ProfileEvent {
   final String fieldName;
   final dynamic value;
@@ -130,7 +118,6 @@ class UpdateProfileField extends ProfileEvent {
   String toString() => 'UpdateProfileField { fieldName: $fieldName, value: $value }';
 }
 
-/// Toggle privacy setting
 class TogglePrivacy extends ProfileEvent {
   final bool isPrivate;
 
@@ -143,7 +130,6 @@ class TogglePrivacy extends ProfileEvent {
   String toString() => 'TogglePrivacy { isPrivate: $isPrivate }';
 }
 
-/// Update theme color
 class UpdateThemeColor extends ProfileEvent {
   final String themeColor;
 
@@ -156,7 +142,6 @@ class UpdateThemeColor extends ProfileEvent {
   String toString() => 'UpdateThemeColor { themeColor: $themeColor }';
 }
 
-/// Delete user account
 class DeleteAccount extends ProfileEvent {
   final String confirmationText;
 
@@ -169,7 +154,6 @@ class DeleteAccount extends ProfileEvent {
   String toString() => 'DeleteAccount { confirmationText: $confirmationText }';
 }
 
-/// Sync profile with server
 class SyncProfile extends ProfileEvent {
   const SyncProfile();
 

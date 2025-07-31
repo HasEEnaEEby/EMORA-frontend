@@ -1,4 +1,3 @@
-// Create this file: lib/features/emotion/domain/use_case/get_global_emotion_heatmap.dart
 
 import 'package:dartz/dartz.dart';
 import 'package:emora_mobile_app/features/emotion/domain/entity/global_heatmap_entity.dart';
@@ -26,7 +25,6 @@ class GetGlobalEmotionHeatmap
     );
 
     return result.fold((failure) => Left(failure), (heatmapData) {
-      // Convert Map to Entity
       final entity = GlobalHeatmapEntity.fromJson(heatmapData);
       return Right(entity);
     });

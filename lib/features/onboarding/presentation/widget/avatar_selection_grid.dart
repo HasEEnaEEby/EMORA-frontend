@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AvatarSelectionGrid extends StatefulWidget {
-  final List<dynamic> avatars; // Changed from List<String> to List<dynamic>
+final List<dynamic> avatars; 
   final String? selectedAvatar;
   final Function(String) onAvatarSelected;
   final int crossAxisCount;
@@ -37,7 +37,6 @@ class _AvatarSelectionGridState extends State<AvatarSelectionGrid>
       vsync: this,
     );
 
-    // Create animation controllers for each avatar item
     _itemAnimationControllers = List.generate(
       widget.avatars.length,
       (index) => AnimationController(
@@ -46,7 +45,6 @@ class _AvatarSelectionGridState extends State<AvatarSelectionGrid>
       ),
     );
 
-    // Create staggered animations for each item
     _itemAnimations = _itemAnimationControllers.map((controller) {
       return Tween<double>(
         begin: 0.0,
@@ -54,7 +52,6 @@ class _AvatarSelectionGridState extends State<AvatarSelectionGrid>
       ).animate(CurvedAnimation(parent: controller, curve: Curves.easeOutBack));
     }).toList();
 
-    // Start animations with stagger effect
     _startStaggeredAnimations();
   }
 
@@ -77,12 +74,10 @@ class _AvatarSelectionGridState extends State<AvatarSelectionGrid>
     super.dispose();
   }
 
-  // FIXED: Safe avatar extraction that handles both String and Map types
   String _extractAvatarValue(dynamic avatar) {
     if (avatar is String) {
       return avatar;
     } else if (avatar is Map<String, dynamic>) {
-      // Try common keys that might contain the avatar value
       return avatar['value']?.toString() ??
           avatar['name']?.toString() ??
           avatar['id']?.toString() ??
@@ -107,7 +102,7 @@ class _AvatarSelectionGridState extends State<AvatarSelectionGrid>
       itemBuilder: (context, index) {
         final avatar = _extractAvatarValue(
           widget.avatars[index],
-        ); // FIXED: Safe extraction
+); 
         final isSelected = widget.selectedAvatar == avatar;
 
         return AnimatedBuilder(
@@ -290,7 +285,6 @@ class _AvatarItemState extends State<AvatarItem>
                 ),
                 child: Stack(
                   children: [
-                    // Main avatar content
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -328,7 +322,6 @@ class _AvatarItemState extends State<AvatarItem>
                         ],
                       ),
                     ),
-                    // Selection indicator
                     if (widget.isSelected)
                       Positioned(
                         top: 8,

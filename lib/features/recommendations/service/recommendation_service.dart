@@ -6,7 +6,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HybridTrackList extends StatefulWidget {
-  final List<Map<String, dynamic>> spotifyTracks; // Each: {title, artist, spotifyUrl, ...}
+final List<Map<String, dynamic>> spotifyTracks; 
 
   const HybridTrackList({super.key, required this.spotifyTracks});
 
@@ -20,7 +20,6 @@ class _HybridTrackListState extends State<HybridTrackList> {
   int? _playingIndex;
   bool _loading = false;
   
-  // ✅ FIX: Add stream subscription to properly dispose
   StreamSubscription<PlayerState>? _playerStateSubscription;
 
   @override
@@ -30,22 +29,22 @@ class _HybridTrackListState extends State<HybridTrackList> {
   }
 
   Future<void> _fetchJamendoUrls() async {
-    if (!mounted) return; // ✅ Safety check
+if (!mounted) return; 
     
     setState(() => _loading = true);
     for (int i = 0; i < widget.spotifyTracks.length; i++) {
-      if (!mounted) break; // ✅ Check mounted state in loop
+if (!mounted) break; 
       
       final track = widget.spotifyTracks[i];
       final url = await findJamendoStreamUrl(track['title'], track['artist']);
       
-      if (!mounted) break; // ✅ Check again after async operation
+if (!mounted) break; 
       
       _jamendoUrls[i] = url;
-      setState(() {}); // Update as each is found
+setState(() {}); 
     }
     
-    if (mounted) { // ✅ Final safety check
+if (mounted) { 
       setState(() => _loading = false);
     }
   }
@@ -54,7 +53,7 @@ class _HybridTrackListState extends State<HybridTrackList> {
     try {
       final clientId = '7e49a9e7';
       final url = Uri.parse(
-        'https://api.jamendo.com/v3.0/tracks?client_id=$clientId&format=json&limit=1&namesearch=${Uri.encodeComponent(title)}&artist_name=${Uri.encodeComponent(artist)}'
+        'https:////api.jamendo.com/v3/tracks/',
       );
       final response = await http.get(url);
       if (response.statusCode == 200) {
@@ -72,7 +71,6 @@ class _HybridTrackListState extends State<HybridTrackList> {
 
   @override
   void dispose() {
-    // ✅ FIX: Properly dispose of all resources
     _playerStateSubscription?.cancel();
     _player.dispose();
     super.dispose();
@@ -83,13 +81,12 @@ class _HybridTrackListState extends State<HybridTrackList> {
       await _player.setUrl(url);
       _player.play();
       
-      if (!mounted) return; // ✅ Safety check before setState
+if (!mounted) return; 
       setState(() => _playingIndex = index);
       
-      // ✅ FIX: Cancel previous subscription before creating new one
       _playerStateSubscription?.cancel();
       _playerStateSubscription = _player.playerStateStream.listen((state) {
-        if (!mounted) return; // ✅ Safety check in stream listener
+if (!mounted) return; 
         
         if (state.processingState == ProcessingState.completed) {
           setState(() => _playingIndex = null);
@@ -115,7 +112,7 @@ class _HybridTrackListState extends State<HybridTrackList> {
 
   @override
   Widget build(BuildContext context) {
-    if (!mounted) return Container(); // ✅ Safety check at build
+if (!mounted) return Container(); 
     
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
@@ -138,7 +135,7 @@ class _HybridTrackListState extends State<HybridTrackList> {
               ? IconButton(
                   icon: Icon(_playingIndex == i ? Icons.pause : Icons.play_arrow),
                   onPressed: () {
-                    if (!mounted) return; // ✅ Safety check
+if (!mounted) return; 
                     
                     if (_playingIndex == i) {
                       _player.pause();

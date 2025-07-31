@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/dialogs/account_management_dialog.dart
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
 import 'package:emora_mobile_app/core/services/logout_service.dart';
 import 'package:emora_mobile_app/features/auth/presentation/view_model/bloc/auth_bloc.dart';
@@ -9,16 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Enhanced account management dialogs with proper BLoC integration
-///
-/// Features:
-/// - Proper sign out with BLoC integration
-/// - Enhanced delete account flow
-/// - Modern Flutter APIs
-/// - Cool glassmorphic UI design
-/// - Proper error handling and state management
 class AccountManagementDialog {
-  /// Shows sign out confirmation dialog with proper BLoC integration
   static void showSignOut(BuildContext context) {
     showCupertinoDialog(
       context: context,
@@ -30,7 +20,6 @@ class AccountManagementDialog {
     );
   }
 
-  /// Shows enhanced delete account confirmation dialog
   static void showDeleteAccount(
     BuildContext context, {
     required VoidCallback onConfirm,
@@ -73,7 +62,6 @@ class AccountManagementDialog {
     );
   }
 
-  /// . Added missing showPrivacySettings method
   static void showPrivacySettings(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
@@ -92,7 +80,6 @@ class AccountManagementDialog {
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 8),
               width: 50,
@@ -103,7 +90,6 @@ class AccountManagementDialog {
               ),
             ),
 
-            // Header
             Container(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -154,7 +140,6 @@ class AccountManagementDialog {
               ),
             ),
 
-            // Privacy options
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -192,7 +177,6 @@ class AccountManagementDialog {
               ),
             ),
 
-            // Action button
             Padding(
               padding: const EdgeInsets.all(20),
               child: CupertinoButton(
@@ -224,7 +208,6 @@ class AccountManagementDialog {
     );
   }
 
-  /// . Added missing showSupportHelp method
   static void showSupportHelp(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
@@ -243,7 +226,6 @@ class AccountManagementDialog {
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 8),
               width: 50,
@@ -254,7 +236,6 @@ class AccountManagementDialog {
               ),
             ),
 
-            // Header
             Container(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -305,7 +286,6 @@ class AccountManagementDialog {
               ),
             ),
 
-            // Support options
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -352,7 +332,6 @@ class AccountManagementDialog {
               ),
             ),
 
-            // Emergency contact
             Container(
               margin: const EdgeInsets.all(20),
               padding: const EdgeInsets.all(16),
@@ -390,7 +369,6 @@ class AccountManagementDialog {
     );
   }
 
-  /// Shows enhanced coming soon dialog with glassmorphic design
   static void showComingSoon(BuildContext context, String feature) {
     showCupertinoModalPopup(
       context: context,
@@ -416,7 +394,6 @@ class AccountManagementDialog {
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 8),
               width: 50,
@@ -428,7 +405,6 @@ class AccountManagementDialog {
             ),
             const SizedBox(height: 20),
 
-            // Animated rocket icon
             TweenAnimationBuilder<double>(
               duration: const Duration(milliseconds: 1000),
               tween: Tween(begin: 0.0, end: 1.0),
@@ -474,7 +450,6 @@ class AccountManagementDialog {
     );
   }
 
-  // MARK: - Sign Out Dialog Components
 
   static Widget _buildSignOutTitle() {
     return Row(
@@ -579,12 +554,10 @@ class AccountManagementDialog {
     ];
   }
 
-  /// Performs the actual sign out using professional logout service
   static void _performSignOut(BuildContext context) {
     LogoutService.performLogout(context);
   }
 
-  // MARK: - Delete Account Dialog Components
 
   static Widget _buildDeleteAccountTitle() {
     return Row(
@@ -642,7 +615,6 @@ class AccountManagementDialog {
         ),
         const SizedBox(height: 16),
 
-        // Enhanced warning box
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -687,7 +659,6 @@ class AccountManagementDialog {
         ),
         const SizedBox(height: 12),
 
-        // Enhanced confirmation input
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
@@ -906,7 +877,6 @@ class AccountManagementDialog {
     });
   }
 
-  // MARK: - Coming Soon Dialog Components
 
   static Widget _buildComingSoonContent(String feature) {
     return Padding(
@@ -1019,9 +989,7 @@ class AccountManagementDialog {
     );
   }
 
-  // MARK: - Additional Enhanced Dialogs
 
-  /// Shows enhanced account security dialog
   static void showAccountSecurity(BuildContext context) {
     showCupertinoModalPopup(
       context: context,
@@ -1040,7 +1008,6 @@ class AccountManagementDialog {
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 8),
               width: 50,
@@ -1051,7 +1018,6 @@ class AccountManagementDialog {
               ),
             ),
 
-            // Header
             Container(
               padding: const EdgeInsets.all(20),
               child: Row(
@@ -1102,7 +1068,6 @@ class AccountManagementDialog {
               ),
             ),
 
-            // Security items
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1137,7 +1102,6 @@ class AccountManagementDialog {
               ),
             ),
 
-            // Action button
             Padding(
               padding: const EdgeInsets.all(20),
               child: CupertinoButton(
@@ -1224,7 +1188,6 @@ class AccountManagementDialog {
     );
   }
 
-  // MARK: - Helper Methods for Privacy Settings
 
   static Widget _buildPrivacyItem(
     String label,
@@ -1287,7 +1250,6 @@ class AccountManagementDialog {
     );
   }
 
-  // MARK: - Helper Methods for Support
 
   static Widget _buildSupportItem(
     String title,

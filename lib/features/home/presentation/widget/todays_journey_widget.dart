@@ -113,7 +113,6 @@ class TodaysJourneyWidget extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Emotion emoji and time
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -132,7 +131,6 @@ class TodaysJourneyWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(width: 16),
-            // Emotion details
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -168,7 +166,6 @@ class TodaysJourneyWidget extends StatelessWidget {
                 ],
               ),
             ),
-            // Intensity indicator
             Container(
               width: 8,
               height: 40,
@@ -239,5 +236,3 @@ class TodaysJourneyWidget extends StatelessWidget {
     );
   }
 }
-
-// Note: WeeklyInsightsPreviewWidget has been moved to its own file: weekly_insights_preview_widget.dart 

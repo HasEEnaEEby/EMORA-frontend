@@ -1,4 +1,3 @@
-// lib/core/providers/notification_provider.dart
 import 'package:flutter/foundation.dart';
 
 class NotificationProvider extends ChangeNotifier {

@@ -7,9 +7,7 @@ import '../../../../../core/network/dio_client.dart';
 import '../../../../../core/network/network_info.dart';
 import '../../../../../core/utils/logger.dart';
 
-/// Abstract interface for emotion remote data operations
 abstract class EmotionRemoteDataSource {
-  /// Log a new emotion to the remote server
   Future<Map<String, dynamic>> logEmotion({
     required String userId,
     required String emotion,
@@ -21,58 +19,47 @@ abstract class EmotionRemoteDataSource {
     Map<String, dynamic>? additionalData,
   });
 
-  /// Get emotion feed from remote server
   Future<List<Map<String, dynamic>>> getEmotionFeed({
     int limit = 20,
     int offset = 0,
   });
 
-  /// Get global emotion statistics from remote server
   Future<Map<String, dynamic>> getGlobalEmotionStats({
     String timeframe = '24h',
   });
 
-  /// Get global emotion heatmap from remote server
   Future<Map<String, dynamic>> getGlobalHeatmap();
 
-  /// Get emotion statistics for a specific user
   Future<Map<String, dynamic>> getUserEmotionStats(String userId);
 
-  /// Get user insights from remote server
   Future<Map<String, dynamic>> getUserInsights({
     required String userId,
     String timeframe = '30d',
   });
 
-  /// Get user analytics from remote server
   Future<Map<String, dynamic>> getUserAnalytics({
     required String userId,
     String timeframe = '7d',
   });
 
-  /// Get emotion history for a specific user
   Future<List<Map<String, dynamic>>> getUserEmotions({
     required String userId,
     required int limit,
     required int offset,
   });
 
-  /// Get emotion analytics for a user
   Future<Map<String, dynamic>> getUserEmotionAnalytics({
     required String userId,
     String period = 'week',
   });
 
-  /// Check server health status
   Future<Map<String, dynamic>> checkServerHealth();
 
-  /// Sync pending emotions to server
   Future<Map<String, dynamic>> syncEmotions({
     required List<Map<String, dynamic>> emotions,
   });
 }
 
-/// Implementation of emotion remote data source using DioClient
 class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
   final DioClient dioClient;
   final NetworkInfo networkInfo;
@@ -96,7 +83,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     try {
       Logger.info('🌐 Remote: Logging emotion $emotion for user $userId');
 
-      // Build emotion data payload
       final emotionData = {
         'emotion': emotion,
         'intensity': intensity,
@@ -113,7 +99,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         if (additionalData != null) ...additionalData,
       };
 
-      // Make API call to log emotion
       final response = await dioClient.logEmotion(
         userId: userId,
         emotion: emotion,
@@ -121,11 +106,9 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         emotionData: emotionData,
       );
 
-      // Check response status
       if (response.statusCode == 200 || response.statusCode == 201) {
         Logger.info('. Remote: Emotion logged successfully');
 
-        // Return standardized response
         return {
           'success': true,
           'data': response.data ?? {},
@@ -144,7 +127,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     } on DioException catch (e) {
       Logger.error('. Remote: Dio error logging emotion', e);
 
-      // Handle different types of network errors
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.sendTimeout ||
           e.type == DioExceptionType.receiveTimeout) {
@@ -170,7 +152,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         '🌐 Remote: Fetching emotion feed (limit: $limit, offset: $offset)',
       );
 
-      // Check network connectivity
       if (!await networkInfo.isConnected) {
         throw NetworkException(message: 'No internet connection');
       }
@@ -183,10 +164,8 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        // Backend returns: { success: true, message: "...", data: emotionsArray, meta: pagination }
         final emotions = data['data'] ?? [];
 
-        // Normalize emotion data
         final normalizedEmotions = emotions.map<Map<String, dynamic>>((
           emotion,
         ) {
@@ -234,7 +213,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       if (response.statusCode == 200) {
         final data = response.data;
 
-        // Normalize stats data
         final normalizedStats = {
           'totalUsers': data['data']?['activeUsers'] ?? data['totalUsers'] ?? 0,
           'totalEmotions':
@@ -298,7 +276,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
             data['locations'] ??
             [];
 
-        // Normalize heatmap data
         final normalizedHeatmap = {
           'locations': heatmapData.map<Map<String, dynamic>>((location) {
             return _normalizeLocationData(location);
@@ -351,7 +328,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       if (response.statusCode == 200) {
         final data = response.data;
 
-        // Normalize user stats
         final normalizedStats = {
           'userId': userId,
           'totalEmotions':
@@ -501,10 +477,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         throw NetworkException(message: 'No internet connection');
       }
 
-      // WORKAROUND: Since getUserEmotions might not exist in DioClient,
-      // we'll use getEmotionFeed and filter by userId
       try {
-        // Try direct user emotions endpoint first (if available)
         final response = await dioClient.getEmotionFeed(
           limit: limit,
           offset: offset,
@@ -513,16 +486,13 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
 
         if (response.statusCode == 200) {
           final data = response.data;
-          // Backend returns: { success: true, message: "...", data: emotionsArray, meta: pagination }
           var emotions = data['data'] ?? [];
 
-          // Filter by userId if the API doesn't do it automatically
           emotions = emotions.where((emotion) {
             final emotionUserId = emotion['userId'] ?? emotion['user_id'] ?? '';
             return emotionUserId == userId;
           }).toList();
 
-          // Normalize emotion data
           final normalizedEmotions = emotions.map<Map<String, dynamic>>((
             emotion,
           ) {
@@ -539,7 +509,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
           );
         }
       } catch (e) {
-        // Fallback: Try alternative endpoint or return empty list
         Logger.warning(
           '. Remote: Primary user emotions endpoint failed, trying fallback',
         );
@@ -569,10 +538,8 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
         throw NetworkException(message: 'No internet connection');
       }
 
-      // Use user stats endpoint and enhance with analytics
       final stats = await getUserEmotionStats(userId);
 
-      // Generate analytics from stats
       final analytics = {
         'userId': userId,
         'period': period,
@@ -665,7 +632,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       int failedCount = 0;
       final List<Map<String, dynamic>> syncResults = [];
 
-      // Sync emotions one by one (or in batches if API supports it)
       for (final emotion in emotions) {
         try {
           final result = await logEmotion(
@@ -717,13 +683,8 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     }
   }
 
-  // ========================================
-  // PRIVATE HELPER METHODS
-  // ========================================
 
-  /// Normalize emotion data from API response
   Map<String, dynamic> _normalizeEmotionData(Map<String, dynamic> emotion) {
-    // Safely extract coordinates
     double? latitude;
     double? longitude;
 
@@ -732,7 +693,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       if (location is Map) {
         final coordinates = location['coordinates'];
         if (coordinates is List && coordinates.length >= 2) {
-          // Handle both string and integer indices
           final lat = coordinates[1];
           final lng = coordinates[0];
 
@@ -764,9 +724,7 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     };
   }
 
-  /// Normalize location data from API response
   Map<String, dynamic> _normalizeLocationData(Map<String, dynamic> location) {
-    // Safely extract coordinates
     double latitude = 0.0;
     double longitude = 0.0;
 
@@ -775,7 +733,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       if (locationData is Map) {
         final coordinates = locationData['coordinates'];
         if (coordinates is List && coordinates.length >= 2) {
-          // Handle both string and integer indices
           final lat = coordinates[1];
           final lng = coordinates[0];
 
@@ -802,7 +759,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     };
   }
 
-  /// Generate emotion insights from stats data
   Map<String, dynamic> _generateEmotionInsights(Map<String, dynamic> stats) {
     final totalEmotions = stats['totalEmotions'] ?? 0;
     final avgIntensity = stats['averageIntensity'] ?? 0.0;
@@ -821,7 +777,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     return insights;
   }
 
-  /// Determine emotional state based on average intensity
   String _getEmotionalState(double avgIntensity) {
     if (avgIntensity >= 0.8) return 'Very Positive';
     if (avgIntensity >= 0.6) return 'Positive';
@@ -830,7 +785,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     return 'Very Low';
   }
 
-  /// Calculate emotion diversity score
   double _calculateEmotionDiversity(Map<String, dynamic> distribution) {
     if (distribution.isEmpty) return 0.0;
 
@@ -839,7 +793,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
 
     if (total == 0) return 0.0;
 
-    // Calculate Shannon diversity index
     double diversity = 0.0;
     for (final value in values) {
       if (value > 0) {
@@ -848,10 +801,9 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
       }
     }
 
-    return diversity / math.log(distribution.length); // Normalize
+return diversity / math.log(distribution.length); 
   }
 
-  /// Get activity level based on total emotions
   String _getActivityLevel(int totalEmotions) {
     if (totalEmotions >= 100) return 'Very Active';
     if (totalEmotions >= 50) return 'Active';
@@ -860,7 +812,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     return 'Very Low';
   }
 
-  /// Generate personalized recommendations
   List<String> _generateRecommendations(Map<String, dynamic> stats) {
     final recommendations = <String>[];
     final avgIntensity = stats['averageIntensity'] ?? 0.0;
@@ -883,7 +834,6 @@ class EmotionRemoteDataSourceImpl implements EmotionRemoteDataSource {
     return recommendations;
   }
 
-  /// Handle DioException with appropriate error types
   Never _handleDioException(DioException e, String operation) {
     Logger.error('. Remote: Dio error during $operation', e);
 

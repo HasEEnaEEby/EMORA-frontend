@@ -13,7 +13,6 @@ class UserStatsModel extends Equatable {
   final Map<String, dynamic> weeklyStats;
   final Map<String, dynamic> monthlyStats;
   
-  // Enhanced fields for journey analytics
   final int longestStreak;
   final int totalFriends;
   final int helpedFriends;
@@ -46,14 +45,12 @@ class UserStatsModel extends Equatable {
     this.comprehensiveStats = const {},
     this.achievements = const {},
   }) {
-    // Add runtime validation
     assert(longestStreak != null, 'longestStreak cannot be null');
     assert(totalFriends != null, 'totalFriends cannot be null');
     assert(helpedFriends != null, 'helpedFriends cannot be null');
     assert(badgesEarned != null, 'badgesEarned cannot be null');
   }
 
-  // Enhanced factory constructor with safe type handling
   factory UserStatsModel.fromJson(Map<String, dynamic> json) {
     try {
       return UserStatsModel(
@@ -84,7 +81,6 @@ class UserStatsModel extends Equatable {
     }
   }
 
-  // Create an empty/default instance for fallback
   factory UserStatsModel.empty() {
     return UserStatsModel(
       totalMoodEntries: 0,
@@ -109,7 +105,6 @@ class UserStatsModel extends Equatable {
     );
   }
 
-  // Safe type conversion methods
   static int _safeInt(dynamic value) {
     if (value == null) return 0;
     if (value is int) return value;

@@ -1,4 +1,3 @@
-// lib/core/services/username_service.dart
 import 'dart:math';
 
 import 'package:dio/dio.dart';
@@ -10,19 +9,16 @@ class UsernameService {
   static final Dio _dio = Dio();
   static final Random _random = Random();
 
-  // Cache for API responses to avoid repeated calls
   static final Map<String, List<String>> _apiCache = {};
   static DateTime? _lastApiFetch;
   static const Duration _cacheTimeout = Duration(hours: 1);
 
-  // Dynamic word categories fetched from APIs
   static List<String> _dynamicAdjectives = [];
   static List<String> _dynamicNouns = [];
   static List<String> _dynamicEmotions = [];
   static DateTime? _lastWordFetch;
   static const Duration _wordCacheTimeout = Duration(hours: 6);
 
-  // Minimal fallback words (only used if all APIs fail)
   static const List<String> _fallbackWords = [
     'bright',
     'swift',
@@ -33,7 +29,6 @@ class UsernameService {
     'peace',
   ];
 
-  /// Configure Dio client for API calls
   UsernameService() {
     _configureDio();
   }
@@ -60,7 +55,6 @@ class UsernameService {
     }
   }
 
-  /// Validate username format
   static String? validateUsernameFormat(String username) {
     if (username.isEmpty) {
       return 'Username cannot be empty';
@@ -74,26 +68,22 @@ class UsernameService {
       return 'Username must be less than 20 characters';
     }
 
-    // Check for valid characters (letters, numbers, underscore, hyphen)
     final validPattern = RegExp(r'^[a-zA-Z0-9_-]+$');
     if (!validPattern.hasMatch(username)) {
       return 'Username can only contain letters, numbers, underscore, and hyphen';
     }
 
-    // Must start with a letter
     if (!RegExp(r'^[a-zA-Z]').hasMatch(username)) {
       return 'Username must start with a letter';
     }
 
-    // Check for profanity or inappropriate content
     if (_containsInappropriateContent(username.toLowerCase())) {
       return 'Username contains inappropriate content';
     }
 
-    return null; // Valid username
+return null; 
   }
 
-  /// Check if username contains inappropriate content
   static bool _containsInappropriateContent(String username) {
     const inappropriateWords = [
       'admin',
@@ -121,7 +111,6 @@ class UsernameService {
     return inappropriateWords.any((word) => username.contains(word));
   }
 
-  /// Generate creative usernames using automated word fetching
   Future<List<String>> generateCreativeUsernames({
     String? baseName,
     int count = 8,
@@ -129,14 +118,12 @@ class UsernameService {
   }) async {
     Logger.info('💡 Generating automated creative usernames...');
 
-    // Ensure we have fresh word data
     await _ensureFreshWordData();
 
     final suggestions = <String>[];
     final usedSuggestions = <String>{};
 
     try {
-      // Generate username suggestions using dynamic words
       while (suggestions.length < count) {
         final suggestion = await _generateDynamicUsername(
           baseName: baseName,
@@ -156,7 +143,6 @@ class UsernameService {
     } catch (e) {
       Logger.warning('. Error in generation, using fallback: $e');
 
-      // Use fallback generation if everything fails
       final fallbackSuggestions = _generateFallbackSuggestions(
         baseName: baseName,
         count: count - suggestions.length,
@@ -166,16 +152,13 @@ class UsernameService {
       suggestions.addAll(fallbackSuggestions);
     }
 
-    // Shuffle and return requested count
     suggestions.shuffle(_random);
     return suggestions.take(count).toList();
   }
 
-  /// Ensure we have fresh word data from APIs
   Future<void> _ensureFreshWordData() async {
     final now = DateTime.now();
 
-    // Check if word cache is still valid
     if (_lastWordFetch != null &&
         now.difference(_lastWordFetch!).compareTo(_wordCacheTimeout) < 0 &&
         _dynamicAdjectives.isNotEmpty &&
@@ -188,7 +171,6 @@ class UsernameService {
     Logger.info('🔄 Refreshing word data from APIs...');
 
     try {
-      // Fetch words from multiple APIs in parallel
       await Future.wait([
         _fetchAdjectivesFromAPI(),
         _fetchNounsFromAPI(),
@@ -203,7 +185,6 @@ class UsernameService {
     } catch (e) {
       Logger.warning('. Failed to refresh word data: $e');
 
-      // Use fallback if we have no cached data
       if (_dynamicAdjectives.isEmpty ||
           _dynamicNouns.isEmpty ||
           _dynamicEmotions.isEmpty) {
@@ -212,7 +193,6 @@ class UsernameService {
     }
   }
 
-  /// Fetch adjectives from Wordnik API
   Future<void> _fetchAdjectivesFromAPI() async {
     try {
       final response = await _dio.get(
@@ -243,10 +223,8 @@ class UsernameService {
     }
   }
 
-  /// Fetch nouns from multiple APIs
   Future<void> _fetchNounsFromAPI() async {
     try {
-      // Try Wordnik API for nouns
       final response = await _dio.get(
         'https://api.wordnik.com/v4/words.json/randomWords',
         queryParameters: {
@@ -271,17 +249,14 @@ class UsernameService {
             .toList();
       }
 
-      // Supplement with nature/animal words from another API if available
       await _fetchNatureWords();
     } catch (e) {
       Logger.warning('. Failed to fetch nouns: $e');
     }
   }
 
-  /// Fetch nature/animal words to supplement nouns
   Future<void> _fetchNatureWords() async {
     try {
-      // Use a list of nature categories to get specific words
       final categories = ['animal', 'nature', 'weather', 'space', 'ocean'];
 
       for (final category in categories) {
@@ -312,7 +287,6 @@ class UsernameService {
             }
           }
         } catch (e) {
-          // Continue with other categories if one fails
           continue;
         }
       }
@@ -321,10 +295,8 @@ class UsernameService {
     }
   }
 
-  /// Fetch emotion-related words
   Future<void> _fetchEmotionWordsFromAPI() async {
     try {
-      // Fetch emotion-related words
       final emotionKeywords = ['emotion', 'feeling', 'mood', 'spirit'];
 
       for (final keyword in emotionKeywords) {
@@ -359,7 +331,6 @@ class UsernameService {
         }
       }
 
-      // Add some basic emotion words if we didn't get enough
       if (_dynamicEmotions.length < 10) {
         _dynamicEmotions.addAll([
           'joy',
@@ -384,7 +355,6 @@ class UsernameService {
     }
   }
 
-  /// Generate a username using dynamic words
   Future<String?> _generateDynamicUsername({
     String? baseName,
     bool includeNumbers = true,
@@ -392,7 +362,6 @@ class UsernameService {
   }) async {
     final used = usedSuggestions ?? <String>{};
 
-    // If baseName is provided, create variations
     if (baseName != null && baseName.isNotEmpty) {
       final cleanBase = baseName.toLowerCase().replaceAll(
         RegExp(r'[^a-z0-9]'),
@@ -414,7 +383,6 @@ class UsernameService {
       }
     }
 
-    // Generate random combinations using dynamic words
     final generationStrategies = [
       () =>
           '${_getRandomWord(_dynamicAdjectives)}_${_getRandomWord(_dynamicNouns)}',
@@ -428,7 +396,6 @@ class UsernameService {
           '${_getRandomWord(_dynamicEmotions)}${_getRandomWord(_dynamicAdjectives)}',
     ];
 
-    // Try each strategy
     for (final strategy in generationStrategies) {
       try {
         final suggestion = strategy();
@@ -444,7 +411,6 @@ class UsernameService {
     return null;
   }
 
-  /// Get a random word from a list with fallback
   static String _getRandomWord(List<String> words) {
     if (words.isEmpty) {
       return _fallbackWords[_random.nextInt(_fallbackWords.length)];
@@ -452,7 +418,6 @@ class UsernameService {
     return words[_random.nextInt(words.length)];
   }
 
-  /// Use fallback words when APIs fail
   static void _useFallbackWords() {
     Logger.info('📦 Using fallback word lists');
 
@@ -461,7 +426,6 @@ class UsernameService {
     _dynamicEmotions = ['joy', 'peace', 'zen'];
   }
 
-  /// Generate fallback suggestions using minimal hardcoded words
   List<String> _generateFallbackSuggestions({
     String? baseName,
     int count = 8,
@@ -496,7 +460,6 @@ class UsernameService {
     return suggestions;
   }
 
-  /// Get username availability message
   static String getAvailabilityMessage(bool isAvailable, String username) {
     if (isAvailable) {
       return '. Great choice! "$username" is available';
@@ -505,7 +468,6 @@ class UsernameService {
     }
   }
 
-  /// Get username tips
   static List<String> getUsernameTips() {
     return [
       '💡 Our suggestions are automatically generated from fresh word databases',
@@ -519,13 +481,11 @@ class UsernameService {
     ];
   }
 
-  /// Get a random tip
   static String getRandomTip() {
     final tips = getUsernameTips();
     return tips[_random.nextInt(tips.length)];
   }
 
-  /// Check if username suggests real name usage
   static bool appearsToBeRealName(String username) {
     final lowerUsername = username.toLowerCase();
 
@@ -538,12 +498,10 @@ class UsernameService {
     return namePatterns.any((pattern) => pattern.hasMatch(lowerUsername));
   }
 
-  /// Get warning message for potential real name usage
   static String getRealNameWarning() {
     return '. Consider using a more creative username instead of your real name for better privacy and safety.';
   }
 
-  /// Clear all caches
   static void clearCache() {
     _apiCache.clear();
     _lastApiFetch = null;
@@ -554,7 +512,6 @@ class UsernameService {
     Logger.info('🧹 Username service cache cleared');
   }
 
-  /// Get cache statistics
   static Map<String, dynamic> getCacheStats() {
     final now = DateTime.now();
     final isApiCacheValid = _lastApiFetch != null
@@ -581,7 +538,6 @@ class UsernameService {
     };
   }
 
-  /// Force refresh word data
   static Future<void> forceRefreshWords() async {
     _lastWordFetch = null;
     _dynamicAdjectives.clear();
@@ -594,7 +550,6 @@ class UsernameService {
     Logger.info('🔄 Forced word data refresh completed');
   }
 
-  /// Get word statistics
   static Map<String, dynamic> getWordStats() {
     return {
       'adjectives_count': _dynamicAdjectives.length,

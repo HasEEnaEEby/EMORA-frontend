@@ -55,7 +55,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Get user's emotion journey
   Future<List<EmotionEntryEntity>> getEmotionJourney(
     String userId, {
     int days = 30,
@@ -87,7 +86,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Get global emotion statistics
   Future<GlobalEmotionStatsEntity?> getGlobalEmotionStats({
     String timeframe = '24h',
   }) async {
@@ -113,7 +111,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Get real-time global emotion map data
   Future<List<GlobalEmotionMapEntity>> getGlobalEmotionMap({
     Map<String, dynamic>? bounds,
     Map<String, String>? timeRange,
@@ -155,7 +152,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Get emotion feed (anonymous)
   Future<List<EmotionEntryEntity>> getEmotionFeed({
     int limit = 10,
     int offset = 0,
@@ -185,7 +181,6 @@ class EmotionBackendService {
 
       if (response.statusCode == 200) {
         final data = response.data;
-        // Backend returns: { success: true, message: "...", data: emotionsArray, meta: pagination }
         final List<dynamic> emotions = data['data'] ?? [];
         return emotions
             .map((json) => EmotionEntryEntity.fromJson(json))
@@ -199,7 +194,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Submit venting session (anonymous)
   Future<bool> submitVentingSession({
     required String sessionId,
     required int duration,
@@ -232,7 +226,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Get user emotion insights
   Future<Map<String, dynamic>?> getUserEmotionInsights(
     String userId, {
     String timeframe = '30d',
@@ -259,7 +252,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Update emotion entry
   Future<bool> updateEmotionEntry({
     required String emotionId,
     String? emotion,
@@ -291,7 +283,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Delete emotion entry
   Future<bool> deleteEmotionEntry(String emotionId) async {
     try {
       final response = await _dioClient.delete('/api/emotions/$emotionId');
@@ -307,7 +298,6 @@ class EmotionBackendService {
     }
   }
 
-  /// Health check
   Future<bool> checkBackendHealth() async {
     try {
       final response = await _dioClient.get('/api/health');

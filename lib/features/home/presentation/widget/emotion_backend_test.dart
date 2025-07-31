@@ -42,15 +42,12 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Status Card
             _buildStatusCard(),
             const SizedBox(height: 20),
 
-            // Test Buttons
             _buildTestButtons(),
             const SizedBox(height: 20),
 
-            // Results Display
             if (_testResults != null) _buildResultsDisplay(),
           ],
         ),
@@ -129,7 +126,6 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
         ),
         const SizedBox(height: 16),
 
-        // Health Check
         _buildTestButton(
           'Health Check',
           'Test backend connectivity',
@@ -139,7 +135,6 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
         ),
         const SizedBox(height: 12),
 
-        // Global Stats
         _buildTestButton(
           'Global Stats',
           'Get global emotion statistics',
@@ -149,7 +144,6 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
         ),
         const SizedBox(height: 12),
 
-        // Global Heatmap
         _buildTestButton(
           'Global Heatmap',
           'Get global emotion heatmap',
@@ -159,7 +153,6 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
         ),
         const SizedBox(height: 12),
 
-        // Emotion Feed
         _buildTestButton(
           'Emotion Feed',
           'Get public emotion feed',
@@ -169,7 +162,6 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
         ),
         const SizedBox(height: 12),
 
-        // Venting Session
         _buildTestButton(
           'Venting Session',
           'Submit anonymous venting session',
@@ -179,7 +171,6 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
         ),
         const SizedBox(height: 12),
 
-        // Full Test Suite
         _buildTestButton(
           'Run All Tests',
           'Execute complete test suite',
@@ -336,7 +327,6 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
     );
   }
 
-  // Test Methods
   Future<void> _testHealthCheck() async {
     await _runTest('Health Check', () async {
       final isHealthy = await _emotionService.checkBackendHealth();
@@ -479,7 +469,6 @@ class _EmotionBackendTestState extends State<EmotionBackendTest> {
   }
 
   bool _isRunningAllTests() {
-    // Simple heuristic to check if we're running all tests
     return _testResults != null && _testResults!.length < 5;
   }
 }

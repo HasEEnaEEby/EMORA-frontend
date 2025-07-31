@@ -112,7 +112,6 @@ class _TrackListBottomSheetState extends State<TrackListBottomSheet> {
           ),
           child: Column(
             children: [
-              // Handle bar
               Container(
                 width: 40,
                 height: 4,
@@ -122,7 +121,6 @@ class _TrackListBottomSheetState extends State<TrackListBottomSheet> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              // Header
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                 child: Row(
@@ -155,7 +153,6 @@ class _TrackListBottomSheetState extends State<TrackListBottomSheet> {
                   ],
                 ),
               ),
-              // Playlist controls
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                 child: Row(
@@ -170,7 +167,6 @@ class _TrackListBottomSheetState extends State<TrackListBottomSheet> {
                 ),
               ),
               const Divider(),
-              // Track list
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,

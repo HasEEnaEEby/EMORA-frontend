@@ -1,4 +1,3 @@
-// lib/features/auth/presentation/view/forgot_password_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
@@ -108,7 +107,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
   }
 
   Future<void> _simulatePasswordReset() async {
-    // Simulate API call delay
     await Future.delayed(const Duration(seconds: 2));
     
     if (mounted) {
@@ -149,12 +147,10 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
                 children: [
                   const SizedBox(height: 20),
 
-                  // Back button
                   _buildBackButton(),
 
                   const SizedBox(height: 40),
 
-                  // Content based on state
                   _isSubmitted 
                       ? _buildSuccessContent()
                       : _buildResetForm(),
@@ -182,22 +178,18 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
         _buildHeader(),
 
         const SizedBox(height: 50),
 
-        // Form
         _buildForm(),
 
         const SizedBox(height: 32),
 
-        // Reset button
         _buildResetButton(),
 
         const SizedBox(height: 24),
 
-        // Back to login link
         _buildBackToLoginLink(),
       ],
     );
@@ -207,7 +199,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Icon with animation
         ScaleTransition(
           scale: _scaleAnimation,
           child: Container(
@@ -238,7 +229,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
 
         const SizedBox(height: 32),
 
-        // Title
         const Text(
           'Forgot your',
           style: TextStyle(
@@ -260,7 +250,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
 
         const SizedBox(height: 16),
 
-        // Subtitle
         Text(
           'Don\'t worry! Enter your email address and we\'ll send you a link to reset your password.',
           style: TextStyle(
@@ -280,7 +269,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Email field label
           Text(
             'Email Address',
             style: TextStyle(
@@ -292,7 +280,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
 
           const SizedBox(height: 8),
 
-          // Email field
           TextFormField(
             controller: _emailController,
             enabled: !_isLoading,
@@ -442,7 +429,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
         children: [
           const SizedBox(height: 60),
 
-          // Success icon
           Container(
             width: 120,
             height: 120,
@@ -470,7 +456,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
 
           const SizedBox(height: 40),
 
-          // Success title
           const Text(
             'Check your email',
             style: TextStyle(
@@ -483,7 +468,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
 
           const SizedBox(height: 16),
 
-          // Success message
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: RichText(
@@ -512,10 +496,8 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
 
           const SizedBox(height: 40),
 
-          // Action buttons
           Column(
             children: [
-              // Back to login button
               Container(
                 width: double.infinity,
                 height: 56,
@@ -563,7 +545,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
 
               const SizedBox(height: 16),
 
-              // Try again button
               TextButton(
                 onPressed: _tryAgain,
                 style: TextButton.styleFrom(
@@ -586,7 +567,6 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView>
 
           const SizedBox(height: 40),
 
-          // Help text
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(

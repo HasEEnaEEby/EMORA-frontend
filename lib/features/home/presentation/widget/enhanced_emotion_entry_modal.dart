@@ -1,4 +1,3 @@
-// Enhanced Emotion Entry Modal with Backend Integration
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
@@ -26,18 +25,15 @@ class _EnhancedEmotionEntryModalState extends State<EnhancedEmotionEntryModal>
   late Animation<double> _slideAnimation;
   late Animation<double> _fadeAnimation;
 
-  // Form controllers
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _tagsController = TextEditingController();
 
-  // State variables
   String selectedEmotion = '';
   int intensity = 3;
   bool shareToCommunity = false;
   bool isLoading = false;
   String? errorMessage;
 
-  // Available emotions with their emojis
   final List<Map<String, dynamic>> emotions = [
     {'name': 'joy', 'emoji': '😊', 'color': '#10B981'},
     {'name': 'sadness', 'emoji': '😢', 'color': '#3B82F6'},
@@ -124,7 +120,6 @@ class _EnhancedEmotionEntryModalState extends State<EnhancedEmotionEntryModal>
                 ),
                 child: Stack(
                   children: [
-                    // Background gradient overlay
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
@@ -142,7 +137,6 @@ class _EnhancedEmotionEntryModalState extends State<EnhancedEmotionEntryModal>
                       ),
                     ),
                     
-                    // Main content
                     Column(
                       children: [
                         _buildHeader(),
@@ -172,7 +166,6 @@ class _EnhancedEmotionEntryModalState extends State<EnhancedEmotionEntryModal>
                       ],
                     ),
                     
-                    // Loading overlay
                     if (isLoading)
                       Positioned.fill(
                         child: Container(
@@ -235,7 +228,6 @@ class _EnhancedEmotionEntryModalState extends State<EnhancedEmotionEntryModal>
         bottom: false,
         child: Column(
           children: [
-            // Handle bar
             Container(
               width: 60,
               height: 5,
@@ -719,7 +711,6 @@ class _EnhancedEmotionEntryModalState extends State<EnhancedEmotionEntryModal>
     try {
       Logger.info('🔄 Logging emotion: $selectedEmotion with intensity: $intensity');
 
-      // Prepare emotion data
       final emotionData = {
         'type': selectedEmotion,
         'intensity': intensity,
@@ -729,21 +720,17 @@ class _EnhancedEmotionEntryModalState extends State<EnhancedEmotionEntryModal>
         'shareToCommunity': shareToCommunity,
       };
 
-      // 1. Log emotion to backend
       final emotionResponse = await _logEmotionToBackend(emotionData);
       
       if (emotionResponse != null) {
         Logger.info('✅ Emotion logged successfully: ${emotionResponse['id']}');
 
-        // 2. If sharing to community, create community post
         if (shareToCommunity) {
           await _createCommunityPost(emotionResponse, emotionData);
         }
 
-        // 3. Refresh emotion logs and community feed
         await _refreshData();
 
-        // 4. Call callbacks
         widget.onEmotionLogged?.call(
           emotionType: emotionData['type'] as String?,
           intensity: emotionData['intensity'] as int?,
@@ -753,7 +740,6 @@ class _EnhancedEmotionEntryModalState extends State<EnhancedEmotionEntryModal>
           widget.onCommunityPostCreated?.call();
         }
 
-        // 5. Close modal
         _handleClose();
       }
     } catch (error) {
@@ -835,14 +821,11 @@ class _EnhancedEmotionEntryModalState extends State<EnhancedEmotionEntryModal>
       }
     } catch (error) {
       Logger.error('❌ Community post creation error: $error');
-      // Don't rethrow - emotion logging succeeded, community post is optional
     }
   }
 
   Future<void> _refreshData() async {
     try {
-      // Data will be refreshed automatically when the modal closes
-      // The parent widget should handle refreshing the data
       Logger.info('✅ Emotion logged successfully, data will be refreshed');
     } catch (error) {
       Logger.error('❌ Error refreshing data: $error');
@@ -860,8 +843,6 @@ class _EnhancedEmotionEntryModalState extends State<EnhancedEmotionEntryModal>
 
   Future<Map<String, dynamic>?> _getCurrentLocation() async {
     try {
-      // You can implement location detection here
-      // For now, return a default location
       return {
         'latitude': 37.785834,
         'longitude': -122.406417,

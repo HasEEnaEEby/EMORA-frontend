@@ -70,7 +70,6 @@ class FriendModel extends Equatable {
     );
   }
 
-  // Safe type conversion methods
   static String _safeString(dynamic value) {
     if (value == null) return '';
     return value.toString();
@@ -247,14 +246,10 @@ class FriendRequestModel extends Equatable {
 
   factory FriendRequestModel.fromJson(Map<String, dynamic> json) {
     try {
-      // Extract user data with better null safety
       final userData = json['user'] as Map<String, dynamic>?;
       
-      // The backend returns user data nested under 'user' object
-      // Try to get userId from user object first, then from top level, then use request ID as fallback
       String userId = FriendModel._safeString(userData?['id'] ?? json['userId']);
       
-      // If userId is still empty, try using the request ID as a fallback
       if (userId.isEmpty) {
         userId = FriendModel._safeString(json['id']);
         print('. FriendRequestModel.fromJson - Using request ID as userId fallback: $userId');
@@ -265,11 +260,9 @@ class FriendRequestModel extends Equatable {
         userData?['displayName'] ?? json['displayName'] ?? username,
       );
       
-      // Handle location - can be string or object
       final locationString = FriendModel._parseLocation(userData?['location']) ?? 
                             FriendModel._parseLocation(json['location']);
       
-      // Enhanced debug logging
       print('. FriendRequestModel.fromJson - Raw JSON: $json');
       print('. FriendRequestModel.fromJson - userData: $userData');
       print('. FriendRequestModel.fromJson - userData?[id]: ${userData?['id']}');
@@ -279,13 +272,11 @@ class FriendRequestModel extends Equatable {
       print('. FriendRequestModel.fromJson - Final displayName: $displayName');
       print('. FriendRequestModel.fromJson - Final location: $locationString');
       
-      // Additional validation
       if (userId.isEmpty) {
         print('. FriendRequestModel.fromJson - userId is empty after parsing');
         print('. FriendRequestModel.fromJson - This will cause issues with cancel requests');
       }
       
-      // Final validation - ensure we have at least an ID and userId
       if (FriendModel._safeString(json['id']).isEmpty) {
         print('. FriendRequestModel.fromJson - Request ID is empty, cannot create valid model');
         return FriendRequestModel.empty();
@@ -424,7 +415,6 @@ class FriendSuggestionModel extends Equatable {
 
   factory FriendSuggestionModel.fromJson(Map<String, dynamic> json) {
     try {
-      // Extract location name if location is an object
       String? locationString;
       final locationField = json['location'];
       if (locationField is Map<String, dynamic>) {
@@ -452,7 +442,6 @@ class FriendSuggestionModel extends Equatable {
     }
   }
 
-  // Helper method for safe list casting
   static List<String> _safeListCast(dynamic value) {
     if (value == null) return [];
     if (value is List) {

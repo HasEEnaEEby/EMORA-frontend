@@ -1,26 +1,19 @@
 import 'package:flutter/foundation.dart';
 
-/// Route analytics for tracking navigation patterns
-///
-/// This class provides analytics tracking for navigation events
-/// to help understand user behavior and app performance.
 class RouteAnalytics {
   static final List<NavigationEvent> _navigationHistory = [];
   static final Map<String, int> _routeVisitCounts = {};
   static final Map<String, Duration> _routeDurations = {};
   static DateTime? _lastNavigationTime;
 
-  /// Track navigation to a route
   static void trackNavigation(String routeName, Object? arguments) {
     final now = DateTime.now();
 
-    // Calculate time spent on previous route
     if (_lastNavigationTime != null) {
       final timeSpent = now.difference(_lastNavigationTime!);
       _updateRouteDuration(_getLastRoute(), timeSpent);
     }
 
-    // Record navigation event
     final event = NavigationEvent(
       routeName: routeName,
       timestamp: now,
@@ -31,19 +24,16 @@ class RouteAnalytics {
     _routeVisitCounts[routeName] = (_routeVisitCounts[routeName] ?? 0) + 1;
     _lastNavigationTime = now;
 
-    // Log in debug mode
     if (kDebugMode) {
       debugPrint('. RouteAnalytics: Navigated to $routeName');
       debugPrint('. Visit count: ${_routeVisitCounts[routeName]}');
     }
 
-    // Keep history manageable (last 100 events)
     if (_navigationHistory.length > 100) {
       _navigationHistory.removeAt(0);
     }
   }
 
-  /// Track route error
   static void trackRouteError(String routeName, String error) {
     final event = NavigationEvent(
       routeName: routeName,
@@ -59,7 +49,6 @@ class RouteAnalytics {
     }
   }
 
-  /// Get navigation statistics
   static NavigationStats getStats() {
     return NavigationStats(
       totalNavigations: _navigationHistory.length,
@@ -69,7 +58,6 @@ class RouteAnalytics {
     );
   }
 
-  /// Get most visited routes
   static List<String> getMostVisitedRoutes({int limit = 5}) {
     final sorted = _routeVisitCounts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
@@ -77,12 +65,10 @@ class RouteAnalytics {
     return sorted.take(limit).map((e) => e.key).toList();
   }
 
-  /// Get average time spent on route
   static Duration? getAverageTimeOnRoute(String routeName) {
     return _routeDurations[routeName];
   }
 
-  /// Clear analytics data
   static void clearData() {
     _navigationHistory.clear();
     _routeVisitCounts.clear();
@@ -94,7 +80,6 @@ class RouteAnalytics {
     }
   }
 
-  /// Export analytics data for external analysis
   static Map<String, dynamic> exportData() {
     return {
       'totalNavigations': _navigationHistory.length,
@@ -107,7 +92,6 @@ class RouteAnalytics {
     };
   }
 
-  // Helper methods
   static void _updateRouteDuration(String? routeName, Duration duration) {
     if (routeName == null) return;
 
@@ -115,7 +99,6 @@ class RouteAnalytics {
     if (currentDuration == null) {
       _routeDurations[routeName] = duration;
     } else {
-      // Calculate moving average
       final visitCount = _routeVisitCounts[routeName] ?? 1;
       final totalMs =
           (currentDuration.inMilliseconds * (visitCount - 1)) +
@@ -132,7 +115,6 @@ class RouteAnalytics {
   }
 }
 
-/// Navigation event data class
 class NavigationEvent {
   final String routeName;
   final DateTime timestamp;
@@ -159,7 +141,6 @@ class NavigationEvent {
   }
 }
 
-/// Navigation statistics data class
 class NavigationStats {
   final int totalNavigations;
   final Map<String, int> routeVisitCounts;

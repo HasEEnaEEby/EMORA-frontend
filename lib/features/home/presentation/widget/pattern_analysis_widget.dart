@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/pattern_analysis_widget.dart
 import 'package:emora_mobile_app/features/home/data/model/insights_models.dart';
 import 'package:flutter/material.dart';
 

@@ -1,24 +1,11 @@
-// lib/features/home/presentation/widget/dialogs/fixed_achievements_dialog.dart
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Fixed achievements display dialog with robust data handling
-///
-/// Features:
-/// - Safe handling of Map<String, dynamic> achievement data
-/// - Shows all achievements with progress
-/// - Category filtering
-/// - Achievement detail view
-/// - Share achievements
-/// - Empty state for new users
-/// - Mock data fallback for development
 class FixedAchievementsDialog {
-  /// Shows all achievements in a bottom sheet with safe data handling
   static void showAll(BuildContext context, List<dynamic> achievements) {
-    // Convert unsafe dynamic data to safe structured data
     final safeAchievements = _convertToSafeAchievements(achievements);
 
     showCupertinoModalPopup(
@@ -46,7 +33,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Shows detailed view of a specific achievement with safe data access
   static void showDetail(BuildContext context, dynamic achievement) {
     final safeAchievement = _convertToSafeAchievement(achievement);
     final Color achievementColor = DialogUtils.getAchievementColor(
@@ -65,12 +51,10 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Safely converts dynamic achievement data to structured format
   static List<SafeAchievement> _convertToSafeAchievements(
     List<dynamic> achievements,
   ) {
     if (achievements.isEmpty) {
-      // Return mock achievements for development
       return _createMockAchievements();
     }
 
@@ -80,7 +64,6 @@ class FixedAchievementsDialog {
         .toList();
   }
 
-  /// Safely converts a single achievement to structured format
   static SafeAchievement _convertToSafeAchievement(dynamic achievement) {
     if (achievement is Map<String, dynamic>) {
       return SafeAchievement.fromMap(achievement);
@@ -91,7 +74,6 @@ class FixedAchievementsDialog {
     }
   }
 
-  /// Creates mock achievements for development/testing
   static List<SafeAchievement> _createMockAchievements() {
     return [
       SafeAchievement(
@@ -169,7 +151,6 @@ class FixedAchievementsDialog {
     ];
   }
 
-  /// Builds the handle bar
   static Widget _buildHandleBar() {
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -182,7 +163,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Builds the header with title and stats
   static Widget _buildHeader(
     BuildContext context,
     List<SafeAchievement> achievements,
@@ -224,7 +204,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Builds category filter chips
   static Widget _buildCategoryFilters(
     BuildContext context,
     List<SafeAchievement> achievements,
@@ -261,7 +240,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Filters achievements by category
   static void _filterAchievementsByCategory(
     BuildContext context,
     String category,
@@ -277,7 +255,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Builds empty state for no achievements
   static Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Column(
@@ -305,7 +282,7 @@ class FixedAchievementsDialog {
             child: const Text('View Sample Achievements'),
             onPressed: () {
               Navigator.pop(context);
-              showAll(context, []); // This will show mock achievements
+showAll(context, []); 
             },
           ),
         ],
@@ -313,7 +290,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Builds the achievements list
   static Widget _buildAchievementsList(
     BuildContext context,
     List<SafeAchievement> achievements,
@@ -328,7 +304,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Builds individual achievement list item
   static Widget _buildAchievementListItem(
     BuildContext context,
     SafeAchievement achievement,
@@ -370,7 +345,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Builds achievement icon
   static Widget _buildAchievementIcon(
     SafeAchievement achievement,
     Color achievementColor,
@@ -407,7 +381,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Builds achievement information section
   static Widget _buildAchievementInfo(
     SafeAchievement achievement,
     Color achievementColor,
@@ -459,7 +432,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Builds achievement status section
   static Widget _buildAchievementStatus(
     SafeAchievement achievement,
     Color achievementColor,
@@ -496,7 +468,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Builds achievement detail content
   static Widget _buildAchievementDetailContent(
     SafeAchievement achievement,
     Color achievementColor,
@@ -667,7 +638,6 @@ class FixedAchievementsDialog {
     );
   }
 
-  /// Builds achievement detail action buttons
   static List<Widget> _buildAchievementDetailActions(
     BuildContext context,
     SafeAchievement achievement,
@@ -695,7 +665,6 @@ class FixedAchievementsDialog {
     return actions;
   }
 
-  /// Shares achievement via native share sheet
   static void _shareAchievement(
     BuildContext context,
     SafeAchievement achievement,
@@ -707,7 +676,6 @@ class FixedAchievementsDialog {
   }
 }
 
-/// Safe achievement model with guaranteed property access
 class SafeAchievement {
   final String id;
   final String name;
@@ -733,7 +701,6 @@ class SafeAchievement {
     this.earnedDate,
   });
 
-  /// Creates from Map with safe fallbacks
   factory SafeAchievement.fromMap(Map<String, dynamic> map) {
     try {
       return SafeAchievement(
@@ -760,7 +727,6 @@ class SafeAchievement {
     }
   }
 
-  /// Creates a default/fallback achievement
   factory SafeAchievement.createDefault() {
     return SafeAchievement(
       id: 'default_${DateTime.now().millisecondsSinceEpoch}',
@@ -776,16 +742,13 @@ class SafeAchievement {
     );
   }
 
-  /// Checks if the achievement has valid data
   bool get isValid => name.isNotEmpty && id.isNotEmpty;
 
-  /// Gets completion percentage
   double get completionPercentage {
     if (target <= 0) return 0.0;
     return (progress / target).clamp(0.0, 1.0);
   }
 
-  // Safe parsing helper methods
   static int? _safeParseInt(dynamic value) {
     if (value == null) return null;
     if (value is int) return value;

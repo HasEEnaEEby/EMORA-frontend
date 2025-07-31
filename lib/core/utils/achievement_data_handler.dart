@@ -1,20 +1,15 @@
-// lib/core/utils/achievement_data_handler.dart
 
-/// Robust achievement data handler that safely converts Map data to structured objects
 class AchievementDataHandler {
-  /// Safely converts dynamic achievement data to structured format
   static AchievementModel safeParse(dynamic achievement) {
     if (achievement is Map<String, dynamic>) {
       return AchievementModel.fromMap(achievement);
     } else if (achievement is AchievementModel) {
       return achievement;
     } else {
-      // Return a default achievement if parsing fails
       return AchievementModel.createDefault();
     }
   }
 
-  /// Safely parses a list of achievements
   static List<AchievementModel> safeParseList(List<dynamic> achievements) {
     return achievements
         .map((achievement) => safeParse(achievement))
@@ -22,7 +17,6 @@ class AchievementDataHandler {
         .toList();
   }
 
-  /// Creates mock achievements for development/testing
   static List<AchievementModel> createMockAchievements() {
     return [
       AchievementModel(
@@ -89,7 +83,6 @@ class AchievementDataHandler {
   }
 }
 
-/// Structured achievement model with safe property access
 class AchievementModel {
   final String id;
   final String name;
@@ -115,7 +108,6 @@ class AchievementModel {
     this.earnedDate,
   });
 
-  /// Creates from Map with safe fallbacks
   factory AchievementModel.fromMap(Map<String, dynamic> map) {
     try {
       return AchievementModel(
@@ -142,7 +134,6 @@ class AchievementModel {
     }
   }
 
-  /// Creates a default/fallback achievement
   factory AchievementModel.createDefault() {
     return AchievementModel(
       id: 'default_${DateTime.now().millisecondsSinceEpoch}',
@@ -158,16 +149,13 @@ class AchievementModel {
     );
   }
 
-  /// Checks if the achievement has valid data
   bool get isValid => name.isNotEmpty && id.isNotEmpty;
 
-  /// Gets completion percentage
   double get completionPercentage {
     if (target <= 0) return 0.0;
     return (progress / target).clamp(0.0, 1.0);
   }
 
-  /// Converts to Map for API calls
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -183,7 +171,6 @@ class AchievementModel {
     };
   }
 
-  // Safe parsing helper methods
   static int? _safeParseInt(dynamic value) {
     if (value == null) return null;
     if (value is int) return value;

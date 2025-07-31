@@ -46,30 +46,24 @@ class CommunityPostModel extends Equatable {
 
   factory CommunityPostModel.fromJson(Map<String, dynamic> json) {
     try {
-      // Debug logging
       print('. DEBUG: Raw JSON data: $json');
       print('. DEBUG: ID field: ${json['id']} (type: ${json['id'].runtimeType})');
       print('. DEBUG: Message field: ${json['message']} (type: ${json['message']?.runtimeType})');
       print('. DEBUG: Name field: ${json['name']} (type: ${json['name']?.runtimeType})');
       
-      // Handle reactions and comments - they might be integers or arrays
       List<dynamic> reactionsData = [];
       List<dynamic> commentsData = [];
       
-      // Check for reactions in different possible fields
       if (json['reactions'] != null) {
         if (json['reactions'] is List) {
           reactionsData = json['reactions'] as List;
         } else if (json['reactions'] is int) {
-          // If reactions is an integer (count), create empty list
           reactionsData = [];
         }
       } else if (json['likes'] != null) {
-        // Backend might send 'likes' instead of 'reactions'
         if (json['likes'] is List) {
           reactionsData = json['likes'] as List;
         } else if (json['likes'] is int) {
-          // If likes is an integer (count), create empty list
           reactionsData = [];
         }
       }
@@ -78,7 +72,6 @@ class CommunityPostModel extends Equatable {
         if (json['comments'] is List) {
           commentsData = json['comments'] as List;
         } else if (json['comments'] is int) {
-          // If comments is an integer (count), create empty list
           commentsData = [];
         }
       }
@@ -139,7 +132,6 @@ class CommunityPostModel extends Equatable {
     );
   }
 
-  // Safe type conversion methods
   static String _safeString(dynamic value) {
     if (value == null) return '';
     return value.toString();
@@ -298,12 +290,11 @@ class CommunityPostModel extends Equatable {
     );
   }
 
-  // Helper method to get mood color as Color object
   Color get moodColorValue {
     try {
       return Color(int.parse(moodColor.replaceAll('#', '0xFF')));
     } catch (e) {
-      return const Color(0xFF8B5CF6); // Default purple
+return const Color(0xFF8B5CF6); 
     }
   }
 

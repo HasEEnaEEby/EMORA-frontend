@@ -1,4 +1,3 @@
-// lib/features/auth/data/model/auth_response_model.dart
 import '../../domain/entity/auth_response_entity.dart';
 import 'user_model.dart';
 

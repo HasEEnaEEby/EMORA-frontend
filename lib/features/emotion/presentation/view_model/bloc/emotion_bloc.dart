@@ -20,7 +20,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
   final GetGlobalEmotionHeatmap getGlobalHeatmap;
   final EmotionRepository emotionRepository;
 
-  // Cache for current data
   List<Map<String, dynamic>> _currentEmotionFeed = [];
   Map<String, dynamic> _currentGlobalStats = {};
   Map<String, dynamic> _currentHeatmapData = {};
@@ -55,7 +54,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
       Logger.info('🎭 EmotionBloc: Logging emotion ${event.emotion}');
       emit(EmotionLoading(message: 'Logging your emotion...'));
 
-      // Create params object for use case
       final params = LogEmotionParams(
         userId: event.userId,
         emotion: event.emotion,
@@ -81,12 +79,11 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
           );
         },
         (emotionEntity) {
-          // Convert entity to map for backward compatibility
           final resultMap = {
             'emotionId': emotionEntity.id,
             'userId': emotionEntity.userId,
             'emotion': emotionEntity.emotion,
-            'type': emotionEntity.emotion, // Backward compatibility
+'type': emotionEntity.emotion, 
             'intensity': emotionEntity.intensity,
             'timestamp': emotionEntity.timestamp.toIso8601String(),
             'context': emotionEntity.context,
@@ -94,7 +91,7 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
             'latitude': emotionEntity.latitude,
             'longitude': emotionEntity.longitude,
             'additionalData': emotionEntity.additionalData,
-            'syncedToRemote': true, // Assume synced if no error
+'syncedToRemote': true, 
           };
 
           Logger.info('✅ EmotionBloc: Emotion logged successfully');
@@ -102,7 +99,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
             EmotionLogSuccess(loggedEmotion: resultMap, syncedToRemote: true),
           );
 
-          // Refresh emotion feed to show the new emotion
           add(LoadEmotionFeedEvent(forceRefresh: true));
           add(LoadGlobalEmotionStatsEvent(forceRefresh: true));
           add(LoadUserInsightsEvent(userId: event.userId, forceRefresh: true));
@@ -128,7 +124,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     try {
       Logger.info('📊 EmotionBloc: Loading user insights');
 
-      // Don't emit loading if we have cached data and not forcing refresh
       if (_currentUserInsights.isEmpty || event.forceRefresh) {
         emit(EmotionLoading(message: 'Loading your insights...'));
       }
@@ -186,7 +181,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     try {
       Logger.info('📈 EmotionBloc: Loading user analytics');
 
-      // Don't emit loading if we have cached data and not forcing refresh
       if (_currentUserAnalytics.isEmpty || event.forceRefresh) {
         emit(EmotionLoading(message: 'Loading your analytics...'));
       }
@@ -244,12 +238,10 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     try {
       Logger.info('📰 EmotionBloc: Loading emotion feed');
 
-      // Don't emit loading if we have cached data and not forcing refresh
       if (_currentEmotionFeed.isEmpty || event.forceRefresh) {
         emit(EmotionLoading(message: 'Loading emotion feed...'));
       }
 
-      // Create params object for use case
       final params = GetEmotionFeedParams(
         limit: event.limit,
         offset: event.offset,
@@ -270,14 +262,13 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
           );
         },
         (emotionEntities) {
-          // Convert entities to maps
           _currentEmotionFeed = emotionEntities
               .map(
                 (entity) => {
                   'id': entity.id,
                   'userId': entity.userId,
                   'emotion': entity.emotion,
-                  'type': entity.emotion, // Backward compatibility
+'type': entity.emotion, 
                   'intensity': entity.intensity,
                   'timestamp': entity.timestamp.toIso8601String(),
                   'context': entity.context,
@@ -324,12 +315,10 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     try {
       Logger.info('🌍 EmotionBloc: Loading global emotion stats');
 
-      // Don't emit loading if we have cached data and not forcing refresh
       if (_currentGlobalStats.isEmpty || event.forceRefresh) {
         emit(EmotionLoading(message: 'Loading global stats...'));
       }
 
-      // Create params object for use case
       final params = GetGlobalEmotionStatsParams(
         timeframe: event.timeframe,
         forceRefresh: event.forceRefresh,
@@ -387,12 +376,10 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     try {
       Logger.info('🗺️ EmotionBloc: Loading global heatmap');
 
-      // Don't emit loading if we have cached data and not forcing refresh
       if (_currentHeatmapData.isEmpty || event.forceRefresh) {
         emit(EmotionLoading(message: 'Loading global heatmap...'));
       }
 
-      // Create params object for use case
       final params = GetGlobalEmotionHeatmapParams(
         forceRefresh: event.forceRefresh,
       );
@@ -411,7 +398,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
           );
         },
         (heatmapEntity) {
-          // Convert heatmap entity to map
           _currentHeatmapData = {
             'locations': heatmapEntity.locations,
             'summary': heatmapEntity.summary,
@@ -451,7 +437,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     try {
       Logger.info('📜 EmotionBloc: Loading user emotion history');
 
-      // Don't emit loading if we have cached data and not forcing refresh
       if (_currentUserEmotionHistory.isEmpty || event.forceRefresh) {
         emit(EmotionLoading(message: 'Loading your emotion history...'));
       }
@@ -478,14 +463,13 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
           );
         },
         (emotionEntities) {
-          // Convert entities to maps
           _currentUserEmotionHistory = emotionEntities
               .map(
                 (entity) => {
                   'id': entity.id,
                   'userId': entity.userId,
                   'emotion': entity.emotion,
-                  'type': entity.emotion, // Backward compatibility
+'type': entity.emotion, 
                   'intensity': entity.intensity,
                   'timestamp': entity.timestamp.toIso8601String(),
                   'context': entity.context,
@@ -533,7 +517,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
       Logger.info('🧹 EmotionBloc: Clearing emotion cache');
       emit(EmotionLoading(message: 'Clearing cache...'));
 
-      // Clear the repository cache
       final result = await emotionRepository.clearEmotionCache();
 
       result.fold(
@@ -548,7 +531,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
           );
         },
         (_) {
-          // Clear local cache
           _currentEmotionFeed = [];
           _currentGlobalStats = {};
           _currentHeatmapData = {};
@@ -582,10 +564,8 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
 
       final List<String> failedOperations = [];
 
-      // Load all data in parallel with error handling
       final futures = <Future>[];
 
-      // Emotion feed
       futures.add(
         getEmotionFeed
             .call(GetEmotionFeedParams(forceRefresh: true))
@@ -604,7 +584,7 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
                           'id': entity.id,
                           'userId': entity.userId,
                           'emotion': entity.emotion,
-                          'type': entity.emotion, // Backward compatibility
+'type': entity.emotion, 
                           'intensity': entity.intensity,
                           'timestamp': entity.timestamp.toIso8601String(),
                           'context': entity.context,
@@ -624,7 +604,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
             }),
       );
 
-      // Global stats
       futures.add(
         getGlobalEmotionStats
             .call(GetGlobalEmotionStatsParams(forceRefresh: true))
@@ -647,7 +626,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
             }),
       );
 
-      // Heatmap data
       futures.add(
         getGlobalHeatmap
             .call(GetGlobalEmotionHeatmapParams(forceRefresh: true))
@@ -738,10 +716,8 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
 
       final List<String> failedOperations = [];
 
-      // Load all data in parallel with error handling
       final futures = <Future>[];
 
-      // Emotion feed
       futures.add(
         getEmotionFeed
             .call(GetEmotionFeedParams())
@@ -760,7 +736,7 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
                           'id': entity.id,
                           'userId': entity.userId,
                           'emotion': entity.emotion,
-                          'type': entity.emotion, // Backward compatibility
+'type': entity.emotion, 
                           'intensity': entity.intensity,
                           'timestamp': entity.timestamp.toIso8601String(),
                           'context': entity.context,
@@ -780,7 +756,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
             }),
       );
 
-      // Global stats
       futures.add(
         getGlobalEmotionStats
             .call(GetGlobalEmotionStatsParams())
@@ -803,7 +778,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
             }),
       );
 
-      // Heatmap data
       futures.add(
         getGlobalHeatmap
             .call(GetGlobalEmotionHeatmapParams(forceRefresh: false))
@@ -884,7 +858,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     }
   }
 
-  // Helper method to determine error type from exceptions
   EmotionErrorType _getErrorType(dynamic error) {
     if (error is ServerException) return EmotionErrorType.server;
     if (error is CacheException) return EmotionErrorType.cache;
@@ -896,7 +869,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     return EmotionErrorType.general;
   }
 
-  // Helper method to determine error type from failures
   EmotionErrorType _getErrorTypeFromFailure(Failure failure) {
     if (failure is ServerFailure) return EmotionErrorType.server;
     if (failure is CacheFailure) return EmotionErrorType.cache;
@@ -908,7 +880,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     return EmotionErrorType.general;
   }
 
-  // Convenience methods for getting current data
   List<Map<String, dynamic>> get currentEmotionFeed => _currentEmotionFeed;
   Map<String, dynamic> get currentGlobalStats => _currentGlobalStats;
   Map<String, dynamic> get currentHeatmapData => _currentHeatmapData;
@@ -917,7 +888,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
   Map<String, dynamic> get currentUserInsights => _currentUserInsights;
   Map<String, dynamic> get currentUserAnalytics => _currentUserAnalytics;
 
-  // Check if we have any data loaded
   bool get hasData =>
       _currentEmotionFeed.isNotEmpty ||
       _currentGlobalStats.isNotEmpty ||
@@ -926,7 +896,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
       _currentUserInsights.isNotEmpty ||
       _currentUserAnalytics.isNotEmpty;
 
-  // Check if specific data is loaded
   bool get hasEmotionFeed => _currentEmotionFeed.isNotEmpty;
   bool get hasGlobalStats => _currentGlobalStats.isNotEmpty;
   bool get hasHeatmapData => _currentHeatmapData.isNotEmpty;
@@ -934,23 +903,19 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
   bool get hasUserInsights => _currentUserInsights.isNotEmpty;
   bool get hasUserAnalytics => _currentUserAnalytics.isNotEmpty;
 
-  // Get data counts
   int get emotionFeedCount => _currentEmotionFeed.length;
   int get userHistoryCount => _currentUserEmotionHistory.length;
   int get heatmapLocationCount =>
       (_currentHeatmapData['locations'] as List?)?.length ?? 0;
 
-  // Initialize emotion data on first load
   void initializeEmotionData() {
     add(InitializeEmotionDataEvent());
   }
 
-  // Refresh all data
   void refreshAllData() {
     add(RefreshAllEmotionDataEvent());
   }
 
-  // Log a new emotion
   void logUserEmotion({
     required String userId,
     required String emotion,
@@ -975,7 +940,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     );
   }
 
-  // Load specific data
   void loadEmotionFeed({bool forceRefresh = false}) {
     add(LoadEmotionFeedEvent(forceRefresh: forceRefresh));
   }
@@ -1019,12 +983,10 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     );
   }
 
-  // Clear cache
   void clearCache() {
     add(ClearEmotionCacheEvent());
   }
 
-  // Get most recent emotion
   Map<String, dynamic>? get mostRecentEmotion {
     if (_currentUserEmotionHistory.isNotEmpty) {
       return _currentUserEmotionHistory.first;
@@ -1032,7 +994,6 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
     return null;
   }
 
-  // Get emotion summary for today
   Map<String, dynamic> getTodayEmotionSummary() {
     final today = DateTime.now();
     final todayEmotions = _currentUserEmotionHistory.where((emotion) {
@@ -1053,14 +1014,12 @@ class EmotionBloc extends Bloc<EmotionEvent, EmotionState> {
       };
     }
 
-    // Calculate average intensity
     final totalIntensity = todayEmotions.fold<double>(
       0.0,
       (sum, emotion) => sum + (emotion['intensity'] as double? ?? 0.0),
     );
     final averageIntensity = totalIntensity / todayEmotions.length;
 
-    // Find most common emotion
     final emotionCounts = <String, int>{};
     for (final emotion in todayEmotions) {
       final emotionName = emotion['emotion'] as String? ?? 'unknown';

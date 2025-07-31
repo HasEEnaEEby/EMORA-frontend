@@ -5,18 +5,15 @@ import 'package:emora_mobile_app/features/emotion/presentation/view/pages/models
 class EmotionMapService {
   static const String baseUrl = 'http://localhost:8000/api/map';
   
-  // Singleton pattern
   static final EmotionMapService _instance = EmotionMapService._internal();
   factory EmotionMapService() => _instance;
   EmotionMapService._internal();
 
-  // Headers for API requests
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
 
-  /// Fetch emotion data points from the API
   Future<MapApiResponse<GlobalEmotionPoint>> getEmotionData({
     String? coreEmotion,
     String? country,
@@ -57,7 +54,6 @@ class EmotionMapService {
     }
   }
 
-  /// Fetch emotion clusters from the API
   Future<MapApiResponse<EmotionCluster>> getEmotionClusters({
     String? coreEmotion,
     String? country,
@@ -98,7 +94,6 @@ class EmotionMapService {
     }
   }
 
-  /// Fetch global emotion statistics
   Future<StatsApiResponse> getGlobalStats({
     String? coreEmotion,
     String? country,
@@ -132,7 +127,6 @@ class EmotionMapService {
     }
   }
 
-  /// Fetch emotion trends over time
   Future<MapApiResponse<EmotionTrend>> getEmotionTrends({
     String? coreEmotion,
     String? country,
@@ -140,7 +134,7 @@ class EmotionMapService {
     String? city,
     DateTime? startDate,
     DateTime? endDate,
-    String? timeGroup = 'day', // day, week, month
+String? timeGroup = 'day', 
   }) async {
     try {
       final queryParams = <String, dynamic>{};
@@ -171,7 +165,6 @@ class EmotionMapService {
     }
   }
 
-  /// Submit user emotion to the global map
   Future<bool> submitEmotion({
     required double latitude,
     required double longitude,
@@ -211,14 +204,10 @@ class EmotionMapService {
     }
   }
 
-  /// Get real-time emotion updates via WebSocket (if available)
   Stream<GlobalEmotionPoint>? getRealtimeEmotions() {
-    // TODO: Implement WebSocket connection for real-time updates
-    // This would require a WebSocket implementation
     return null;
   }
 
-  /// Get heatmap data for visualization
   Future<List<Map<String, dynamic>>> getHeatmapData({
     String? coreEmotion,
     DateTime? startDate,
@@ -246,7 +235,6 @@ class EmotionMapService {
     }
   }
 
-  /// Get AI-generated insights for a region
   Future<String> getRegionalInsights({
     required String region,
     String? coreEmotion,
@@ -277,7 +265,6 @@ class EmotionMapService {
     }
   }
 
-  /// Get emotion predictions for a region
   Future<Map<String, dynamic>> getEmotionPredictions({
     required String region,
     int? hoursAhead = 24,

@@ -36,7 +36,6 @@ class _OnboardingViewState extends State<OnboardingView>
   static const int maxRetries = 3;
   bool _hasNavigated = false;
 
-  // Store onboarding data to pass to auth
   Map<String, dynamic> _collectedData = {};
 
   @override
@@ -141,7 +140,6 @@ class _OnboardingViewState extends State<OnboardingView>
                 '🏗️ Building OnboardingView with state: ${state.runtimeType}',
               );
 
-              // Handle all possible states explicitly
               if (state is OnboardingLoading) {
                 return _buildLoadingView();
               }
@@ -155,7 +153,6 @@ class _OnboardingViewState extends State<OnboardingView>
               }
 
               if (state is OnboardingCompleted) {
-                // Show completion state while navigation is happening
                 return _buildCompletionView();
               }
 
@@ -163,12 +160,10 @@ class _OnboardingViewState extends State<OnboardingView>
                 return _buildErrorView(state.message);
               }
 
-              // Handle initial state or any other unexpected states
               if (state is OnboardingInitial) {
                 return _buildInitialView();
               }
 
-              // Last resort fallback with more detailed error info
               Logger.error(
                 '. Unexpected OnboardingBloc state: ${state.runtimeType}',
                 'Unhandled state',
@@ -216,14 +211,12 @@ class _OnboardingViewState extends State<OnboardingView>
   }
 
   Widget _buildCompletionView() {
-    // Immediately navigate to auth choice when completion view would be shown
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && !_hasNavigated) {
         _navigateToAuthChoice();
       }
     });
 
-    // Show a simple loading state while navigating
     return const Center(
       child: CircularProgressIndicator(
         valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8B5FBF)),
@@ -256,13 +249,12 @@ class _OnboardingViewState extends State<OnboardingView>
     _showErrorSnackBar(message);
   }
 
-  // FIXED: Ensure we capture the ACTUAL onboarding data
   void _updateCollectedData(UserOnboardingEntity userData) {
     _collectedData = {
       'username': userData.username,
-      'pronouns': userData.pronouns, // ACTUAL selected pronouns
-      'ageGroup': userData.ageGroup, // ACTUAL selected age group
-      'selectedAvatar': userData.selectedAvatar, // ACTUAL selected avatar
+'pronouns': userData.pronouns, 
+'ageGroup': userData.ageGroup, 
+'selectedAvatar': userData.selectedAvatar, 
       'hasCompletedOnboarding': userData.isCompleted,
       'timestamp': DateTime.now().toIso8601String(),
     };
@@ -299,20 +291,17 @@ class _OnboardingViewState extends State<OnboardingView>
           ),
         );
 
-        // Direct navigation without delay
         _navigateToAuthChoice();
       }
     } catch (e) {
       Logger.error('Error handling onboarding completion', e);
       if (mounted) {
         _showErrorSnackBar('Failed to save preferences');
-        // Fallback navigation
         _navigateToAuthChoice();
       }
     }
   }
 
-  // FIXED: Pass the actual collected data to auth choice
   void _navigateToAuthChoice() {
     if (_hasNavigated) return;
     _hasNavigated = true;
@@ -321,17 +310,15 @@ class _OnboardingViewState extends State<OnboardingView>
     Logger.info('📦 Onboarding data to pass: $_collectedData');
 
     try {
-      // Primary navigation attempt with proper data passing
       Navigator.of(context).pushReplacementNamed(
         AppRouter.authChoice,
-        arguments: _collectedData, // Pass the ACTUAL collected data
+arguments: _collectedData, 
       );
       Logger.info('. Primary navigation successful with data');
     } catch (primaryError) {
       Logger.error('. Primary navigation failed', primaryError);
 
       try {
-        // Fallback 1: Use NavigationService
         NavigationService.pushReplacementNamed(
           AppRouter.authChoice,
           arguments: _collectedData,
@@ -341,7 +328,6 @@ class _OnboardingViewState extends State<OnboardingView>
         Logger.error('. Fallback 1 navigation failed', fallback1Error);
 
         try {
-          // Fallback 2: Navigate to auth wrapper
           Navigator.of(context).pushReplacementNamed(AppRouter.auth);
           Logger.info('. Fallback 2 navigation successful');
         } catch (fallback2Error) {
@@ -428,7 +414,7 @@ class _OnboardingViewState extends State<OnboardingView>
                   Navigator.of(context).pop();
                   Navigator.of(context).pushReplacementNamed(
                     AppRouter.register,
-                    arguments: _collectedData, // Pass data here too
+arguments: _collectedData, 
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -461,13 +447,11 @@ class _OnboardingViewState extends State<OnboardingView>
     );
   }
 
-  // FIXED: Save onboarding data more reliably
   Future<void> _saveOnboardingData(Map<String, dynamic> data) async {
     try {
       Logger.info('. Saving onboarding data: $data');
       final prefs = await SharedPreferences.getInstance();
 
-      // Save individual fields
       await prefs.setString('onboarding_username', data['username'] ?? '');
       await prefs.setString('onboarding_pronouns', data['pronouns'] ?? '');
       await prefs.setString('onboarding_age_group', data['ageGroup'] ?? '');
@@ -475,7 +459,6 @@ class _OnboardingViewState extends State<OnboardingView>
       await prefs.setBool('onboarding_completed', true);
       await prefs.setString('onboarding_timestamp', data['timestamp'] ?? '');
 
-      // Save complete JSON for easy retrieval
       final jsonString =
           '''
 {
@@ -838,7 +821,6 @@ Widget _buildBrandTitle() {
         );
       case OnboardingStepType.welcome:
       case OnboardingStepType.completion:
-        // These should never be reached since we filter them out
         return const SizedBox.shrink();
     }
   }

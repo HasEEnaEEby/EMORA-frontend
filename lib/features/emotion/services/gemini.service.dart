@@ -1,4 +1,3 @@
-// gemini.service.dart - Enhanced AI Service for Global Emotion Insights
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:emora_mobile_app/features/emotion/presentation/view/pages/models/emotion_map_models.dart';
@@ -7,7 +6,6 @@ class GeminiService {
   static const String _baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
   static const String _apiKey = 'YOUR_GEMINI_API_KEY'; // Replace with actual API key
   
-  // Enhanced prompt templates for different use cases
   static const Map<String, String> _promptTemplates = {
     'regional_summary': '''
 Analyze the emotional data for {region} and provide insights:
@@ -96,7 +94,6 @@ Keep it to 2-3 sentences maximum.
 ''',
   };
 
-  // Generate regional emotion summary
   static Future<String> generateRegionalSummary({
     required String region,
     required int totalEmotions,
@@ -121,7 +118,6 @@ Keep it to 2-3 sentences maximum.
     }
   }
 
-  // Generate global trends analysis
   static Future<String> generateGlobalTrends({
     required int totalEmotions,
     required double avgIntensity,
@@ -144,7 +140,6 @@ Keep it to 2-3 sentences maximum.
     }
   }
 
-  // Generate emotion cluster analysis
   static Future<String> generateClusterAnalysis({
     required String location,
     required String coreEmotion,
@@ -169,7 +164,6 @@ Keep it to 2-3 sentences maximum.
     }
   }
 
-  // Generate personal emotional insight
   static Future<String> generatePersonalInsight({
     required List<String> recentEmotions,
     required double avgIntensity,
@@ -190,7 +184,6 @@ Keep it to 2-3 sentences maximum.
     }
   }
 
-  // Generate emotional weather metaphor
   static Future<String> generateEmotionalWeather({
     required String region,
     required String dominantEmotion,
@@ -213,7 +206,6 @@ Keep it to 2-3 sentences maximum.
     }
   }
 
-  // Core API call method
   static Future<String> _generateContent(String prompt) async {
     final response = await http.post(
       Uri.parse('$_baseUrl?key=$_apiKey'),
@@ -253,7 +245,6 @@ Keep it to 2-3 sentences maximum.
     throw Exception('Failed to generate content: ${response.statusCode}');
   }
 
-  // Fallback methods for when API is unavailable
   static String _generateFallbackRegionalSummary(String region, String dominantEmotion, double avgIntensity) {
     final emotionEmoji = PlutchikCoreEmotion.getEmoji(dominantEmotion);
     final intensityLevel = avgIntensity >= 4.0 ? 'high' : avgIntensity >= 3.0 ? 'moderate' : 'low';
@@ -290,7 +281,6 @@ Keep it to 2-3 sentences maximum.
     return 'The emotional weather in $region is $weatherType with $dominantEmotion $emotionEmoji prevailing. This creates a ${_getEmotionContext(dominantEmotion)} atmosphere in the area.';
   }
 
-  // Helper methods for fallback generation
   static String _getEmotionContext(String emotion) {
     switch (emotion.toLowerCase()) {
       case 'joy': return 'uplifting and positive';
@@ -321,7 +311,6 @@ Keep it to 2-3 sentences maximum.
     }
   }
 
-  // Enhanced methods for specific use cases
   static Future<String> generateEmotionInsight({
     required GlobalEmotionPoint point,
     required GlobalEmotionStats? globalStats,
@@ -385,7 +374,6 @@ Provide a brief comparison (2-3 sentences) highlighting the key differences and 
     return '$region1 shows $emotion1 $emoji1 while $region2 experiences $emotion2 $emoji2, indicating different emotional climates in these regions. This suggests varying social and environmental factors influencing emotional well-being.';
   }
 
-  // Method to generate insights for the Gemini Summary Modal
   static Future<Map<String, String>> generateComprehensiveInsights({
     required String region,
     required GlobalEmotionStats? globalStats,
@@ -395,7 +383,6 @@ Provide a brief comparison (2-3 sentences) highlighting the key differences and 
     final insights = <String, String>{};
 
     try {
-      // Regional summary
       if (localPoints.isNotEmpty) {
         final dominantEmotion = _getDominantEmotion(localPoints);
         final avgIntensity = _calculateAverageIntensity(localPoints);
@@ -412,7 +399,6 @@ Provide a brief comparison (2-3 sentences) highlighting the key differences and 
         );
       }
 
-      // Global context
       if (globalStats != null) {
         insights['global_context'] = await generateGlobalTrends(
           totalEmotions: globalStats.totalEmotions,
@@ -423,7 +409,6 @@ Provide a brief comparison (2-3 sentences) highlighting the key differences and 
         );
       }
 
-      // Emotional weather
       if (localPoints.isNotEmpty) {
         final dominantEmotion = _getDominantEmotion(localPoints);
         final avgIntensity = _calculateAverageIntensity(localPoints);
@@ -437,7 +422,6 @@ Provide a brief comparison (2-3 sentences) highlighting the key differences and 
         );
       }
 
-      // Cluster insights
       if (clusters.isNotEmpty) {
         final largestCluster = clusters.reduce((a, b) => a.count > b.count ? a : b);
         insights['cluster_insight'] = await generateClusterAnalysis(
@@ -450,7 +434,6 @@ Provide a brief comparison (2-3 sentences) highlighting the key differences and 
         );
       }
     } catch (e) {
-      // Generate fallback insights
       insights['regional_summary'] = _generateFallbackRegionalSummary(
         region, 'joy', 3.5);
       insights['global_context'] = _generateFallbackGlobalTrends('joy', 3.5);
@@ -461,7 +444,6 @@ Provide a brief comparison (2-3 sentences) highlighting the key differences and 
     return insights;
   }
 
-  // Helper methods for data processing
   static String _getDominantEmotion(List<GlobalEmotionPoint> points) {
     final emotionCounts = <String, int>{};
     for (final point in points) {

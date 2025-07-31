@@ -3,7 +3,6 @@ import 'dart:math' as math;
 class EmotionAIService {
   static const String _baseUrl = 'https://api.emora.ai/v1';
   
-  // AI Model Configuration
   static const Map<String, List<String>> emotionCategories = {
     'positive': ['happiness', 'excitement', 'gratitude', 'contentment', 'love', 'pride'],
     'negative': ['sadness', 'anger', 'fear', 'anxiety', 'frustration', 'disappointment'],
@@ -11,18 +10,13 @@ class EmotionAIService {
     'complex': ['nostalgia', 'anticipation', 'curiosity', 'determination', 'relief']
   };
 
-  // ============================================================================
-  // TEXT-BASED EMOTION ANALYSIS
-  // ============================================================================
   
   Future<EmotionAnalysisResult> analyzeText(String text, {
     Map<String, dynamic>? context,
   }) async {
     try {
-      // Preprocess text
       final preprocessed = _preprocessText(text);
       
-      // Multi-model analysis
       final bertResult = await _bertEmotionClassification(preprocessed);
       final contextResult = await _contextualAnalysis(preprocessed, context);
       final sentimentResult = await _sentimentIntensityAnalysis(preprocessed);
@@ -34,14 +28,10 @@ class EmotionAIService {
   }
   
   Future<Map<String, double>> _bertEmotionClassification(String text) async {
-    // TODO: Implement BERT-based emotion classification
-    // This would call your trained model endpoint
     
-    // Mock implementation with realistic patterns
     final words = text.toLowerCase().split(' ');
     final emotions = <String, double>{};
     
-    // Pattern-based emotion detection (replace with actual BERT model)
     final positiveWords = ['happy', 'great', 'amazing', 'wonderful', 'love', 'excited'];
     final negativeWords = ['sad', 'angry', 'terrible', 'hate', 'frustrated', 'awful'];
     final anxietyWords = ['worried', 'nervous', 'scared', 'anxious', 'panic'];
@@ -72,9 +62,6 @@ class EmotionAIService {
     return math.min(1.0, score);
   }
 
-  // ============================================================================
-  // CONTEXTUAL EMOTION ANALYSIS
-  // ============================================================================
   
   Future<Map<String, dynamic>> _contextualAnalysis(
     String text, 
@@ -83,21 +70,17 @@ class EmotionAIService {
     final contextFactors = <String, double>{};
     
     if (context != null) {
-      // Time-based context
       final hour = DateTime.now().hour;
       contextFactors['timeOfDay'] = _getTimeContext(hour);
       
-      // Weather context (if available)
       if (context.containsKey('weather')) {
         contextFactors['weather'] = _getWeatherContext(context['weather']);
       }
       
-      // Location context
       if (context.containsKey('location')) {
         contextFactors['location'] = _getLocationContext(context['location']);
       }
       
-      // Social context
       if (context.containsKey('socialSetting')) {
         contextFactors['social'] = _getSocialContext(context['socialSetting']);
       }
@@ -110,11 +93,8 @@ class EmotionAIService {
   }
   
   double _getTimeContext(int hour) {
-    // Morning boost for positive emotions
     if (hour >= 6 && hour <= 10) return 1.2;
-    // Evening dip potential
     if (hour >= 18 && hour <= 22) return 0.9;
-    // Late night emotional intensity
     if (hour >= 23 || hour <= 5) return 1.1;
     return 1.0;
   }
@@ -130,12 +110,11 @@ class EmotionAIService {
   }
   
   double _getLocationContext(Map<String, dynamic> location) {
-    // Home vs work vs public spaces affect emotional expression
     final locationType = location['type'] as String?;
     switch (locationType) {
-      case 'home': return 1.1; // More authentic emotions
-      case 'work': return 0.8; // Potentially suppressed emotions
-      case 'social': return 1.2; // Heightened emotions
+case 'home': return 1.1; 
+case 'work': return 0.8; 
+case 'social': return 1.2; 
       default: return 1.0;
     }
   }
@@ -150,21 +129,15 @@ class EmotionAIService {
     }
   }
 
-  // ============================================================================
-  // GLOBAL EMOTION CLUSTERING
-  // ============================================================================
   
   Future<List<EmotionCluster>> generateGlobalClusters({
     required List<EmotionDataPoint> emotionData,
     int maxClusters = 10,
   }) async {
-    // Group emotions by geographic regions
     final geoClusters = await _performGeographicClustering(emotionData);
     
-    // Apply temporal weighting (recent emotions have more influence)
     final weightedClusters = _applyTemporalWeighting(geoClusters);
     
-    // Generate insights for each cluster
     final clustersWithInsights = await _generateClusterInsights(weightedClusters);
     
     return clustersWithInsights;
@@ -175,7 +148,6 @@ class EmotionAIService {
   ) async {
     final clusters = <EmotionCluster>[];
     
-    // K-means clustering based on location and emotion similarity
     final locationGroups = <String, List<EmotionDataPoint>>{};
     
     for (final point in data) {
@@ -184,7 +156,7 @@ class EmotionAIService {
     }
     
     for (final entry in locationGroups.entries) {
-      if (entry.value.length < 5) continue; // Minimum cluster size
+if (entry.value.length < 5) continue; 
       
       final cluster = await _createEmotionCluster(entry.value, entry.key);
       clusters.add(cluster);
@@ -194,7 +166,6 @@ class EmotionAIService {
   }
   
   String _getRegionKey(double lat, double lng) {
-    // Create geographic grid (1-degree precision)
     final latGrid = (lat).round();
     final lngGrid = (lng).round();
     return '${latGrid}_${lngGrid}';
@@ -204,12 +175,10 @@ class EmotionAIService {
     List<EmotionDataPoint> points,
     String regionKey,
   ) async {
-    // Calculate cluster statistics
     final totalPoints = points.length;
     final centerLat = points.map((p) => p.latitude).reduce((a, b) => a + b) / totalPoints;
     final centerLng = points.map((p) => p.longitude).reduce((a, b) => a + b) / totalPoints;
     
-    // Determine dominant emotion
     final emotionCounts = <String, int>{};
     double totalIntensity = 0;
     
@@ -224,7 +193,6 @@ class EmotionAIService {
     
     final averageIntensity = totalIntensity / totalPoints;
     
-    // Generate AI insight
     final insight = await _generateClusterInsight(points, dominantEmotion);
     
     return EmotionCluster(
@@ -240,25 +208,18 @@ class EmotionAIService {
     );
   }
 
-  // ============================================================================
-  // PREDICTIVE ANALYTICS
-  // ============================================================================
   
   Future<EmotionPrediction> predictEmotionTrends({
     required String userId,
     required List<EmotionDataPoint> historicalData,
     int daysAhead = 7,
   }) async {
-    // Analyze personal patterns
     final personalPatterns = await _analyzePersonalPatterns(userId, historicalData);
     
-    // Consider global trends
     final globalTrends = await _getGlobalEmotionTrends();
     
-    // Weather and seasonal factors
     final environmentalFactors = await _getEnvironmentalPredictions(daysAhead);
     
-    // Generate predictions
     final predictions = _generatePredictions(
       personalPatterns,
       globalTrends,
@@ -273,16 +234,12 @@ class EmotionAIService {
     String userId,
     List<EmotionDataPoint> data,
   ) async {
-    // Weekly patterns
     final weeklyPattern = _analyzeWeeklyPattern(data);
     
-    // Daily patterns
     final dailyPattern = _analyzeDailyPattern(data);
     
-    // Seasonal patterns
     final seasonalPattern = _analyzeSeasonalPattern(data);
     
-    // Trigger identification
     final triggers = await _identifyEmotionTriggers(data);
     
     return PersonalEmotionPatterns(
@@ -294,22 +251,16 @@ class EmotionAIService {
     );
   }
 
-  // ============================================================================
-  // REAL-TIME EMOTION INSIGHTS
-  // ============================================================================
   
   Future<RealTimeInsight> generateRealTimeInsight(
     EmotionDataPoint currentEmotion,
     List<EmotionDataPoint> recentHistory,
   ) async {
-    // Compare with personal baseline
     final personalBaseline = _calculatePersonalBaseline(recentHistory);
     final deviationFromNorm = _calculateDeviation(currentEmotion, personalBaseline);
     
-    // Compare with global patterns
     final globalContext = await _getGlobalEmotionalContext();
     
-    // Generate recommendations
     final recommendations = await _generateRecommendations(
       currentEmotion,
       deviationFromNorm,
@@ -326,9 +277,6 @@ class EmotionAIService {
     );
   }
   
-  // ============================================================================
-  // MUSIC & ACTIVITY RECOMMENDATIONS
-  // ============================================================================
   
   Future<List<Recommendation>> _generateRecommendations(
     EmotionDataPoint emotion,
@@ -337,21 +285,17 @@ class EmotionAIService {
   ) async {
     final recommendations = <Recommendation>[];
     
-    // Music recommendations
     final musicRec = await _generateMusicRecommendation(emotion);
     recommendations.add(musicRec);
     
-    // Activity recommendations
     final activityRec = await _generateActivityRecommendation(emotion, deviation);
     recommendations.add(activityRec);
     
-    // Social recommendations
     if (globalContext.communityMood != emotion.emotion) {
       final socialRec = await _generateSocialRecommendation(emotion, globalContext);
       recommendations.add(socialRec);
     }
     
-    // Mindfulness recommendations
     if (deviation.isSignificant) {
       final mindfulnessRec = await _generateMindfulnessRecommendation(deviation);
       recommendations.add(mindfulnessRec);
@@ -360,9 +304,6 @@ class EmotionAIService {
     return recommendations;
   }
   
-  // ============================================================================
-  // HELPER METHODS
-  // ============================================================================
   
   String _preprocessText(String text) {
     return text
@@ -373,7 +314,6 @@ class EmotionAIService {
   }
   
   double _calculateClusterSize(int participantCount) {
-    // Logarithmic scaling for visual representation
     return math.min(100, 20 + (math.log(participantCount) * 10));
   }
   
@@ -386,9 +326,8 @@ class EmotionAIService {
     final now = DateTime.now();
     
     return clusters.map((cluster) {
-      // More recent emotions have higher weight
       final ageInHours = now.difference(cluster.lastUpdated).inHours;
-      final temporalWeight = math.exp(-ageInHours / 24); // Exponential decay
+final temporalWeight = math.exp(-ageInHours / 24); 
       
       return cluster.copyWith(
         weight: cluster.weight * temporalWeight,
@@ -400,11 +339,9 @@ class EmotionAIService {
     List<EmotionDataPoint> points,
     String dominantEmotion,
   ) async {
-    // AI-generated insights based on patterns
     final timePattern = _analyzeTimePattern(points);
     final intensityPattern = _analyzeIntensityPattern(points);
     
-    // Generate contextual insight
     if (timePattern.isWeekend && dominantEmotion == 'relaxed') {
       return 'Weekend relaxation trend - people are unwinding from the work week';
     } else if (intensityPattern.isHigh && dominantEmotion == 'excited') {
@@ -416,7 +353,6 @@ class EmotionAIService {
     return 'Community showing ${dominantEmotion} patterns with ${intensityPattern.description}';
   }
 
-  // Placeholder methods for future implementation
   Future<Map<String, double>> _sentimentIntensityAnalysis(String text) async {
     return {'sentiment': 0.5};
   }
@@ -536,9 +472,6 @@ class EmotionAIService {
   }
 }
 
-// ============================================================================
-// DATA MODELS
-// ============================================================================
 
 class EmotionAnalysisResult {
   final String primaryEmotion;
@@ -700,7 +633,6 @@ class Recommendation {
   });
 }
 
-// Additional supporting classes
 class GlobalEmotionTrends {
   final List<EmotionTrend> trends;
   

@@ -9,25 +9,16 @@ abstract class FriendState extends Equatable {
   List<Object?> get props => [];
 }
 
-// ============================================================================
-// INITIAL AND LOADING STATES
-// ============================================================================
 
-/// Initial state
 class FriendInitial extends FriendState {
   const FriendInitial();
 }
 
-/// General loading state
 class FriendLoading extends FriendState {
   const FriendLoading();
 }
 
-// ============================================================================
-// SEARCH STATES
-// ============================================================================
 
-/// Search loading state
 class FriendSearchLoading extends FriendState {
   const FriendSearchLoading();
 
@@ -35,7 +26,6 @@ class FriendSearchLoading extends FriendState {
   List<Object?> get props => [];
 }
 
-/// Search results state
 class FriendSearchLoaded extends FriendState {
   final List<FriendSuggestionEntity> searchResults;
   final int totalResults;
@@ -63,7 +53,6 @@ class FriendSearchLoaded extends FriendState {
   }
 }
 
-/// Search empty state
 class FriendSearchEmpty extends FriendState {
   final String query;
 
@@ -73,11 +62,7 @@ class FriendSearchEmpty extends FriendState {
   List<Object?> get props => [query];
 }
 
-// ============================================================================
-// FRIENDS DATA STATES
-// ============================================================================
 
-/// Friends loaded state
 class FriendsLoaded extends FriendState {
   final List<FriendEntity> friends;
   final List<FriendSuggestionEntity> suggestions;
@@ -118,7 +103,6 @@ class FriendsLoaded extends FriendState {
     );
   }
 
-  // Helper getters
   List<FriendRequestEntity> get sentRequests => pendingRequests['sent'] ?? [];
   List<FriendRequestEntity> get receivedRequests => pendingRequests['received'] ?? [];
   int get totalFriends => friends.length;
@@ -126,13 +110,9 @@ class FriendsLoaded extends FriendState {
   int get totalPendingRequests => sentRequests.length + receivedRequests.length;
 }
 
-// ============================================================================
-// ACTION STATES
-// ============================================================================
 
-/// Friend request action loading
 class FriendRequestActionLoading extends FriendsLoaded {
-  final String actionType; // 'send', 'accept', 'reject', 'remove'
+final String actionType; 
   final String targetUserId;
 
   const FriendRequestActionLoading({
@@ -157,7 +137,6 @@ class FriendRequestActionLoading extends FriendsLoaded {
       ];
 }
 
-/// Friend request action success
 class FriendRequestActionSuccess extends FriendsLoaded {
   final String message;
   final String actionType;
@@ -187,11 +166,7 @@ class FriendRequestActionSuccess extends FriendsLoaded {
   ];
 }
 
-// ============================================================================
-// ERROR STATES
-// ============================================================================
 
-/// Friend error state
 class FriendError extends FriendState {
   final String message;
   final String? errorType;
@@ -219,7 +194,6 @@ class FriendError extends FriendState {
   }
 }
 
-/// Search error state
 class FriendSearchError extends FriendState {
   final String message;
   final String query;

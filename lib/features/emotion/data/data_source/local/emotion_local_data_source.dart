@@ -16,15 +16,12 @@ abstract class EmotionLocalDataSource {
   Future<List<Map<String, dynamic>>> getUserEmotionHistory();
   Future<void> clearEmotionCache();
 
-  // User stats methods
   Future<Map<String, dynamic>> getCachedUserStats(String userId);
   Future<void> cacheUserStats(String userId, Map<String, dynamic> stats);
 
-  // User insights methods
   Future<Map<String, dynamic>> getCachedUserInsights(String userId);
   Future<void> cacheUserInsights(String userId, Map<String, dynamic> insights);
 
-  // User analytics methods
   Future<Map<String, dynamic>> getCachedUserAnalytics(String userId);
   Future<void> cacheUserAnalytics(String userId, Map<String, dynamic> analytics);
 
@@ -193,13 +190,10 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
 
       final prefs = await SharedPreferences.getInstance();
 
-      // Get existing emotions
       final existingEmotions = await getUserEmotionHistory();
 
-      // Add new emotion to the front
       existingEmotions.insert(0, emotion);
 
-      // Keep only last 100 emotions to prevent excessive storage
       if (existingEmotions.length > 100) {
         existingEmotions.removeRange(100, existingEmotions.length);
       }
@@ -263,7 +257,6 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
         await prefs.remove(key);
       }
 
-      // Clear user-specific cache keys (we'll need to get all keys and filter)
       final allKeys = prefs.getKeys();
       final userCacheKeys = allKeys.where((key) => 
         key.startsWith(_userStatsKey) || 
@@ -291,33 +284,27 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // Check if we have any cached data with timestamps
       final lastCacheTime = prefs.getString('emotion_cache_timestamp');
 
       if (lastCacheTime == null) {
-        // No cache timestamp means no cache or very old cache
         return true;
       }
 
       final cacheDateTime = DateTime.tryParse(lastCacheTime);
       if (cacheDateTime == null) {
-        // Invalid timestamp format
         return true;
       }
 
       final now = DateTime.now();
       final difference = now.difference(cacheDateTime);
 
-      // Return true if cache is older than maxAge
       return difference > maxAge;
     } catch (e) {
       Logger.error('. Failed to check cache staleness', e);
-      // If we can't determine staleness, assume cache is stale
       return true;
     }
   }
 
-  // User stats methods
   @override
   Future<Map<String, dynamic>> getCachedUserStats(String userId) async {
     try {
@@ -365,7 +352,6 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
     }
   }
 
-  // User insights methods
   @override
   Future<Map<String, dynamic>> getCachedUserInsights(String userId) async {
     try {
@@ -413,7 +399,6 @@ class EmotionLocalDataSourceImpl implements EmotionLocalDataSource {
     }
   }
 
-  // User analytics methods
   @override
   Future<Map<String, dynamic>> getCachedUserAnalytics(String userId) async {
     try {

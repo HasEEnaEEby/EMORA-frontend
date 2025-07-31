@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/dialogs/edit_profile_dialog.dart - FINAL FIXED VERSION
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
 import 'package:emora_mobile_app/features/profile/presentation/view_model/profile_bloc.dart';
 import 'package:emora_mobile_app/features/profile/presentation/view_model/profile_event.dart';
@@ -8,25 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Enhanced profile editing dialog with beautiful UI and proper BLoC integration
-///
-/// Features:
-/// - Stunning gradient backgrounds and animations
-/// - Real-time avatar preview
-/// - Smooth state transitions
-/// - Proper validation and error handling
-/// - BLoC state management
-/// - Haptic feedback
-/// - Accessibility support
-/// - Enhanced fields: pronouns, age group, bio, theme color
 class EditProfileDialog {
-  /// Shows the enhanced edit profile dialog
   static void show(
     BuildContext context,
     dynamic profile, {
     required Function(Map<String, dynamic>) onSave,
   }) {
-    // Store the ProfileBloc reference before opening the modal
     final profileBloc = context.read<ProfileBloc>();
     
     showCupertinoModalPopup(
@@ -73,7 +59,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
   String selectedThemeColor = '#8B5CF6';
   bool isLoading = false;
 
-  // Available options
   final List<String> pronounsOptions = [
     'They / Them',
     'He / Him',
@@ -105,7 +90,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
   void initState() {
     super.initState();
     
-    // Initialize controllers with safe access
     nameController = TextEditingController(
       text: _safeNameAccess(widget.profile),
     );
@@ -116,7 +100,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
       text: _safeBioAccess(widget.profile),
     );
     
-    // Initialize state
     isPrivate = _safePrivateAccess(widget.profile);
     selectedAvatar = _safeAvatarAccess(widget.profile);
     username = _safeUsernameAccess(widget.profile);
@@ -124,7 +107,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
     selectedAgeGroup = _safeAgeGroupAccess(widget.profile);
     selectedThemeColor = _safeThemeColorAccess(widget.profile);
     
-    // Setup animations
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -146,7 +128,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
       curve: Curves.easeInOut,
     ));
     
-    // Start entrance animation
     _animationController.forward();
   }
 
@@ -161,7 +142,7 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
 
   @override
   Widget build(BuildContext context) {
-    return Material( // . FIX 1: Wrap entire dialog with Material
+return Material( 
       color: Colors.transparent,
       child: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) {
@@ -221,7 +202,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
                   ),
                   child: Stack(
                     children: [
-                      // Background gradient overlay
                       Positioned.fill(
                         child: Container(
                           decoration: BoxDecoration(
@@ -239,7 +219,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
                         ),
                       ),
                       
-                      // Main content
                       Column(
                         children: [
                           _buildEnhancedHeader(),
@@ -264,7 +243,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
                         ],
                       ),
                       
-                      // Loading overlay
                       if (isLoading)
                         Positioned.fill(
                           child: Container(
@@ -329,7 +307,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
         bottom: false,
         child: Column(
           children: [
-            // Handle bar with glow effect
             Container(
               width: 60,
               height: 5,
@@ -349,7 +326,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
             ),
             const SizedBox(height: 24),
 
-            // . FIX 2: Responsive header layout to prevent overflow
             LayoutBuilder(
               builder: (context, constraints) {
                 final screenWidth = constraints.maxWidth;
@@ -357,10 +333,8 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
                 
                 return Column(
                   children: [
-                    // Title and avatar (always centered)
                     Column(
                       children: [
-                        // Animated avatar preview
                         TweenAnimationBuilder<double>(
                           duration: const Duration(milliseconds: 300),
                           tween: Tween(begin: 0.0, end: 1.0),
@@ -413,7 +387,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
                     
                     const SizedBox(height: 20),
                     
-                    // Buttons row (responsive)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -1026,7 +999,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                // Current selection
                 Row(
                   children: [
                     Container(
@@ -1060,7 +1032,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
                   ],
                 ),
                 const SizedBox(height: 16),
-                // Color options grid
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
@@ -1295,7 +1266,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
             ),
           ),
           const SizedBox(width: 16),
-          // . FIX 3: Wrap Switch with Material - This was the main issue!
           Material(
             color: Colors.transparent,
             child: Transform.scale(
@@ -1363,7 +1333,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
   }
 
   void _handleSave() {
-    // Validation
     final name = nameController.text.trim();
     final email = emailController.text.trim();
     final bio = bioController.text.trim();
@@ -1393,7 +1362,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
       return;
     }
 
-    // Prepare updated data with enhanced fields
     final updatedData = {
       'name': name,
       'email': email,
@@ -1409,7 +1377,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
       'updatedAt': DateTime.now().toIso8601String(),
     };
 
-    // Trigger ProfileBloc update
     context.read<ProfileBloc>().add(UpdateProfile(profileData: updatedData));
     
     HapticFeedback.lightImpact();
@@ -1420,12 +1387,10 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
     DialogUtils.showErrorSnackBar(context, message);
   }
 
-  // . FIX 4: Updated safe property access methods to handle API data structure
   String _safeNameAccess(dynamic profile) {
     try {
       if (profile == null) return '';
       if (profile is Map<String, dynamic>) {
-        // Try nested profile object first (API structure)
         final profileObj = profile['profile'];
         if (profileObj is Map<String, dynamic>) {
           final displayName = profileObj['displayName'];
@@ -1433,7 +1398,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
             return displayName.toString();
           }
         }
-        // Fall back to direct properties
         return profile['name']?.toString() ?? 
                profile['displayName']?.toString() ??
                profile['username']?.toString() ??
@@ -1491,7 +1455,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
     try {
       if (profile == null) return false;
       if (profile is Map<String, dynamic>) {
-        // Check preferences object for privacy settings
         final preferences = profile['preferences'];
         if (preferences is Map<String, dynamic>) {
           final moodPrivacy = preferences['moodPrivacy'];
@@ -1536,18 +1499,15 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
     try {
       if (profile == null) return '#8B5CF6';
       if (profile is Map<String, dynamic>) {
-        // Check nested profile object first (API structure)
         final profileObj = profile['profile'];
         if (profileObj is Map<String, dynamic>) {
           final themeColor = profileObj['themeColor'];
           if (themeColor != null && themeColor.toString().isNotEmpty) {
             final colorValue = themeColor.toString();
-            // Validate that the color exists in our options
             final isValidColor = themeColorOptions.any((option) => option['value'] == colorValue);
             return isValidColor ? colorValue : '#8B5CF6';
           }
         }
-        // Fall back to direct themeColor
         final directColor = profile['themeColor']?.toString();
         if (directColor != null && directColor.isNotEmpty) {
           final isValidColor = themeColorOptions.any((option) => option['value'] == directColor);
@@ -1571,7 +1531,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
     try {
       if (profile == null) return '';
       if (profile is Map<String, dynamic>) {
-        // Check nested profile object first (API structure)
         final profileObj = profile['profile'];
         if (profileObj is Map<String, dynamic>) {
           final bio = profileObj['bio'];
@@ -1579,7 +1538,6 @@ class _EditProfileDialogContentState extends State<_EditProfileDialogContent>
             return bio.toString();
           }
         }
-        // Fall back to direct bio
         return profile['bio']?.toString() ?? '';
       }
       return profile.bio?.toString() ?? '';

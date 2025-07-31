@@ -31,7 +31,7 @@ import 'package:dio/dio.dart';
 IO.Socket? socket;
 
 void connectSocket(String userId, BuildContext context) {
-  socket = IO.io('http://localhost:8000', <String, dynamic>{
+  socket = IO.io('http:////localhost:3000', {
     'transports': ['websocket'],
     'autoConnect': false,
   });
@@ -54,7 +54,6 @@ class Dashboard extends StatelessWidget {
         ..add(const LoadGlobalStatsEvent()),
       child: BlocBuilder<HomeBloc, HomeState>(
         builder: (context, state) {
-          // Now this context definitely has access to HomeBloc and CommunityBloc
           return _DashboardContent(homeState: state);
         },
       ),
@@ -73,42 +72,34 @@ class _DashboardContent extends StatefulWidget {
 
 class _DashboardContentState extends State<_DashboardContent>
     with TickerProviderStateMixin {
-  // BLoC instances
   late HomeBloc? _homeBloc;
   late CommunityBloc? _communityBloc;
   late EmotionBloc? _emotionBloc;
 
-  // Animation controllers
   late AnimationController _breathingController;
   late AnimationController _rippleController;
   late AnimationController _glowController;
 
-  // State variables
   bool _isNewUser = false;
   bool _isLoading = false;
   String _errorMessage = '';
   MoodType currentMood = MoodType.okay;
   String currentMoodLabel = 'Okay';
 
-  // Enhanced dashboard data
   List<Map<String, dynamic>> _emotionHistory = [];
   List<Map<String, dynamic>> _todaysJourney = [];
   List<Map<String, dynamic>> _calendarData = [];
 
-  // Community data
   List<Map<String, dynamic>> _communityPosts = [];
   bool _isCommunityLoading = false;
 
-  // Profile data
   Map<String, dynamic>? _userProfile;
   List<Map<String, dynamic>> _achievements = [];
   bool _isProfileLoading = false;
 
-  // Analytics data
   Map<String, dynamic> _analyticsData = {};
   bool _isAnalyticsLoading = false;
 
-  // Enhanced emotion entry data
   String _selectedEmotion = '';
   int _emotionIntensity = 3;
   String _emotionNote = '';
@@ -116,31 +107,25 @@ class _DashboardContentState extends State<_DashboardContent>
   bool _shareToCommunity = false;
   bool _isAnonymous = false;
 
-  // Calendar state
   DateTime _selectedDate = DateTime.now();
   bool _isCalendarLoading = false;
 
-  // Emotion detail state
   Map<String, dynamic>? _selectedEmotionDetail;
   bool _isEmotionDetailLoading = false;
 
-  // Edit/Delete state
   Map<String, dynamic>? _editingEmotion;
   bool _isEditing = false;
   bool _isDeleting = false;
 
-  // Notification state variables
   List<Map<String, dynamic>> _notifications = [];
   bool _hasNotifications = false;
   int _notificationCount = 0;
   IO.Socket? _socket;
 
-  // ✅ CRITICAL FIX: Use HomeDataModel's computed isNewUser property
   bool get _isUserNew {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
       
-      // ✅ CRITICAL FIX: Use the HomeDataModel's computed isNewUser property
       final homeData = dashboardState.homeData;
       if (homeData != null) {
         final isNew = homeData.isNewUser;
@@ -149,7 +134,6 @@ class _DashboardContentState extends State<_DashboardContent>
         return isNew;
       }
       
-      // Fallback: check emotion entries if homeData is null
       final emotionEntriesCount = dashboardState.emotionEntries.length;
       final isNew = emotionEntriesCount == 0;
       print('🔍 DEBUG: _isUserNew fallback from emotionEntries: $isNew (count: $emotionEntriesCount)');
@@ -160,7 +144,6 @@ class _DashboardContentState extends State<_DashboardContent>
     return true;
   }
 
-  // ✅ ENHANCED: Better emotion data extraction with fallback to homeData
   List<EmotionEntryModel> get _emotionEntries {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
@@ -168,14 +151,12 @@ class _DashboardContentState extends State<_DashboardContent>
       
       print('🔍 DEBUG: Emotion entries from state: ${entries.length}');
       
-      // If state entries are empty, try to get from homeData
       if (entries.isEmpty) {
         final homeData = dashboardState.homeData;
         if (homeData != null) {
           final recentEmotions = homeData.recentEmotions;
           print('🔍 DEBUG: Recent emotions from homeData: ${recentEmotions.length}');
           
-          // Convert recent emotions to EmotionEntryModel
           final convertedEntries = recentEmotions.map((emotionData) {
             return EmotionEntryModel.fromJson({
               'id': emotionData['id'],
@@ -198,7 +179,6 @@ class _DashboardContentState extends State<_DashboardContent>
     return [];
   }
 
-  // ✅ ENHANCED: Better today's emotions filtering
   List<EmotionEntryModel> get _todaysEmotions {
     final today = DateTime.now();
     final todayStart = DateTime(today.year, today.month, today.day);
@@ -217,7 +197,6 @@ class _DashboardContentState extends State<_DashboardContent>
     return todaysEmotions;
   }
 
-  // Remove the explicit type annotation for _weeklyInsights to avoid type conflicts
   get _weeklyInsights {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
@@ -226,7 +205,6 @@ class _DashboardContentState extends State<_DashboardContent>
     return null;
   }
 
-  // Stats calculation
   int get _totalLogs {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
@@ -254,16 +232,12 @@ class _DashboardContentState extends State<_DashboardContent>
   List<MoodCapsule>? get _moodCapsulesData {
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
-      // For now, return null since we don't have emotion data in the model yet
-      // In a real implementation, this would extract emotion entries from dashboardState.homeData
       return null;
     }
     return null;
   }
 
   List<Map<String, dynamic>>? get _communityPostsData {
-    // This method is deprecated - we now get community data directly from CommunityBloc
-    // Return null to let CommunityFeedWidget handle real data from CommunityBloc
     return null;
   }
 
@@ -271,10 +245,8 @@ class _DashboardContentState extends State<_DashboardContent>
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
       
-      // Debug logging
       print('🔍 DEBUG: _weeklyMoodData - emotionEntries.length: ${_emotionEntries.length}');
       
-      // Generate weekly mood data from emotion entries
       if (_emotionEntries.isNotEmpty) {
         print('🔍 DEBUG: Generating weekly mood data from ${_emotionEntries.length} emotion entries');
         
@@ -299,7 +271,7 @@ class _DashboardContentState extends State<_DashboardContent>
           
           final dayData = {
             'day': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][index],
-            'intensity': avgIntensity / 5.0, // Normalize to 0-1 range
+'intensity': avgIntensity / 5.0, 
             'color': _getMoodColor(avgIntensity),
           };
           
@@ -320,15 +292,12 @@ class _DashboardContentState extends State<_DashboardContent>
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
       
-      // Debug logging
       print('🔍 DEBUG: _analyticsDataGetter - emotionEntries.length: ${_emotionEntries.length}');
       
-      // Generate analytics data from emotion entries
       if (_emotionEntries.isNotEmpty) {
         final totalEntries = _emotionEntries.length;
         final avgIntensity = _emotionEntries.map((e) => e.intensity).reduce((a, b) => a + b) / totalEntries;
         
-        // Determine mood trend based on recent emotions
         final recentEmotions = _emotionEntries.take(5).toList();
         final recentAvg = recentEmotions.isNotEmpty
             ? recentEmotions.map((e) => e.intensity).reduce((a, b) => a + b) / recentEmotions.length
@@ -361,10 +330,10 @@ class _DashboardContentState extends State<_DashboardContent>
   }
 
   Color _getMoodColor(double intensity) {
-    if (intensity >= 4.0) return const Color(0xFF4CAF50); // Green for good mood
-    if (intensity >= 3.0) return const Color(0xFF8B5CF6); // Purple for neutral
-    if (intensity >= 2.0) return const Color(0xFFFFD700); // Yellow for okay
-    return const Color(0xFFFF6B6B); // Red for low mood
+if (intensity >= 4.0) return const Color(0xFF4CAF50); 
+if (intensity >= 3.0) return const Color(0xFF8B5CF6); 
+if (intensity >= 2.0) return const Color(0xFFFFD700); 
+return const Color(0xFFFF6B6B); 
   }
 
   String _getMusicRecommendation(double avgIntensity) {
@@ -379,14 +348,12 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  // ✅ ENHANCED: Immediate mood update from state
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
     _initializeSocket();
-    loadInboxNotifications(); // <-- Add this line
-    // IMMEDIATE mood update from state
+loadInboxNotifications(); 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateMoodFromCurrentState();
       _initializeBackendServices();
@@ -399,7 +366,7 @@ class _DashboardContentState extends State<_DashboardContent>
     try {
       final currentUserId = getCurrentUserId();
       if (currentUserId != null) {
-        _socket = IO.io('http://localhost:8000', <String, dynamic>{
+        _socket = IO.io('http:////localhost:3000', {
           'transports': ['websocket'],
           'autoConnect': false,
         });
@@ -425,13 +392,11 @@ class _DashboardContentState extends State<_DashboardContent>
     if (widget.homeState is HomeDashboardState) {
       final dashboardState = widget.homeState as HomeDashboardState;
       final homeData = dashboardState.homeData;
-      // Try to extract user ID from dashboardData
       final data = homeData.dashboardData['data'];
       if (data != null && data['user'] != null && data['user']['id'] != null) {
         return data['user']['id'] as String;
       }
     }
-    // Fallback: hardcoded for testing
     return '687ab32176d3e5066eaa6431';
   }
 
@@ -624,24 +589,21 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  // ✅ ENHANCED: Update mood from current state and ensure data persistence
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ensureEmotionDataLoaded();
       _ensureHomeDataLoaded();
-      _updateMoodFromCurrentState(); // Always update mood when returning
+_updateMoodFromCurrentState(); 
     });
   }
 
-  // ✅ NEW: Update mood from current state immediately
   void _updateMoodFromCurrentState() {
     try {
       if (widget.homeState is HomeDashboardState) {
         final dashboardState = widget.homeState as HomeDashboardState;
         
-        // 1. Try to get latest emotion from entries
         if (dashboardState.emotionEntries.isNotEmpty) {
           final latestEmotion = dashboardState.emotionEntries.first;
           setState(() {
@@ -652,7 +614,6 @@ class _DashboardContentState extends State<_DashboardContent>
           return;
         }
         
-        // 2. Try to get from homeData recent emotions
         final homeData = dashboardState.homeData;
         if (homeData != null) {
           final recentEmotions = homeData.recentEmotions;
@@ -675,13 +636,11 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  /// ✅ ENHANCED: Ensure both home data and emotion data are loaded
   void _ensureHomeDataLoaded() {
     try {
       if (_homeBloc != null && !_homeBloc!.isClosed) {
         print('🔄 Ensuring home data is loaded...');
         
-        // Check if we have valid home data
         if (widget.homeState is HomeDashboardState) {
           final dashboardState = widget.homeState as HomeDashboardState;
           final homeData = dashboardState.homeData;
@@ -702,7 +661,6 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  // ✅ CRITICAL FIX: Safe method to add events to HomeBloc
   void _safeAddHomeEvent(home_events.HomeEvent event) {
     try {
       if (_homeBloc != null && !_homeBloc!.isClosed) {
@@ -716,25 +674,19 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  /// ✅ ENHANCED: Force refresh all dashboard data with mood update
   void _forceRefreshAllData() {
       print('🔄 Force refreshing all dashboard data...');
       
-      // Refresh home data first
     _safeAddHomeEvent(const home_events.LoadHomeDataEvent(forceRefresh: true));
       
-      // Then refresh emotion history
     _safeAddHomeEvent(const home_events.LoadEmotionHistoryEvent(forceRefresh: true));
       
-      // Refresh user stats
     _safeAddHomeEvent(const home_events.LoadUserStatsEvent(forceRefresh: true));
       
-      // Refresh weekly insights
     _safeAddHomeEvent(const home_events.LoadWeeklyInsightsEvent(forceRefresh: true));
       
       print('✅ All data refresh initiated');
       
-      // Update mood after a short delay
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
           _updateMoodFromCurrentState();
@@ -742,23 +694,18 @@ class _DashboardContentState extends State<_DashboardContent>
       });
   }
 
-  // ✅ ENHANCED: Data loading with mood update
   void _loadEnhancedDashboardData() {
     try {
       final homeBloc = context.read<HomeBloc>();
       
       Logger.info('🎭 Loading enhanced dashboard data with persistence...');
       
-      // Load fresh data from backend
       homeBloc.add(const home_events.LoadEmotionHistoryEvent(forceRefresh: false));
       
-      // Load weekly insights with cache fallback
       homeBloc.add(const home_events.LoadWeeklyInsightsEvent(forceRefresh: false));
       
-      // Load today's journey
       homeBloc.add(const home_events.LoadTodaysJourneyEvent(forceRefresh: false));
       
-      // Load current month calendar data
       homeBloc.add(home_events.LoadEmotionCalendarEvent(
         month: DateTime.now(),
         forceRefresh: false,
@@ -766,7 +713,6 @@ class _DashboardContentState extends State<_DashboardContent>
       
       Logger.info('✅ Enhanced dashboard data loading initiated with persistence');
       
-      // Update mood after data loads
       Future.delayed(const Duration(milliseconds: 1000), () {
         if (mounted) {
           _updateMoodFromCurrentState();
@@ -777,20 +723,16 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  /// Load cached emotion data immediately for better UX when returning to dashboard
   Future<void> _loadCachedEmotionDataImmediately() async {
     try {
       Logger.info('📦 Loading cached emotion data immediately for dashboard...');
-      // Cache loading logic would go here if implemented
     } catch (e) {
       Logger.warning('⚠️ Could not load cached emotion data immediately: $e');
     }
   }
 
-  /// Ensure emotion data is loaded when returning to dashboard
   void _ensureEmotionDataLoaded() {
     try {
-      // Check if we have emotion entries in the current state
       if (_emotionEntries.isEmpty && _homeBloc != null && !_homeBloc!.isClosed) {
         Logger.info('🔄 No emotion entries found, triggering emotion history load...');
         _homeBloc!.add(const home_events.LoadEmotionHistoryEvent(forceRefresh: false));
@@ -802,7 +744,6 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  /// Test method to log a sample emotion
   void _testLogEmotion() async {
     try {
       Logger.info('🧪 Testing emotion logging...');
@@ -859,12 +800,10 @@ class _DashboardContentState extends State<_DashboardContent>
     )..repeat(reverse: true);
   }
 
-  // ✅ FIXED: Safe initialization with proper context access
   void _initializeBackendServices() {
     try {
       if (!mounted) return;
 
-      // Initialize DIO client
       try {
         final dioClient = GetIt.instance<DioClient>();
         Logger.info('✅ DIO client initialized');
@@ -872,7 +811,6 @@ class _DashboardContentState extends State<_DashboardContent>
         Logger.warning('⚠️ Could not initialize DIO client: $e');
       }
 
-      // Get EmotionBloc from GetIt
       try {
         _emotionBloc = GetIt.instance<EmotionBloc>();
         Logger.info('✅ EmotionBloc retrieved from GetIt');
@@ -880,7 +818,6 @@ class _DashboardContentState extends State<_DashboardContent>
         Logger.warning('⚠️ Could not get EmotionBloc: $e');
       }
 
-      // ✅ CRITICAL FIX: Now context definitely has HomeBloc access
       try {
         _homeBloc = context.read<HomeBloc>();
         Logger.info('✅ HomeBloc retrieved from context successfully');
@@ -903,7 +840,6 @@ class _DashboardContentState extends State<_DashboardContent>
 
   Future<void> _testBackendConnection() async {
     try {
-      // Test backend connection via HomeBloc
       if (_homeBloc != null && !_homeBloc!.isClosed) {
         _homeBloc!.add(const home_events.RefreshHomeDataEvent());
         Logger.info('✅ Backend connection test initiated via HomeBloc');
@@ -917,7 +853,6 @@ class _DashboardContentState extends State<_DashboardContent>
     try {
       Logger.info('🎭 Dashboard initialized - loading enhanced emotion data with persistence');
       
-      // Initialize home with emotion data persistence
       if (_homeBloc != null && !_homeBloc!.isClosed) {
         _homeBloc!.add(const home_events.InitializeHomeEvent(initialData: {}));
       }
@@ -926,52 +861,44 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  // ✅ ENHANCED: Navigation handling with state preservation
   void _onNavItemTapped(int index) {
-    // Save current state before navigation
     _preserveCurrentState();
     
     switch (index) {
-      case 0: // Atlas
+case 0: 
         _navigateToMoodAtlas();
         break;
-      case 1: // Friends
+case 1: 
         NavigationService.pushNamed(AppRouter.friends);
         break;
-      case 2: // Insights
+case 2: 
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const EnhancedInsightsView(),
           ),
         ).then((_) {
-          // ✅ CRITICAL: Restore data when returning from insights
           _restoreStateAfterNavigation();
         });
         break;
-      case 3: // Profile
+case 3: 
         NavigationService.pushNamed(AppRouter.profile);
         break;
     }
   }
 
-  // ✅ NEW: Preserve current state before navigation
   void _preserveCurrentState() {
-    // Store current mood state
     final preservedMood = currentMood;
     final preservedLabel = currentMoodLabel;
     
     print('🔒 Preserving state: mood=$preservedLabel, emotions=${_emotionEntries.length}');
   }
 
-  // ✅ NEW: Restore state after navigation
   void _restoreStateAfterNavigation() {
     print('🔄 Restoring state after navigation...');
     
-    // Force refresh data
     _forceRefreshAllData();
     
-    // Update mood from current state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateMoodFromCurrentState();
     });
@@ -985,7 +912,6 @@ class _DashboardContentState extends State<_DashboardContent>
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) {
-          // Get the EmotionBloc from the current context
           EmotionBloc? emotionBloc;
           try {
             emotionBloc = context.read<EmotionBloc>();
@@ -994,14 +920,12 @@ class _DashboardContentState extends State<_DashboardContent>
             print('⚠️ EmotionBloc not found in dashboard: $e');
           }
 
-          // Wrap MoodAtlasView with BlocProvider
           if (emotionBloc != null) {
             return BlocProvider.value(
               value: emotionBloc,
               child: const MoodAtlasView(),
             );
           } else {
-            // Fallback: create a new EmotionBloc instance using DI
             return BlocProvider(
               create: (context) => di.sl<EmotionBloc>(),
               child: const MoodAtlasView(),
@@ -1031,12 +955,10 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  /// ✅ ENHANCED: Enhanced emotion logging handler with immediate UI updates and complete data refresh
   void _handleEnhancedEmotionLog({String? emotionType, int? intensity, String? note}) {
     print('🎭 Enhanced emotion log handler called');
     print('🎭 Emotion: $emotionType, Intensity: $intensity');
     
-    // Immediately update current mood if emotion data is provided
     if (emotionType != null) {
       setState(() {
         currentMood = _mapEmotionToMoodType(emotionType);
@@ -1046,30 +968,25 @@ class _DashboardContentState extends State<_DashboardContent>
       print('🔍 DEBUG: Immediately updated current mood to: $currentMoodLabel ($emotionType)');
     }
     
-    // Show success feedback
     NavigationService.showSuccessSnackBar('🎭 Emotion logged successfully!');
     
-    // Force refresh ALL data to ensure consistency
     print('🔄 Forcing complete data refresh after emotion log...');
     _forceRefreshAllData();
     
-    // Additional delayed refresh to catch any backend sync delays
     Future.delayed(const Duration(milliseconds: 2000), () {
       if (mounted && _homeBloc != null && !_homeBloc!.isClosed) {
         print('🔄 Secondary data refresh for backend sync...');
         _homeBloc!.add(const home_events.RefreshHomeDataEvent());
-        _updateMoodFromCurrentState(); // Update mood again
+_updateMoodFromCurrentState(); 
       }
     });
   }
 
   void _updateCurrentMoodFromEmotions() {
     if (_emotionEntries.isNotEmpty) {
-      // Get the most recent emotion
       final latestEmotion = _emotionEntries.first;
       final emotionType = latestEmotion.emotion;
       
-      // Map emotion to mood type
       setState(() {
         currentMood = _mapEmotionToMoodType(emotionType);
         currentMoodLabel = _getEmotionDisplayName(emotionType);
@@ -1162,15 +1079,12 @@ class _DashboardContentState extends State<_DashboardContent>
 
   void _postToCommunity(String emotion, int intensity, String? contextText, List<String> tags, bool isAnonymous) {
     try {
-      // Get the emotion emoji
       final emotionEmoji = _getEmotionEmoji(emotion);
       
-      // Create community post content
       final postContent = contextText?.isNotEmpty == true 
           ? contextText! 
           : 'Feeling $emotion today';
       
-      // Get CommunityBloc and post to community
       final communityBloc = context.read<CommunityBloc>();
       
       communityBloc.add(CreateCommunityPostEvent(
@@ -1222,7 +1136,6 @@ class _DashboardContentState extends State<_DashboardContent>
     }
   }
 
-  // ✅ ENHANCED: Handle refresh with state preservation
   Future<void> _handleRefresh() async {
     try {
       print('🔄 Dashboard refresh initiated...');
@@ -1230,13 +1143,11 @@ class _DashboardContentState extends State<_DashboardContent>
       await Future.delayed(const Duration(milliseconds: 500));
       await _testBackendConnection();
 
-      // ✅ Safe HomeBloc refresh with proper lifecycle check
       if (_homeBloc != null && !_homeBloc!.isClosed) {
         _homeBloc!.add(const home_events.RefreshHomeDataEvent());
         _homeBloc!.add(const home_events.LoadEmotionHistoryEvent(forceRefresh: true));
       }
 
-      // Update mood after refresh
       Future.delayed(const Duration(milliseconds: 1000), () {
         if (mounted) {
           _updateMoodFromCurrentState();
@@ -1259,13 +1170,11 @@ class _DashboardContentState extends State<_DashboardContent>
     super.dispose();
   }
 
-  // ✅ ENHANCED: Popup scope handling with state preservation
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
       onPopInvoked: (didPop) {
-        // Preserve state when pop is invoked
         if (!didPop) {
           _preserveCurrentState();
         }
@@ -1328,11 +1237,9 @@ class _DashboardContentState extends State<_DashboardContent>
         ),
         backgroundColor: const Color(0xFF0A0A0F),
         body: SafeArea(
-          // ✅ CRITICAL FIX: Enhanced BlocListener with immediate mood updates
           child: BlocListener<HomeBloc, HomeState>(
             listener: (context, state) {
               if (state is HomeDashboardState) {
-                // ✅ FIXED: Use HomeDataModel.isNewUser instead of userStats
                 final homeData = state.homeData;
                 final isNewUser = homeData?.isNewUser ?? true;
                 
@@ -1343,10 +1250,8 @@ class _DashboardContentState extends State<_DashboardContent>
                   print('🔍 DEBUG: Updated _isNewUser state to: $isNewUser');
                 }
                 
-                // ✅ CRITICAL FIX: Update mood immediately when state changes
                 _updateMoodFromCurrentState();
                 
-                // Update current mood based on emotion entries
                 if (_emotionEntries.isNotEmpty) {
                   print('🔍 DEBUG: Emotion entries updated: ${_emotionEntries.length} entries');
                   print('🔍 DEBUG: Latest emotion: ${_emotionEntries.first.emotion}');
@@ -1365,7 +1270,7 @@ class _DashboardContentState extends State<_DashboardContent>
                   ),
                 ),
                 EnhancedBottomNavigationCustom(
-                  selectedIndex: 0, // Default to first tab
+selectedIndex: 0, 
                   onItemTapped: _onNavItemTapped,
                   onMoodTapped: _onMoodTapped,
                   currentMood: currentMood,
@@ -1410,7 +1315,6 @@ class _DashboardContentState extends State<_DashboardContent>
   }
 
   Widget _buildEnhancedErrorState(HomeState state) {
-    // Extract error details from HomeError state
     String message = 'Something went wrong';
     bool canRetry = true;
     String retryAction = 'load_home_data';
@@ -1427,7 +1331,6 @@ class _DashboardContentState extends State<_DashboardContent>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Error Icon with animation
             AnimatedBuilder(
               animation: _breathingController,
               builder: (context, child) {
@@ -1462,7 +1365,6 @@ class _DashboardContentState extends State<_DashboardContent>
             
             const SizedBox(height: 24),
             
-            // Error Title
             const Text(
               'Unable to Load Dashboard',
               style: TextStyle(
@@ -1474,7 +1376,6 @@ class _DashboardContentState extends State<_DashboardContent>
             
             const SizedBox(height: 12),
             
-            // Error Message
             Text(
               message,
               style: TextStyle(
@@ -1516,7 +1417,6 @@ class _DashboardContentState extends State<_DashboardContent>
               
               const SizedBox(height: 16),
               
-              // Secondary Action - Use Offline Mode
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -1542,7 +1442,6 @@ class _DashboardContentState extends State<_DashboardContent>
                 ),
               ),
             ] else ...[
-              // If can't retry, show contact support option
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
@@ -1565,7 +1464,6 @@ class _DashboardContentState extends State<_DashboardContent>
             
             const SizedBox(height: 24),
             
-            // Connection Status
             _buildConnectionStatus(),
           ],
         ),
@@ -1592,7 +1490,7 @@ class _DashboardContentState extends State<_DashboardContent>
             height: 8,
             decoration: const BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.green, // Connected status
+color: Colors.green, 
             ),
           ),
           const SizedBox(width: 8),
@@ -1621,22 +1519,18 @@ class _DashboardContentState extends State<_DashboardContent>
           _homeBloc!.add(const home_events.LoadHomeDataEvent(forceRefresh: true));
       }
       
-      // Show retry feedback
       NavigationService.showInfoSnackBar('Retrying...');
     }
   }
 
   void _tryOfflineMode() {
-    // Try to load cached data
     if (_homeBloc != null && !_homeBloc!.isClosed) {
-      // This could trigger loading cached data or showing a simplified offline UI
       NavigationService.showInfoSnackBar('Loading offline data...');
-      _loadInitialData(); // Attempt to use any cached data
+_loadInitialData(); 
     }
   }
 
   void _showContactSupport() {
-    // Show support contact options
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1701,13 +1595,10 @@ class _DashboardContentState extends State<_DashboardContent>
     );
   }
 
-  // ✅ ENHANCED: Build dashboard content with better data handling
   Widget _buildDashboardContent(HomeDashboardState state) {
-    // ✅ CRITICAL FIX: Use HomeDataModel.isNewUser instead of userStats
     final homeData = state.homeData;
     final isNewUser = homeData?.isNewUser ?? true;
 
-    // Debug logging
     print('🔍 DEBUG: Building dashboard content');
     print('🔍 DEBUG: isNewUser: $isNewUser');
     print('🔍 DEBUG: emotionEntries.length: ${_emotionEntries.length}');
@@ -1768,7 +1659,6 @@ class _DashboardContentState extends State<_DashboardContent>
     );
   }
 
-  // ✅ ENHANCED: Better content rendering with data checks
   Widget _buildRegularContent() {
     final dashboardState = widget.homeState as HomeDashboardState;
     final weeklyInsights = dashboardState.weeklyInsights;
@@ -1778,7 +1668,6 @@ class _DashboardContentState extends State<_DashboardContent>
     return Column(
       children: [
         const SizedBox(height: 32),
-        // ✅ CRITICAL: Always show TodaysJourneyWidget with proper data
         TodaysJourneyWidget(
           todaysEmotions: _todaysEmotions,
           onEmotionTap: _onEmotionTap,
@@ -1801,9 +1690,7 @@ class _DashboardContentState extends State<_DashboardContent>
     );
   }
 
-  // Enhanced dashboard interaction methods
   void _onCalendarDateSelected(DateTime date) {
-    // This could show a modal with emotions for the selected date
     print('Selected date: $date');
     
     final emotionsForDate = _emotionEntries.where((emotion) {
@@ -1829,7 +1716,6 @@ class _DashboardContentState extends State<_DashboardContent>
   }
 
   void _onEmotionTap(EmotionEntryModel emotion) {
-    // Show detailed view of the emotion with edit options
     print('Tapped emotion: ${emotion.emotion}');
     _showEmotionDetailModal(emotion);
   }
@@ -2010,7 +1896,6 @@ class _DashboardContentState extends State<_DashboardContent>
                           child: OutlinedButton.icon(
                             onPressed: () {
                               Navigator.pop(context);
-                              // TODO: Implement edit functionality
                             },
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF8B5CF6),
@@ -2025,7 +1910,6 @@ class _DashboardContentState extends State<_DashboardContent>
                           child: ElevatedButton.icon(
                             onPressed: () {
                               Navigator.pop(context);
-                              // TODO: Implement delete functionality
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFFF6B6B),
@@ -2084,7 +1968,7 @@ class _DashboardContentState extends State<_DashboardContent>
         return;
       }
       final response = await dio.get(
-        'http://localhost:8000/api/messages/inbox',
+        'http:////localhost:3000/api/messages/inbox',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
@@ -2203,7 +2087,6 @@ class _EnhancedBottomNavigationCustomState
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  // Atlas (Map)
                   Expanded(
                     child: _buildNavItem(
                       index: 0,
@@ -2214,7 +2097,6 @@ class _EnhancedBottomNavigationCustomState
                     ),
                   ),
 
-                  // Friends
                   Expanded(
                     child: _buildNavItem(
                       index: 1,
@@ -2225,10 +2107,8 @@ class _EnhancedBottomNavigationCustomState
                     ),
                   ),
 
-                  // Space for floating mood button
                   const SizedBox(width: 70),
 
-                  // Insights
                   Expanded(
                     child: _buildNavItem(
                       index: 2,
@@ -2239,7 +2119,6 @@ class _EnhancedBottomNavigationCustomState
                     ),
                   ),
 
-                  // Profile
                   Expanded(
                     child: _buildNavItem(
                       index: 3,
@@ -2254,7 +2133,6 @@ class _EnhancedBottomNavigationCustomState
             ),
           ),
 
-          // Floating Mood Button with Custom Face
           Positioned(
             top: 5,
             left: MediaQuery.of(context).size.width / 2 - 35,
@@ -2385,4 +2263,4 @@ class _EnhancedBottomNavigationCustomState
 }
 
 final dioClient = GetIt.instance<DioClient>();
-final token = dioClient.getAuthToken(); // This is synchronous and returns the stored token
+final token = dioClient.getAuthToken(); 

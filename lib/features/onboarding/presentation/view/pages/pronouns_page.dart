@@ -1,4 +1,3 @@
-// lib/features/onboarding/presentation/view/pages/pronouns_page.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -44,7 +43,6 @@ class _PronounsPageState extends State<PronounsPage>
   void _initializePronounOptions() {
     final stepData = widget.step.data;
 
-    // . FIXED: Use exact backend values for both display and value
     final defaultPronounOptions = [
       {'display': 'She / Her', 'value': 'She / Her'},
       {'display': 'He / Him', 'value': 'He / Him'},
@@ -52,7 +50,6 @@ class _PronounsPageState extends State<PronounsPage>
       {'display': 'Other', 'value': 'Other'},
     ];
 
-    // Try to get options from API response first
     if (stepData != null && stepData['options'] is List) {
       final apiOptions = stepData['options'] as List<dynamic>? ?? [];
       _pronounOptions = apiOptions
@@ -62,7 +59,6 @@ class _PronounsPageState extends State<PronounsPage>
               final label = option['label']?.toString() ?? value;
               return {'display': label, 'value': value};
             } else if (option is String) {
-              // Handle simple string options
               final normalized = _normalizePronounValue(option);
               return {'display': option, 'value': normalized};
             } else {
@@ -81,14 +77,12 @@ class _PronounsPageState extends State<PronounsPage>
         '. Pronoun options from API: ${_pronounOptions.map((o) => '"${o['value']}" (${o['display']})').join(', ')}',
       );
     } else {
-      // Fallback to default options if API doesn't provide them
       _pronounOptions = defaultPronounOptions;
       print(
         '. Pronoun options from default: ${_pronounOptions.map((o) => '"${o['value']}" (${o['display']})').join(', ')}',
       );
     }
 
-    // Validate that the current selection is in the available options
     if (_selectedPronouns != null) {
       final isValidSelection = _pronounOptions.any(
         (option) => option['value'] == _selectedPronouns,
@@ -103,7 +97,6 @@ class _PronounsPageState extends State<PronounsPage>
   }
 
   String _normalizePronounValue(String input) {
-    // . FIXED: Normalize to exact backend format
     switch (input.toLowerCase().replaceAll(' ', '').replaceAll('/', '')) {
       case 'sheher':
         return 'She / Her';
@@ -114,11 +107,10 @@ class _PronounsPageState extends State<PronounsPage>
       case 'other':
         return 'Other';
       default:
-        // If already in correct format, keep it
         if (['She / Her', 'He / Him', 'They / Them', 'Other'].contains(input)) {
           return input;
         }
-        return 'Other'; // Safe fallback
+return 'Other'; 
     }
   }
 

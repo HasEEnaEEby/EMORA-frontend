@@ -1,7 +1,3 @@
-// ============================================================================
-// COMPLETE ENHANCED FRIENDS VIEW - PRODUCTION READY
-// friends_view.dart
-// ============================================================================
 
 import 'dart:async';
 import 'package:emora_mobile_app/core/utils/friends_utils.dart';
@@ -17,9 +13,6 @@ import '../../view_model/bloc/friend_bloc.dart';
 import '../../view_model/bloc/friend_event.dart';
 import '../../view_model/bloc/friend_state.dart';
 
-// ============================================================================
-// ENUMS AND STATUS DEFINITIONS
-// ============================================================================
 
 enum FriendRequestStatus {
   notRequested,
@@ -30,9 +23,6 @@ enum FriendRequestStatus {
   error,
 }
 
-// ============================================================================
-// ENHANCED FRIEND REQUEST BUTTON
-// ============================================================================
 
 class EnhancedFriendRequestButton extends StatefulWidget {
   final String userId;
@@ -244,9 +234,6 @@ class _ButtonConfig {
   });
 }
 
-// ============================================================================
-// ENHANCED FRIENDS TAB BAR
-// ============================================================================
 
 class EnhancedFriendsTabBar extends StatelessWidget {
   final TabController controller;
@@ -385,9 +372,6 @@ class EnhancedFriendsTabBar extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// ENHANCED FLOATING BUTTON
-// ============================================================================
 
 class EnhancedFloatingButton extends StatelessWidget {
   final Animation<double> animation;
@@ -438,9 +422,6 @@ class EnhancedFloatingButton extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// MAIN FRIENDS VIEW
-// ============================================================================
 
 class FriendsView extends StatefulWidget {
   const FriendsView({super.key});
@@ -457,20 +438,18 @@ class _FriendsViewState extends State<FriendsView>
   late Animation<double> _floatingAnimation;
   late TextEditingController _searchController;
 
-  // Enhanced search state management
   String _searchQuery = '';
   bool _showSearch = false;
   Timer? _searchDebounceTimer;
   static const Duration _debounceDuration = Duration(milliseconds: 500);
 
-  // BLoC instances
   late FriendBloc _friendBloc;
   late CommunityBloc _communityBloc;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this); // ✅ CRITICAL FIX: Changed from 5 to 4 to match actual tabs
+_tabController = TabController(length: 4, vsync: this); 
     _searchController = TextEditingController();
     _initializeAnimations();
     _initializeBloCs();
@@ -577,9 +556,6 @@ class _FriendsViewState extends State<FriendsView>
     );
   }
 
-  // ============================================================================
-  // SEARCH METHODS
-  // ============================================================================
 
   void _toggleSearch() {
     setState(() => _showSearch = !_showSearch);
@@ -593,16 +569,13 @@ class _FriendsViewState extends State<FriendsView>
     setState(() => _searchQuery = value);
     _searchController.text = value;
     
-    // Cancel previous timer
     _searchDebounceTimer?.cancel();
     
     if (value.trim().isNotEmpty) {
-      // Switch to discover tab when searching
       if (_tabController.index != 3) {
         _tabController.animateTo(3);
       }
       
-      // Debounce search to avoid too many API calls
       _searchDebounceTimer = Timer(_debounceDuration, () {
         print('🔍 Executing global search for: "${value.trim()}"');
         _friendBloc.add(SearchAllUsersEvent(query: value.trim()));
@@ -622,9 +595,6 @@ class _FriendsViewState extends State<FriendsView>
     _friendBloc.add(const ClearSearchEvent());
   }
 
-  // ============================================================================
-  // ACTION METHODS
-  // ============================================================================
 
   Future<void> _handleRefresh() async {
     _refreshController.forward();
@@ -659,7 +629,6 @@ class _FriendsViewState extends State<FriendsView>
     print('🚀 Sending friend request to: $userId');
     if (userId.isEmpty) return;
     
-    // Check if request is already sent before making the API call
     final currentState = _friendBloc.state;
     if (currentState is FriendsLoaded) {
       final isAlreadySent = currentState.sentRequests.any((req) => req.userId == userId);
@@ -821,9 +790,6 @@ class _FriendsViewState extends State<FriendsView>
   }
 }
 
-// ============================================================================
-// ENHANCED FRIENDS HEADER
-// ============================================================================
 
 class EnhancedFriendsHeader extends StatefulWidget {
   final bool showSearch;
@@ -1061,13 +1027,7 @@ class _EnhancedFriendsHeaderState extends State<EnhancedFriendsHeader>
   }
 }
 
-// ============================================================================
-// ENHANCED DISCOVER TAB
-// ============================================================================
 
-// ============================================================================
-// ENHANCED DISCOVER TAB WITH IMPROVED UI
-// ============================================================================
 
 class EnhancedDiscoverTab extends StatefulWidget {
   final bool isSearching;
@@ -1146,7 +1106,6 @@ class _EnhancedDiscoverTabState extends State<EnhancedDiscoverTab>
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           
-          // Suggestions list
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             sliver: SliverList(
@@ -1166,9 +1125,8 @@ class _EnhancedDiscoverTabState extends State<EnhancedDiscoverTab>
             ),
           ),
           
-          // Bottom padding
           const SliverToBoxAdapter(
-            child: SizedBox(height: 100), // Space for floating action button
+child: SizedBox(height: 100), 
           ),
         ],
       ),
@@ -1266,7 +1224,6 @@ class _EnhancedDiscoverTabState extends State<EnhancedDiscoverTab>
     );
   }
 
-  // Loading and Error States
   Widget _buildSearchLoadingState() {
     return const Center(
       child: Column(
@@ -1508,9 +1465,6 @@ class _EnhancedDiscoverTabState extends State<EnhancedDiscoverTab>
   }
 }
 
-// ============================================================================
-// ENHANCED USER SUGGESTION CARD
-// ============================================================================
 
 class EnhancedUserSuggestionCard extends StatefulWidget {
   final FriendSuggestionEntity suggestion;
@@ -1655,7 +1609,6 @@ class _EnhancedUserSuggestionCardState extends State<EnhancedUserSuggestionCard>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Name and username row
         Row(
           children: [
             Expanded(
@@ -1677,7 +1630,6 @@ class _EnhancedUserSuggestionCardState extends State<EnhancedUserSuggestionCard>
         ),
         const SizedBox(height: 4),
         
-        // Username badge
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
@@ -1699,7 +1651,6 @@ class _EnhancedUserSuggestionCardState extends State<EnhancedUserSuggestionCard>
         
         const SizedBox(height: 8),
         
-        // Location
         Row(
           children: [
             Icon(Icons.location_on_rounded, color: Colors.grey[500], size: 16),
@@ -1714,7 +1665,6 @@ class _EnhancedUserSuggestionCardState extends State<EnhancedUserSuggestionCard>
           ],
         ),
         
-        // Mutual friends badge
         if (widget.suggestion.mutualFriends > 0) ...[
           const SizedBox(height: 8),
           Container(
@@ -1748,7 +1698,6 @@ class _EnhancedUserSuggestionCardState extends State<EnhancedUserSuggestionCard>
   Widget _buildActionSection() {
     return Column(
       children: [
-        // Common interests
         if (widget.suggestion.commonInterests.isNotEmpty) ...[
           Align(
             alignment: Alignment.centerLeft,
@@ -1787,7 +1736,6 @@ class _EnhancedUserSuggestionCardState extends State<EnhancedUserSuggestionCard>
           const SizedBox(height: 16),
         ],
         
-        // Action button
         SizedBox(
           width: double.infinity,
           child: BlocBuilder<FriendBloc, FriendState>(
@@ -1809,34 +1757,28 @@ class _EnhancedUserSuggestionCardState extends State<EnhancedUserSuggestionCard>
   }
 
   FriendRequestStatus _getButtonStatus(FriendBloc friendBloc, FriendState state) {
-    // Check if currently loading for this specific user
     if (state is FriendRequestActionLoading && state.targetUserId == widget.suggestion.id) {
       return FriendRequestStatus.sending;
     }
     
-    // Check if already friends
     if (state is FriendsLoaded && state.friends.any((f) => f.id == widget.suggestion.id)) {
       return FriendRequestStatus.friends;
     }
     
-    // Check if request already exists in sent requests
     if (state is FriendsLoaded && 
         state.sentRequests.any((req) => req.userId == widget.suggestion.id)) {
       return FriendRequestStatus.requested;
     }
     
-    // Check if request already exists in received requests
     if (state is FriendsLoaded && 
         state.receivedRequests.any((req) => req.userId == widget.suggestion.id)) {
       return FriendRequestStatus.requested;
     }
     
-    // Check if this suggestion is already marked as requested
     if (widget.suggestion.isRequested) {
       return FriendRequestStatus.requested;
     }
     
-    // Default state
     return FriendRequestStatus.notRequested;
   }
   
@@ -1875,9 +1817,6 @@ class _EnhancedUserSuggestionCardState extends State<EnhancedUserSuggestionCard>
 
 
 
-// ============================================================================
-// ENHANCED SEARCH RESULT CARD
-// ============================================================================
 
 class EnhancedSearchResultCard extends StatefulWidget {
   final FriendSuggestionEntity suggestion;
@@ -2119,34 +2058,28 @@ class _EnhancedSearchResultCardState extends State<EnhancedSearchResultCard>
   }
 
   FriendRequestStatus _getButtonStatus(FriendBloc friendBloc, FriendState state) {
-    // Check if currently loading for this specific user
     if (state is FriendRequestActionLoading && state.targetUserId == widget.suggestion.id) {
       return FriendRequestStatus.sending;
     }
     
-    // Check if already friends
     if (state is FriendsLoaded && state.friends.any((f) => f.id == widget.suggestion.id)) {
       return FriendRequestStatus.friends;
     }
     
-    // Check if request already exists in sent requests
     if (state is FriendsLoaded && 
         state.sentRequests.any((req) => req.userId == widget.suggestion.id)) {
       return FriendRequestStatus.requested;
     }
     
-    // Check if request already exists in received requests
     if (state is FriendsLoaded && 
         state.receivedRequests.any((req) => req.userId == widget.suggestion.id)) {
       return FriendRequestStatus.requested;
     }
     
-    // Check if this suggestion is already marked as requested
     if (widget.suggestion.isRequested) {
       return FriendRequestStatus.requested;
     }
     
-    // Default state
     return FriendRequestStatus.notRequested;
   }
   
@@ -2182,9 +2115,6 @@ class _EnhancedSearchResultCardState extends State<EnhancedSearchResultCard>
   }
 }
 
-// ============================================================================
-// USER PROFILE MODAL
-// ============================================================================
 
 class UserProfileModal extends StatelessWidget {
   final FriendSuggestionEntity user;
@@ -2480,9 +2410,6 @@ class UserProfileModal extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// MINIMAL CHAT VIEW
-// ============================================================================
 
 class ChatView extends StatelessWidget {
   final String friendId;

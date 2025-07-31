@@ -182,7 +182,6 @@ class _OnboardingButtonState extends State<OnboardingButton>
   }
 }
 
-// Alternative button styles for different use cases
 class OnboardingSecondaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;

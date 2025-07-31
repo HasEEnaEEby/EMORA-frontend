@@ -1,7 +1,5 @@
-// lib/features/home/data/models/settings_model.dart
 import 'package:equatable/equatable.dart';
 
-/// Model for user settings and preferences
 class SettingsModel extends Equatable {
   final bool notificationsEnabled;
   final bool dataSharingEnabled;
@@ -17,7 +15,6 @@ class SettingsModel extends Equatable {
     this.updatedAt,
   });
 
-  /// Create from JSON
   factory SettingsModel.fromJson(Map<String, dynamic> json) {
     return SettingsModel(
       notificationsEnabled: json['notificationsEnabled'] ?? true,
@@ -30,7 +27,6 @@ class SettingsModel extends Equatable {
     );
   }
 
-  /// Convert to JSON
   Map<String, dynamic> toJson() {
     return {
       'notificationsEnabled': notificationsEnabled,
@@ -41,7 +37,6 @@ class SettingsModel extends Equatable {
     };
   }
 
-  /// Create a copy with modified values
   SettingsModel copyWith({
     bool? notificationsEnabled,
     bool? dataSharingEnabled,

@@ -1,4 +1,3 @@
-// lib/features/profile/presentation/view_model/profile_state.dart - COMPLETE VERSION
 import 'package:equatable/equatable.dart';
 import 'package:emora_mobile_app/features/profile/domain/entity/profile_entity.dart';
 import 'package:emora_mobile_app/features/profile/domain/entity/achievement_entity.dart';
@@ -11,7 +10,6 @@ abstract class ProfileState extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Initial state when profile hasn't been loaded yet
 class ProfileInitial extends ProfileState {
   const ProfileInitial();
 
@@ -19,7 +17,6 @@ class ProfileInitial extends ProfileState {
   String toString() => 'ProfileInitial';
 }
 
-/// Loading state for profile data
 class ProfileLoading extends ProfileState {
   final ProfileEntity? profile;
   final UserPreferencesEntity? preferences;
@@ -38,7 +35,6 @@ class ProfileLoading extends ProfileState {
   String toString() => 'ProfileLoading';
 }
 
-/// Profile data loaded successfully
 class ProfileLoaded extends ProfileState {
   final ProfileEntity profile;
   final UserPreferencesEntity? preferences;
@@ -56,7 +52,6 @@ class ProfileLoaded extends ProfileState {
   @override
   String toString() => 'ProfileLoaded { profile: ${profile.name}, achievements: ${achievements.length} }';
 
-  /// Create a copy with updated fields
   ProfileLoaded copyWith({
     ProfileEntity? profile,
     UserPreferencesEntity? preferences,
@@ -70,7 +65,6 @@ class ProfileLoaded extends ProfileState {
   }
 }
 
-/// Profile is being updated
 class ProfileUpdating extends ProfileState {
   final ProfileEntity profile;
   final UserPreferencesEntity? preferences;
@@ -89,7 +83,6 @@ class ProfileUpdating extends ProfileState {
   String toString() => 'ProfileUpdating { profile: ${profile.name} }';
 }
 
-/// Preferences are being updated
 class ProfilePreferencesUpdating extends ProfileState {
   final ProfileEntity profile;
   final UserPreferencesEntity? preferences;
@@ -108,7 +101,6 @@ class ProfilePreferencesUpdating extends ProfileState {
   String toString() => 'ProfilePreferencesUpdating { profile: ${profile.name} }';
 }
 
-/// Achievements are being loaded
 class ProfileAchievementsLoading extends ProfileState {
   final ProfileEntity profile;
   final UserPreferencesEntity? preferences;
@@ -127,7 +119,6 @@ class ProfileAchievementsLoading extends ProfileState {
   String toString() => 'ProfileAchievementsLoading { profile: ${profile.name} }';
 }
 
-/// Data is being exported
 class ProfileDataExporting extends ProfileState {
   final ProfileEntity profile;
   final UserPreferencesEntity? preferences;
@@ -146,7 +137,6 @@ class ProfileDataExporting extends ProfileState {
   String toString() => 'ProfileDataExporting { profile: ${profile.name} }';
 }
 
-/// Data has been exported successfully
 class ProfileDataExported extends ProfileState {
   final ProfileEntity profile;
   final UserPreferencesEntity? preferences;
@@ -167,7 +157,6 @@ class ProfileDataExported extends ProfileState {
   String toString() => 'ProfileDataExported { profile: ${profile.name}, exportedData: $exportedData }';
 }
 
-/// Avatar is being updated
 class ProfileAvatarUpdating extends ProfileState {
   final ProfileEntity profile;
   final UserPreferencesEntity? preferences;
@@ -188,7 +177,6 @@ class ProfileAvatarUpdating extends ProfileState {
   String toString() => 'ProfileAvatarUpdating { profile: ${profile.name}, newAvatar: $newAvatar }';
 }
 
-/// Profile sync in progress
 class ProfileSyncing extends ProfileState {
   final ProfileEntity profile;
   final UserPreferencesEntity? preferences;
@@ -207,7 +195,6 @@ class ProfileSyncing extends ProfileState {
   String toString() => 'ProfileSyncing { profile: ${profile.name} }';
 }
 
-/// Profile error state
 class ProfileError extends ProfileState {
   final String message;
   final ProfileEntity? profile;
@@ -229,14 +216,11 @@ class ProfileError extends ProfileState {
   @override
   String toString() => 'ProfileError { message: $message, error: $error }';
 
-  /// Check if we have profile data despite the error
   bool get hasProfileData => profile != null;
 
-  /// Check if we can retry the operation
   bool get canRetry => profile != null;
 }
 
-/// Account deletion in progress
 class ProfileAccountDeleting extends ProfileState {
   final ProfileEntity profile;
 
@@ -249,7 +233,6 @@ class ProfileAccountDeleting extends ProfileState {
   String toString() => 'ProfileAccountDeleting { profile: ${profile.name} }';
 }
 
-/// Account has been deleted
 class ProfileAccountDeleted extends ProfileState {
   final String message;
 
@@ -262,7 +245,6 @@ class ProfileAccountDeleted extends ProfileState {
   String toString() => 'ProfileAccountDeleted { message: $message }';
 }
 
-/// Profile validation error
 class ProfileValidationError extends ProfileState {
   final String message;
   final Map<String, String> fieldErrors;
@@ -284,14 +266,11 @@ class ProfileValidationError extends ProfileState {
   @override
   String toString() => 'ProfileValidationError { message: $message, fieldErrors: $fieldErrors }';
 
-  /// Get error for a specific field
   String? getFieldError(String fieldName) => fieldErrors[fieldName];
 
-  /// Check if a specific field has an error
   bool hasFieldError(String fieldName) => fieldErrors.containsKey(fieldName);
 }
 
-/// Network connectivity error
 class ProfileNetworkError extends ProfileState {
   final String message;
   final ProfileEntity? profile;
@@ -312,9 +291,7 @@ class ProfileNetworkError extends ProfileState {
   String toString() => 'ProfileNetworkError { message: $message }';
 }
 
-/// Extension methods for ProfileState
 extension ProfileStateExtensions on ProfileState {
-  /// Check if state indicates loading
   bool get isLoading {
     return this is ProfileLoading ||
            this is ProfileUpdating ||
@@ -326,7 +303,6 @@ extension ProfileStateExtensions on ProfileState {
            this is ProfileAccountDeleting;
   }
 
-  /// Check if state has profile data
   bool get hasProfileData {
     if (this is ProfileLoaded) return true;
     if (this is ProfileUpdating) return true;
@@ -341,7 +317,6 @@ extension ProfileStateExtensions on ProfileState {
     return false;
   }
 
-  /// Get profile data if available
   ProfileEntity? get profileData {
     if (this is ProfileLoaded) return (this as ProfileLoaded).profile;
     if (this is ProfileUpdating) return (this as ProfileUpdating).profile;
@@ -356,7 +331,6 @@ extension ProfileStateExtensions on ProfileState {
     return null;
   }
 
-  /// Get preferences data if available
   UserPreferencesEntity? get preferencesData {
     if (this is ProfileLoaded) return (this as ProfileLoaded).preferences;
     if (this is ProfileUpdating) return (this as ProfileUpdating).preferences;
@@ -370,7 +344,6 @@ extension ProfileStateExtensions on ProfileState {
     return null;
   }
 
-  /// Get achievements data if available
   List<AchievementEntity> get achievementsData {
     if (this is ProfileLoaded) return (this as ProfileLoaded).achievements;
     if (this is ProfileUpdating) return (this as ProfileUpdating).achievements;
@@ -384,14 +357,12 @@ extension ProfileStateExtensions on ProfileState {
     return [];
   }
 
-  /// Check if state indicates error
   bool get isError {
     return this is ProfileError ||
            this is ProfileValidationError ||
            this is ProfileNetworkError;
   }
 
-  /// Get error message if in error state
   String? get errorMessage {
     if (this is ProfileError) return (this as ProfileError).message;
     if (this is ProfileValidationError) return (this as ProfileValidationError).message;
@@ -399,12 +370,10 @@ extension ProfileStateExtensions on ProfileState {
     return null;
   }
 
-  /// Check if state allows user interaction
   bool get allowsInteraction {
     return !isLoading && !isError;
   }
 
-  /// Check if we can perform updates
   bool get canUpdate {
     return hasProfileData && !isLoading;
   }

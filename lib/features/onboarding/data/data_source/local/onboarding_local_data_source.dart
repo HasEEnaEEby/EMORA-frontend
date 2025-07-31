@@ -21,7 +21,6 @@ abstract class OnboardingLocalDataSource {
 class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
   final SharedPreferences sharedPreferences;
 
-  // Cache keys
   static const String _cachedStepsKey = 'cached_onboarding_steps';
   static const String _cacheTimestampKey = 'onboarding_cache_timestamp';
   static const String _userDataKey = 'user_onboarding_data';
@@ -45,7 +44,6 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
         return steps;
       }
 
-      // Return default steps if no cache
       Logger.info('📱 No cached steps, returning default steps');
       return _getDefaultSteps();
     } catch (e) {
@@ -86,7 +84,6 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
         return model;
       }
 
-      // Return empty user data if none exists
       Logger.info('📱 No cached user data, returning empty model');
       return UserOnboardingModel();
     } catch (e) {
@@ -144,7 +141,6 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
       await sharedPreferences.remove(_userDataKey);
       await sharedPreferences.remove(_completionKey);
       await sharedPreferences.remove(_completionTimestampKey);
-      // Keep cached steps for reuse
 
       Logger.info('🧹 Cleared onboarding data');
     } catch (e) {
@@ -174,7 +170,6 @@ class OnboardingLocalDataSourceImpl implements OnboardingLocalDataSource {
     }
   }
 
-  // Helper method to get default onboarding steps
   List<OnboardingStepModel> _getDefaultSteps() {
     return [
       OnboardingStepModel(

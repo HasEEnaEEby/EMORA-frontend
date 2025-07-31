@@ -47,7 +47,6 @@ class _CompletionPageState extends State<CompletionPage>
           CurvedAnimation(parent: _slideController, curve: Curves.easeOutCubic),
         );
 
-    // Start animations
     _startAnimations();
   }
 

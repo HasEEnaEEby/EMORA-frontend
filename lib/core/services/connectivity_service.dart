@@ -1,7 +1,3 @@
-// ============================================================================
-// lib/core/services/connectivity_service.dart
-// Complete connectivity service with banner management and network monitoring
-// ============================================================================
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -20,23 +16,19 @@ class ConnectivityService {
 
   ConnectivityService._internal();
 
-  // Banner management
   static bool _isOfflineBannerShowing = false;
   static bool _isSyncBannerShowing = false;
   static OverlayEntry? _offlineBannerEntry;
   static OverlayEntry? _syncBannerEntry;
 
-  // Network monitoring
   StreamSubscription<InternetConnectionStatus>? _networkSubscription;
   NetworkInfo? _networkInfo;
   bool _isInitialized = false;
   bool _isCurrentlyOnline = true;
 
-  // Callbacks
   final List<VoidCallback> _onConnectedCallbacks = [];
   final List<VoidCallback> _onDisconnectedCallbacks = [];
 
-  /// Initialize the connectivity service with network monitoring
   Future<void> initialize(NetworkInfo networkInfo) async {
     if (_isInitialized) return;
 
@@ -46,13 +38,11 @@ class ConnectivityService {
     Logger.info('🔗 Initializing connectivity service...');
 
     try {
-      // Check initial connection status
       _isCurrentlyOnline = await networkInfo.isConnected;
       Logger.info(
         '📶 Initial connection status: ${_isCurrentlyOnline ? "Online" : "Offline"}',
       );
 
-      // Start listening to network changes
       _networkSubscription = networkInfo.connectionStream.listen(
         _onNetworkStatusChanged,
         onError: (error) {
@@ -60,7 +50,6 @@ class ConnectivityService {
         },
       );
 
-      // Show initial offline banner if needed
       if (!_isCurrentlyOnline) {
         showOfflineBanner();
       }
@@ -71,7 +60,6 @@ class ConnectivityService {
     }
   }
 
-  /// Handle network status changes
   void _onNetworkStatusChanged(InternetConnectionStatus status) {
     final wasOnline = _isCurrentlyOnline;
     _isCurrentlyOnline = status == InternetConnectionStatus.connected;
@@ -79,21 +67,17 @@ class ConnectivityService {
     Logger.info('📶 Network status changed: ${status.name}');
 
     if (!wasOnline && _isCurrentlyOnline) {
-      // Just connected
       _onConnected();
     } else if (wasOnline && !_isCurrentlyOnline) {
-      // Just disconnected
       _onDisconnected();
     }
   }
 
-  /// Handle connection established
   void _onConnected() {
     Logger.info('🌐 Connected to internet');
 
     hideOfflineBanner();
 
-    // Notify callbacks
     for (final callback in _onConnectedCallbacks) {
       try {
         callback();
@@ -103,14 +87,12 @@ class ConnectivityService {
     }
   }
 
-  /// Handle connection lost
   void _onDisconnected() {
     Logger.info('📴 Disconnected from internet');
 
     hideSyncBanner();
     showOfflineBanner();
 
-    // Notify callbacks
     for (final callback in _onDisconnectedCallbacks) {
       try {
         callback();
@@ -120,30 +102,24 @@ class ConnectivityService {
     }
   }
 
-  /// Register callback for when connection is established
   void onConnected(VoidCallback callback) {
     _onConnectedCallbacks.add(callback);
   }
 
-  /// Register callback for when connection is lost
   void onDisconnected(VoidCallback callback) {
     _onDisconnectedCallbacks.add(callback);
   }
 
-  /// Remove connection callback
   void removeOnConnected(VoidCallback callback) {
     _onConnectedCallbacks.remove(callback);
   }
 
-  /// Remove disconnection callback
   void removeOnDisconnected(VoidCallback callback) {
     _onDisconnectedCallbacks.remove(callback);
   }
 
-  /// Get current connection status
   bool get isOnline => _isCurrentlyOnline;
 
-  /// Check connection status asynchronously
   Future<bool> checkConnection() async {
     if (_networkInfo == null) {
       Logger.warning('Network info not initialized');
@@ -160,7 +136,6 @@ class ConnectivityService {
     }
   }
 
-  /// Show offline banner at the top of the screen
   static void showOfflineBanner({
     String? customMessage,
     Duration? autoDismiss,
@@ -240,7 +215,6 @@ class ConnectivityService {
     try {
       Overlay.of(context).insert(_offlineBannerEntry!);
 
-      // Auto dismiss if specified
       if (autoDismiss != null) {
         Future.delayed(autoDismiss, () {
           hideOfflineBanner();
@@ -253,7 +227,6 @@ class ConnectivityService {
     }
   }
 
-  /// Show sync success banner
   static void showSyncSuccessBanner({
     int syncedCount = 1,
     String? customMessage,
@@ -265,7 +238,6 @@ class ConnectivityService {
       return;
     }
 
-    // Don't show if already showing
     if (_isSyncBannerShowing) return;
 
     _isSyncBannerShowing = true;
@@ -319,7 +291,6 @@ class ConnectivityService {
     try {
       Overlay.of(context).insert(_syncBannerEntry!);
 
-      // Auto dismiss
       Future.delayed(autoDismiss, () {
         hideSyncBanner();
       });
@@ -330,7 +301,6 @@ class ConnectivityService {
     }
   }
 
-  /// Show sync in progress banner
   static void showSyncInProgressBanner({
     int pendingCount = 1,
     String? customMessage,
@@ -342,7 +312,6 @@ class ConnectivityService {
       return;
     }
 
-    // Don't show if already showing
     if (_isSyncBannerShowing) return;
 
     _isSyncBannerShowing = true;
@@ -429,7 +398,6 @@ class ConnectivityService {
     }
   }
 
-  /// Show sync error banner
   static void showSyncErrorBanner({
     String? customMessage,
     VoidCallback? onRetryPressed,
@@ -441,7 +409,6 @@ class ConnectivityService {
       return;
     }
 
-    // Don't show if already showing
     if (_isSyncBannerShowing) return;
 
     _isSyncBannerShowing = true;
@@ -514,7 +481,6 @@ class ConnectivityService {
     try {
       Overlay.of(context).insert(_syncBannerEntry!);
 
-      // Auto dismiss
       Future.delayed(autoDismiss, () {
         hideSyncBanner();
       });
@@ -525,7 +491,6 @@ class ConnectivityService {
     }
   }
 
-  /// Hide offline banner
   static void hideOfflineBanner() {
     if (_isOfflineBannerShowing && _offlineBannerEntry != null) {
       Logger.info('🌐 Hiding offline banner');
@@ -539,7 +504,6 @@ class ConnectivityService {
     }
   }
 
-  /// Hide sync banner
   static void hideSyncBanner() {
     if (_isSyncBannerShowing && _syncBannerEntry != null) {
       Logger.info('📱 Hiding sync banner');
@@ -553,23 +517,18 @@ class ConnectivityService {
     }
   }
 
-  /// Hide all banners
   static void hideAllBanners() {
     hideOfflineBanner();
     hideSyncBanner();
   }
 
-  /// Check if any banner is currently showing
   static bool get isBannerShowing =>
       _isOfflineBannerShowing || _isSyncBannerShowing;
 
-  /// Check if offline banner is showing
   static bool get isOfflineBannerShowing => _isOfflineBannerShowing;
 
-  /// Check if sync banner is showing
   static bool get isSyncBannerShowing => _isSyncBannerShowing;
 
-  /// Show a custom snackbar for connectivity messages
   static void showConnectivitySnackBar({
     required String message,
     required ConnectivityMessageType type,
@@ -635,7 +594,6 @@ class ConnectivityService {
     );
   }
 
-  /// Dispose resources
   void dispose() {
     Logger.info('🗑️ Disposing connectivity service...');
 
@@ -653,16 +611,12 @@ class ConnectivityService {
     Logger.info('. Connectivity service disposed');
   }
 
-  /// Reset the singleton instance (useful for testing)
   static void reset() {
     _instance?.dispose();
     _instance = null;
   }
 }
 
-// ============================================================================
-// Supporting Enums and Classes
-// ============================================================================
 
 enum ConnectivityMessageType { offline, online, syncing, error }
 
@@ -683,9 +637,6 @@ class ConnectivityStatus {
   }
 }
 
-// ============================================================================
-// Connectivity Widget Helper
-// ============================================================================
 
 class ConnectivityBuilder extends StatefulWidget {
   final Widget Function(BuildContext context, bool isOnline) builder;

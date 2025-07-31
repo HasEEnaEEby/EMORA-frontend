@@ -1,4 +1,3 @@
-// lib/core/widgets/debounced_button.dart
 import 'package:flutter/material.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
 
@@ -47,7 +46,6 @@ class _DebouncedButtonState extends State<DebouncedButton> {
     Logger.info('. Button tap processed');
     widget.onPressed!();
 
-    // Reset debounce after delay
     Future.delayed(widget.debounceTime, () {
       if (mounted) {
         setState(() {
@@ -73,7 +71,6 @@ class _DebouncedButtonState extends State<DebouncedButton> {
   }
 }
 
-// Convenience widget for friend request buttons
 class FriendRequestButton extends StatelessWidget {
   final String userId;
   final bool isLoading;

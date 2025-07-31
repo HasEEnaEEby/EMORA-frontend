@@ -31,7 +31,6 @@ import '../../features/auth/presentation/view/forgot_password_view.dart';
 
 
 class AppRouter {
-  // Route constants
   static const String splash = '/';
   static const String auth = '/auth';
   static const String authChoice = '/auth-choice';
@@ -49,7 +48,6 @@ class AppRouter {
   static const String forgotPassword = '/forgot-password';
   static const String resetPassword = '/reset-password';
 
-  /// Main route generator with proper error handling
   static Route<dynamic> generateRoute(RouteSettings settings) {
     final routeName = settings.name ?? '/';
     final arguments = settings.arguments;
@@ -95,7 +93,7 @@ class AppRouter {
           return _createFriendsRoute(settings);
 
         case profile:
-          return MaterialPageRoute(
+          return MaterialPageRoute( 
             builder: (context) => BlocProvider(
               create: (context) => GetIt.instance<ProfileBloc>(),
               child: const ProfileView(),
@@ -111,12 +109,6 @@ class AppRouter {
             builder: (context) => const ForgotPasswordView(),
             settings: settings,
           );
-        // case resetPassword:
-        //   final token = (settings.arguments as Map?)?['token'] as String?;
-        //   return MaterialPageRoute(
-        //     builder: (context) => ResetPasswordView(token: token),
-        //     settings: settings,
-        //   );
 
         default:
           Logger.warning('❌ Unknown route: $routeName');
@@ -133,9 +125,6 @@ class AppRouter {
     }
   }
 
-  // ============================================================================
-  // ROUTE FACTORIES - FIXED WITH PROPER BLOC MANAGEMENT
-  // ============================================================================
 
   static Route<dynamic> _createSplashRoute(RouteSettings settings) {
     return _createFadeRoute(
@@ -161,7 +150,6 @@ class AppRouter {
     );
   }
 
-  // CRITICAL FIX: Provide AuthBloc at the auth choice level to share across auth flows
   static Route<dynamic> _createAuthChoiceRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
@@ -177,7 +165,6 @@ class AppRouter {
           }
         }
 
-        // CRITICAL FIX: Create AuthBloc here to share across auth flows
         return BlocProvider<AuthBloc>(
           create: (_) => di.sl<AuthBloc>(),
           child: AuthChoiceView(onboardingData: onboardingData),
@@ -186,17 +173,14 @@ class AppRouter {
     );
   }
 
-  // CRITICAL FIX: Reuse existing AuthBloc when available
   static Route<dynamic> _createLoginRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
       builder: (context) {
         return Builder(
           builder: (context) {
-            // Try to get existing AuthBloc from context
             try {
               final existingBloc = context.read<AuthBloc>();
-              // Check if BLoC is not closed
               if (!existingBloc.isClosed) {
                 Logger.info('✅ Reusing existing AuthBloc for login');
                 return const LoginView();
@@ -205,7 +189,6 @@ class AppRouter {
               Logger.info('ℹ️ No existing AuthBloc found, creating new one');
             }
 
-            // If no existing BLoC or it's closed, create a new one
             return BlocProvider<AuthBloc>(
               create: (_) => di.sl<AuthBloc>(),
               child: const LoginView(),
@@ -216,7 +199,6 @@ class AppRouter {
     );
   }
 
-  // CRITICAL FIX: Reuse existing AuthBloc when available
   static Route<dynamic> _createRegisterRoute(RouteSettings settings) {
     return _createSlideRoute(
       settings: settings,
@@ -234,10 +216,8 @@ class AppRouter {
 
         return Builder(
           builder: (context) {
-            // Try to get existing AuthBloc from context
             try {
               final existingBloc = context.read<AuthBloc>();
-              // Check if BLoC is not closed
               if (!existingBloc.isClosed) {
                 Logger.info('✅ Reusing existing AuthBloc for register');
                 return RegisterView(onboardingData: onboardingData);
@@ -246,7 +226,6 @@ class AppRouter {
               Logger.info('ℹ️ No existing AuthBloc found, creating new one');
             }
 
-            // If no existing BLoC or it's closed, create a new one
             return BlocProvider<AuthBloc>(
               create: (_) => di.sl<AuthBloc>(),
               child: RegisterView(onboardingData: onboardingData),
@@ -289,7 +268,7 @@ class AppRouter {
         return MultiBlocProvider(
           providers: [
             BlocProvider<HomeBloc>(
-              create: (_) => di.sl<HomeBloc>(), // ✅ CRITICAL FIX: Don't add events immediately
+create: (_) => di.sl<HomeBloc>(), 
               lazy: false,
             ),
             BlocProvider<EmotionBloc>(
@@ -303,7 +282,6 @@ class AppRouter {
           ],
           child: Builder(
             builder: (context) {
-              // ✅ CRITICAL FIX: Add the event after the BLoC is properly initialized
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 if (context.mounted) {
                   context.read<HomeBloc>().add(const LoadHomeData());
@@ -357,9 +335,6 @@ class AppRouter {
     );
   }
 
-  // ============================================================================
-  // HELPER METHODS
-  // ============================================================================
 
   static Map<String, dynamic>? _parseArguments(Object? arguments) {
     if (arguments == null) return null;
@@ -375,9 +350,6 @@ class AppRouter {
     throw ArgumentError('Invalid argument type: ${arguments.runtimeType}');
   }
 
-  // ============================================================================
-  // ROUTE TRANSITION BUILDERS
-  // ============================================================================
 
   static Route<dynamic> _createFadeRoute({
     required RouteSettings settings,
@@ -439,9 +411,6 @@ class AppRouter {
     );
   }
 
-  // ============================================================================
-  // ERROR ROUTE BUILDERS
-  // ============================================================================
 
   static Route<dynamic> _createErrorRoute(String? routeName, String message) {
     return _createFadeRoute(
@@ -466,9 +435,6 @@ class AppRouter {
     );
   }
 
-  // ============================================================================
-  // NAVIGATION UTILITY METHODS
-  // ============================================================================
 
   static bool canNavigateToRoute(String routeName, BuildContext? context) {
     switch (routeName) {
@@ -524,9 +490,6 @@ class AppRouter {
   }
 }
 
-// ============================================================================
-// ENHANCED HOME WRAPPER
-// ============================================================================
 class EnhancedHomeWrapper extends StatefulWidget {
   final Map<String, dynamic>? userData;
 
@@ -723,9 +686,6 @@ class _EnhancedHomeWrapperState extends State<EnhancedHomeWrapper> {
   }
 }
 
-// ============================================================================
-// PROFILE VIEWS
-// ============================================================================
 
 class FullProfileView extends StatelessWidget {
   const FullProfileView({super.key});
@@ -803,9 +763,6 @@ class ProfileDisabledView extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// PLACEHOLDER VIEWS
-// ============================================================================
 
 class MoodMapPlaceholderView extends StatelessWidget {
   const MoodMapPlaceholderView({super.key});
@@ -835,9 +792,6 @@ class MoodMapPlaceholderView extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// ERROR SCREENS
-// ============================================================================
 
 class ErrorScreen extends StatelessWidget {
   final String? routeName;

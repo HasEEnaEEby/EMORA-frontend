@@ -27,7 +27,6 @@ class AchievementEntity extends Equatable {
     required this.rarity,
   });
 
-  // Factory constructor to create from backend response
   factory AchievementEntity.fromBackendResponse(Map<String, dynamic> data) {
     return AchievementEntity(
       id: data['id'] as String,

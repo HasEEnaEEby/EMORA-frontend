@@ -85,11 +85,9 @@ class _DashboardHeaderState extends State<DashboardHeader>
   }
 
 bool get _isReallyNewUser {
-  // ✅ FIX: Use the actual backend data from home-data API
   final homeData = widget.homeData;
   if (homeData == null) return true;
   
-  // Get total emotions from the dashboard data (from backend API response)
   final dashboardData = homeData.dashboardData['data']?['dashboard'];
   final totalEmotions = dashboardData?['totalEmotions'] ?? 0;
   
@@ -102,7 +100,6 @@ bool get _isReallyNewUser {
     final homeData = widget.homeData;
     if (homeData == null) return 'there';
     
-    // Since parsing is working correctly, just return the username directly
     if (homeData.username.isNotEmpty && homeData.username != 'Unknown') {
       return homeData.username;
     }
@@ -110,7 +107,6 @@ bool get _isReallyNewUser {
     return 'there';
   }
 
-  // Helper method to get today's date formatted
   String get _todaysDate {
     return DateFormat('EEEE, MMM dd').format(DateTime.now());
   }
@@ -178,11 +174,9 @@ bool get _isReallyNewUser {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Welcome Section with Avatar
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Animated Welcome Avatar
                     AnimatedBuilder(
                       animation: _sparkleController,
                       builder: (context, child) {
@@ -218,12 +212,10 @@ bool get _isReallyNewUser {
                     
                     const SizedBox(width: 16),
                     
-                    // Personal Welcome Message - FIXED LAYOUT
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Welcome text without truncation
                           ShaderMask(
                             shaderCallback: (bounds) => const LinearGradient(
                               colors: [Color(0xFF8B5CF6), Color(0xFF6366F1), Color(0xFFEC4899)],
@@ -255,7 +247,6 @@ bool get _isReallyNewUser {
                     
                     const SizedBox(width: 8),
                     
-                    // New User Badge
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
@@ -337,45 +328,36 @@ bool get _isReallyNewUser {
                 ),
                 child: Column(
                   children: [
-                    // Top Row: User Stats & Connection
                     Row(
                       children: [
-                        // Level Badge
                         _buildLevelBadge(level),
                         
                         const SizedBox(width: 12),
                         
-                        // Streak Fire
                         if (streak > 0) _buildStreakIndicator(streak),
                         
                         const Spacer(),
                         
-                        // Connection Status
                         _buildConnectionIndicator(),
                       ],
                     ),
                     
                     const SizedBox(height: 20),
                     
-                    // Main Mood Section
                     Row(
                       children: [
-                        // Animated Mood Face
                         _buildAnimatedMoodFace(),
                         
                         const SizedBox(width: 20),
                         
-                        // Mood Info
                         Expanded(child: _buildMoodInfo()),
                         
-                        // Update Button
                         _buildMoodUpdateButton(),
                       ],
                     ),
                     
                     const SizedBox(height: 20),
                     
-                    // Progress Bar
                     _buildLevelProgressBar(progressToNextLevel, level),
                     
                     const SizedBox(height: 16),
@@ -739,7 +721,6 @@ bool get _isReallyNewUser {
   }
 }
 
-// Utility class for mood operations
 class MoodUtils {
   static List<MoodType> getAllMoods() {
     return [MoodType.awful, MoodType.down, MoodType.okay, MoodType.good, MoodType.amazing];

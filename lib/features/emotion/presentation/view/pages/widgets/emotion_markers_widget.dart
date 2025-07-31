@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 
-// ============================================================================
-// EMOTION POINT MARKER WIDGET
-// ============================================================================
 
 class EmotionPointMarkerWidget extends StatelessWidget {
   final dynamic point;
@@ -27,7 +24,6 @@ class EmotionPointMarkerWidget extends StatelessWidget {
           return Stack(
             alignment: Alignment.center,
             children: [
-              // Outer pulse ring
               Container(
                 width: 60 * animation.value,
                 height: 60 * animation.value,
@@ -47,7 +43,6 @@ class EmotionPointMarkerWidget extends StatelessWidget {
                 ),
               ),
 
-              // Inner pulse ring
               Container(
                 width: 35 * animation.value,
                 height: 35 * animation.value,
@@ -63,7 +58,6 @@ class EmotionPointMarkerWidget extends StatelessWidget {
                 ),
               ),
 
-              // Main marker
               Container(
                 width: 32,
                 height: 32,
@@ -96,7 +90,6 @@ class EmotionPointMarkerWidget extends StatelessWidget {
                 ),
               ),
 
-              // Intensity indicator
               Positioned(
                 top: -8,
                 child: Container(
@@ -132,7 +125,6 @@ class EmotionPointMarkerWidget extends StatelessWidget {
                 ),
               ),
 
-              // Emotion label
               Positioned(
                 bottom: -24,
                 child: Container(
@@ -229,9 +221,6 @@ class EmotionPointMarkerWidget extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// EMOTION CLUSTER MARKER WIDGET
-// ============================================================================
 
 class EmotionClusterMarkerWidget extends StatelessWidget {
   final dynamic cluster;
@@ -255,7 +244,6 @@ class EmotionClusterMarkerWidget extends StatelessWidget {
           return Stack(
             alignment: Alignment.center,
             children: [
-              // Outer pulse ring
               Container(
                 width: cluster.radius * 2 * animation.value,
                 height: cluster.radius * 2 * animation.value,
@@ -275,7 +263,6 @@ class EmotionClusterMarkerWidget extends StatelessWidget {
                 ),
               ),
 
-              // Middle ring
               Container(
                 width: cluster.radius * 1.2,
                 height: cluster.radius * 1.2,
@@ -291,7 +278,6 @@ class EmotionClusterMarkerWidget extends StatelessWidget {
                 ),
               ),
 
-              // Main cluster marker
               Container(
                 width: cluster.radius * 0.8,
                 height: cluster.radius * 0.8,
@@ -338,7 +324,6 @@ class EmotionClusterMarkerWidget extends StatelessWidget {
                 ),
               ),
 
-              // Emotion label
               Positioned(
                 bottom: -cluster.radius * 0.6,
                 child: Container(
@@ -375,7 +360,6 @@ class EmotionClusterMarkerWidget extends StatelessWidget {
                 ),
               ),
 
-              // Intensity indicator
               Positioned(
                 top: -cluster.radius * 0.3,
                 child: Container(
@@ -482,9 +466,6 @@ class EmotionClusterMarkerWidget extends StatelessWidget {
   }
 }
 
-// ============================================================================
-// USER LOCATION MARKER WIDGET
-// ============================================================================
 
 class UserLocationMarkerWidget extends StatelessWidget {
   final Animation<double> animation;
@@ -502,7 +483,6 @@ class UserLocationMarkerWidget extends StatelessWidget {
         return Stack(
           alignment: Alignment.center,
           children: [
-            // Outer pulse ring
             Container(
               width: 60 * animation.value,
               height: 60 * animation.value,
@@ -522,7 +502,6 @@ class UserLocationMarkerWidget extends StatelessWidget {
               ),
             ),
 
-            // Middle ring
             Container(
               width: 40 * animation.value,
               height: 40 * animation.value,
@@ -538,7 +517,6 @@ class UserLocationMarkerWidget extends StatelessWidget {
               ),
             ),
 
-            // Main marker
             Container(
               width: 32,
               height: 32,
@@ -568,7 +546,6 @@ class UserLocationMarkerWidget extends StatelessWidget {
               ),
             ),
 
-            // "You" label
             Positioned(
               bottom: -20,
               child: Container(

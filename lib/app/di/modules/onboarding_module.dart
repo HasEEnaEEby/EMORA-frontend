@@ -33,18 +33,16 @@ class OnboardingModule {
   static void _initDataSources(GetIt sl) {
     Logger.info('📱 Initializing onboarding data sources...');
 
-    // Local Data Source
     sl.registerLazySingleton<OnboardingLocalDataSource>(
       () => OnboardingLocalDataSourceImpl(
         sharedPreferences: sl<SharedPreferences>(),
       ),
     );
 
-    // Remote Data Source - Fixed constructor parameters
     sl.registerLazySingleton<OnboardingRemoteDataSource>(
       () => OnboardingRemoteDataSourceImpl(
         apiService:
-            sl<ApiService>(), // Fixed: use apiService instead of dioClient
+sl<ApiService>(), 
       ),
     );
   }

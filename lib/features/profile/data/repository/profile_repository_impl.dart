@@ -30,7 +30,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
   @override
   Future<Either<Failure, ProfileEntity>> getUserProfile(String userId) async {
     try {
-      // If userId is empty, try to get current user
       if (userId.isEmpty) {
         final currentUser = await authLocalDataSource.getCurrentUser();
         if (currentUser != null) {
@@ -45,7 +44,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
       Logger.info('📡 Fetching profile for user: $userId');
       final result = await remoteDataSource.getUserProfile(userId);
 
-      // Cache the result
       await localDataSource.cacheUserProfile(result);
       Logger.info('. Profile cached successfully');
 
@@ -86,7 +84,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
         Logger.info('. Profile updated and cached');
         return Right(updatedProfile.toEntity());
       } else {
-        // Offline: cache locally and return
         await localDataSource.cacheUserProfile(profileModel);
         Logger.info('📱 Profile cached offline');
         return Right(profile);
@@ -149,12 +146,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
         Logger.info('📱 No cached preferences, using defaults');
         return const Right(
           UserPreferencesEntity(),
-        ); // Return default preferences
+); 
       } on CacheException {
         Logger.info('📱 Cache error, using defaults');
         return const Right(
           UserPreferencesEntity(),
-        ); // Return default preferences
+); 
       } catch (e) {
         Logger.warning('. Offline error: $e');
         return Left(NetworkFailure(message: 'No internet connection'));
@@ -180,7 +177,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
         Logger.info('. Preferences updated and cached');
         return Right(updatedPreferences.toEntity());
       } else {
-        // Offline: cache locally and return
         await localDataSource.cacheUserPreferences(preferencesModel);
         Logger.info('📱 Preferences cached offline');
         return Right(preferences);
@@ -212,7 +208,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
           '. ${remoteAchievements.length} achievements fetched and cached',
         );
 
-        // FIXED: Use the toEntity() method instead of manual mapping
         return Right(
           remoteAchievements
               .map((achievement) => achievement.toEntity())
@@ -227,7 +222,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
             Logger.info(
               '📱 Using ${cachedAchievements.length} cached achievements',
             );
-            // FIXED: Use the toEntity() method instead of manual mapping
             return Right(
               cachedAchievements
                   .map((achievement) => achievement.toEntity())
@@ -255,7 +249,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
           Logger.info(
             '📱 Using ${cachedAchievements.length} cached achievements (offline)',
           );
-          // FIXED: Use the toEntity() method instead of manual mapping
           return Right(
             cachedAchievements
                 .map((achievement) => achievement.toEntity())
@@ -312,7 +305,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
     }
   }
 
-  /// Additional method for account deletion (if needed)
   Future<Either<Failure, bool>> deleteUserAccount(String userId) async {
     Logger.info('🗑️ Deleting account for user: $userId');
 

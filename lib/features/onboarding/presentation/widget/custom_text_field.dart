@@ -200,7 +200,7 @@ class _CustomTextFieldState extends State<CustomTextField>
                         vertical: 16,
                         horizontal: widget.prefixIcon == null ? 16 : 0,
                       ),
-                      counterText: '', // Hide default character counter
+counterText: '', 
                     ),
                     onSubmitted: widget.onSubmitted,
                   ),
@@ -230,7 +230,6 @@ class _CustomTextFieldState extends State<CustomTextField>
           ),
         ),
 
-        // Error text and character count
         if (widget.errorText != null ||
             (widget.showCharacterCount && widget.maxLength != null))
           Padding(

@@ -17,7 +17,6 @@ class MoodChartPainter extends CustomPainter {
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
 
-    // Create gradient for the line
     final gradient = LinearGradient(
       colors: [
         const Color(0xFF8B5CF6),
@@ -32,7 +31,6 @@ class MoodChartPainter extends CustomPainter {
     final stepX = size.width / (data.length - 1);
     final points = <Offset>[];
 
-    // Calculate points with animation
     for (int i = 0; i < data.length; i++) {
       final x = i * stepX;
       final y = size.height - (data[i].value * size.height * animationValue);
@@ -41,7 +39,6 @@ class MoodChartPainter extends CustomPainter {
       if (i == 0) {
         path.moveTo(x, y);
       } else {
-        // Create smooth curve using quadratic bezier
         final prevPoint = points[i - 1];
         final controlX = (prevPoint.dx + x) / 2;
         final controlY = (prevPoint.dy + y) / 2;
@@ -49,10 +46,8 @@ class MoodChartPainter extends CustomPainter {
       }
     }
 
-    // Draw the animated line
     canvas.drawPath(path, paint);
 
-    // Fill area under curve with gradient
     final fillPath = Path.from(path);
     fillPath.lineTo(size.width, size.height);
     fillPath.lineTo(0, size.height);
@@ -70,12 +65,10 @@ class MoodChartPainter extends CustomPainter {
 
     canvas.drawPath(fillPath, fillPaint);
 
-    // Draw points and labels
     for (int i = 0; i < data.length; i++) {
       final point = points[i];
       final isSelected = i == selectedIndex;
 
-      // Draw point
       final pointPaint = Paint()
         ..color = isSelected ? const Color(0xFFFFD700) : const Color(0xFF8B5CF6)
         ..style = PaintingStyle.fill;
@@ -83,7 +76,6 @@ class MoodChartPainter extends CustomPainter {
       final pointRadius = isSelected ? 6.0 : 4.0;
       canvas.drawCircle(point, pointRadius * animationValue, pointPaint);
 
-      // Draw white border for selected point
       if (isSelected) {
         final borderPaint = Paint()
           ..color = Colors.white
@@ -92,7 +84,6 @@ class MoodChartPainter extends CustomPainter {
         canvas.drawCircle(point, pointRadius * animationValue, borderPaint);
       }
 
-      // Draw day labels
       final textPainter = TextPainter(
         text: TextSpan(
           text: data[i].day,
@@ -106,14 +97,12 @@ class MoodChartPainter extends CustomPainter {
       );
       textPainter.layout();
 
-      // Position label below the chart
       final labelY = size.height + 12;
       textPainter.paint(
         canvas,
         Offset(point.dx - textPainter.width / 2, labelY),
       );
 
-      // Draw mood emoji above point if selected
       if (isSelected && animationValue > 0.8) {
         final emojiPainter = TextPainter(
           text: TextSpan(
@@ -130,7 +119,6 @@ class MoodChartPainter extends CustomPainter {
       }
     }
 
-    // Draw mood scale on the left
     _drawMoodScale(canvas, size);
   }
 
@@ -141,14 +129,12 @@ class MoodChartPainter extends CustomPainter {
     for (int i = 0; i < scaleLabels.length; i++) {
       final y = size.height - (scaleValues[i] * size.height);
 
-      // Draw horizontal grid line
       final gridPaint = Paint()
         ..color = Colors.grey.withValues(alpha: 0.2)
         ..strokeWidth = 1;
 
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
 
-      // Draw emoji scale
       final emojiPainter = TextPainter(
         text: TextSpan(
           text: scaleLabels[i],

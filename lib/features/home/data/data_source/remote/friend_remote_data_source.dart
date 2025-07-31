@@ -186,7 +186,6 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
     try {
       Logger.info('📨 Responding to friend request: $action for $requestUserId');
 
-      // FIXED: Use the correct endpoint that works
       final response = await apiService.post(
         '/api/friends/respond',
         data: {
@@ -262,7 +261,6 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
           final sentRequests = <FriendRequestModel>[];
           final receivedRequests = <FriendRequestModel>[];
           
-          // Parse sent requests
           if (requestsData['sent'] is List) {
             for (final reqData in requestsData['sent'] as List) {
               try {
@@ -276,7 +274,6 @@ class FriendRemoteDataSourceImpl implements FriendRemoteDataSource {
             }
           }
           
-          // Parse received requests
           if (requestsData['received'] is List) {
             for (final reqData in requestsData['received'] as List) {
               try {

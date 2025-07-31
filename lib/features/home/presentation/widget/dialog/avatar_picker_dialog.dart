@@ -1,18 +1,9 @@
-// lib/features/home/presentation/widget/dialogs/avatar_picker_dialog.dart
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Standalone avatar picker dialog
-///
-/// Features:
-/// - Grid layout with 32+ avatar options
-/// - Visual selection feedback
-/// - Haptic feedback on selection
-/// - iOS-style bottom sheet presentation
 class AvatarPickerDialog {
-  /// Shows the avatar picker dialog
   static void show(
     BuildContext context,
     String currentAvatar,
@@ -30,13 +21,10 @@ class AvatarPickerDialog {
         ),
         child: Column(
           children: [
-            // Handle bar
             _buildHandleBar(),
 
-            // Header
             _buildHeader(context),
 
-            // Avatar grid
             _buildAvatarGrid(context, avatars, currentAvatar, onAvatarChanged),
           ],
         ),
@@ -44,7 +32,6 @@ class AvatarPickerDialog {
     );
   }
 
-  /// Builds the handle bar at the top
   static Widget _buildHandleBar() {
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -57,7 +44,6 @@ class AvatarPickerDialog {
     );
   }
 
-  /// Builds the header with title and close button
   static Widget _buildHeader(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -84,7 +70,6 @@ class AvatarPickerDialog {
     );
   }
 
-  /// Builds the avatar selection grid
   static Widget _buildAvatarGrid(
     BuildContext context,
     List<Map<String, String>> avatars,
@@ -117,7 +102,6 @@ class AvatarPickerDialog {
     );
   }
 
-  /// Builds individual avatar item
   static Widget _buildAvatarItem(
     BuildContext context,
     Map<String, String> avatar,

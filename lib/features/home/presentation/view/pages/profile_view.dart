@@ -92,7 +92,7 @@ class _ProfileViewState extends State<ProfileView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0F), // Dark background like your app
+backgroundColor: const Color(0xFF0A0A0F), 
       body: MultiBlocListener(
         listeners: [
           BlocListener<ProfileBloc, ProfileState>(
@@ -121,7 +121,6 @@ class _ProfileViewState extends State<ProfileView>
         state is ProfileDataExporting ||
         state is ProfileDataExported) {
       
-      // Extract profile data from state
       ProfileEntity profile;
       UserPreferencesEntity? preferences;
       List<AchievementEntity> achievements = [];
@@ -259,7 +258,6 @@ class _ProfileViewState extends State<ProfileView>
       child: CustomScrollView(
         controller: _scrollController,
         slivers: [
-          // App Bar matching your design
           SliverAppBar(
             backgroundColor: const Color(0xFF0A0A0F),
             foregroundColor: Colors.white,
@@ -285,7 +283,6 @@ class _ProfileViewState extends State<ProfileView>
             ],
           ),
 
-          // Profile Header
           SliverToBoxAdapter(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -296,7 +293,6 @@ class _ProfileViewState extends State<ProfileView>
             ),
           ),
 
-          // Content Sections
           SliverToBoxAdapter(
             child: FadeTransition(
               opacity: _fadeAnimation,
@@ -327,10 +323,8 @@ class _ProfileViewState extends State<ProfileView>
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // Profile Picture and Stats Row
           Row(
             children: [
-              // Profile Picture with gradient ring like your app
               Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -364,7 +358,6 @@ class _ProfileViewState extends State<ProfileView>
               
               const SizedBox(width: 32),
               
-              // Stats matching your card style
               Expanded(
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -380,7 +373,6 @@ class _ProfileViewState extends State<ProfileView>
           
           const SizedBox(height: 24),
           
-          // Name and Bio
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -416,7 +408,7 @@ class _ProfileViewState extends State<ProfileView>
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E1B3A), // Dark card color like your app
+color: const Color(0xFF1E1B3A), 
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
                       color: const Color(0xFF8B5CF6).withOpacity(0.2),
@@ -460,7 +452,6 @@ class _ProfileViewState extends State<ProfileView>
           
           const SizedBox(height: 24),
           
-          // Action Buttons matching your app style
           Row(
             children: [
               Expanded(
@@ -1144,7 +1135,6 @@ class _ProfileViewState extends State<ProfileView>
     );
   }
 
-  // Event Handlers
   void _handleBlocListener(BuildContext context, ProfileState state) {
     if (state is ProfileError) {
       Logger.error('❌ Profile error: ${state.message}');
@@ -1313,7 +1303,6 @@ class _ProfileViewState extends State<ProfileView>
     );
   }
 
-  // Helper Methods
   String _getAvatarEmoji(String avatarName) {
     const avatarEmojis = {
       'panda': '🐼',

@@ -1,4 +1,3 @@
-// lib/features/profile/presentation/widget/profile_header_widget.dart - BACKEND CONNECTED VERSION
 import 'package:emora_mobile_app/features/profile/domain/entity/profile_entity.dart';
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +8,7 @@ class ProfileHeaderWidget extends StatelessWidget {
   final VoidCallback? onEditProfile;
   final VoidCallback? onAvatarTap;
   final Function(String)? onAvatarChanged;
-  final bool isLoading; // New: Loading state for stats
+final bool isLoading; 
 
   const ProfileHeaderWidget({
     super.key,
@@ -42,7 +41,7 @@ class ProfileHeaderWidget extends StatelessWidget {
           const SizedBox(height: 16),
           _buildUserInfo(context),
           const SizedBox(height: 16),
-          _buildStatsRow(context), // Connected to backend data
+_buildStatsRow(context), 
           const SizedBox(height: 16),
           _buildLevelBadge(context),
         ],
@@ -136,7 +135,6 @@ class ProfileHeaderWidget extends StatelessWidget {
     );
   }
 
-  /// ✅ BACKEND CONNECTED: Stats row with real data from your API
   Widget _buildStatsRow(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -200,7 +198,6 @@ class ProfileHeaderWidget extends StatelessWidget {
     );
   }
 
-  /// Loading state for stats
   Widget _buildLoadingStatsRow() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -264,7 +261,6 @@ class ProfileHeaderWidget extends StatelessWidget {
     );
   }
 
-  /// Enhanced stat item with backend data and optional subtitle
   Widget _buildStatItem(
     BuildContext context,
     String label,
@@ -280,7 +276,6 @@ class ProfileHeaderWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 4),
           child: Column(
       children: [
-              // Icon with animated background
               TweenAnimationBuilder<double>(
                 duration: const Duration(milliseconds: 600),
                 tween: Tween(begin: 0.0, end: 1.0),
@@ -311,7 +306,6 @@ class ProfileHeaderWidget extends StatelessWidget {
         ),
         const SizedBox(height: 6),
               
-              // Value with number animation
               TweenAnimationBuilder<double>(
                 duration: const Duration(milliseconds: 800),
                 tween: Tween(
@@ -331,7 +325,6 @@ class ProfileHeaderWidget extends StatelessWidget {
                 },
         ),
               
-              // Label
         Text(
           label,
           style: TextStyle(
@@ -341,7 +334,6 @@ class ProfileHeaderWidget extends StatelessWidget {
           ),
         ),
               
-              // Optional subtitle for additional context
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
                 Text(
@@ -361,7 +353,6 @@ class ProfileHeaderWidget extends StatelessWidget {
     );
   }
 
-  /// Handle stat item taps for detailed views
   void _onStatTapped(BuildContext context, String label, String value) {
     HapticFeedback.lightImpact();
     
@@ -437,13 +428,9 @@ class ProfileHeaderWidget extends StatelessWidget {
   }
 
   void _showAvatarSelectionDialog(BuildContext context) {
-    // Implementation for avatar selection dialog
-    // This would show available avatars for selection
   }
 
-  /// ✅ HELPER METHODS for backend data formatting
 
-  /// Format stat values with appropriate units
   String _formatStatValue(int value) {
     if (value >= 1000) {
       return '${(value / 1000).toStringAsFixed(1)}k';
@@ -451,7 +438,6 @@ class ProfileHeaderWidget extends StatelessWidget {
     return value.toString();
                       }
 
-  /// Format animated values during transitions
   String _formatAnimatedValue(double animatedValue, String originalValue) {
     if (originalValue.contains('k')) {
       return '${(animatedValue / 1000).toStringAsFixed(1)}k';
@@ -459,7 +445,6 @@ class ProfileHeaderWidget extends StatelessWidget {
     return animatedValue.round().toString();
   }
 
-  /// Get contextual subtitles for each stat
   String? _getEntriesSubtitle() {
     if (profile.totalEntries == 0) return 'Start logging';
     if (profile.totalEntries < 5) return 'Getting started';

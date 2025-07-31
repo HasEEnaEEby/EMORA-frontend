@@ -1,4 +1,3 @@
-// lib/features/friends/services/mood_reaction_service.dart
 
 import 'package:flutter/material.dart';
 import 'package:emora_mobile_app/core/network/dio_client.dart';
@@ -9,7 +8,6 @@ class MoodReactionService {
 
   MoodReactionService(this._dioClient);
 
-  /// Send a reaction to a friend's mood
   Future<bool> sendReaction({
     required String moodId,
     required String reactionType,
@@ -47,7 +45,6 @@ class MoodReactionService {
     }
   }
 
-  /// Get friend's recent moods
   Future<List<Map<String, dynamic>>> getFriendMoods({
     required String friendId,
     int limit = 5,
@@ -83,7 +80,6 @@ class MoodReactionService {
     }
   }
 
-  /// Get friend's latest mood
   Future<Map<String, dynamic>?> getFriendLatestMood({
     required String friendId,
   }) async {

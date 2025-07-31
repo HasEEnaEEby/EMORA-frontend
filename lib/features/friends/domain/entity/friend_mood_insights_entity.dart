@@ -1,4 +1,3 @@
-// lib/features/friends/domain/entity/friend_mood_insights_entity.dart
 
 import 'package:emora_mobile_app/features/home/domain/entity/friend_entity.dart';
 
@@ -83,7 +82,6 @@ class MoodInsightsEntity {
     };
   }
 
-  // Helper methods for insights
   String get dominantEmotion {
     if (emotionBreakdown.isEmpty) return 'unknown';
     
@@ -114,7 +112,6 @@ class MoodInsightsEntity {
   }
 
   double get moodScore {
-    // Calculate a simple mood score based on emotion breakdown
     const positiveEmotions = ['joy', 'excitement', 'contentment', 'gratitude', 'love', 'hope'];
     const negativeEmotions = ['sadness', 'anger', 'fear', 'anxiety', 'disgust', 'shame'];
     
@@ -131,7 +128,7 @@ class MoodInsightsEntity {
       }
     });
     
-    if (totalMoods == 0) return 0.5; // Neutral
+if (totalMoods == 0) return 0.5; 
     
     return (positiveScore - negativeScore) / totalMoods;
   }

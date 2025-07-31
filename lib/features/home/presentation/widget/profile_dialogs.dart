@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/profile_dialogs.dart
 import 'package:emora_mobile_app/core/utils/dialog_utils.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/dialog/account_management_dialog.dart';
 import 'package:emora_mobile_app/features/home/presentation/widget/dialog/achievements_dialog.dart';
@@ -11,27 +10,8 @@ import 'package:emora_mobile_app/features/home/presentation/widget/dialog/theme_
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
-/// Main ProfileDialogs class that serves as the entry point for all profile-related dialogs
-///
-/// This class delegates to specific dialog implementations for better organization
-/// and easier debugging/maintenance.
-///
-/// Features:
-/// - Profile management (edit, avatar selection)
-/// - Achievements display and sharing
-/// - QR code generation and sharing
-/// - Settings and preferences
-/// - Data export with multiple options
-/// - Account management and security
-/// - All dialogs use iOS-native components
-/// - Comprehensive error handling
-/// - Haptic feedback throughout
-/// - Robust handling of missing profile properties
 class ProfileDialogs {
-  // MARK: - Profile Management
 
-  /// Shows the edit profile dialog with avatar selection, form fields, and privacy settings
-  /// Handles missing profile properties gracefully
   static void showEditProfileDialog(
     BuildContext context,
     dynamic profile, {
@@ -44,7 +24,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Shows the avatar picker with all available avatars
   static void showAvatarPicker(
     BuildContext context,
     String currentAvatar,
@@ -57,46 +36,36 @@ class ProfileDialogs {
     }
   }
 
-  // MARK: - Achievements
 
-  /// Shows all achievements in a scrollable bottom sheet
   static void showAllAchievements(
     BuildContext context,
     List<dynamic> achievements,
   ) {
     try {
-      // Use the fixed achievements dialog with robust data handling
       FixedAchievementsDialog.showAll(context, achievements);
     } catch (e) {
       _handleDialogError(context, 'Failed to load achievements', e);
     }
   }
 
-  /// Shows detailed view of a specific achievement
   static void showAchievementDetail(BuildContext context, dynamic achievement) {
     try {
-      // Use the fixed achievements dialog with safe data access
       FixedAchievementsDialog.showDetail(context, achievement);
     } catch (e) {
       _handleDialogError(context, 'Failed to show achievement details', e);
     }
   }
 
-  // MARK: - QR Code
 
-  /// Shows QR code dialog with save and share options
-  /// Handles potential QR generation errors gracefully
   static void showQRCode(BuildContext context, dynamic profile) {
     try {
       if (profile == null) {
         DialogUtils.showErrorSnackBar(context, 'Profile data not available');
         return;
       }
-      // Use the safer QR dialog implementation
       SafeQRCodeDialog.show(context, profile);
     } catch (e) {
       _handleDialogError(context, 'Failed to generate QR code', e);
-      // Fallback to simple QR dialog
       try {
         SafeQRCodeDialog.showSimpleQRDialog(context, profile);
       } catch (fallbackError) {
@@ -109,9 +78,7 @@ class ProfileDialogs {
     }
   }
 
-  // MARK: - Settings & Preferences
 
-  /// Shows language selection dialog
   static void showLanguageSelector(
     BuildContext context,
     String selectedLanguage,
@@ -124,18 +91,15 @@ class ProfileDialogs {
     }
   }
 
-  /// Shows theme selection dialog with enhanced UI
   static void showThemeSelector(
     BuildContext context,
     String selectedTheme,
     ValueChanged<String> onThemeChanged,
   ) {
     try {
-      // Use the enhanced theme selector with beautiful UI
       ThemeSelectorDialog.show(context, selectedTheme, onThemeChanged);
     } catch (e) {
       _handleDialogError(context, 'Failed to open theme selector', e);
-      // Fallback to simple theme selector
       try {
         _showSimpleThemeSelector(context, selectedTheme, onThemeChanged);
       } catch (fallbackError) {
@@ -148,7 +112,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Shows theme preview dialog
   static void showThemePreview(
     BuildContext context,
     Map<String, dynamic> theme,
@@ -160,9 +123,7 @@ class ProfileDialogs {
     }
   }
 
-  // MARK: - Data Export
 
-  /// Shows data export options dialog
   static void showExportDialog(
     BuildContext context, {
     required VoidCallback onExport,
@@ -174,7 +135,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Shows detailed export options
   static void showDetailedExportOptions(BuildContext context) {
     try {
       ExportDataDialog.showDetailedExportOptions(context);
@@ -183,9 +143,7 @@ class ProfileDialogs {
     }
   }
 
-  // MARK: - Account Management
 
-  /// Shows sign out confirmation dialog
   static void showSignOutDialog(BuildContext context) {
     try {
       AccountManagementDialog.showSignOut(context);
@@ -194,7 +152,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Shows delete account confirmation dialog
   static void showDeleteAccountDialog(
     BuildContext context, {
     required VoidCallback onConfirm,
@@ -206,7 +163,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Shows coming soon dialog for features under development
   static void showComingSoonDialog(BuildContext context, String feature) {
     try {
       AccountManagementDialog.showComingSoon(context, feature);
@@ -215,7 +171,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Shows account security information
   static void showAccountSecurity(BuildContext context) {
     try {
       AccountManagementDialog.showAccountSecurity(context);
@@ -224,7 +179,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Shows privacy settings
   static void showPrivacySettings(BuildContext context) {
     try {
       AccountManagementDialog.showPrivacySettings(context);
@@ -233,7 +187,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Shows support and help options
   static void showSupportHelp(BuildContext context) {
     try {
       AccountManagementDialog.showSupportHelp(context);
@@ -242,24 +195,18 @@ class ProfileDialogs {
     }
   }
 
-  // MARK: - Error Handling
 
-  /// Handles dialog errors gracefully with user feedback
   static void _handleDialogError(
     BuildContext context,
     String userMessage,
     dynamic error,
   ) {
-    // Log the error for debugging
     debugPrint('ProfileDialogs Error: $userMessage - $error');
 
-    // Provide haptic feedback
     HapticFeedback.heavyImpact();
 
-    // Show user-friendly error message
     DialogUtils.showErrorSnackBar(context, userMessage);
 
-    // Optionally show detailed error in debug mode
     if (const bool.fromEnvironment('DEBUG', defaultValue: false)) {
       showCupertinoDialog(
         context: context,
@@ -277,9 +224,7 @@ class ProfileDialogs {
     }
   }
 
-  // MARK: - Safe Profile Property Access
 
-  /// Safely extract username from profile object
   static String getSafeUsername(dynamic profile) {
     try {
       if (profile == null) return 'User';
@@ -292,7 +237,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Safely extract avatar from profile object
   static String getSafeAvatar(dynamic profile) {
     try {
       if (profile == null) return 'fox';
@@ -305,7 +249,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Safely extract email from profile object
   static String getSafeEmail(dynamic profile) {
     try {
       if (profile == null) return '';
@@ -318,7 +261,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Safely extract bio from profile object
   static String getSafeBio(dynamic profile) {
     try {
       if (profile == null) return '';
@@ -331,7 +273,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Safely extract private setting from profile object
   static bool getSafePrivate(dynamic profile) {
     try {
       if (profile == null) return false;
@@ -344,7 +285,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Safely extract achievement earned status
   static bool getSafeAchievementEarned(dynamic achievement) {
     try {
       if (achievement == null) return false;
@@ -363,7 +303,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Safely extract achievement progress
   static double getSafeAchievementProgress(dynamic achievement) {
     try {
       if (achievement == null) return 0.0;
@@ -382,9 +321,7 @@ class ProfileDialogs {
     }
   }
 
-  // MARK: - Fallback Implementations
 
-  /// Simple theme selector fallback
   static void _showSimpleThemeSelector(
     BuildContext context,
     String selectedTheme,
@@ -421,9 +358,7 @@ class ProfileDialogs {
     );
   }
 
-  // MARK: - Utility Methods for BLoC Integration
 
-  /// Updates profile using ProfileBloc with error handling
   static void updateProfileWithBloc(
     BuildContext context,
     Map<String, dynamic> profileData,
@@ -435,7 +370,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Updates preferences using ProfileBloc with error handling
   static void updatePreferencesWithBloc(
     BuildContext context,
     Map<String, dynamic> preferences,
@@ -447,7 +381,6 @@ class ProfileDialogs {
     }
   }
 
-  /// Exports data using ProfileBloc with error handling
   static void exportDataWithBloc(BuildContext context) {
     try {
       DialogUtils.exportDataWithBloc(context);
@@ -464,101 +397,88 @@ class ProfileDialogs {
     }
   }
 
-  // MARK: - Helper Methods
 
-  /// Shows success snackbar
   static void showSuccessSnackBar(BuildContext context, String message) {
     DialogUtils.showSuccessSnackBar(context, message);
   }
 
-  /// Shows error snackbar
   static void showErrorSnackBar(BuildContext context, String message) {
     DialogUtils.showErrorSnackBar(context, message);
   }
 
-  /// Shows info snackbar
   static void showInfoSnackBar(BuildContext context, String message) {
     DialogUtils.showInfoSnackBar(context, message);
   }
 
-  // MARK: - Data Access Helpers
 
-  /// Gets available avatars list
   static List<Map<String, String>> getAvailableAvatars() {
     return DialogUtils.getAvailableAvatars();
   }
 
-  /// Gets available languages list
   static List<Map<String, String>> getAvailableLanguages() {
     return DialogUtils.getAvailableLanguages();
   }
 
-  /// Gets available themes list
   static List<Map<String, dynamic>> getAvailableThemes() {
     return DialogUtils.getAvailableThemes();
   }
 
-  /// Gets emoji for avatar name
   static String getEmojiForAvatar(String avatarName) {
     return DialogUtils.getEmojiForAvatar(avatarName);
   }
 
-  /// Gets achievement color by category
   static Color getAchievementColor(String category) {
     return DialogUtils.getAchievementColor(category);
   }
 
-  /// Validates email format
   static bool isValidEmail(String email) {
     return DialogUtils.isValidEmail(email);
   }
 
-  /// Formats date with relative time
   static String formatDate(DateTime date) {
     return DialogUtils.formatDate(date);
   }
 
-  /// Gets valid CupertinoIcons for themes
   static List<Map<String, dynamic>> getValidThemeIcons() {
     return [
       {
         'name': 'Cosmic Purple',
-        'icon': CupertinoIcons.sparkles, // ✓ Valid
+'icon': CupertinoIcons.sparkles, 
         'color': const Color(0xFF8B5CF6),
       },
       {
         'name': 'Ocean Blue',
-        'icon': CupertinoIcons.drop_fill, // ✓ Valid
+'icon': CupertinoIcons.drop_fill, 
         'color': const Color(0xFF3B82F6),
       },
       {
         'name': 'Forest Green',
-        'icon': CupertinoIcons.leaf_arrow_circlepath, // ✓ Valid
+'icon': CupertinoIcons.leaf_arrow_circlepath, 
         'color': const Color(0xFF10B981),
       },
       {
         'name': 'Sunset Orange',
-        'icon': CupertinoIcons.sun_max_fill, // ✓ Valid
+'icon': CupertinoIcons.sun_max_fill, 
         'color': const Color(0xFFF59E0B),
       },
       {
         'name': 'Cherry Blossom',
-        'icon': CupertinoIcons.heart_fill, // ✓ Valid
+'icon': CupertinoIcons.heart_fill, 
         'color': const Color(0xFFEC4899),
       },
       {
         'name': 'Fire Red',
-        'icon': CupertinoIcons.flame_fill, // ✓ Valid
+'icon': CupertinoIcons.flame_fill, 
         'color': const Color(0xFFEF4444),
       },
       {
         'name': 'Mystic Teal',
-        'icon': CupertinoIcons.waveform, // ✓ Valid
+'icon': CupertinoIcons.waveform, 
         'color': const Color(0xFF14B8A6),
       },
       {
         'name': 'Royal Indigo',
-        'icon': CupertinoIcons.star_fill, // ✓ Valid (alternative to crown_fill)
+'icon': CupertinoIcons.star_fill, 
         'color': const Color(0xFF6366F1),
       },
     ];

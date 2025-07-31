@@ -36,7 +36,6 @@ class CommunityRepositoryImpl implements CommunityRepository {
         final entities = posts.map((post) => post.toEntity()).toList();
         Logger.info('. Repository: Found ${entities.length} global posts');
 
-        // Log sample data for debugging
         if (entities.isNotEmpty) {
           final firstPost = entities.first;
           Logger.info(
@@ -192,7 +191,6 @@ class CommunityRepositoryImpl implements CommunityRepository {
         '❤️ Repository: Reacting to post $postId with $emoji (type: $type)',
       );
 
-      // Validate input parameters
       if (postId.isEmpty) {
         Logger.error('. Repository: Invalid post ID for reaction');
         return Left(
@@ -265,7 +263,6 @@ class CommunityRepositoryImpl implements CommunityRepository {
     try {
       Logger.info('🗑️ Repository: Removing reaction from post $postId');
 
-      // Validate input parameters
       if (postId.isEmpty) {
         Logger.error('. Repository: Invalid post ID for removing reaction');
         return Left(
@@ -339,7 +336,6 @@ class CommunityRepositoryImpl implements CommunityRepository {
         '💬 Repository: Adding comment to post $postId (anonymous: $isAnonymous)',
       );
 
-      // Validate input parameters
       if (postId.isEmpty) {
         Logger.error('. Repository: Invalid post ID for adding comment');
         return Left(
@@ -431,7 +427,6 @@ class CommunityRepositoryImpl implements CommunityRepository {
         '💬 Repository: Fetching comments for post $postId (page: $page, limit: $limit)',
       );
 
-      // Validate input parameters
       if (postId.isEmpty) {
         Logger.error('. Repository: Invalid post ID for fetching comments');
         return Left(
@@ -537,7 +532,6 @@ class CommunityRepositoryImpl implements CommunityRepository {
     }
   }
 
-  // Helper method to validate network connectivity with retry logic
   Future<bool> _checkNetworkWithRetry({int retries = 2}) async {
     for (int i = 0; i < retries; i++) {
       if (await networkInfo.isConnected) {
@@ -553,7 +547,6 @@ class CommunityRepositoryImpl implements CommunityRepository {
     return false;
   }
 
-  // Helper method to get user-friendly error messages
   String _getUserFriendlyErrorMessage(dynamic error) {
     if (error is ServerException) {
       if (error.message.toLowerCase().contains('timeout')) {
@@ -579,7 +572,6 @@ class CommunityRepositoryImpl implements CommunityRepository {
   }
 }
 
-// Custom validation failure class
 class ValidationFailure extends Failure {
   const ValidationFailure({required super.message});
 

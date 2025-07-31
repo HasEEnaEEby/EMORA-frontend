@@ -13,7 +13,7 @@ class EmotionEntity extends Equatable {
   final Map<String, dynamic>? additionalData;
   final bool isAnonymous;
   final List<String>? tags;
-  final String? character; // For Inside Out style emotions
+final String? character; 
 
   const EmotionEntity({
     required this.id,
@@ -118,7 +118,6 @@ class EmotionEntity extends Equatable {
     );
   }
 
-  // Helper methods
   bool get hasLocation => latitude != null && longitude != null;
   bool get hasContext => context != null && context!.isNotEmpty;
   bool get hasMemory => memory != null && memory!.isNotEmpty;

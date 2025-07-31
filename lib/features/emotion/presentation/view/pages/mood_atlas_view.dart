@@ -38,13 +38,11 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
   late AnimationController _uiPulseController;
   late AnimationController _floatingController;
 
-  // AI Insights
   EmotionInsight? _globalInsight;
   bool _isLoadingInsights = false;
   String? _insightsErrorMessage;
   InsightsService? _insightsService;
 
-  // Cinematic transition animations
   late Animation<double> _zoomAnimation;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _earthPositionAnimation;
@@ -61,54 +59,45 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
   }
 
   void _initializeAnimations() {
-    // Slow rotation for the background
     _rotationController = AnimationController(
       duration: const Duration(seconds: 120),
       vsync: this,
     )..repeat();
 
-    // Planet orbits
     _orbitController = AnimationController(
       duration: const Duration(seconds: 60),
       vsync: this,
     )..repeat();
 
-    // Earth glow pulse
     _pulseController = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     )..repeat(reverse: true);
 
-    // UI element pulse
     _uiPulseController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     )..repeat(reverse: true);
 
-    // Floating animation for UI elements
     _floatingController = AnimationController(
       duration: const Duration(seconds: 4),
       vsync: this,
     )..repeat(reverse: true);
 
-    // Earth rotation (faster for effect)
     _earthRotationController = AnimationController(
       duration: const Duration(seconds: 8),
       vsync: this,
     )..repeat();
 
-    // Cinematic transition controller
     _transitionController = AnimationController(
       duration: const Duration(milliseconds: 2500),
       vsync: this,
     );
 
-    // Setup transition animations
     _setupTransitionAnimations();
   }
 
   void _setupTransitionAnimations() {
-    // Epic zoom animation (starts normal, goes massive)
     _zoomAnimation = Tween<double>(begin: 1.0, end: 80.0).animate(
       CurvedAnimation(
         parent: _transitionController,
@@ -116,7 +105,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
       ),
     );
 
-    // Fade out space background
     _fadeAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _transitionController,
@@ -124,7 +112,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
       ),
     );
 
-    // Earth moves to center during transition
     _earthPositionAnimation =
         Tween<Offset>(begin: const Offset(200, 0), end: Offset.zero).animate(
           CurvedAnimation(
@@ -133,7 +120,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
           ),
         );
 
-    // Earth rotation speeds up during transition
     _earthRotationAnimation = Tween<double>(begin: 1.0, end: 3.0).animate(
       CurvedAnimation(
         parent: _transitionController,
@@ -141,12 +127,10 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
       ),
     );
 
-    // UI pulse animation
     _uiPulseAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
       CurvedAnimation(parent: _uiPulseController, curve: Curves.easeInOut),
     );
 
-    // Floating animation
     _floatingAnimation = Tween<double>(begin: -5.0, end: 5.0).animate(
       CurvedAnimation(parent: _floatingController, curve: Curves.easeInOut),
     );
@@ -212,7 +196,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
             ),
             child: Column(
               children: [
-                // Handle bar
                 Container(
                   margin: const EdgeInsets.only(top: 8),
                   width: 40,
@@ -255,7 +238,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
                         ),
                         const SizedBox(height: 20),
                         
-                        // Global Insights
                         if (_globalInsight != null) ...[
                           Text(
                             'Global Insights',
@@ -298,7 +280,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
                           ),
                         ],
                         
-                        // Loading state
                         if (_isLoadingInsights)
                           const Center(
                             child: Padding(
@@ -309,7 +290,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
                             ),
                           ),
                         
-                        // Error state
                         if (_insightsErrorMessage != null)
                           Container(
                             padding: const EdgeInsets.all(16),
@@ -373,7 +353,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
       _isTransitioning = true;
     });
 
-    // Stop other animations for cinematic effect
     _rotationController.stop();
     _orbitController.stop();
     _pulseController.stop();
@@ -382,11 +361,9 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
 
     print('🎬 Starting epic zoom transition...');
     
-    // Start the epic transition
     _transitionController.forward().then((_) {
       if (!mounted) return;
 
-      // Get the EmotionBloc from current context before navigation
       EmotionBloc? emotionBloc;
       try {
         emotionBloc = context.read<EmotionBloc>();
@@ -400,14 +377,12 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 800),
           pageBuilder: (context, animation, secondaryAnimation) {
-            // Pass the EmotionBloc to the new route
             if (emotionBloc != null) {
               return BlocProvider.value(
                 value: emotionBloc,
                 child:  EnhancedAtlasView(),
               );
             } else {
-              // Fallback: create a new EmotionBloc instance using DI
               return BlocProvider(
                 create: (context) => EmotionBloc(
                   logEmotion: di.sl<LogEmotion>(),
@@ -460,19 +435,16 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
         builder: (context, child) {
           return Stack(
             children: [
-              // Space background with stars and nebulae
               SpaceBackground(
                 rotationController: _rotationController,
                 fadeAnimation: _fadeAnimation,
               ),
 
-              // Solar system (sun and planets except Earth)
               SolarSystem(
                 orbitController: _orbitController,
                 fadeAnimation: _fadeAnimation,
               ),
 
-              // Earth widget with cinematic transition
               EarthWidget(
                 orbitController: _orbitController,
                 pulseController: _pulseController,
@@ -485,13 +457,10 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
                 onTap: _onEarthTap,
               ),
 
-              // Orbital paths
               OrbitPaths(fadeAnimation: _fadeAnimation),
 
-              // Cinematic transition overlay effect (tunnel vision)
               if (_isTransitioning) _buildTransitionOverlay(),
 
-              // Enhanced UI Elements
               if (!_isTransitioning) _buildEnhancedUI(),
             ],
           );
@@ -545,7 +514,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                // Enhanced back button
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
@@ -588,7 +556,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
 
                 const Spacer(),
                 
-                // AI Insights Button
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
@@ -644,7 +611,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
           offset: Offset(0, _floatingAnimation.value * 0.5),
           child: Column(
             children: [
-              // Main instruction card - make it tappable as backup
               GestureDetector(
                 onTap: () {
                   print('�� INSTRUCTION CARD TAPPED as backup!');
@@ -711,7 +677,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             letterSpacing: 0.6,
-                            // Removed shadows to make it simpler
                           ),
                         ),
                       ],
@@ -722,7 +687,6 @@ class _MoodAtlasViewState extends State<MoodAtlasView>
 
               const SizedBox(height: 16),
 
-              // Subtitle with floating animation
               Transform.translate(
                 offset: Offset(0, _floatingAnimation.value * -0.3),
                 child: Container(

@@ -5,7 +5,7 @@ class QuickActionsGrid extends StatelessWidget {
   final VoidCallback onJournalTapped;
   final VoidCallback onInsightsTapped;
   final VoidCallback onAtlasTapped;
-  final VoidCallback? onDashboardTapped; // NEW: Optional dashboard navigation
+final VoidCallback? onDashboardTapped; 
 
   const QuickActionsGrid({
     super.key,
@@ -13,7 +13,7 @@ class QuickActionsGrid extends StatelessWidget {
     required this.onJournalTapped,
     required this.onInsightsTapped,
     required this.onAtlasTapped,
-    this.onDashboardTapped, // NEW: Optional parameter
+this.onDashboardTapped, 
   });
 
   @override
@@ -38,7 +38,7 @@ class QuickActionsGrid extends StatelessWidget {
             mainAxisSpacing: 16,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 1.8, // Increased from 1.5 to prevent overflow
+childAspectRatio: 1.8, 
             children: [
               _buildQuickActionCard(
                 icon: Icons.air_rounded,
@@ -113,7 +113,7 @@ class QuickActionsGrid extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12), // Reduced from 16 to 12
+padding: const EdgeInsets.all(12), 
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: gradient.colors
@@ -130,7 +130,7 @@ class QuickActionsGrid extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min, // Added to prevent overflow
+mainAxisSize: MainAxisSize.min, 
           children: [
             Container(
               padding: const EdgeInsets.all(8),
@@ -141,38 +141,36 @@ class QuickActionsGrid extends StatelessWidget {
               child: Icon(
                 icon,
                 color: Colors.white,
-                size: 20, // Reduced from 24 to 20
+size: 20, 
               ),
             ),
-            const SizedBox(height: 8), // Reduced from 12 to 8
+const SizedBox(height: 8), 
             Flexible(
-              // Wrapped in Flexible to prevent overflow
               child: Text(
                 title,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 14, // Reduced from 16 to 14
+fontSize: 14, 
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.3,
-                  height: 1.2, // Added line height
+height: 1.2, 
                 ),
-                maxLines: 2, // Added max lines
-                overflow: TextOverflow.ellipsis, // Added overflow handling
+maxLines: 2, 
+overflow: TextOverflow.ellipsis, 
               ),
             ),
-            const SizedBox(height: 2), // Reduced from 4 to 2
+const SizedBox(height: 2), 
             Flexible(
-              // Wrapped in Flexible to prevent overflow
               child: Text(
                 subtitle,
                 style: TextStyle(
                   color: Colors.grey[400],
-                  fontSize: 11, // Reduced from 12 to 11
+fontSize: 11, 
                   letterSpacing: 0.2,
-                  height: 1.3, // Added line height
+height: 1.3, 
                 ),
-                maxLines: 1, // Added max lines
-                overflow: TextOverflow.ellipsis, // Added overflow handling
+maxLines: 1, 
+overflow: TextOverflow.ellipsis, 
               ),
             ),
           ],

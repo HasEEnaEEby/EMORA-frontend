@@ -59,7 +59,7 @@ class _CompletionAnimationState extends State<CompletionAnimation>
         return Transform.scale(
           scale: _scaleAnimation.value,
           child: Transform.rotate(
-            angle: _rotationAnimation.value * 0.1, // Subtle rotation
+angle: _rotationAnimation.value * 0.1, 
             child: Opacity(opacity: _fadeAnimation.value, child: widget.child),
           ),
         );

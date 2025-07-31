@@ -15,7 +15,6 @@ class CommunityModule {
     Logger.info('🌍 Initializing Community Module...');
 
     try {
-      // BLoC
       sl.registerFactory<CommunityBloc>(
         () => CommunityBloc(
           getGlobalFeed: sl<GetGlobalFeed>(),
@@ -29,7 +28,6 @@ class CommunityModule {
         ),
       );
 
-      // Use Cases
       sl.registerLazySingleton<GetGlobalFeed>(
         () => GetGlobalFeed(sl<CommunityRepository>()),
       );
@@ -62,7 +60,6 @@ class CommunityModule {
         () => GetGlobalStats(sl<CommunityRepository>()),
       );
 
-      // Repository
       sl.registerLazySingleton<CommunityRepository>(
         () => CommunityRepositoryImpl(
           remoteDataSource: sl<CommunityRemoteDataSource>(),
@@ -70,10 +67,9 @@ class CommunityModule {
         ),
       );
 
-      // Data Sources (Remote Only) - FIXED: Added both required dependencies
       sl.registerLazySingleton<CommunityRemoteDataSource>(
         () => CommunityRemoteDataSourceImpl(
-          apiService: sl<ApiService>(), // . FIXED: Added missing apiService
+apiService: sl<ApiService>(), 
           dioClient: sl<DioClient>(),
         ),
       );

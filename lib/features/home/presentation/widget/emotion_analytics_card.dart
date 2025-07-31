@@ -10,7 +10,7 @@ class EmotionAnalyticsCard extends StatelessWidget {
   final List<Map<String, dynamic>>? weeklyMoodData;
   final Map<String, dynamic>? analyticsData;
   final bool isNewUser;
-  final String dominantMood; // Pass this from analytics
+final String dominantMood; 
 
   const EmotionAnalyticsCard({
     super.key,
@@ -139,7 +139,7 @@ class EmotionAnalyticsCard extends StatelessWidget {
                 const SizedBox(height: 20),
                 if (tracks.isNotEmpty)
                   SizedBox(
-                    height: 300, // Adjust as needed
+height: 300, 
                     child: HybridTrackList(spotifyTracks: tracks),
                   )
                 else
@@ -168,7 +168,6 @@ class EmotionAnalyticsCard extends StatelessWidget {
         ),
         const SizedBox(height: 24),
         
-        // Empty Chart Placeholder
         Container(
           height: 120,
           decoration: BoxDecoration(
@@ -212,7 +211,6 @@ class EmotionAnalyticsCard extends StatelessWidget {
         
         const SizedBox(height: 20),
         
-        // Empty Insights Card
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -280,7 +278,7 @@ class EmotionAnalyticsCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1DB954), Color(0xFF1ED760)], // Spotify green
+colors: [Color(0xFF1DB954), Color(0xFF1ED760)], 
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -493,9 +491,7 @@ class EmotionAnalyticsCard extends StatelessWidget {
           if (playlist['spotifyUrl'] != null)
             ElevatedButton(
               onPressed: () {
-                // Open Spotify URL
                 Navigator.pop(context);
-                // You can add URL launcher here
               },
               child: const Text('Open in Spotify'),
             ),

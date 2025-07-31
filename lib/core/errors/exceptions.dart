@@ -1,14 +1,13 @@
-// lib/core/errors/exceptions.dart
 
 class ServerException implements Exception {
   final String message;
   final String? code;
-  final int? statusCode; // Added this field
+final int? statusCode; 
 
   ServerException({
     required this.message,
     this.code,
-    this.statusCode, // Added this parameter
+this.statusCode, 
   });
 
   @override
@@ -86,21 +85,19 @@ class PermissionException implements Exception {
   String toString() => 'PermissionException(message: $message, code: $code)';
 }
 
-// . ADDED: Rate limit exception for friend requests
 class RateLimitException implements Exception {
   final String message;
-  final int retryAfter; // Seconds to wait before retrying
+final int retryAfter; 
 
   RateLimitException({
     required this.message,
-    this.retryAfter = 300, // Default 5 minutes
+this.retryAfter = 300, 
   });
 
   @override
   String toString() => 'RateLimitException(message: $message, retryAfter: $retryAfter)';
 }
 
-// . ADDED: Friend request specific exceptions
 class FriendRequestException implements Exception {
   final String message;
   final String? code;

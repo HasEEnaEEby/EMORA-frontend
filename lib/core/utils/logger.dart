@@ -1,10 +1,8 @@
-// lib/core/utils/logger.dart - ENHANCED VERSION
 import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 
-/// Enhanced logging utility with comprehensive debugging capabilities
 class Logger {
   static bool _initialized = false;
   static bool _enableFileLogging = false;
@@ -12,7 +10,6 @@ class Logger {
   static const int _maxHistorySize = 1000;
   static LogLevel _currentLevel = LogLevel.info;
 
-  // Log level configuration
   static const Map<LogLevel, int> _levelPriorities = {
     LogLevel.debug: 700,
     LogLevel.info: 800,
@@ -21,7 +18,6 @@ class Logger {
     LogLevel.critical: 1100,
   };
 
-  // ANSI color codes for better console output
   static const String _reset = '\x1B[0m';
   static const String _red = '\x1B[31m';
   static const String _green = '\x1B[32m';
@@ -32,7 +28,6 @@ class Logger {
   static const String _white = '\x1B[37m';
   static const String _bold = '\x1B[1m';
 
-  /// Initialize the logger with configuration
   static void init({
     LogLevel level = LogLevel.info,
     bool enableFileLogging = false,
@@ -54,7 +49,6 @@ class Logger {
     }
   }
 
-  /// Log debug messages (development only)
   static void debug(String message, [dynamic data]) {
     if (!_shouldLog(LogLevel.debug)) return;
     
@@ -67,7 +61,6 @@ class Logger {
     );
   }
 
-  /// Log informational messages
   static void info(String message, [dynamic data]) {
     if (!_shouldLog(LogLevel.info)) return;
     
@@ -80,7 +73,6 @@ class Logger {
     );
   }
 
-  /// Log warning messages
   static void warning(String message, [dynamic data]) {
     if (!_shouldLog(LogLevel.warning)) return;
     
@@ -93,7 +85,6 @@ class Logger {
     );
   }
 
-  /// Log error messages with optional error object and stack trace
   static void error(String message, [dynamic error, StackTrace? stackTrace]) {
     if (!_shouldLog(LogLevel.error)) return;
     
@@ -107,7 +98,6 @@ class Logger {
     );
   }
 
-  /// Log critical errors that require immediate attention
   static void critical(String message, [dynamic error, StackTrace? stackTrace]) {
     _log(
       level: LogLevel.critical,
@@ -120,7 +110,6 @@ class Logger {
     );
   }
 
-  /// Log HTTP requests and responses
   static void http({
     required String method,
     required String url,
@@ -145,21 +134,18 @@ class Logger {
     });
   }
 
-  /// Log navigation events
   static void navigation(String action, String route, [Map<String, dynamic>? data]) {
     if (!_shouldLog(LogLevel.info)) return;
     
     info('🧭 $action: $route', data);
   }
 
-  /// Log bloc/cubit state changes
   static void bloc(String blocName, String event, String state, [dynamic data]) {
     if (!_shouldLog(LogLevel.debug)) return;
     
     debug('🔄 $blocName: $event → $state', data);
   }
 
-  /// Log performance metrics
   static void performance(String operation, Duration duration, [Map<String, dynamic>? metrics]) {
     if (!_shouldLog(LogLevel.info)) return;
     
@@ -167,37 +153,31 @@ class Logger {
     info(message, metrics);
   }
 
-  /// Log user interactions
   static void userAction(String action, [Map<String, dynamic>? data]) {
     if (!_shouldLog(LogLevel.info)) return;
     
     info('. User: $action', data);
   }
 
-  /// Log database operations
   static void database(String operation, [Map<String, dynamic>? data]) {
     if (!_shouldLog(LogLevel.debug)) return;
     
     debug('. DB: $operation', data);
   }
 
-  /// Log cache operations
   static void cache(String operation, String key, [dynamic data]) {
     if (!_shouldLog(LogLevel.debug)) return;
     
     debug('📦 Cache: $operation ($key)', data);
   }
 
-  /// Log authentication events
   static void auth(String event, [Map<String, dynamic>? data]) {
     if (!_shouldLog(LogLevel.info)) return;
     
-    // Sanitize sensitive data
     final sanitizedData = data != null ? _sanitizeAuthData(data) : null;
     info('🔐 Auth: $event', sanitizedData);
   }
 
-  /// Core logging implementation
   static void _log({
     required LogLevel level,
     required String message,
@@ -216,10 +196,8 @@ class Logger {
       stackTrace: stackTrace,
     );
 
-    // Add to history
     _addToHistory(logEntry);
 
-    // Format message for console
     final formattedMessage = _formatMessage(
       timestamp: timestamp,
       level: level,
@@ -230,7 +208,6 @@ class Logger {
 
     final priority = _levelPriorities[level] ?? 800;
 
-    // Log to console
     if (kDebugMode || forcePrint) {
       if (data != null) {
         developer.log(
@@ -241,7 +218,6 @@ class Logger {
           stackTrace: stackTrace,
         );
         
-        // Log data separately for better formatting
         if (data is! Exception) {
           developer.log(
             '   . Data: ${_formatData(data)}',
@@ -259,7 +235,6 @@ class Logger {
         );
       }
 
-      // Log stack trace if provided and not already included
       if (stackTrace != null && data is! Exception) {
         developer.log(
           '   📚 Stack Trace:\n$stackTrace',
@@ -269,13 +244,11 @@ class Logger {
       }
     }
 
-    // File logging (if enabled)
     if (_enableFileLogging) {
       _writeToFile(logEntry);
     }
   }
 
-  /// Format message for console output
   static String _formatMessage({
     required DateTime timestamp,
     required LogLevel level,
@@ -293,7 +266,6 @@ class Logger {
     }
   }
 
-  /// Format time for log entries
   static String _formatTime(DateTime timestamp) {
     return '${timestamp.hour.toString().padLeft(2, '0')}:'
            '${timestamp.minute.toString().padLeft(2, '0')}:'
@@ -301,7 +273,6 @@ class Logger {
            '${timestamp.millisecond.toString().padLeft(3, '0')}';
   }
 
-  /// Format data for logging
   static String _formatData(dynamic data) {
     if (data == null) return 'null';
     if (data is String) return '"$data"';
@@ -315,23 +286,17 @@ class Logger {
     return data.toString();
   }
 
-  /// Add log entry to history
   static void _addToHistory(LogEntry entry) {
     _logHistory.add(entry);
     
-    // Maintain max history size
     if (_logHistory.length > _maxHistorySize) {
       _logHistory.removeAt(0);
     }
   }
 
-  /// Write log entry to file (placeholder implementation)
   static void _writeToFile(LogEntry entry) {
-    // TODO: Implement file logging if needed
-    // This would write to app's documents directory
   }
 
-  /// Check if we should log at the given level
   static bool _shouldLog(LogLevel level) {
     if (!_initialized) init();
     
@@ -341,11 +306,9 @@ class Logger {
     return messagePriority >= currentPriority;
   }
 
-  /// Sanitize authentication data to prevent logging sensitive information
   static Map<String, dynamic> _sanitizeAuthData(Map<String, dynamic> data) {
     final sanitized = Map<String, dynamic>.from(data);
     
-    // Remove or mask sensitive fields
     const sensitiveFields = [
       'password',
       'token',
@@ -365,20 +328,14 @@ class Logger {
     return sanitized;
   }
 
-  // ============================================================================
-  // PUBLIC UTILITY METHODS
-  // ============================================================================
 
-  /// Get current log level
   static LogLevel get currentLevel => _currentLevel;
 
-  /// Set log level
   static void setLevel(LogLevel level) {
     _currentLevel = level;
     info('. Log level changed to: ${level.name}');
   }
 
-  /// Get log history
   static List<LogEntry> getHistory({LogLevel? level, int? limit}) {
     var filtered = _logHistory;
     
@@ -394,13 +351,11 @@ class Logger {
     return List.unmodifiable(filtered);
   }
 
-  /// Clear log history
   static void clearHistory() {
     _logHistory.clear();
     info('🗑️ Log history cleared');
   }
 
-  /// Export logs as formatted string
   static String exportLogs({LogLevel? level, int? limit}) {
     final entries = getHistory(level: level, limit: limit);
     final buffer = StringBuffer();
@@ -425,7 +380,6 @@ class Logger {
     return buffer.toString();
   }
 
-  /// Get logger statistics
   static Map<String, dynamic> getStats() {
     final stats = <LogLevel, int>{};
     for (final level in LogLevel.values) {
@@ -443,11 +397,10 @@ class Logger {
       'total_entries': _logHistory.length,
       'max_history_size': _maxHistorySize,
       'level_counts': stats.map((k, v) => MapEntry(k.name, v)),
-      'memory_usage_kb': (_logHistory.length * 100) ~/ 1024, // Rough estimate
+'memory_usage_kb': (_logHistory.length * 100) ~/ 1024, 
     };
   }
 
-  /// Print logger statistics
   static void printStats() {
     final stats = getStats();
     info('. Logger Statistics:');
@@ -456,21 +409,15 @@ class Logger {
     });
   }
 
-  /// Check if logger is initialized
   static bool get isInitialized => _initialized;
 
-  /// Enable/disable file logging
   static void setFileLogging(bool enabled) {
     _enableFileLogging = enabled;
     info('📁 File logging ${enabled ? 'enabled' : 'disabled'}');
   }
 }
 
-// ============================================================================
-// SUPPORTING CLASSES AND ENUMS
-// ============================================================================
 
-/// Log levels in order of severity
 enum LogLevel {
   debug,
   info,
@@ -479,7 +426,6 @@ enum LogLevel {
   critical,
 }
 
-/// Log entry data structure
 class LogEntry {
   final DateTime timestamp;
   final LogLevel level;
@@ -505,7 +451,6 @@ class LogEntry {
     return '${level.name.toUpperCase().padRight(8)} | $timeStr | $message';
   }
 
-  /// Convert to JSON for serialization
   Map<String, dynamic> toJson() {
     return {
       'timestamp': timestamp.toIso8601String(),
@@ -517,11 +462,7 @@ class LogEntry {
   }
 }
 
-// ============================================================================
-// EXTENSION METHODS FOR CONVENIENCE
-// ============================================================================
 
-/// Extension on Object for easy logging
 extension LoggerExtension on Object {
   void logInfo(String message) => Logger.info('${runtimeType}: $message');
   void logWarning(String message) => Logger.warning('${runtimeType}: $message');
@@ -530,7 +471,6 @@ extension LoggerExtension on Object {
   void logDebug(String message) => Logger.debug('${runtimeType}: $message');
 }
 
-/// Extension on Duration for performance logging
 extension DurationLogging on Duration {
   void logPerformance(String operation, [Map<String, dynamic>? metrics]) =>
       Logger.performance(operation, this, metrics);

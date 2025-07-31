@@ -1,4 +1,3 @@
-// lib/features/friends/domain/entity/friend_mood_data.dart
 
 import 'package:flutter/material.dart';
 import 'package:equatable/equatable.dart';
@@ -74,7 +73,6 @@ class FriendMoodData extends Equatable {
     };
   }
 
-  /// Get emoji based on emotion
   String get emoji {
     const emotionEmojis = {
       'happy': '😊',
@@ -101,34 +99,32 @@ class FriendMoodData extends Equatable {
     return emotionEmojis[emotion.toLowerCase()] ?? '😊';
   }
 
-  /// Get color based on emotion
   Color get color {
     const emotionColors = {
-      'happy': Color(0xFF10B981), // Green
-      'sad': Color(0xFF6366F1),   // Blue
-      'angry': Color(0xFFEF4444), // Red
-      'anxious': Color(0xFFF59E0B), // Amber
-      'excited': Color(0xFFFFD700), // Yellow
-      'calm': Color(0xFF8B5CF6),   // Purple
-      'stressed': Color(0xFFF97316), // Orange
-      'grateful': Color(0xFF10B981), // Green
-      'lonely': Color(0xFF6366F1),  // Blue
-      'confident': Color(0xFF10B981), // Green
-      'tired': Color(0xFF6B7280),   // Gray
-      'energetic': Color(0xFFFFD700), // Yellow
-      'peaceful': Color(0xFF8B5CF6), // Purple
-      'frustrated': Color(0xFFEF4444), // Red
-      'joyful': Color(0xFF10B981),   // Green
-      'worried': Color(0xFFF59E0B),  // Amber
-      'content': Color(0xFF10B981),  // Green
-      'overwhelmed': Color(0xFFEF4444), // Red
-      'hopeful': Color(0xFF8B5CF6),  // Purple
-      'disappointed': Color(0xFF6B7280), // Gray
+'happy': Color(0xFF10B981), 
+'sad': Color(0xFF6366F1),   
+'angry': Color(0xFFEF4444), 
+'anxious': Color(0xFFF59E0B), 
+'excited': Color(0xFFFFD700), 
+'calm': Color(0xFF8B5CF6),   
+'stressed': Color(0xFFF97316), 
+'grateful': Color(0xFF10B981), 
+'lonely': Color(0xFF6366F1),  
+'confident': Color(0xFF10B981), 
+'tired': Color(0xFF6B7280),   
+'energetic': Color(0xFFFFD700), 
+'peaceful': Color(0xFF8B5CF6), 
+'frustrated': Color(0xFFEF4444), 
+'joyful': Color(0xFF10B981),   
+'worried': Color(0xFFF59E0B),  
+'content': Color(0xFF10B981),  
+'overwhelmed': Color(0xFFEF4444), 
+'hopeful': Color(0xFF8B5CF6),  
+'disappointed': Color(0xFF6B7280), 
     };
     return emotionColors[emotion.toLowerCase()] ?? const Color(0xFF8B5CF6);
   }
 
-  /// Get location display string
   String get locationDisplay {
     if (location == null) return 'Unknown Location';
     

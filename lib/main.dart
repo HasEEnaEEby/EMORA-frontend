@@ -1,45 +1,33 @@
+import 'dart:async';
+
 import 'package:emora_mobile_app/core/network/dio_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 import 'app/app.dart';
 import 'app/bloc_observer.dart';
 import 'app/di/injection_container.dart' as di;
 import 'core/navigation/navigation_service.dart';
 import 'core/utils/logger.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:get_it/get_it.dart';
 import 'features/auth/data/data_source/local/auth_local_data_source.dart';
-import 'features/auth/data/model/user_model.dart';
-import 'package:provider/provider.dart';
-import 'package:uni_links/uni_links.dart';
-import 'dart:async';
-import 'core/navigation/app_router.dart';
-import '../../features/auth/presentation/view/forgot_password_view.dart';
-
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-
     Logger.init(
-      level: LogLevel
-          .warning, 
+      level: LogLevel.warning,
       enableFileLogging: false,
       clearPreviousLogs: true,
     );
 
     Logger.info(' Starting Emora Mobile App...');
-
-    // --- PROFESSIONAL PRACTICE ---
-    // Do NOT clear onboarding data on every app start.
-    // If you need to clear onboarding data for a migration or bug fix,
-    // use the utility below ONCE, then comment it out again.
-    // await clearOnboardingDataForMigration(); // <-- Only run manually if needed
 
     await _setupSystemUI();
     await _initializeDependencies();
@@ -61,9 +49,6 @@ Future<void> main() async {
   }
 }
 
-// --- ONBOARDING DATA CLEAR UTILITY (for one-time migrations/bugfixes) ---
-// Call this ONLY if you need to reset onboarding for all users (e.g. after a breaking change).
-// Never call this in production code on every app start!
 Future<void> clearOnboardingDataForMigration() async {
   final prefs = await SharedPreferences.getInstance();
   final onboardingKeys = [
@@ -196,7 +181,6 @@ Widget _buildErrorApp(String error) {
                 const SizedBox(height: 32),
                 ElevatedButton(
                   onPressed: () {
-                    // Restart the app
                     SystemNavigator.pop();
                   },
                   style: ElevatedButton.styleFrom(
@@ -236,8 +220,8 @@ class SpotifyTrackPlayer extends StatefulWidget {
     required this.trackName,
     required this.artist,
     required this.imageUrl,
-    Key? key,
-  }) : super(key: key);
+    super.key,
+  });
 
   @override
   State<SpotifyTrackPlayer> createState() => _SpotifyTrackPlayerState();
@@ -274,7 +258,12 @@ class _SpotifyTrackPlayerState extends State<SpotifyTrackPlayer> {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Image.network(widget.imageUrl, width: 50, height: 50, fit: BoxFit.cover),
+      leading: Image.network(
+        widget.imageUrl,
+        width: 50,
+        height: 50,
+        fit: BoxFit.cover,
+      ),
       title: Text(widget.trackName),
       subtitle: Text(widget.artist),
       trailing: IconButton(
@@ -324,6 +313,8 @@ class MessageRepository {
 }
 
 class MessagesInboxPage extends StatelessWidget {
+  const MessagesInboxPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -349,7 +340,6 @@ class MessagesInboxPage extends StatelessWidget {
                   '${msg.sentAt.hour.toString().padLeft(2, '0')}:${msg.sentAt.minute.toString().padLeft(2, '0')}',
                 ),
                 onTap: () {
-                  // Optionally open conversation
                 },
               );
             },
@@ -363,7 +353,8 @@ class MessagesInboxPage extends StatelessWidget {
 class NotificationProvider extends ChangeNotifier {
   final List<Map<String, dynamic>> _notifications = [];
 
-  List<Map<String, dynamic>> get notifications => List.unmodifiable(_notifications);
+  List<Map<String, dynamic>> get notifications =>
+      List.unmodifiable(_notifications);
 
   void addNotification(Map<String, dynamic> notification) {
     _notifications.insert(0, notification);
@@ -383,7 +374,7 @@ class NotificationService {
     final userId = await getCurrentUserId();
     if (userId == null) return;
 
-    _socket = IO.io('http://localhost:8000', <String, dynamic>{
+    _socket = IO.io('http:////localhost:8000', <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
     });
@@ -395,12 +386,15 @@ class NotificationService {
     });
 
     _socket!.on('new_message', (data) {
-      // Add to notification provider
-      Provider.of<NotificationProvider>(context, listen: false).addNotification(data);
-      // Optionally show a SnackBar as well
+      Provider.of<NotificationProvider>(
+        context,
+        listen: false,
+      ).addNotification(data);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('New message from ${data['senderName']}: ${data['content']}'),
+          content: Text(
+            'New message from ${data['senderName']}: ${data['content']}',
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -419,9 +413,13 @@ Future<String?> getCurrentUserId() async {
 }
 
 class NotificationListDialog extends StatelessWidget {
+  const NotificationListDialog({super.key});
+
   @override
   Widget build(BuildContext context) {
-    final notifications = Provider.of<NotificationProvider>(context).notifications;
+    final notifications = Provider.of<NotificationProvider>(
+      context,
+    ).notifications;
     return AlertDialog(
       title: Text('Notifications'),
       content: SizedBox(
@@ -438,7 +436,9 @@ class NotificationListDialog extends StatelessWidget {
                     subtitle: Text(n['content'] ?? ''),
                     trailing: Text(
                       n['sentAt'] != null
-                          ? DateTime.parse(n['sentAt']).toLocal().toString().substring(0, 16)
+                          ? DateTime.parse(
+                              n['sentAt'],
+                            ).toLocal().toString().substring(0, 16)
                           : '',
                       style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
@@ -449,7 +449,10 @@ class NotificationListDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () {
-            Provider.of<NotificationProvider>(context, listen: false).clearNotifications();
+            Provider.of<NotificationProvider>(
+              context,
+              listen: false,
+            ).clearNotifications();
             Navigator.pop(context);
           },
           child: Text('Clear All'),

@@ -9,7 +9,6 @@ class EmotionApiService {
 
   EmotionApiService(this._apiService);
 
-  // Get emotion constants from backend
   Future<Map<String, dynamic>> getEmotionConstants() async {
     try {
       Logger.info('. Fetching emotion constants from backend...');
@@ -29,7 +28,6 @@ class EmotionApiService {
     }
   }
 
-  // Log a new emotion entry
   Future<EmotionEntryModel> logEmotion({
     required String emotion,
     required double intensity,
@@ -74,7 +72,6 @@ class EmotionApiService {
     }
   }
 
-  // Get user's emotion history
   Future<List<EmotionEntryModel>> getEmotionHistory({
     int limit = 100,
     int offset = 0,
@@ -127,7 +124,6 @@ class EmotionApiService {
     }
   }
 
-  // Get emotion statistics
   Future<Map<String, dynamic>> getEmotionStats({
     String period = '7d',
   }) async {
@@ -151,7 +147,6 @@ class EmotionApiService {
     }
   }
 
-  // Get user insights
   Future<Map<String, dynamic>> getUserInsights({
     String timeframe = '30d',
   }) async {
@@ -175,7 +170,6 @@ class EmotionApiService {
     }
   }
 
-  // Get emotion timeline
   Future<Map<String, dynamic>> getEmotionTimeline({
     String timeframe = '7d',
     int page = 1,
@@ -203,7 +197,6 @@ class EmotionApiService {
     }
   }
 
-  // Search emotions
   Future<Map<String, dynamic>> searchEmotions({
     String? query,
     String? emotion,
@@ -246,7 +239,6 @@ class EmotionApiService {
     }
   }
 
-  // Update emotion entry
   Future<EmotionEntryModel> updateEmotion({
     required String id,
     String? emotion,
@@ -287,7 +279,6 @@ class EmotionApiService {
     }
   }
 
-  // Delete emotion entry
   Future<void> deleteEmotion(String id) async {
     try {
       Logger.info('🗑️ Deleting emotion: $id');
@@ -305,7 +296,6 @@ class EmotionApiService {
     }
   }
 
-  // Get global emotion statistics
   Future<Map<String, dynamic>> getGlobalStats({
     String timeframe = '7d',
   }) async {
@@ -329,7 +319,6 @@ class EmotionApiService {
     }
   }
 
-  // Get public emotion feed
   Future<Map<String, dynamic>> getPublicEmotionFeed({
     int page = 1,
     int limit = 20,
@@ -357,7 +346,6 @@ class EmotionApiService {
     }
   }
 
-  // Send comfort reaction
   Future<Map<String, dynamic>> sendComfortReaction({
     required String emotionId,
     required String reactionType,

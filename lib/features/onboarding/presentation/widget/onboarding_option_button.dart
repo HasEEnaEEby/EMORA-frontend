@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class OnboardingOptionButton extends StatefulWidget {
   final String text;
   final bool isSelected;
-  final VoidCallback onTap; // Changed from onPressed to onTap and made required
+final VoidCallback onTap; 
   final IconData? icon;
   final Widget? trailing;
   final double? width;
@@ -12,7 +12,7 @@ class OnboardingOptionButton extends StatefulWidget {
   const OnboardingOptionButton({
     super.key,
     required this.text,
-    required this.onTap, // Made required
+required this.onTap, 
     this.isSelected = false,
     this.icon,
     this.trailing,
@@ -121,7 +121,7 @@ class _OnboardingOptionButtonState extends State<OnboardingOptionButton>
             onTapDown: _onTapDown,
             onTapUp: _onTapUp,
             onTapCancel: _onTapCancel,
-            onTap: widget.onTap, // Changed from onPressed to onTap
+onTap: widget.onTap, 
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               width: widget.width ?? double.infinity,
@@ -208,14 +208,14 @@ class _OnboardingOptionButtonState extends State<OnboardingOptionButton>
 class OnboardingMultiOptionButton extends StatelessWidget {
   final String text;
   final bool isSelected;
-  final VoidCallback onTap; // Changed from onPressed to onTap
+final VoidCallback onTap; 
   final IconData? icon;
   final Color? selectedColor;
 
   const OnboardingMultiOptionButton({
     super.key,
     required this.text,
-    required this.onTap, // Made required
+required this.onTap, 
     this.isSelected = false,
     this.icon,
     this.selectedColor,
@@ -226,7 +226,7 @@ class OnboardingMultiOptionButton extends StatelessWidget {
     return OnboardingOptionButton(
       text: text,
       isSelected: isSelected,
-      onTap: onTap, // Changed from onPressed to onTap
+onTap: onTap, 
       icon: icon,
       trailing: isSelected
           ? Container(
@@ -253,13 +253,13 @@ class OnboardingMultiOptionButton extends StatelessWidget {
 class OnboardingChipButton extends StatelessWidget {
   final String text;
   final bool isSelected;
-  final VoidCallback onTap; // Changed from onPressed to onTap
+final VoidCallback onTap; 
   final IconData? icon;
 
   const OnboardingChipButton({
     super.key,
     required this.text,
-    required this.onTap, // Made required
+required this.onTap, 
     this.isSelected = false,
     this.icon,
   });
@@ -267,7 +267,7 @@ class OnboardingChipButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap, // Changed from onPressed to onTap
+onTap: onTap, 
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -365,33 +365,29 @@ class _ResponsiveOnboardingOptionButtonState extends State<ResponsiveOnboardingO
     super.dispose();
   }
 
-  // . Dynamic font size based on button height
   double get _fontSize {
     if (widget.height <= 40) return 13;
     if (widget.height <= 48) return 14;
     if (widget.height <= 52) return 15;
-    return 16; // Default for height > 52
+return 16; 
   }
 
-  // . Dynamic icon size based on button height
   double get _iconSize {
     if (widget.height <= 40) return 18;
     if (widget.height <= 48) return 20;
-    return 22; // Default for height > 48
+return 22; 
   }
 
-  // . Dynamic padding based on button height
   double get _horizontalPadding {
     if (widget.height <= 40) return 14;
     if (widget.height <= 48) return 16;
-    return 20; // Default for height > 48
+return 20; 
   }
 
-  // . Dynamic spacing based on button height
   double get _spacing {
     if (widget.height <= 40) return 8;
     if (widget.height <= 48) return 10;
-    return 12; // Default for height > 48
+return 12; 
   }
 
   @override

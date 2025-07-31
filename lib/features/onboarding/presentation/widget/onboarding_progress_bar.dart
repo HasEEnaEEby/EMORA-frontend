@@ -90,7 +90,6 @@ class _OnboardingProgressBarState extends State<OnboardingProgressBar>
 
               return Stack(
                 children: [
-                  // Main progress fill with gradient
                   Container(
                     width: progressWidth,
                     height: widget.height,

@@ -16,7 +16,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
   final GetComments getComments;
   final GetGlobalStats getGlobalStats;
 
-  // Cache management
   bool _isLoadingGlobalFeed = false;
   bool _isLoadingFriendsFeed = false;
   bool _isLoadingTrendingPosts = false;
@@ -32,7 +31,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     required this.getComments,
     required this.getGlobalStats,
   }) : super(const CommunityInitial()) {
-    // Register all event handlers
     on<LoadGlobalFeedEvent>(_onLoadGlobalFeed);
     on<LoadFriendsFeedEvent>(_onLoadFriendsFeed);
     on<LoadTrendingPostsEvent>(_onLoadTrendingPosts);
@@ -49,9 +47,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     on<ResetCommunityStateEvent>(_onResetCommunityState);
   }
 
-  // ============================================================================
-  // FEED LOADING EVENT HANDLERS
-  // ============================================================================
 
   Future<void> _onLoadGlobalFeed(
     LoadGlobalFeedEvent event,
@@ -67,7 +62,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     try {
       Logger.info('🌍 Loading global feed: page ${event.page}');
 
-      // Show loading state if first page
       if (event.page == 1) {
         if (state is CommunityFeedLoaded) {
           final currentState = state as CommunityFeedLoaded;
@@ -147,7 +141,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     try {
       Logger.info('👫 Loading friends feed: page ${event.page}');
 
-      // Show loading state if first page
       if (event.page == 1) {
         if (state is CommunityFeedLoaded) {
           final currentState = state as CommunityFeedLoaded;
@@ -227,7 +220,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     try {
       Logger.info('🔥 Loading trending posts: timeRange ${event.timeRange}h');
 
-      // Show loading state
       if (state is CommunityFeedLoaded) {
         final currentState = state as CommunityFeedLoaded;
         emit(CommunityFeedLoading(
@@ -300,13 +292,11 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     if (state is CommunityFeedLoaded) {
       final currentState = state as CommunityFeedLoaded;
       
-      // Update feed type immediately
       emit(currentState.copyWith(
         currentFeedType: event.feedType,
         isRefreshing: false,
       ));
 
-      // Load data for the selected feed type if needed
       switch (event.feedType) {
         case 'global':
           if (currentState.globalPosts.isEmpty) {
@@ -325,7 +315,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
           break;
       }
     } else {
-      // If no current state, load initial data for the requested feed type
       switch (event.feedType) {
         case 'global':
           add(const LoadGlobalFeedEvent());
@@ -340,9 +329,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     }
   }
 
-  // ============================================================================
-  // INTERACTION EVENT HANDLERS
-  // ============================================================================
 
   Future<void> _onReactToPost(
     ReactToPostEvent event,
@@ -351,7 +337,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     try {
       Logger.info('💖 Reacting to post: ${event.postId} with ${event.emoji}');
 
-      // Show loading state while maintaining current data
       if (state is CommunityFeedLoaded) {
         final currentState = state as CommunityFeedLoaded;
         emit(PostInteractionLoading(
@@ -398,7 +383,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
           if (success) {
             Logger.info('. Successfully reacted to post');
             
-            // Update the post with new reaction locally
             _updatePostReaction(event.postId, event.emoji, event.type, emit);
             
             if (state is CommunityFeedLoaded) {
@@ -441,7 +425,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     try {
       Logger.info('💔 Removing reaction from post: ${event.postId}');
 
-      // Show loading state
       if (state is CommunityFeedLoaded) {
         final currentState = state as CommunityFeedLoaded;
         emit(PostInteractionLoading(
@@ -486,7 +469,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
           if (success) {
             Logger.info('. Successfully removed reaction from post');
             
-            // Update the post locally by removing reaction
             _removePostReaction(event.postId, emit);
             
             if (state is CommunityFeedLoaded) {
@@ -529,7 +511,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     try {
       Logger.info('💬 Adding comment to post: ${event.postId}');
 
-      // Show loading state
       if (state is CommunityFeedLoaded) {
         final currentState = state as CommunityFeedLoaded;
         emit(PostInteractionLoading(
@@ -575,7 +556,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         (comment) {
           Logger.info('. Successfully added comment to post');
           
-          // Update the post with new comment count locally
           _updatePostCommentCount(event.postId, emit);
           
           if (state is CommunityFeedLoaded) {
@@ -655,10 +635,8 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     try {
       Logger.info('🌍 Creating community post: ${event.emoji} - ${event.note}');
 
-      // For now, we'll create a simple community post entity
-      // In a real implementation, this would call a use case to create the post
       final newPost = CommunityPostEntity(
-        id: DateTime.now().millisecondsSinceEpoch.toString(), // Temporary ID
+id: DateTime.now().millisecondsSinceEpoch.toString(), 
         name: event.isAnonymous ? 'Anonymous User' : 'Current User',
         username: event.isAnonymous ? 'anonymous' : 'current_user',
         displayName: event.isAnonymous ? 'Anonymous' : 'Current User',
@@ -671,7 +649,7 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         comments: const [],
         viewCount: 0,
         shareCount: 0,
-        moodColor: '#8b5cf6', // Purple for emotion posts
+moodColor: '#8b5cf6', 
         activityType: 'General',
         isFriend: false,
         privacy: 'public',
@@ -680,7 +658,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
 
       Logger.info('. Community post created successfully');
       
-      // Add the new post to the current feed
       if (state is CommunityFeedLoaded) {
         final currentState = state as CommunityFeedLoaded;
         final updatedGlobalPosts = [newPost, ...currentState.globalPosts];
@@ -721,13 +698,11 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       result.fold(
         (failure) {
           Logger.error('. Load global stats failed: ${failure.message}');
-          // Don't emit error state for stats - it's not critical
           Logger.warning('. Could not load global mood statistics');
         },
         (globalStats) {
           Logger.info('. Loaded global mood statistics: ${globalStats.length} emotions');
           
-          // Update stats in current state
           if (state is CommunityFeedLoaded) {
             final currentState = state as CommunityFeedLoaded;
             emit(currentState.copyWith(
@@ -739,15 +714,11 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       );
     } catch (e) {
       Logger.error('. Unexpected error loading global stats', e);
-      // Don't emit error state for non-critical operation
     } finally {
       _isLoadingStats = false;
     }
   }
 
-  // ============================================================================
-  // REFRESH EVENT HANDLERS
-  // ============================================================================
 
   Future<void> _onRefreshCommunityData(
     RefreshCommunityDataEvent event,
@@ -760,7 +731,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       emit(currentState.copyWith(isRefreshing: true));
     }
     
-    // Load all feeds and stats in parallel
     add(const LoadGlobalFeedEvent(forceRefresh: true));
     add(const LoadFriendsFeedEvent(forceRefresh: true));
     add(const LoadTrendingPostsEvent(forceRefresh: true));
@@ -777,7 +747,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       final currentState = state as CommunityFeedLoaded;
       emit(currentState.copyWith(isRefreshing: true));
       
-      // Refresh the current active feed
       switch (currentState.currentFeedType) {
         case 'global':
           add(const LoadGlobalFeedEvent(forceRefresh: true));
@@ -790,14 +759,10 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
           break;
       }
     } else {
-      // Load initial data
       add(const LoadGlobalFeedEvent());
     }
   }
 
-  // ============================================================================
-  // ERROR HANDLING EVENT HANDLERS
-  // ============================================================================
 
   Future<void> _onClearCommunityError(
     ClearCommunityErrorEvent event,
@@ -805,7 +770,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
   ) async {
     Logger.info('🧹 Clearing community error state');
     
-    // Return to previous valid state or load initial data
     add(const LoadGlobalFeedEvent());
   }
 
@@ -815,7 +779,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
   ) async {
     Logger.info('🔄 Resetting community state to initial');
     
-    // Clear cache flags
     _isLoadingGlobalFeed = false;
     _isLoadingFriendsFeed = false;
     _isLoadingTrendingPosts = false;
@@ -824,9 +787,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     emit(const CommunityInitial());
   }
 
-  // ============================================================================
-  // UTILITY METHODS
-  // ============================================================================
 
   void _updateFeedWithGlobalPosts(
     List<CommunityPostEntity> globalPosts,
@@ -850,7 +810,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         currentPage: event.page,
       ));
     } else {
-      // First time loading
       _emitInitialFeedState(
         globalPosts: globalPosts,
         hasMore: globalPosts.length >= event.limit,
@@ -882,7 +841,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         currentPage: event.page,
       ));
     } else {
-      // First time loading
       _emitInitialFeedState(
         friendsPosts: friendsPosts,
         hasMore: friendsPosts.length >= event.limit,
@@ -904,10 +862,9 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         trendingPosts: trendingPosts,
         hasMorePosts: trendingPosts.length >= event.limit,
         isRefreshing: false,
-        currentPage: 1, // Trending is usually a fresh load
+currentPage: 1, 
       ));
     } else {
-      // First time loading
       _emitInitialFeedState(
         trendingPosts: trendingPosts,
         hasMore: trendingPosts.length >= event.limit,
@@ -936,7 +893,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
       currentPage: page,
     ));
     
-    // Also load global stats
     add(const LoadGlobalStatsEvent());
   }
 
@@ -949,17 +905,14 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     if (state is CommunityFeedLoaded) {
       final currentState = state as CommunityFeedLoaded;
       
-      // Update global posts
       final updatedGlobalPosts = currentState.globalPosts.map((post) {
         if (post.id == postId) {
           final updatedReactions = [...post.reactions];
-          // Add new reaction (in real implementation, this would come from the server)
           return post.copyWith(reactions: updatedReactions);
         }
         return post;
       }).toList();
       
-      // Update friends posts similarly
       final updatedFriendsPosts = currentState.friendsPosts.map((post) {
         if (post.id == postId) {
           final updatedReactions = [...post.reactions];
@@ -968,7 +921,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
         return post;
       }).toList();
       
-      // Update trending posts similarly
       final updatedTrendingPosts = currentState.trendingPosts.map((post) {
         if (post.id == postId) {
           final updatedReactions = [...post.reactions];
@@ -990,8 +942,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     if (state is CommunityFeedLoaded) {
       final currentState = state as CommunityFeedLoaded;
       
-      // Similar logic to _updatePostReaction but removing reaction
-      // In real implementation, this would be handled by server response
       emit(currentState.copyWith(isRefreshing: false));
     }
   }
@@ -1000,13 +950,10 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     if (state is CommunityFeedLoaded) {
       final currentState = state as CommunityFeedLoaded;
       
-      // Similar logic to _updatePostReaction but updating comment count
-      // In real implementation, this would be handled by server response
       emit(currentState.copyWith(isRefreshing: false));
     }
   }
 
-  // Get current feed posts
   List<CommunityPostEntity> getCurrentFeedPosts() {
     if (state is CommunityFeedLoaded) {
       return (state as CommunityFeedLoaded).currentFeedPosts;
@@ -1014,7 +961,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
     return [];
   }
 
-  // Get global stats
   List<GlobalMoodStatsEntity> getGlobalMoodStats() {
     if (state is CommunityFeedLoaded) {
       return (state as CommunityFeedLoaded).globalStats;
@@ -1038,7 +984,6 @@ class CommunityBloc extends Bloc<CommunityEvent, CommunityState> {
 
   @override
   Future<void> close() {
-    // Clear any ongoing operations
     _isLoadingGlobalFeed = false;
     _isLoadingFriendsFeed = false;
     _isLoadingTrendingPosts = false;

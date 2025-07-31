@@ -1,4 +1,3 @@
-// lib/features/auth/data/data_source/local/auth_local_data_source.dart
 import 'dart:convert';
 
 import 'package:emora_mobile_app/core/config/app_config.dart';
@@ -14,7 +13,7 @@ abstract class AuthLocalDataSource {
   Future<String?> getRefreshToken();
   Future<void> saveUserData(UserModel user);
   Future<UserModel?> getUserData();
-  Future<UserModel?> getCurrentUser(); // Add this method
+Future<UserModel?> getCurrentUser(); 
   Future<void> clearAuthData();
   Future<bool> hasEverBeenLoggedIn();
   Future<void> markAsLoggedIn();
@@ -125,7 +124,6 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Future<UserModel?> getCurrentUser() async {
-    // This method is the same as getUserData - it gets the currently logged-in user
     try {
       final userJson = sharedPreferences.getString(AppConfig.userDataKey);
       if (userJson != null) {
@@ -177,7 +175,6 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
       Logger.info('. Marked as logged in');
     } catch (e) {
       Logger.error('. Failed to mark as logged in', e);
-      // Don't throw - this is not critical
     }
   }
 }

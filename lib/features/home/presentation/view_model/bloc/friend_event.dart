@@ -1,5 +1,3 @@
-// Complete Enhanced Friend Events with Cancel Functionality
-// lib/features/community/presentation/view_model/bloc/friend_event.dart
 
 import 'package:equatable/equatable.dart';
 
@@ -12,11 +10,7 @@ abstract class FriendEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-// ============================================================================
-// SEARCH EVENTS
-// ============================================================================
 
-/// Search users for friend suggestions
 class SearchUsersEvent extends FriendEvent {
   final String query;
   final int page;
@@ -37,7 +31,6 @@ class SearchUsersEvent extends FriendEvent {
   String toString() => 'SearchUsersEvent { query: $query, page: $page, limit: $limit }';
 }
 
-/// Search all users globally (including friends, excluding self)
 class SearchAllUsersEvent extends FriendEvent {
   final String query;
   final int page;
@@ -58,7 +51,6 @@ class SearchAllUsersEvent extends FriendEvent {
   String toString() => 'SearchAllUsersEvent { query: $query, page: $page, limit: $limit }';
 }
 
-/// Clear search results
 class ClearSearchEvent extends FriendEvent {
   const ClearSearchEvent();
 
@@ -69,14 +61,10 @@ class ClearSearchEvent extends FriendEvent {
   String toString() => 'ClearSearchEvent';
 }
 
-// ============================================================================
-// FRIEND REQUEST EVENTS
-// ============================================================================
 
-/// Send friend request to a user
 class SendFriendRequestEvent extends FriendEvent {
   final String userId;
-  final String? message; // Optional message with request
+final String? message; 
 
   const SendFriendRequestEvent({
     required this.userId,
@@ -90,10 +78,9 @@ class SendFriendRequestEvent extends FriendEvent {
   String toString() => 'SendFriendRequestEvent { userId: $userId, message: $message }';
 }
 
-/// Cancel a sent friend request
 class CancelFriendRequestEvent extends FriendEvent {
   final String userId;
-  final String? reason; // Optional reason for cancellation
+final String? reason; 
 
   const CancelFriendRequestEvent({
     required this.userId,
@@ -107,11 +94,10 @@ class CancelFriendRequestEvent extends FriendEvent {
   String toString() => 'CancelFriendRequestEvent { userId: $userId, reason: $reason }';
 }
 
-/// Respond to a friend request (accept/reject)
 class RespondToFriendRequestEvent extends FriendEvent {
   final String requestUserId;
-  final String action; // 'accept' or 'reject'
-  final String? message; // Optional response message
+final String action; 
+final String? message; 
 
   const RespondToFriendRequestEvent({
     required this.requestUserId,
@@ -126,7 +112,6 @@ class RespondToFriendRequestEvent extends FriendEvent {
   String toString() => 'RespondToFriendRequestEvent { requestUserId: $requestUserId, action: $action, message: $message }';
 }
 
-/// Load pending friend requests
 class LoadPendingRequestsEvent extends FriendEvent {
   final bool forceRefresh;
 
@@ -139,7 +124,6 @@ class LoadPendingRequestsEvent extends FriendEvent {
   String toString() => 'LoadPendingRequestsEvent { forceRefresh: $forceRefresh }';
 }
 
-/// Load sent friend requests specifically
 class LoadSentRequestsEvent extends FriendEvent {
   final bool forceRefresh;
 
@@ -152,7 +136,6 @@ class LoadSentRequestsEvent extends FriendEvent {
   String toString() => 'LoadSentRequestsEvent { forceRefresh: $forceRefresh }';
 }
 
-/// Load received friend requests specifically
 class LoadReceivedRequestsEvent extends FriendEvent {
   final bool forceRefresh;
 
@@ -165,11 +148,7 @@ class LoadReceivedRequestsEvent extends FriendEvent {
   String toString() => 'LoadReceivedRequestsEvent { forceRefresh: $forceRefresh }';
 }
 
-// ============================================================================
-// FRIENDS MANAGEMENT EVENTS
-// ============================================================================
 
-/// Load friends list
 class LoadFriendsEvent extends FriendEvent {
   final int page;
   final int limit;
@@ -188,10 +167,9 @@ class LoadFriendsEvent extends FriendEvent {
   String toString() => 'LoadFriendsEvent { page: $page, limit: $limit, forceRefresh: $forceRefresh }';
 }
 
-/// Remove a friend
 class RemoveFriendEvent extends FriendEvent {
   final String friendUserId;
-  final String? reason; // Optional reason for removal
+final String? reason; 
 
   const RemoveFriendEvent({
     required this.friendUserId,
@@ -205,11 +183,10 @@ class RemoveFriendEvent extends FriendEvent {
   String toString() => 'RemoveFriendEvent { friendUserId: $friendUserId, reason: $reason }';
 }
 
-/// Load friend suggestions
 class LoadFriendSuggestionsEvent extends FriendEvent {
   final int limit;
   final bool forceRefresh;
-  final String? filterType; // 'mood_based', 'interest_based', 'location_based'
+final String? filterType; 
 
   const LoadFriendSuggestionsEvent({
     this.limit = 10,
@@ -224,11 +201,7 @@ class LoadFriendSuggestionsEvent extends FriendEvent {
   String toString() => 'LoadFriendSuggestionsEvent { limit: $limit, forceRefresh: $forceRefresh, filterType: $filterType }';
 }
 
-// ============================================================================
-// BATCH OPERATION EVENTS
-// ============================================================================
 
-/// Accept all pending friend requests
 class AcceptAllRequestsEvent extends FriendEvent {
   const AcceptAllRequestsEvent();
 
@@ -236,7 +209,6 @@ class AcceptAllRequestsEvent extends FriendEvent {
   String toString() => 'AcceptAllRequestsEvent';
 }
 
-/// Cancel all sent friend requests
 class CancelAllSentRequestsEvent extends FriendEvent {
   const CancelAllSentRequestsEvent();
 
@@ -244,7 +216,6 @@ class CancelAllSentRequestsEvent extends FriendEvent {
   String toString() => 'CancelAllSentRequestsEvent';
 }
 
-/// Reject all received friend requests
 class RejectAllRequestsEvent extends FriendEvent {
   const RejectAllRequestsEvent();
 
@@ -252,11 +223,7 @@ class RejectAllRequestsEvent extends FriendEvent {
   String toString() => 'RejectAllRequestsEvent';
 }
 
-// ============================================================================
-// FRIEND INTERACTION EVENTS
-// ============================================================================
 
-/// Block a user
 class BlockUserEvent extends FriendEvent {
   final String userId;
   final String? reason;
@@ -273,7 +240,6 @@ class BlockUserEvent extends FriendEvent {
   String toString() => 'BlockUserEvent { userId: $userId, reason: $reason }';
 }
 
-/// Unblock a user
 class UnblockUserEvent extends FriendEvent {
   final String userId;
 
@@ -286,7 +252,6 @@ class UnblockUserEvent extends FriendEvent {
   String toString() => 'UnblockUserEvent { userId: $userId }';
 }
 
-/// Report a user
 class ReportUserEvent extends FriendEvent {
   final String userId;
   final String reason;
@@ -305,7 +270,6 @@ class ReportUserEvent extends FriendEvent {
   String toString() => 'ReportUserEvent { userId: $userId, reason: $reason, description: $description }';
 }
 
-/// Update friend settings (notifications, privacy, etc.)
 class UpdateFriendSettingsEvent extends FriendEvent {
   final String friendId;
   final Map<String, dynamic> settings;
@@ -322,11 +286,7 @@ class UpdateFriendSettingsEvent extends FriendEvent {
   String toString() => 'UpdateFriendSettingsEvent { friendId: $friendId, settings: $settings }';
 }
 
-// ============================================================================
-// REAL-TIME EVENTS
-// ============================================================================
 
-/// Handle real-time friend request received
 class RealTimeFriendRequestReceivedEvent extends FriendEvent {
   final FriendRequestEntity request;
 
@@ -339,7 +299,6 @@ class RealTimeFriendRequestReceivedEvent extends FriendEvent {
   String toString() => 'RealTimeFriendRequestReceivedEvent { request: ${request.id} }';
 }
 
-/// Handle real-time friend request accepted
 class RealTimeFriendRequestAcceptedEvent extends FriendEvent {
   final String requestId;
   final String friendId;
@@ -358,7 +317,6 @@ class RealTimeFriendRequestAcceptedEvent extends FriendEvent {
   String toString() => 'RealTimeFriendRequestAcceptedEvent { requestId: $requestId, friendId: $friendId }';
 }
 
-/// Handle real-time friend request canceled
 class RealTimeFriendRequestCanceledEvent extends FriendEvent {
   final String requestId;
   final String userId;
@@ -375,7 +333,6 @@ class RealTimeFriendRequestCanceledEvent extends FriendEvent {
   String toString() => 'RealTimeFriendRequestCanceledEvent { requestId: $requestId, userId: $userId }';
 }
 
-/// Handle real-time friend online status update
 class RealTimeFriendOnlineStatusEvent extends FriendEvent {
   final String friendId;
   final bool isOnline;
@@ -394,7 +351,6 @@ class RealTimeFriendOnlineStatusEvent extends FriendEvent {
   String toString() => 'RealTimeFriendOnlineStatusEvent { friendId: $friendId, isOnline: $isOnline, lastSeen: $lastSeen }';
 }
 
-/// Handle real-time friend mood update
 class RealTimeFriendMoodUpdateEvent extends FriendEvent {
   final String friendId;
   final String mood;
@@ -415,11 +371,7 @@ class RealTimeFriendMoodUpdateEvent extends FriendEvent {
   String toString() => 'RealTimeFriendMoodUpdateEvent { friendId: $friendId, mood: $mood, emoji: $emoji }';
 }
 
-// ============================================================================
-// REFRESH EVENTS
-// ============================================================================
 
-/// Refresh all friends data
 class RefreshFriendsDataEvent extends FriendEvent {
   const RefreshFriendsDataEvent();
 
@@ -427,9 +379,8 @@ class RefreshFriendsDataEvent extends FriendEvent {
   String toString() => 'RefreshFriendsDataEvent';
 }
 
-/// Refresh specific data type
 class RefreshSpecificDataEvent extends FriendEvent {
-  final String dataType; // 'friends', 'requests', 'suggestions'
+final String dataType; 
 
   const RefreshSpecificDataEvent({required this.dataType});
 
@@ -440,11 +391,7 @@ class RefreshSpecificDataEvent extends FriendEvent {
   String toString() => 'RefreshSpecificDataEvent { dataType: $dataType }';
 }
 
-// ============================================================================
-// NOTIFICATION EVENTS
-// ============================================================================
 
-/// Mark friend notification as read
 class MarkNotificationReadEvent extends FriendEvent {
   final String notificationId;
 
@@ -457,7 +404,6 @@ class MarkNotificationReadEvent extends FriendEvent {
   String toString() => 'MarkNotificationReadEvent { notificationId: $notificationId }';
 }
 
-/// Mark all friend notifications as read
 class MarkAllNotificationsReadEvent extends FriendEvent {
   const MarkAllNotificationsReadEvent();
 
@@ -465,7 +411,6 @@ class MarkAllNotificationsReadEvent extends FriendEvent {
   String toString() => 'MarkAllNotificationsReadEvent';
 }
 
-/// Update notification preferences
 class UpdateNotificationPreferencesEvent extends FriendEvent {
   final Map<String, bool> preferences;
 
@@ -478,13 +423,9 @@ class UpdateNotificationPreferencesEvent extends FriendEvent {
   String toString() => 'UpdateNotificationPreferencesEvent { preferences: $preferences }';
 }
 
-// ============================================================================
-// ANALYTICS EVENTS
-// ============================================================================
 
-/// Load friendship analytics
 class LoadFriendshipAnalyticsEvent extends FriendEvent {
-  final String period; // 'week', 'month', 'year'
+final String period; 
 
   const LoadFriendshipAnalyticsEvent({this.period = 'month'});
 
@@ -495,10 +436,9 @@ class LoadFriendshipAnalyticsEvent extends FriendEvent {
   String toString() => 'LoadFriendshipAnalyticsEvent { period: $period }';
 }
 
-/// Track friend interaction
 class TrackFriendInteractionEvent extends FriendEvent {
   final String friendId;
-  final String interactionType; // 'message', 'mood_reaction', 'profile_view'
+final String interactionType; 
   final Map<String, dynamic>? metadata;
 
   const TrackFriendInteractionEvent({
@@ -514,11 +454,7 @@ class TrackFriendInteractionEvent extends FriendEvent {
   String toString() => 'TrackFriendInteractionEvent { friendId: $friendId, interactionType: $interactionType }';
 }
 
-// ============================================================================
-// ERROR HANDLING EVENTS
-// ============================================================================
 
-/// Clear friend error state
 class ClearFriendErrorEvent extends FriendEvent {
   const ClearFriendErrorEvent();
 
@@ -526,7 +462,6 @@ class ClearFriendErrorEvent extends FriendEvent {
   String toString() => 'ClearFriendErrorEvent';
 }
 
-/// Reset friend state to initial
 class ResetFriendStateEvent extends FriendEvent {
   const ResetFriendStateEvent();
 
@@ -534,7 +469,6 @@ class ResetFriendStateEvent extends FriendEvent {
   String toString() => 'ResetFriendStateEvent';
 }
 
-/// Retry failed operation
 class RetryFailedOperationEvent extends FriendEvent {
   final String operationType;
   final Map<String, dynamic>? parameters;
@@ -551,11 +485,7 @@ class RetryFailedOperationEvent extends FriendEvent {
   String toString() => 'RetryFailedOperationEvent { operationType: $operationType, parameters: $parameters }';
 }
 
-// ============================================================================
-// PRIVACY AND SETTINGS EVENTS
-// ============================================================================
 
-/// Update friend privacy settings
 class UpdateFriendPrivacySettingsEvent extends FriendEvent {
   final Map<String, dynamic> privacySettings;
 
@@ -568,7 +498,6 @@ class UpdateFriendPrivacySettingsEvent extends FriendEvent {
   String toString() => 'UpdateFriendPrivacySettingsEvent { privacySettings: $privacySettings }';
 }
 
-/// Load friend privacy settings
 class LoadFriendPrivacySettingsEvent extends FriendEvent {
   const LoadFriendPrivacySettingsEvent();
 
@@ -576,7 +505,6 @@ class LoadFriendPrivacySettingsEvent extends FriendEvent {
   String toString() => 'LoadFriendPrivacySettingsEvent';
 }
 
-/// Update discovery preferences
 class UpdateDiscoveryPreferencesEvent extends FriendEvent {
   final Map<String, dynamic> preferences;
 
@@ -589,11 +517,7 @@ class UpdateDiscoveryPreferencesEvent extends FriendEvent {
   String toString() => 'UpdateDiscoveryPreferencesEvent { preferences: $preferences }';
 }
 
-// ============================================================================
-// IMPORT/EXPORT EVENTS
-// ============================================================================
 
-/// Import friends from contacts
 class ImportFriendsFromContactsEvent extends FriendEvent {
   final List<Map<String, String>> contacts;
 
@@ -606,9 +530,8 @@ class ImportFriendsFromContactsEvent extends FriendEvent {
   String toString() => 'ImportFriendsFromContactsEvent { contactsCount: ${contacts.length} }';
 }
 
-/// Export friends list
 class ExportFriendsListEvent extends FriendEvent {
-  final String format; // 'json', 'csv', 'vcard'
+final String format; 
 
   const ExportFriendsListEvent({this.format = 'json'});
 
@@ -619,11 +542,7 @@ class ExportFriendsListEvent extends FriendEvent {
   String toString() => 'ExportFriendsListEvent { format: $format }';
 }
 
-// ============================================================================
-// SYNC EVENTS
-// ============================================================================
 
-/// Sync friends data with server
 class SyncFriendsDataEvent extends FriendEvent {
   final bool forceSync;
 
@@ -636,10 +555,9 @@ class SyncFriendsDataEvent extends FriendEvent {
   String toString() => 'SyncFriendsDataEvent { forceSync: $forceSync }';
 }
 
-/// Handle sync conflict
 class HandleSyncConflictEvent extends FriendEvent {
   final String conflictId;
-  final String resolution; // 'local', 'remote', 'merge'
+final String resolution; 
 
   const HandleSyncConflictEvent({
     required this.conflictId,

@@ -1,4 +1,3 @@
-// lib/features/auth/data/data_source/remote/auth_remote_data_source.dart - CLEAN VERSION
 import 'package:emora_mobile_app/core/config/app_config.dart';
 import 'package:emora_mobile_app/core/errors/exceptions.dart';
 import 'package:emora_mobile_app/core/network/api_service.dart';
@@ -66,7 +65,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        // Handle both nested and flat response structures
         final data = responseData['data'] ?? responseData;
         final isAvailable = data['isAvailable'] ?? false;
         final message =
@@ -91,7 +89,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } catch (e) {
       Logger.error('. Username check error', e);
 
-      // Return mock data on error for development
       if (AppConfig.isDevelopmentMode) {
         final isAvailable = !AppConfig.reservedUsernames.contains(
           username.toLowerCase(),
@@ -114,7 +111,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String username,
     required String email,
     required String password,
-    required String confirmPassword, // . Added confirmPassword parameter
+required String confirmPassword, 
     String? pronouns,
     String? ageGroup,
     String? selectedAvatar,
@@ -133,12 +130,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'username': username,
         'email': email,
         'password': password,
-        'confirmPassword': confirmPassword, // . Added confirmPassword to request
+'confirmPassword': confirmPassword, 
         'termsAccepted': termsAccepted ?? true,
         'privacyAccepted': privacyAccepted ?? true,
       };
 
-      // Add optional onboarding fields if provided
       if (pronouns != null && pronouns.isNotEmpty) {
         requestData['pronouns'] = pronouns;
       }
@@ -162,24 +158,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       Logger.info('📤 Registration data: ${requestData.keys.toList()}');
 
       final response = await apiService.post(
-        '/api/auth/register', // . Clean auth endpoint
+'/api/auth/register', 
         data: requestData,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final responseData = response.data;
 
-        // . CRITICAL FIX: Handle both 'success' and 'true' status formats
         final isSuccess = responseData?['success'] == true || 
                          responseData?['status'] == 'success';
 
         if (isSuccess) {
           final authData = responseData?['data'];
-          final userData = authData?['user']; // . Add null safety
+final userData = authData?['user']; 
 
           Logger.info('. Registration successful');
 
-          // . Create entities from response with proper null safety
           final userEntity = UserEntity(
             id: userData?['id']?.toString() ?? 
                 DateTime.now().millisecondsSinceEpoch.toString(),
@@ -222,7 +216,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } catch (e) {
       Logger.error('. Registration error', e);
-      // . Removed mock data fallback - always propagate real errors
       rethrow;
     }
   }
@@ -241,31 +234,27 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       Logger.info('🔐 Login request for username: $username');
       
-      // . ADD THIS DEBUG LINE:
       print('. DEBUG: About to call apiService.post with: $requestData');
 
       final response = await apiService.post(
-        '/api/auth/login', // . Clean auth endpoint
+'/api/auth/login', 
         data: requestData,
       );
 
-      // . ADD THIS DEBUG LINE:
       print('. DEBUG: Got response: ${response.statusCode} - ${response.data}');
 
       if (response.statusCode == 200) {
         final responseData = response.data;
 
-        // . CRITICAL FIX: Handle both 'success' and 'true' status formats
         final isSuccess = responseData?['success'] == true || 
                          responseData?['status'] == 'success';
 
         if (isSuccess) {
           final authData = responseData?['data'];
-          final userData = authData?['user']; // . Add null safety
+final userData = authData?['user']; 
 
           Logger.info('. Login successful');
 
-          // . Create entities from response with proper null safety
           final userEntity = UserEntity(
             id: userData?['id']?.toString() ?? 
                 DateTime.now().millisecondsSinceEpoch.toString(),
@@ -307,10 +296,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
     } catch (e) {
-      // . ADD THIS DEBUG LINE:
       print('. DEBUG: Login error caught: $e');
       Logger.error('. Login error', e);
-      // . Removed mock data fallback - always propagate real errors  
       rethrow;
     }
   }
@@ -373,19 +360,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
       if (await networkInfo.isConnected) {
         try {
-          // Send empty JSON object to satisfy the backend's JSON validation
           await apiService.post('/api/auth/logout', data: {});
           Logger.info('. Server logout successful');
         } catch (e) {
           Logger.warning('. Server logout failed: $e');
-          // Don't throw - we still want to clear local data
         }
       }
 
       Logger.info('🔑 Logout completed');
     } catch (e) {
       Logger.error('. Logout error', e);
-      // Don't throw - logout should always succeed locally
     }
   }
 

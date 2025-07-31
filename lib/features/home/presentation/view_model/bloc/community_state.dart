@@ -9,31 +9,22 @@ abstract class CommunityState extends Equatable {
   List<Object?> get props => [];
 }
 
-// ============================================================================
-// INITIAL AND LOADING STATES
-// ============================================================================
 
-/// Initial state
 class CommunityInitial extends CommunityState {
   const CommunityInitial();
 }
 
-/// General loading state
 class CommunityLoading extends CommunityState {
   const CommunityLoading();
 }
 
-// ============================================================================
-// FEED STATES
-// ============================================================================
 
-/// Community feed loaded state
 class CommunityFeedLoaded extends CommunityState {
   final List<CommunityPostEntity> globalPosts;
   final List<CommunityPostEntity> friendsPosts;
   final List<CommunityPostEntity> trendingPosts;
   final List<GlobalMoodStatsEntity> globalStats;
-  final String currentFeedType; // 'global', 'friends', 'trending'
+final String currentFeedType; 
   final bool hasMorePosts;
   final bool isRefreshing;
   final int currentPage;
@@ -83,7 +74,6 @@ class CommunityFeedLoaded extends CommunityState {
     );
   }
 
-  // Helper getters
   List<CommunityPostEntity> get currentFeedPosts {
     switch (currentFeedType) {
       case 'friends':
@@ -101,7 +91,6 @@ class CommunityFeedLoaded extends CommunityState {
   int get totalTrendingPosts => trendingPosts.length;
 }
 
-/// Feed loading state (when switching feed types)
 class CommunityFeedLoading extends CommunityFeedLoaded {
   final String loadingFeedType;
 
@@ -131,13 +120,9 @@ class CommunityFeedLoading extends CommunityFeedLoaded {
       ];
 }
 
-// ============================================================================
-// INTERACTION STATES
-// ============================================================================
 
-/// Post interaction loading state
 class PostInteractionLoading extends CommunityFeedLoaded {
-  final String interactionType; // 'react', 'comment', 'remove_reaction'
+final String interactionType; 
   final String postId;
 
   const PostInteractionLoading({
@@ -168,7 +153,6 @@ class PostInteractionLoading extends CommunityFeedLoaded {
       ];
 }
 
-/// Post interaction success state
 class PostInteractionSuccess extends CommunityFeedLoaded {
   final String message;
   final String interactionType;
@@ -204,11 +188,7 @@ class PostInteractionSuccess extends CommunityFeedLoaded {
       ];
 }
 
-// ============================================================================
-// COMMENTS STATES
-// ============================================================================
 
-/// Comments loaded state
 class CommentsLoaded extends CommunityState {
   final String postId;
   final List<CommentEntity> comments;
@@ -252,7 +232,6 @@ class CommentsLoaded extends CommunityState {
   int get totalComments => comments.length;
 }
 
-/// Comments loading state
 class CommentsLoading extends CommunityState {
   final String postId;
 
@@ -262,11 +241,7 @@ class CommentsLoading extends CommunityState {
   List<Object?> get props => [postId];
 }
 
-// ============================================================================
-// ERROR STATES
-// ============================================================================
 
-/// Community error state
 class CommunityError extends CommunityState {
   final String message;
   final String? errorType;
@@ -294,7 +269,6 @@ class CommunityError extends CommunityState {
   }
 }
 
-/// Feed error state (maintains current data)
 class CommunityFeedError extends CommunityFeedLoaded {
   final String errorMessage;
   final String? errorType;
@@ -327,7 +301,6 @@ class CommunityFeedError extends CommunityFeedLoaded {
       ];
 }
 
-/// Comments error state
 class CommentsError extends CommunityState {
   final String postId;
   final String message;

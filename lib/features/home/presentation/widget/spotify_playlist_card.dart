@@ -194,13 +194,11 @@ class _SpotifyPlaylistCardState extends State<SpotifyPlaylistCard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header with cover image
         Container(
           height: 150,
           padding: const EdgeInsets.all(24),
           child: Row(
             children: [
-              // Cover image
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: playlist.coverImage != null
@@ -215,7 +213,6 @@ class _SpotifyPlaylistCardState extends State<SpotifyPlaylistCard> {
                     : _buildDefaultCover(),
               ),
               const SizedBox(width: 20),
-              // Playlist info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,7 +262,6 @@ class _SpotifyPlaylistCardState extends State<SpotifyPlaylistCard> {
             ],
           ),
         ),
-        // Action buttons
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           child: Row(
@@ -307,7 +303,6 @@ class _SpotifyPlaylistCardState extends State<SpotifyPlaylistCard> {
             ],
           ),
         ),
-        // Mood indicators
         Padding(
           padding: const EdgeInsets.only(left: 24, right: 24, bottom: 16),
           child: Wrap(
@@ -421,7 +416,6 @@ class _SpotifyPlaylistCardState extends State<SpotifyPlaylistCard> {
       builder: (context) => TrackListBottomSheet(
         playlist: _playlist!,
         spotifyService: widget.spotifyService,
-        // Optionally pass playAll to start playback immediately
       ),
     );
   }

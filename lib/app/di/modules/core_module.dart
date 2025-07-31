@@ -1,4 +1,3 @@
-// lib/app/di/modules/core_module.dart
 import 'package:dio/dio.dart';
 import 'package:emora_mobile_app/core/network/api_service.dart';
 import 'package:emora_mobile_app/core/network/dio_client.dart';
@@ -13,7 +12,6 @@ import '../../../core/config/app_config.dart';
 import '../injection_container.dart';
 
 class CoreModule {
-  // . CRITICAL FIX: Initialize ApiService with saved auth token from storage
   static void _initializeApiServiceWithSavedToken(GetIt sl) {
     try {
       Logger.info('🔑 Initializing ApiService with saved auth token...');
@@ -21,11 +19,9 @@ class CoreModule {
       final sharedPreferences = sl<SharedPreferences>();
       final apiService = sl<ApiService>();
       
-      // Get saved auth token from SharedPreferences
       final savedToken = sharedPreferences.getString(AppConfig.authTokenKey);
       
       if (savedToken != null && savedToken.isNotEmpty) {
-        // Set the token in ApiService for immediate use
         apiService.setAuthToken(savedToken);
         Logger.info('. Auth token loaded and set in ApiService on app startup');
       } else {
@@ -33,7 +29,6 @@ class CoreModule {
       }
     } catch (e) {
       Logger.error('. Failed to initialize ApiService with saved token', e);
-      // Don't rethrow - this is not critical for app startup
     }
   }
   static Future<void> init(GetIt sl) async {
@@ -56,12 +51,10 @@ class CoreModule {
     Logger.info('📦 Initializing external dependencies...');
 
     try {
-      // SharedPreferences
       final sharedPreferences = await SharedPreferences.getInstance();
       sl.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
       Logger.info('. SharedPreferences registered successfully');
 
-      // Internet Connection Checker
       sl.registerLazySingleton<InternetConnectionChecker>(
         () => InternetConnectionChecker.createInstance(
           checkTimeout: const Duration(seconds: 10),
@@ -78,21 +71,16 @@ class CoreModule {
   static void _initCoreDependencies(GetIt sl) {
     Logger.info('. Initializing core dependencies...');
 
-    // Network Info
     sl.registerLazySingleton<NetworkInfo>(
       () => NetworkInfoImpl(sl<InternetConnectionChecker>()),
     );
 
-    // DioClient (singleton instance)
     sl.registerLazySingleton<DioClient>(() => DioClient.create());
 
-    // Dio instance (from DioClient)
     sl.registerLazySingleton<Dio>(() => sl<DioClient>().dio);
 
-    // FIXED: Register ApiService with required dio parameter
     sl.registerLazySingleton<ApiService>(() => ApiService(dio: sl<Dio>()));
 
-    // . CRITICAL FIX: Initialize ApiService with saved auth token
     _initializeApiServiceWithSavedToken(sl);
 
     Logger.info('. Core dependencies registered successfully');
@@ -101,7 +89,6 @@ class CoreModule {
   static void _initServices(GetIt sl) {
     Logger.info('🛠️ Initializing core services...');
 
-    // Username Service with automated word generation
     sl.registerLazySingleton<UsernameService>(() => UsernameService());
 
     Logger.info('. Core services registered successfully');
@@ -111,9 +98,9 @@ class CoreModule {
     Logger.info('🚩 Initializing feature flags...');
 
     const isMoodFeatureAvailable =
-        false; // Set to true when mood feature is ready
-    const isEmotionFeatureAvailable = true; // Emotion feature is available
-    const isAutomatedUsernamesEnabled = true; // New automated username feature
+false; 
+const isEmotionFeatureAvailable = true; 
+const isAutomatedUsernamesEnabled = true; 
 
     sl.registerLazySingleton<FeatureFlagService>(
       () => const FeatureFlagService(
@@ -172,12 +159,10 @@ class CoreModule {
     };
   }
 
-  /// Test core services functionality
   static Future<bool> testServices(GetIt sl) async {
     Logger.info('🧪 Testing core services...');
 
     try {
-      // Test SharedPreferences
       final prefs = sl<SharedPreferences>();
       await prefs.setString('test_key', 'test_value');
       final testValue = prefs.getString('test_key');
@@ -187,26 +172,22 @@ class CoreModule {
         throw Exception('SharedPreferences test failed');
       }
 
-      // Test Network Info
       final networkInfo = sl<NetworkInfo>();
       final isConnected = await networkInfo.isConnected;
       Logger.info(
         '🌐 Network status: ${isConnected ? 'Connected' : 'Disconnected'}',
       );
 
-      // Test DioClient
       final dioClient = sl<DioClient>();
       final clientInfo = dioClient.getClientInfo();
       Logger.info('📡 DioClient info: ${clientInfo['baseUrl']}');
 
-      // Test ApiService
       final apiService = sl<ApiService>();
       final cacheStats = apiService.getCacheStats();
       Logger.info(
         '📦 ApiService cache: ${cacheStats['cachedResponses']} items',
       );
 
-      // Test Username Service with automated generation
       final usernameService = sl<UsernameService>();
       Logger.info('🔄 Testing automated username generation...');
 
@@ -220,11 +201,9 @@ class CoreModule {
         '🎯 Sample suggestions: ${testSuggestions.take(3).join(', ')}',
       );
 
-      // Test word statistics
       final wordStats = UsernameService.getWordStats();
       Logger.info('. Word automation: ${wordStats['automation_status']}');
 
-      // Test Feature Flags
       final featureFlags = sl<FeatureFlagService>();
       Logger.info('🚩 Feature flags: ${featureFlags.enabledFeatures}');
 
@@ -236,7 +215,6 @@ class CoreModule {
     }
   }
 
-  /// Get core module health status
   static Map<String, dynamic> getHealthStatus(GetIt sl) {
     final health = <String, dynamic>{
       'module': 'Core',
@@ -338,7 +316,6 @@ class CoreModule {
         }
       }
 
-      // Determine overall status
       final healthPercentage = (healthyServices / services.length * 100)
           .round();
       if (healthPercentage == 100) {
@@ -360,12 +337,10 @@ class CoreModule {
     return health;
   }
 
-  /// Reset core module (for testing)
   static Future<void> reset(GetIt sl) async {
     Logger.info('🔄 Resetting core module...');
 
     try {
-      // Clear caches
       if (sl.isRegistered<ApiService>()) {
         sl<ApiService>().clearCache();
       }
@@ -374,7 +349,6 @@ class CoreModule {
         sl<DioClient>().clearCache();
       }
 
-      // Clear username service caches and force refresh
       UsernameService.clearCache();
       await UsernameService.forceRefreshWords();
 
@@ -384,7 +358,6 @@ class CoreModule {
     }
   }
 
-  /// Get automation status for username service
   static Future<Map<String, dynamic>> getAutomationStatus(GetIt sl) async {
     try {
       final wordStats = UsernameService.getWordStats();

@@ -1,4 +1,3 @@
-// lib/features/friends/domain/entity/friend_mood_entity.dart
 
 import 'package:emora_mobile_app/features/home/domain/entity/friend_entity.dart';
 

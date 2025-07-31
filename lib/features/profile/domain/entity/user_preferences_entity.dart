@@ -19,7 +19,6 @@ class UserPreferencesEntity extends Equatable {
     this.customSettings = const {},
   });
 
-  // Factory constructor to create from backend response
   factory UserPreferencesEntity.fromBackendResponse(Map<String, dynamic> data) {
     return UserPreferencesEntity(
       notificationsEnabled:
@@ -58,7 +57,6 @@ class UserPreferencesEntity extends Equatable {
     );
   }
 
-  // Convert to backend format for API calls
   Map<String, dynamic> toBackendMap() {
     return {
       'notificationsEnabled': notificationsEnabled,
@@ -68,7 +66,6 @@ class UserPreferencesEntity extends Equatable {
       'darkModeEnabled': darkModeEnabled,
       'privacySettings': privacySettings,
       'customSettings': customSettings,
-      // Legacy format for backend compatibility
       'notifications': {
         'dailyReminder': notificationsEnabled,
         'friendRequests': notificationsEnabled,

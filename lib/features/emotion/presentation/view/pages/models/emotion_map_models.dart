@@ -1,8 +1,5 @@
 import 'package:latlong2/latlong.dart';
 
-// ============================================================================
-// CORE EMOTION MODELS
-// ============================================================================
 
 class PlutchikCoreEmotion {
   final String name;
@@ -85,9 +82,6 @@ class PlutchikCoreEmotion {
   }
 }
 
-// ============================================================================
-// MAP DATA MODELS
-// ============================================================================
 
 class GlobalEmotionPoint {
   final String id;
@@ -117,13 +111,10 @@ class GlobalEmotionPoint {
   });
 
   factory GlobalEmotionPoint.fromJson(Map<String, dynamic> json) {
-    // Handle both old coordinates format and new GeoJSON location format
     List<dynamic> coordinates;
     if (json['location'] != null && json['location']['coordinates'] != null) {
-      // New GeoJSON format
       coordinates = json['location']['coordinates'] as List<dynamic>? ?? [];
     } else if (json['coordinates'] != null) {
-      // Old format for backward compatibility
       coordinates = json['coordinates'] as List<dynamic>? ?? [];
     } else {
       throw Exception('No coordinates found in emotion data');
@@ -219,7 +210,7 @@ class EmotionCluster {
       city: json['city'],
       country: json['country'],
       latestTimestamp: DateTime.tryParse(json['latestTimestamp'] ?? '') ?? DateTime.now(),
-      size: (json['count'] ?? 1) * 2.0, // Size based on count
+size: (json['count'] ?? 1) * 2.0, 
     );
   }
 
@@ -382,9 +373,6 @@ class GlobalEmotionStats {
   }
 }
 
-// ============================================================================
-// API RESPONSE MODELS
-// ============================================================================
 
 class MapApiResponse<T> {
   final bool success;
@@ -438,9 +426,6 @@ class StatsApiResponse {
   }
 }
 
-// ============================================================================
-// FILTER MODELS
-// ============================================================================
 
 class EmotionMapFilters {
   final String? coreEmotion;
@@ -513,9 +498,6 @@ class EmotionMapFilters {
   }
 }
 
-// ============================================================================
-// AI INSIGHTS MODELS
-// ============================================================================
 
 class EmotionInsight {
   final String region;

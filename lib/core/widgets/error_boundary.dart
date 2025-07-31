@@ -1,10 +1,7 @@
-// lib/core/widgets/error_boundary.dart
 import 'package:flutter/material.dart';
 import '../navigation/navigation_service.dart';
 import '../utils/logger.dart';
 
-/// A comprehensive error boundary widget that provides consistent error handling
-/// and recovery options across the app
 class ErrorBoundary extends StatefulWidget {
   final Widget child;
   final String? context;
@@ -51,7 +48,6 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Error Icon
                 Container(
                   width: 100,
                   height: 100,
@@ -72,7 +68,6 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
 
                 const SizedBox(height: 24),
 
-                // Error Title
                 const Text(
                   'Something went wrong',
                   style: TextStyle(
@@ -85,7 +80,6 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
 
                 const SizedBox(height: 16),
 
-                // Error Message
                 Text(
                   widget.customErrorMessage ?? 
                   'We encountered an unexpected error. Please try again or restart the app.',
@@ -111,10 +105,8 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
 
                 const SizedBox(height: 32),
 
-                // Action Buttons
                 Column(
                   children: [
-                    // Retry Button
                     if (widget.showRetryButton)
                       SizedBox(
                         width: double.infinity,
@@ -142,7 +134,6 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
 
                     if (widget.showRetryButton) const SizedBox(height: 16),
 
-                    // Navigate to Fallback Button
                     if (widget.fallbackRoute != null)
                       SizedBox(
                         width: double.infinity,
@@ -162,7 +153,6 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
                         ),
                       ),
 
-                    // Restart App Button (last resort)
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: _handleRestart,
@@ -240,7 +230,6 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
     }
   }
 
-  /// Call this method when an error occurs to trigger the error boundary
   void captureError(Object error, StackTrace stackTrace) {
     Logger.error(
       '. ErrorBoundary: Captured error in ${widget.context ?? 'unknown context'}',
@@ -258,7 +247,6 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
   }
 }
 
-/// A mixin that provides error boundary functionality to widgets
 mixin ErrorBoundaryMixin<T extends StatefulWidget> on State<T> {
   void handleError(Object error, StackTrace stackTrace, [String? context]) {
     Logger.error(
@@ -267,7 +255,6 @@ mixin ErrorBoundaryMixin<T extends StatefulWidget> on State<T> {
       stackTrace,
     );
 
-    // Show user-friendly error message
     if (mounted) {
       NavigationService.showErrorSnackBar(
         'Something went wrong. Please try again.',
@@ -296,12 +283,10 @@ mixin ErrorBoundaryMixin<T extends StatefulWidget> on State<T> {
   }
 }
 
-/// Global error handling utilities
 class GlobalErrorHandler {
   static void handleUncaughtError(Object error, StackTrace stackTrace) {
     Logger.error('. GlobalErrorHandler: Uncaught error', error, stackTrace);
     
-    // Show user notification if possible
     if (NavigationService.currentContext != null) {
       NavigationService.showErrorSnackBar(
         'An unexpected error occurred. Please restart the app if issues persist.',
@@ -316,8 +301,6 @@ class GlobalErrorHandler {
       details.stack,
     );
 
-    // In debug mode, we might want to show the red screen
-    // In release mode, show user-friendly error
     if (!details.silent) {
       NavigationService.showErrorSnackBar(
         'App error detected. Please restart if issues persist.',

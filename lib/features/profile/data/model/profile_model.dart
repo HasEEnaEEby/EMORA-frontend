@@ -45,32 +45,28 @@ class UserProfileModel {
     this.isPrivate = false,
   });
 
-  // Factory constructor from JSON
   factory UserProfileModel.fromJson(Map<String, dynamic> json) {
     print('[DEBUG] UserProfileModel.fromJson input: $json');
     
-    // Handle nested user object if present
     final userData = json['user'] as Map<String, dynamic>? ?? json;
     final profileData = userData['profile'] as Map<String, dynamic>? ?? {};
     
     print('[DEBUG] userData keys: ${userData.keys.toList()}');
     print('[DEBUG] profileData keys: ${profileData.keys.toList()}');
     
-    // Extract username properly
     final username = userData['username']?.toString() ?? '';
     print('[DEBUG] Extracted username: "$username"');
     
-    // DEBUG LOGGING
     print('[DEBUG] profileData["displayName"]: \'${profileData['displayName']}\'');
     final computedName = profileData['displayName']?.toString() ?? 
           userData['name']?.toString() ?? 
-          username; // Use username as fallback instead of empty string
+username; 
     print('[DEBUG] Computed name for UserProfileModel: \'$computedName\'');
 
     return UserProfileModel(
       id: userData['id']?.toString() ?? '',
       name: computedName,
-      username: username, // Use the properly extracted username
+username: username, 
       email: userData['email']?.toString() ?? '',
       avatar: userData['selectedAvatar']?.toString() ?? 
               userData['avatar']?.toString(),
@@ -100,7 +96,6 @@ class UserProfileModel {
     );
   }
 
-  // Convert to JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -126,13 +121,12 @@ class UserProfileModel {
     };
   }
 
-  // Convert to Entity
   ProfileEntity toEntity() {
     print('[DEBUG] UserProfileModel.toEntity() - name: \'$name\', username: \'$username\'');
     return ProfileEntity(
       id: id,
       name: name,
-      displayName: name, // <-- Set displayName from name (which is displayName from backend)
+displayName: name, 
       username: username,
       email: email,
       bio: bio,
@@ -155,7 +149,6 @@ class UserProfileModel {
     );
   }
 
-  // Create from Entity
   factory UserProfileModel.fromEntity(ProfileEntity entity) {
     return UserProfileModel(
       id: entity.id,

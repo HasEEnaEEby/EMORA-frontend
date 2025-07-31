@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/dialogs/qr_code_dialog_safe.dart
 import 'dart:convert';
 import 'dart:ui' as ui;
 
@@ -11,17 +10,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
-/// Safe QR Code generation and sharing dialog with robust error handling
-///
-/// Features:
-/// - Generates QR code with profile data
-/// - Save to Photos app (with permission)
-/// - Share via native iOS share sheet
-/// - Beautiful iOS-style presentation
-/// - Robust layout handling
-/// - Comprehensive error handling
 class SafeQRCodeDialog {
-  /// Shows the QR code dialog with comprehensive error handling
   static void show(BuildContext context, dynamic profile) {
     if (profile == null) {
       DialogUtils.showErrorSnackBar(context, 'Profile data not available');
@@ -31,7 +20,6 @@ class SafeQRCodeDialog {
     try {
       final qrData = _generateQRData(profile);
 
-      // Use showCupertinoModalPopup for better layout control
       showCupertinoModalPopup<void>(
         context: context,
         builder: (context) => _buildQRDialog(context, profile, qrData),
@@ -44,7 +32,6 @@ class SafeQRCodeDialog {
     }
   }
 
-  /// Builds the QR dialog with proper constraints
   static Widget _buildQRDialog(
     BuildContext context,
     dynamic profile,
@@ -61,7 +48,6 @@ class SafeQRCodeDialog {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
               Container(
                 margin: const EdgeInsets.only(top: 8),
                 width: 40,
@@ -72,10 +58,8 @@ class SafeQRCodeDialog {
                 ),
               ),
 
-              // Header
               _buildHeader(context, profile),
 
-              // Content
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
@@ -83,7 +67,6 @@ class SafeQRCodeDialog {
                 ),
               ),
 
-              // Actions
               _buildActions(context, qrData, profile),
             ],
           ),
@@ -92,7 +75,6 @@ class SafeQRCodeDialog {
     );
   }
 
-  /// Generates JSON data for QR code with validation
   static String _generateQRData(dynamic profile) {
     try {
       final data = {
@@ -105,7 +87,6 @@ class SafeQRCodeDialog {
 
       final jsonData = jsonEncode(data);
 
-      // Validate JSON length for QR code
       if (jsonData.length > 2000) {
         throw Exception('Profile data too large for QR code');
       }
@@ -116,7 +97,6 @@ class SafeQRCodeDialog {
     }
   }
 
-  /// Builds the header with profile info
   static Widget _buildHeader(BuildContext context, dynamic profile) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -125,7 +105,6 @@ class SafeQRCodeDialog {
       ),
       child: Row(
         children: [
-          // Profile avatar
           Container(
             width: 50,
             height: 50,
@@ -148,7 +127,6 @@ class SafeQRCodeDialog {
 
           const SizedBox(width: 16),
 
-          // Profile info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +150,6 @@ class SafeQRCodeDialog {
             ),
           ),
 
-          // Close button
           CupertinoButton(
             padding: EdgeInsets.zero,
             onPressed: () => Navigator.pop(context),
@@ -187,12 +164,10 @@ class SafeQRCodeDialog {
     );
   }
 
-  /// Builds the content with QR code and info
   static Widget _buildContent(String qrData) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // QR Code container with fixed dimensions
         Container(
           width: 240,
           height: 240,
@@ -226,7 +201,6 @@ class SafeQRCodeDialog {
 
         const SizedBox(height: 24),
 
-        // Info container
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -271,7 +245,6 @@ class SafeQRCodeDialog {
     );
   }
 
-  /// Builds the action buttons
   static Widget _buildActions(
     BuildContext context,
     String qrData,
@@ -284,7 +257,6 @@ class SafeQRCodeDialog {
       ),
       child: Row(
         children: [
-          // Share button
           Expanded(
             child: CupertinoButton(
               color: CupertinoColors.systemBlue,
@@ -303,7 +275,6 @@ class SafeQRCodeDialog {
 
           const SizedBox(width: 12),
 
-          // Save button
           Expanded(
             child: CupertinoButton(
               color: const Color(0xFF8B5CF6),
@@ -324,7 +295,6 @@ class SafeQRCodeDialog {
     );
   }
 
-  /// Shares QR code via native share sheet
   static void _shareQRCode(BuildContext context, String qrData) {
     try {
       Share.share('Connect with me on EMORA! Scan this QR code: $qrData');
@@ -335,14 +305,12 @@ class SafeQRCodeDialog {
     }
   }
 
-  /// Saves QR code to Photos app with comprehensive error handling
   static void _saveQRCode(
     BuildContext context,
     String qrData,
     dynamic profile,
   ) async {
     try {
-      // Request photo library permission
       final permission = await Permission.photos.request();
       if (!permission.isGranted) {
         if (context.mounted) {
@@ -354,7 +322,6 @@ class SafeQRCodeDialog {
         return;
       }
 
-      // Show loading indicator
       if (context.mounted) {
         showCupertinoDialog(
           context: context,
@@ -372,7 +339,6 @@ class SafeQRCodeDialog {
         );
       }
 
-      // Generate QR code image
       final qrValidationResult = QrValidator.validate(
         data: qrData,
         version: QrVersions.auto,
@@ -408,11 +374,9 @@ class SafeQRCodeDialog {
           );
 
           if (context.mounted) {
-            // Close loading dialog
             Navigator.pop(context);
 
             if (result['isSuccess'] == true) {
-              // Close QR dialog
               Navigator.pop(context);
 
               DialogUtils.showSuccessSnackBar(
@@ -426,7 +390,7 @@ class SafeQRCodeDialog {
           }
         } else {
           if (context.mounted) {
-            Navigator.pop(context); // Close loading dialog
+Navigator.pop(context); 
             DialogUtils.showErrorSnackBar(
               context,
               'Failed to generate QR image',
@@ -435,17 +399,15 @@ class SafeQRCodeDialog {
         }
       } else {
         if (context.mounted) {
-          Navigator.pop(context); // Close loading dialog
+Navigator.pop(context); 
           DialogUtils.showErrorSnackBar(context, 'Invalid QR code data');
         }
       }
     } catch (e) {
       if (context.mounted) {
-        // Try to close loading dialog if it's open
         try {
           Navigator.pop(context);
         } catch (_) {
-          // Loading dialog might not be open
         }
 
         DialogUtils.showErrorSnackBar(
@@ -456,7 +418,6 @@ class SafeQRCodeDialog {
     }
   }
 
-  /// Alternative simple QR dialog for when the main one fails
   static void showSimpleQRDialog(BuildContext context, dynamic profile) {
     if (profile == null) {
       DialogUtils.showErrorSnackBar(context, 'Profile data not available');

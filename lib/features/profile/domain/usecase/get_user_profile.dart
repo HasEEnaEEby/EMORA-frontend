@@ -6,7 +6,6 @@ import 'package:emora_mobile_app/features/profile/domain/entity/profile_entity.d
 import 'package:emora_mobile_app/features/profile/domain/repository/profile_repository.dart';
 import 'package:equatable/equatable.dart';
 
-// Parameter class for GetUserProfile
 class GetUserProfileParams extends Equatable {
   final String userId;
 
@@ -33,7 +32,6 @@ class GetUserProfile implements UseCase<ProfileEntity, GetUserProfileParams> {
     }
   }
 
-  // Convenience method for getting current user's profile
   Future<Either<Failure, ProfileEntity>> getCurrentUserProfile() async {
     try {
       final currentUserResult = await getCurrentUser(NoParams());

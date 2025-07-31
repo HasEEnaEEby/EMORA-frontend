@@ -24,7 +24,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
   @override
   void initState() {
     super.initState();
-    // Load community data when widget initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCommunityData();
     });
@@ -33,10 +32,8 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
   void _loadCommunityData() {
     final communityBloc = context.read<CommunityBloc>();
 
-    // Load global feed if not already loaded
     communityBloc.add(const LoadGlobalFeedEvent(forceRefresh: true));
 
-    // Load global stats
     communityBloc.add(const LoadGlobalStatsEvent(forceRefresh: true));
   }
 
@@ -51,19 +48,16 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
       print('. Post emoji: ${post.emoji}');
       print('. Post reactions: ${post.reactions.length}');
 
-      // Handle message content with fallback
       final messageContent = post.message.isNotEmpty
           ? post.message
-          : 'Sharing a moment...'; // Better fallback text
+: 'Sharing a moment...'; 
 
       final displayMessage = messageContent.length > 60
           ? '${messageContent.substring(0, 60)}...'
           : messageContent;
 
-      // Ensure we have a valid ID
       final postId = post.id.isNotEmpty ? post.id : 'temp_${DateTime.now().millisecondsSinceEpoch}';
 
-      // Use reactions count, or fallback to 0 if empty
       final comfortsCount = post.reactions.isNotEmpty ? post.reactions.length : 0;
 
       return {
@@ -215,7 +209,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
         } else if (state is CommunityError) {
           return _buildErrorState(context);
         } else if (state is CommunityFeedError) {
-          // Show error but keep existing data if available
           final posts = _convertPostsToMaps(state.globalPosts);
           if (posts.isNotEmpty) {
             return Column(
@@ -230,7 +223,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
         } else if (widget.isNewUser) {
           return _buildEmptyState();
         } else {
-          // Initial state - trigger loading
           WidgetsBinding.instance.addPostFrameCallback((_) {
             _loadCommunityData();
           });
@@ -243,7 +235,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
   Widget _buildFeedList(List<Map<String, dynamic>> posts) {
     return Column(
       children: [
-        // Global stats banner
         BlocBuilder<CommunityBloc, CommunityState>(
           builder: (context, state) {
             if (state is CommunityFeedLoaded && state.globalStats.isNotEmpty) {
@@ -253,7 +244,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
           },
         ),
 
-        // Posts list
         ListView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -350,7 +340,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
   Widget _buildPostHeader(Map<String, dynamic> post) {
     return Row(
       children: [
-        // User avatar
         Container(
           width: 40,
           height: 40,
@@ -372,7 +361,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
         ),
         const SizedBox(width: 12),
 
-        // User info
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -393,7 +381,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
           ),
         ),
 
-        // Emotion emoji
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
@@ -419,7 +406,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
   Widget _buildPostActions(Map<String, dynamic> post, String postId) {
     return Row(
       children: [
-        // Comfort button
         GestureDetector(
           onTap: () {
             print('💖 Heart tapped for post: $postId');
@@ -428,7 +414,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
                 ReactToPostEvent(postId: postId, emoji: '❤️', type: 'comfort'),
               );
 
-              // Show feedback
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text('Comfort sent! 💖'),
@@ -487,11 +472,9 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
 
         const SizedBox(width: 12),
 
-        // Reply button
         GestureDetector(
           onTap: () {
             print('💬 Reply tapped for post: $postId');
-            // Show coming soon message
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('Comments feature coming soon! 💬'),
@@ -538,10 +521,8 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
 
         const Spacer(),
 
-        // Share button
         GestureDetector(
           onTap: () {
-            // Share functionality
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: const Text('Share feature coming soon! 🔗'),
@@ -687,7 +668,6 @@ class _CommunityFeedWidgetState extends State<CommunityFeedWidget> {
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          // Animated loading indicator
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.0, end: 1.0),
             duration: const Duration(milliseconds: 1500),

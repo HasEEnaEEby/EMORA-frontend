@@ -238,7 +238,6 @@ class FriendRepositoryImpl implements FriendRepository {
 
         final result = <String, List<FriendRequestEntity>>{};
         
-        // Filter out invalid requests and log any issues
         final validSentRequests = <FriendRequestEntity>[];
         final validReceivedRequests = <FriendRequestEntity>[];
         

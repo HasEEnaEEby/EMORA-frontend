@@ -1,4 +1,3 @@
-// lib/features/home/presentation/view_model/bloc/home_state.dart
 import 'package:emora_mobile_app/features/home/data/model/home_data_model.dart';
 import 'package:emora_mobile_app/features/home/data/model/user_stats_model.dart';
 import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart' hide WeeklyInsightsModel;
@@ -65,7 +64,6 @@ class HomeDashboardState extends HomeState {
     selectedDateEmotions,
   ];
 
-  // Add these getter methods for compatibility with AppRouter
   Map<String, dynamic> get dashboardData => homeData.toMap();
   String get username => homeData.username;
   Map<String, dynamic> get userStatsMap => userStats?.toMap() ?? {};
@@ -95,7 +93,6 @@ class HomeDashboardState extends HomeState {
   }
 }
 
-/// Stats refreshing state (when user is on dashboard)
 class HomeStatsRefreshing extends HomeDashboardState {
   const HomeStatsRefreshing({
     required super.homeData, 
@@ -114,7 +111,6 @@ class HomeStatsRefreshing extends HomeDashboardState {
   Map<String, dynamic> get userStatsMap => userStats?.toMap() ?? {};
 }
 
-/// Data refreshing state (when user pulls to refresh)
 class HomeDataRefreshing extends HomeDashboardState {
   const HomeDataRefreshing({
     required super.homeData, 
@@ -133,7 +129,6 @@ class HomeDataRefreshing extends HomeDashboardState {
   Map<String, dynamic> get userStatsMap => userStats?.toMap() ?? {};
 }
 
-/// Error state with retry functionality
 class HomeError extends HomeState {
   final String message;
   final bool canRetry;
@@ -165,12 +160,10 @@ class HomeError extends HomeState {
   }
 }
 
-/// Logout loading state
 class HomeLogoutLoading extends HomeState {
   const HomeLogoutLoading();
 }
 
-/// Success state for specific actions
 class HomeActionSuccess extends HomeState {
   final String message;
 

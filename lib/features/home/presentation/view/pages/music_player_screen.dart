@@ -61,7 +61,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
           SingleChildScrollView(
             child: Column(
               children: [
-                // Mood selection
                 MoodSelectionWidget(
                   selectedMood: _selectedMood,
                   onMoodSelected: (mood) {
@@ -71,7 +70,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                   },
                 ),
                 
-                // Playlist card
                 if (_selectedMood != null)
                   SpotifyPlaylistCard(
                     mood: _selectedMood!,
@@ -84,13 +82,11 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
                     },
                   ),
                 
-                // Bottom padding for music player
                 if (_showMusicPlayer) const SizedBox(height: 120),
               ],
             ),
           ),
           
-          // Music player overlay
           if (_showMusicPlayer)
             Positioned(
               left: 0,
@@ -112,7 +108,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   }
 
   void _showFeaturedPlaylists() {
-    // Implementation for featured playlists
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Featured playlists coming soon!'),
@@ -122,7 +117,6 @@ class _MusicPlayerScreenState extends State<MusicPlayerScreen> {
   }
 
   void _showSpotifyAuth() {
-    // Implementation for Spotify authentication
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Spotify authentication coming soon!'),

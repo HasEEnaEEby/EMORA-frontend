@@ -24,9 +24,7 @@ class HomeDataModel extends Equatable {
     required this.lastUpdated,
   });
 
-  // ✅ ENHANCED: Computed properties for better state management
   bool get isNewUser {
-    // Extract total emotions from the nested dashboard data structure
     final data = dashboardData['data'];
     if (data == null) return true;
     
@@ -35,7 +33,6 @@ class HomeDataModel extends Equatable {
     
     final totalEmotions = dashboard['totalEmotions'] ?? 0;
     
-    // User is new if they have 0 total emotions
     final isNew = totalEmotions == 0;
     
     print('🔍 DEBUG: HomeDataModel.isNewUser computed: $isNew (totalEmotions: $totalEmotions)');
@@ -73,13 +70,10 @@ class HomeDataModel extends Equatable {
     return [];
   }
 
-  // ✅ FIXED: Enhanced factory constructor to parse the correct API structure
   factory HomeDataModel.fromJson(Map<String, dynamic> json) {
     try {
       print('🔍 HomeDataModel.fromJson input: ${json.toString().substring(0, 200)}...');
       
-      // Extract the actual data from the API response structure
-      // API returns: { "success": true, "data": { "user": { "username": "haseenakc" }, "dashboard": {...}, "insights": {...} } }
       final responseData = json['data'] ?? json;
       print('🔍 responseData found: ${responseData != null}');
       
@@ -90,16 +84,14 @@ class HomeDataModel extends Equatable {
       print('🔍 userData keys: ${userData.keys.toList()}');
       print('🔍 dashboardData keys: ${dashboardData.keys.toList()}');
       
-      // Extract username from the correct path: data.user.username
       final username = _safeString(userData['username']) ?? 'Unknown';
       print('🔍 Extracted username: "$username"');
       
-      // Extract emotions count for debugging
       final totalEmotions = _safeInt(dashboardData['totalEmotions']);
       print('🔍 Total emotions from API: $totalEmotions');
       
       return HomeDataModel(
-        username: username, // ✅ Now gets "haseenakc" instead of "User"
+username: username, 
         currentMood: _safeString(userData['currentMood']),
         streak: _safeInt(userData['currentStreak']) ?? _safeInt(userData['streak']) ?? 0,
         isFirstTimeLogin: _safeBool(dashboardData['isFirstTimeLogin']) ?? (totalEmotions == 0),
@@ -125,14 +117,13 @@ class HomeDataModel extends Equatable {
           'achievements': {},
         }),
         selectedAvatar: _safeString(userData['selectedAvatar']),
-        dashboardData: json, // Store the entire API response for computed properties
+dashboardData: json, 
         lastUpdated: _parseDateTime(responseData['timestamp']) ?? DateTime.now(),
       );
     } catch (e, stackTrace) {
       print('❌ Error parsing HomeDataModel: $e');
       print('❌ Stack trace: $stackTrace');
       
-      // Return safe defaults if parsing fails
       return HomeDataModel(
         username: 'Unknown',
         currentMood: 'neutral',
@@ -146,7 +137,6 @@ class HomeDataModel extends Equatable {
     }
   }
 
-  // ✅ ENHANCED: Mock factory method for testing
   factory HomeDataModel.mock({
     String? username, 
     String? avatar,
@@ -181,7 +171,6 @@ class HomeDataModel extends Equatable {
     );
   }
 
-  // Convert from Entity to Model (for clean architecture)
   factory HomeDataModel.fromEntity(HomeDataEntity entity) {
     return HomeDataModel(
       username: entity.username,
@@ -195,7 +184,6 @@ class HomeDataModel extends Equatable {
     );
   }
 
-  // ✅ ENHANCED: Safe type conversion methods with better error handling
   static String? _safeString(dynamic value) {
     if (value == null) return null;
     if (value is String) return value.trim().isEmpty ? null : value.trim();
@@ -240,7 +228,6 @@ class HomeDataModel extends Equatable {
 
       if (statsData is UserStatsModel) return statsData;
 
-      // Try to convert if it's a different type of Map
       if (statsData is Map) {
         return UserStatsModel.fromJson(Map<String, dynamic>.from(statsData));
       }
@@ -292,7 +279,6 @@ class HomeDataModel extends Equatable {
     }
   }
 
-  // ✅ ENHANCED: Better JSON serialization
   Map<String, dynamic> toJson() {
     return {
       'username': username,
@@ -303,7 +289,6 @@ class HomeDataModel extends Equatable {
       'selectedAvatar': selectedAvatar,
       'dashboardData': dashboardData,
       'lastUpdated': lastUpdated.toIso8601String(),
-      // Include computed properties for debugging
       'computedValues': {
         'isNewUser': isNewUser,
         'totalEmotions': totalEmotions,
@@ -352,7 +337,6 @@ class HomeDataModel extends Equatable {
     );
   }
 
-  // ✅ ENHANCED: Debug method for troubleshooting
   void debugPrint() {
     print('🔍 ===== HomeDataModel Debug =====');
     print('🔍 Username: "$username"');
@@ -374,7 +358,6 @@ class HomeDataModel extends Equatable {
     print('🔍 ===============================');
   }
 
-  // ✅ ENHANCED: Validation method
   bool get isValid {
     return username.isNotEmpty && 
            username != 'Unknown' && 

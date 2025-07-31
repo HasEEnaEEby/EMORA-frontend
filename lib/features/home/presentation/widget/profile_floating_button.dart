@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/profile_floating_button.dart
 import 'package:flutter/material.dart';
 
 class ProfileFloatingButton extends StatelessWidget {

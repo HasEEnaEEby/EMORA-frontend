@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/profile_account_widget.dart
 import 'package:emora_mobile_app/features/home/data/model/settings_model.dart';
 import 'package:emora_mobile_app/features/profile/presentation/view_model/profile_bloc.dart';
 import 'package:emora_mobile_app/features/profile/presentation/view_model/profile_event.dart';
@@ -35,7 +34,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
   late AnimationController _cardAnimationController;
   late Animation<double> _glowAnimation;
 
-  // Settings state
   bool _notificationsEnabled = true;
   bool _dataSharingEnabled = false;
   String _selectedLanguage = 'English';
@@ -205,26 +203,26 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
                   colors: [
                     const Color(
                       0xFF8B5CF6,
-                    ).withOpacity(0.3), // FIXED: withValues -> withOpacity
+).withOpacity(0.3), 
                     const Color(
                       0xFF6366F1,
-                    ).withOpacity(0.2), // FIXED: withValues -> withOpacity
+).withOpacity(0.2), 
                     const Color(
                       0xFF3B82F6,
-                    ).withOpacity(0.1), // FIXED: withValues -> withOpacity
+).withOpacity(0.1), 
                   ],
                 ),
                 border: Border.all(
                   color: const Color(
                     0xFF8B5CF6,
-                  ).withOpacity(0.4), // FIXED: withValues -> withOpacity
+).withOpacity(0.4), 
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: const Color(0xFF8B5CF6).withOpacity(
                       0.2 * _glowAnimation.value,
-                    ), // FIXED: withValues -> withOpacity
+), 
                     blurRadius: 16,
                     offset: const Offset(0, 4),
                     spreadRadius: 2,
@@ -272,16 +270,16 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
                   colors: [
                     const Color(
                       0xFF10B981,
-                    ).withOpacity(0.2), // FIXED: withValues -> withOpacity
+).withOpacity(0.2), 
                     const Color(
                       0xFF059669,
-                    ).withOpacity(0.1), // FIXED: withValues -> withOpacity
+).withOpacity(0.1), 
                   ],
                 ),
                 border: Border.all(
                   color: const Color(
                     0xFF10B981,
-                  ).withOpacity(0.3), // FIXED: withValues -> withOpacity
+).withOpacity(0.3), 
                 ),
               ),
               child: Row(
@@ -330,27 +328,27 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
                   colors: [
                     const Color(
                       0xFF1A1A2E,
-                    ).withOpacity(0.95), // FIXED: withValues -> withOpacity
+).withOpacity(0.95), 
                     const Color(
                       0xFF16213E,
-                    ).withOpacity(0.8), // FIXED: withValues -> withOpacity
+).withOpacity(0.8), 
                     const Color(
                       0xFF0F172A,
-                    ).withOpacity(0.6), // FIXED: withValues -> withOpacity
+).withOpacity(0.6), 
                   ],
                   stops: const [0.0, 0.5, 1.0],
                 ),
                 border: Border.all(
                   color: const Color(
                     0xFF8B5CF6,
-                  ).withOpacity(0.2), // FIXED: withValues -> withOpacity
+).withOpacity(0.2), 
                   width: 1.5,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: const Color(
                       0xFF8B5CF6,
-                    ).withOpacity(0.1), // FIXED: withValues -> withOpacity
+).withOpacity(0.1), 
                     blurRadius: 24,
                     offset: const Offset(0, 12),
                     spreadRadius: 0,
@@ -358,7 +356,7 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
                   BoxShadow(
                     color: Colors.black.withOpacity(
                       0.25,
-                    ), // FIXED: withValues -> withOpacity
+), 
                     blurRadius: 40,
                     offset: const Offset(0, 20),
                     spreadRadius: -8,
@@ -390,10 +388,10 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
             Colors.transparent,
             const Color(
               0xFF8B5CF6,
-            ).withOpacity(0.3), // FIXED: withValues -> withOpacity
+).withOpacity(0.3), 
             const Color(
               0xFF6366F1,
-            ).withOpacity(0.2), // FIXED: withValues -> withOpacity
+).withOpacity(0.2), 
             Colors.transparent,
           ],
           stops: const [0.0, 0.3, 0.7, 1.0],
@@ -455,30 +453,30 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
               ? [
                   Colors.red.withOpacity(
                     0.2,
-                  ), // FIXED: withValues -> withOpacity
+), 
                   Colors.red.withOpacity(
                     0.15,
-                  ), // FIXED: withValues -> withOpacity
+), 
                   Colors.red.withOpacity(
                     0.1,
-                  ), // FIXED: withValues -> withOpacity
+), 
                 ]
               : [
                   item.color.withOpacity(
                     0.2,
-                  ), // FIXED: withValues -> withOpacity
+), 
                   item.color.withOpacity(
                     0.15,
-                  ), // FIXED: withValues -> withOpacity
+), 
                   item.color.withOpacity(
                     0.1,
-                  ), // FIXED: withValues -> withOpacity
+), 
                 ],
         ),
         border: Border.all(
           color: item.isDestructive
-              ? Colors.red.withOpacity(0.4) // FIXED: withValues -> withOpacity
-              : item.color.withOpacity(0.4), // FIXED: withValues -> withOpacity
+? Colors.red.withOpacity(0.4) 
+: item.color.withOpacity(0.4), 
           width: 1.2,
         ),
         boxShadow: [
@@ -486,10 +484,10 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
             color: item.isDestructive
                 ? Colors.red.withOpacity(
                     0.15,
-                  ) // FIXED: withValues -> withOpacity
+) 
                 : item.color.withOpacity(
                     0.15,
-                  ), // FIXED: withValues -> withOpacity
+), 
             blurRadius: 10,
             offset: const Offset(0, 3),
             spreadRadius: 0,
@@ -608,7 +606,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
   }
 
   Widget _buildToggleSwitch(_SettingItem item) {
-    // FIXED: Wrap Switch with Material
     return Material(
       color: Colors.transparent,
       child: Switch.adaptive(
@@ -621,16 +618,15 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
     );
   }
 
-  // In _buildModernTrailingIcon method (around line 485):
   Widget _buildModernTrailingIcon(_SettingItem item) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: item.color.withOpacity(0.1), // FIXED: withValues -> withOpacity
+color: item.color.withOpacity(0.1), 
         border: Border.all(
           color: item.color.withOpacity(0.2),
-        ), // FIXED: withValues -> withOpacity
+), 
       ),
       child: Icon(Icons.chevron_right_rounded, color: item.color, size: 18),
     );
@@ -650,7 +646,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
       }
     });
 
-    // Save to database
     _saveSettingsToDatabase();
   }
 
@@ -688,7 +683,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
     }
   }
 
-  // . FIXED: Built-in language selector (no external dependency)
   void _showLanguageSelector() {
     final languages = [
       {'name': 'English', 'flag': '🇺🇸'},
@@ -720,7 +714,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 50,
@@ -731,7 +724,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
               ),
             ),
 
-            // Header
             Container(
               padding: const EdgeInsets.all(24),
               child: Row(
@@ -773,7 +765,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
               ),
             ),
 
-            // Language list
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -838,7 +829,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
     );
   }
 
-  // . FIXED: Built-in theme selector (no external dependency)
   void _showThemeSelector() {
     final themes = [
       {
@@ -890,7 +880,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
         ),
         child: Column(
           children: [
-            // Handle bar
             Container(
               margin: const EdgeInsets.only(top: 12),
               width: 50,
@@ -901,7 +890,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
               ),
             ),
 
-            // Header
             Container(
               padding: const EdgeInsets.all(24),
               child: Row(
@@ -943,7 +931,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
               ),
             ),
 
-            // Theme grid
             Expanded(
               child: GridView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -1031,7 +1018,6 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
     );
   }
 
-  // . FIXED: Proper ProfileBloc event dispatch
   void _saveSettingsToDatabase() {
     final settingsData = {
       'notificationsEnabled': _notificationsEnabled,
@@ -1042,10 +1028,8 @@ class _ProfileAccountWidgetState extends State<ProfileAccountWidget>
     };
 
     try {
-      // Save using ProfileBloc
       context.read<ProfileBloc>().add(UpdateSettings(settings: settingsData));
     } catch (e) {
-      // Fallback: Show success message even if BLoC fails
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(

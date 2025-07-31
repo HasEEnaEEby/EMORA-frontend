@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/emotion_list_view_widget.dart
 import 'package:emora_mobile_app/features/home/data/model/emotion_entry_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -164,7 +163,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
       );
     }
 
-    // Group emotions by date
     final groupedEmotions = _groupEmotionsByDate(widget.emotions);
     final dates = groupedEmotions.keys.toList()..sort((a, b) => b.compareTo(a));
 
@@ -196,7 +194,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
       grouped[date]!.add(emotion);
     }
     
-    // Sort emotions within each date by time (newest first)
     for (final emotions in grouped.values) {
       emotions.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     }
@@ -327,7 +324,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
             ),
             child: Row(
               children: [
-                // Emotion icon and info
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -341,7 +337,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
                 ),
                 const SizedBox(width: 16),
                 
-                // Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +374,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
                       ),
                       const SizedBox(height: 4),
                       
-                      // Time and location
                       Row(
                         children: [
                           Icon(
@@ -408,7 +402,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
                         ],
                       ),
                       
-                      // Note preview
                       if (emotion.note.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
@@ -422,7 +415,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
                         ),
                       ],
                       
-                      // Tags preview
                       if (emotion.tags.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Wrap(
@@ -453,7 +445,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
                   ),
                 ),
                 
-                // Actions and selection
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -467,12 +458,10 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
                         ),
                       ),
                     
-                    // Intensity indicator
                     _buildCompactIntensityIndicator(emotion),
                     
                     const SizedBox(height: 8),
                     
-                    // Quick actions
                     PopupMenuButton<String>(
                       icon: Icon(
                         Icons.more_vert,
@@ -607,7 +596,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
             ),
             child: Column(
               children: [
-                // Handle bar
                 Container(
                   margin: const EdgeInsets.only(top: 8),
                   width: 40,
@@ -624,7 +612,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header
                         Row(
                           children: [
                             Container(
@@ -666,7 +653,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
                         ),
                         const SizedBox(height: 24),
                         
-                        // Intensity
                         Text(
                           'Intensity: ${emotion.intensityLabel}',
                           style: const TextStyle(
@@ -693,7 +679,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
                         ),
                         const SizedBox(height: 24),
                         
-                        // Note
                         if (emotion.note.isNotEmpty) ...[
                           Text(
                             'Note',
@@ -721,7 +706,6 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
                           const SizedBox(height: 24),
                         ],
                         
-                        // Actions
                         Row(
                           children: [
                             if (widget.onEmotionEdit != null)
@@ -771,15 +755,7 @@ class _EmotionListViewWidgetState extends State<EmotionListViewWidget>
   }
 
   void _shareEmotion(EmotionEntryModel emotion) {
-    // Implementation would depend on share_plus package
-    // final shareText = '''
-    // 🎭 ${emotion.emotion} (${emotion.intensityLabel})
-    // 📅 ${emotion.formattedDateTime}
-    // ${emotion.note.isNotEmpty ? '📝 ${emotion.note}' : ''}
-    // #EmotionTracking
-    // ''';
     
-    // Share.share(shareText);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Sharing: ${emotion.emotion}'),

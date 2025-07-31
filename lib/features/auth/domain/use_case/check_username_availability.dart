@@ -1,4 +1,3 @@
-// lib/features/auth/domain/use_case/check_username_availability.dart
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 

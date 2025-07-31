@@ -1,4 +1,3 @@
-// lib/features/auth/presentation/view/login_view.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -23,7 +22,7 @@ class _LoginViewState extends State<LoginView>
 
   bool _isPasswordVisible = false;
   bool _rememberMe = false;
-  bool _isLoading = false; // LOCAL loading state
+bool _isLoading = false; 
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -68,18 +67,15 @@ class _LoginViewState extends State<LoginView>
   }
 
   Future<void> _handleLogin() async {
-    // CRITICAL FIX: Check if form is valid and not already loading
     if (!_formKey.currentState!.validate() || _isLoading) {
       return;
     }
 
-    // CRITICAL FIX: Check if widget is still mounted and BLoC is available
     if (!mounted) return;
 
     try {
       final authBloc = context.read<AuthBloc>();
       
-      // CRITICAL FIX: Check if BLoC is closed before adding events
       if (authBloc.isClosed) {
         Logger.error('❌ AuthBloc is closed, cannot process login');
         _showErrorSnackBar('Session expired. Please try again.');
@@ -93,7 +89,6 @@ class _LoginViewState extends State<LoginView>
       Logger.info('🔐 Starting login process...');
       Logger.info('  Username: ${_usernameController.text.trim()}');
 
-      // SAFE: Add event only if BLoC is not closed
       authBloc.add(
         AuthLogin(
           username: _usernameController.text.trim(),
@@ -114,14 +109,14 @@ class _LoginViewState extends State<LoginView>
   }
 
   void _navigateToRegister() {
-    if (_isLoading) return; // Prevent navigation during loading
+if (_isLoading) return; 
     
     Logger.info('📝 Navigating to registration');
     Navigator.pushReplacementNamed(context, AppRouter.register);
   }
 
   void _navigateToForgotPassword() {
-    if (_isLoading) return; // Prevent navigation during loading
+if (_isLoading) return; 
     Logger.info('🔑 Navigating to forgot password');
     Navigator.pushNamed(context, AppRouter.forgotPassword);
   }
@@ -133,7 +128,6 @@ class _LoginViewState extends State<LoginView>
       body: SafeArea(
         child: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
-            // CRITICAL FIX: Reset loading state for all state changes
             if (mounted && _isLoading) {
               setState(() {
                 _isLoading = false;
@@ -160,7 +154,6 @@ class _LoginViewState extends State<LoginView>
             }
           },
           builder: (context, state) {
-            // Use local loading state instead of BLoC state to avoid disposed BLoC issues
             final isLoading = _isLoading || state is AuthLoading;
 
             return SingleChildScrollView(
@@ -174,42 +167,34 @@ class _LoginViewState extends State<LoginView>
                     children: [
                       const SizedBox(height: 20),
 
-                      // Back button
                       _buildBackButton(),
 
                       const SizedBox(height: 40),
 
-                      // Header section
                       _buildHeader(),
 
                       const SizedBox(height: 50),
 
-                      // Login form
                       _buildLoginForm(isLoading),
 
                       const SizedBox(height: 20),
 
-                      // Remember me and forgot password
                       _buildRememberMeAndForgotPassword(),
 
                       const SizedBox(height: 32),
 
-                      // Login button
                       _buildLoginButton(isLoading),
 
                       const SizedBox(height: 24),
 
-                      // Divider
                       _buildDivider(),
 
                       const SizedBox(height: 24),
 
-                      // Social login options (optional)
                       _buildSocialLoginOptions(isLoading),
 
                       const SizedBox(height: 32),
 
-                      // Sign up link
                       _buildSignUpLink(),
 
                       const SizedBox(height: 40),
@@ -313,12 +298,10 @@ class _LoginViewState extends State<LoginView>
       key: _formKey,
       child: Column(
         children: [
-          // Username field
           _buildUsernameField(isLoading),
 
           const SizedBox(height: 20),
 
-          // Password field
           _buildPasswordField(isLoading),
         ],
       ),
@@ -429,7 +412,6 @@ class _LoginViewState extends State<LoginView>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // Remember me checkbox
         Row(
           children: [
             Transform.scale(
@@ -453,7 +435,6 @@ class _LoginViewState extends State<LoginView>
           ],
         ),
 
-        // Forgot password link
         TextButton(
           onPressed: _isLoading ? null : _navigateToForgotPassword,
           style: TextButton.styleFrom(
@@ -562,7 +543,6 @@ class _LoginViewState extends State<LoginView>
   Widget _buildSocialLoginOptions(bool isLoading) {
     return Column(
       children: [
-        // Guest login button
         Container(
           width: double.infinity,
           height: 50,

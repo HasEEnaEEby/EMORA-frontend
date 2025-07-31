@@ -1,4 +1,3 @@
-// lib/features/home/data/data_source/local/home_local_data_source.dart
 import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,7 +17,6 @@ abstract class HomeLocalDataSource {
   Future<bool> hasHomeData();
   Future<DateTime?> getLastCacheTime();
 
-  // Enhanced emotion-related methods
   Future<void> cacheEmotionFeed(List<Map<String, dynamic>> emotionFeed);
   Future<List<Map<String, dynamic>>> getCachedEmotionFeed();
   Future<void> cacheGlobalStats(Map<String, dynamic> globalStats);
@@ -35,7 +33,6 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
   static const String _cacheTimestampKey = 'HOME_CACHE_TIMESTAMP';
   static const String _firstTimeLoginKey = 'IS_FIRST_TIME_LOGIN';
 
-  // New emotion-related cache keys
   static const String _emotionFeedKey = 'CACHED_EMOTION_FEED';
   static const String _globalStatsKey = 'CACHED_GLOBAL_STATS';
   static const String _heatmapDataKey = 'CACHED_HEATMAP_DATA';
@@ -80,20 +77,16 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       final prefs = await SharedPreferences.getInstance();
       final homeDataJson = json.encode(homeData.toJson());
 
-      // Cache the home data
       await prefs.setString(_homeDataKey, homeDataJson);
 
-      // Cache the user stats separately for quick access
       final userStatsJson = json.encode((homeData.userStats).toJson());
       await prefs.setString(_userStatsKey, userStatsJson);
 
-      // Update cache timestamp
       await prefs.setString(
         _cacheTimestampKey,
         DateTime.now().toIso8601String(),
       );
 
-      // Cache first-time login status
       await prefs.setBool(_firstTimeLoginKey, homeData.isFirstTimeLogin);
 
       Logger.info('. Home data cached successfully');
@@ -110,13 +103,10 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
     try {
       Logger.info('📱 Marking first-time login as complete locally...');
 
-      // Get current cached data
       final cachedHomeData = await getLastHomeData();
 
-      // Update first-time login status
       final updatedHomeData = cachedHomeData.copyWith(isFirstTimeLogin: false);
 
-      // Cache the updated data
       await cacheHomeData(updatedHomeData);
 
       Logger.info('. First-time login marked complete locally');
@@ -169,7 +159,6 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
 
       await prefs.setString(_userStatsKey, userStatsJson);
 
-      // Also update the cache timestamp
       await prefs.setString(
         _cacheTimestampKey,
         DateTime.now().toIso8601String(),
@@ -191,7 +180,6 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
 
       final prefs = await SharedPreferences.getInstance();
 
-      // Remove all home-related cache keys
       final keysToRemove = [
         _homeDataKey,
         _userStatsKey,
@@ -253,9 +241,6 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
     }
   }
 
-  // ========================================
-  // Enhanced Emotion-Related Methods
-  // ========================================
 
   @override
   Future<void> cacheEmotionFeed(List<Map<String, dynamic>> emotionFeed) async {
@@ -447,11 +432,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
     }
   }
 
-  // ========================================
-  // Enhanced Helper Methods
-  // ========================================
 
-  /// Check if cached data is stale (older than specified duration)
   Future<bool> isCacheStale({
     Duration maxAge = const Duration(hours: 1),
   }) async {
@@ -459,7 +440,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       final lastCacheTime = await getLastCacheTime();
 
       if (lastCacheTime == null) {
-        return true; // No cache = stale
+return true; 
       }
 
       final age = DateTime.now().difference(lastCacheTime);
@@ -469,11 +450,10 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       return isStale;
     } catch (e) {
       Logger.error('. Error checking cache staleness', e);
-      return true; // Assume stale on error
+return true; 
     }
   }
 
-  /// Check if emotion cache is stale
   Future<bool> isEmotionCacheStale({
     Duration maxAge = const Duration(minutes: 30),
   }) async {
@@ -482,7 +462,7 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       final timestampString = prefs.getString(_emotionCacheTimestampKey);
 
       if (timestampString == null) {
-        return true; // No cache = stale
+return true; 
       }
 
       final lastCacheTime = DateTime.parse(timestampString);
@@ -495,11 +475,10 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       return isStale;
     } catch (e) {
       Logger.error('. Error checking emotion cache staleness', e);
-      return true; // Assume stale on error
+return true; 
     }
   }
 
-  /// Get first-time login status from cache
   Future<bool> getFirstTimeLoginStatus() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -509,11 +488,10 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       return isFirstTime;
     } catch (e) {
       Logger.error('. Error getting first-time login status', e);
-      return true; // Default to first-time on error
+return true; 
     }
   }
 
-  /// Update only the first-time login status
   Future<void> setFirstTimeLoginStatus(bool isFirstTime) async {
     try {
       Logger.info('📱 Setting first-time login status: $isFirstTime');
@@ -530,13 +508,11 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
     }
   }
 
-  /// Get cache size information for debugging
   Future<Map<String, dynamic>> getCacheInfo() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final info = <String, dynamic>{};
 
-      // Check which keys exist
       info['has_home_data'] = prefs.containsKey(_homeDataKey);
       info['has_user_stats'] = prefs.containsKey(_userStatsKey);
       info['has_timestamp'] = prefs.containsKey(_cacheTimestampKey);
@@ -546,7 +522,6 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
       info['has_heatmap_data'] = prefs.containsKey(_heatmapDataKey);
       info['has_last_emotion'] = prefs.containsKey(_lastEmotionKey);
 
-      // Get cache timestamps
       final timestampString = prefs.getString(_cacheTimestampKey);
       if (timestampString != null) {
         info['last_cache_time'] = timestampString;
@@ -563,7 +538,6 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
             .inMinutes;
       }
 
-      // Get first-time status
       info['is_first_time_login'] = prefs.getBool(_firstTimeLoginKey);
 
       Logger.info('📱 Cache info: $info');
@@ -574,7 +548,6 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
     }
   }
 
-  /// Clear only emotion-related cache
   Future<void> clearEmotionCache() async {
     try {
       Logger.info('🎭 Clearing emotion cache...');
@@ -602,13 +575,11 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
     }
   }
 
-  /// Get emotion cache statistics
   Future<Map<String, dynamic>> getEmotionCacheStats() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final stats = <String, dynamic>{};
 
-      // Check emotion feed
       final emotionFeedJson = prefs.getString(_emotionFeedKey);
       if (emotionFeedJson != null) {
         final List<dynamic> emotionFeed = json.decode(emotionFeedJson);
@@ -617,10 +588,8 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         stats['emotion_feed_count'] = 0;
       }
 
-      // Check global stats
       stats['has_global_stats'] = prefs.containsKey(_globalStatsKey);
 
-      // Check heatmap data
       final heatmapJson = prefs.getString(_heatmapDataKey);
       if (heatmapJson != null) {
         final Map<String, dynamic> heatmapData = json.decode(heatmapJson);
@@ -630,10 +599,8 @@ class HomeLocalDataSourceImpl implements HomeLocalDataSource {
         stats['heatmap_locations_count'] = 0;
       }
 
-      // Check last emotion
       stats['has_last_emotion'] = prefs.containsKey(_lastEmotionKey);
 
-      // Get emotion cache age
       final emotionTimestampString = prefs.getString(_emotionCacheTimestampKey);
       if (emotionTimestampString != null) {
         stats['emotion_cache_age_minutes'] = DateTime.now()

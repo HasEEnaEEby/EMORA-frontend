@@ -1,4 +1,3 @@
-// lib/core/services/logout_service.dart - PROFESSIONAL LOGOUT SERVICE
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,23 +10,17 @@ import '../../features/profile/presentation/view_model/profile_bloc.dart';
 import '../../features/profile/presentation/view_model/profile_event.dart';
 import '../utils/dialog_utils.dart';
 
-/// Professional logout service that handles user logout and account deletion
-/// with proper state management, navigation, and user feedback
 class LogoutService {
   static const String _tag = 'LogoutService';
 
-  /// Performs a professional logout with proper cleanup and navigation
   static Future<void> performLogout(BuildContext context) async {
     try {
       Logger.info('🚪 Starting professional logout process...');
 
-      // Show loading dialog
       _showLogoutLoadingDialog(context);
 
-      // Clear all local data first
       await _clearAllLocalData();
 
-      // Handle logout completion
       _handleSuccessfulLogout(context);
 
     } catch (e) {
@@ -36,7 +29,6 @@ class LogoutService {
     }
   }
 
-  /// Performs account deletion with comprehensive cleanup
   static Future<void> performAccountDeletion(
     BuildContext context, {
     required String password,
@@ -45,7 +37,6 @@ class LogoutService {
     try {
       Logger.info('🗑️ Starting account deletion process...');
 
-      // Validate confirmation
       if (confirmation != 'DELETE') {
         DialogUtils.showErrorSnackBar(
           context,
@@ -54,20 +45,14 @@ class LogoutService {
         return;
       }
 
-      // Show deletion loading dialog
       _showDeletionLoadingDialog(context);
 
-      // TODO: Implement account deletion API call
-      // For now, we'll simulate the process
       await Future.delayed(const Duration(seconds: 3));
 
-      // Clear all local data
       await _clearAllLocalData();
 
-      // Navigate to auth choice
       _navigateToAuthChoice(context);
 
-      // Show success message
       DialogUtils.showSuccessSnackBar(
         context,
         'Account deleted successfully. All your data has been permanently removed.',
@@ -81,7 +66,6 @@ class LogoutService {
     }
   }
 
-  /// Shows logout confirmation dialog
   static void showLogoutConfirmation(BuildContext context) {
     showDialog(
       context: context,
@@ -185,7 +169,6 @@ class LogoutService {
     );
   }
 
-  /// Shows account deletion confirmation dialog
   static void showAccountDeletionConfirmation(
     BuildContext context, {
     required Function(String password, String confirmation) onConfirm,
@@ -349,7 +332,6 @@ class LogoutService {
     );
   }
 
-  // Private helper methods
 
   static Widget _buildDeletionItem(String text) {
     return Padding(
@@ -430,45 +412,35 @@ class LogoutService {
   }
 
   static void _handleSuccessfulLogout(BuildContext context) {
-    // Close loading dialog
     Navigator.of(context).pop();
 
-    // Navigate to auth choice
     _navigateToAuthChoice(context);
 
-    // Show success message
     DialogUtils.showSuccessSnackBar(
       context,
       'Successfully signed out',
     );
 
-    // Provide haptic feedback
     HapticFeedback.lightImpact();
 
     Logger.info('. Logout completed successfully');
   }
 
   static void _handleLogoutError(BuildContext context, String message) {
-    // Close loading dialog
     Navigator.of(context).pop();
 
-    // Show error message
     DialogUtils.showErrorSnackBar(context, message);
 
-    // Provide haptic feedback
     HapticFeedback.heavyImpact();
 
     Logger.error('. Logout failed: $message');
   }
 
   static void _handleDeletionError(BuildContext context, String message) {
-    // Close loading dialog
     Navigator.of(context).pop();
 
-    // Show error message
     DialogUtils.showErrorSnackBar(context, message);
 
-    // Provide haptic feedback
     HapticFeedback.heavyImpact();
 
     Logger.error('. Account deletion failed: $message');
@@ -476,21 +448,15 @@ class LogoutService {
 
   static Future<void> _clearAllLocalData() async {
     try {
-      // Call backend logout API
       try {
-        // TODO: Implement backend logout API call
-        // For now, we'll just clear local data
         Logger.info('🔐 Backend logout API call would go here');
       } catch (e) {
         Logger.warning('. Backend logout failed, continuing with local cleanup: $e');
       }
 
-      // Clear shared preferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
 
-      // Clear any cached data
-      // TODO: Implement cache clearing if needed
 
       Logger.info('🧹 All local data cleared successfully');
     } catch (e) {
@@ -499,7 +465,6 @@ class LogoutService {
   }
 
   static void _navigateToAuthChoice(BuildContext context) {
-    // Navigate to auth wrapper to show auth choice
     NavigationService.safeNavigate(
       AppRouter.auth,
       clearStack: true,

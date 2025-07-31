@@ -5,9 +5,6 @@ import 'package:emora_mobile_app/core/use_case/use_case.dart';
 import '../entity/community_entity.dart';
 import '../repository/community_repository.dart';
 
-// ============================================================================
-// GET GLOBAL FEED USE CASE
-// ============================================================================
 class GetGlobalFeedParams {
   final int page;
   final int limit;
@@ -32,9 +29,6 @@ class GetGlobalFeed implements UseCase<List<CommunityPostEntity>, GetGlobalFeedP
   }
 }
 
-// ============================================================================
-// GET FRIENDS FEED USE CASE
-// ============================================================================
 class GetFriendsFeedParams {
   final int page;
   final int limit;
@@ -59,9 +53,6 @@ class GetFriendsFeed implements UseCase<List<CommunityPostEntity>, GetFriendsFee
   }
 }
 
-// ============================================================================
-// REACT TO POST USE CASE
-// ============================================================================
 class ReactToPostParams {
   final String postId;
   final String emoji;
@@ -89,9 +80,6 @@ class ReactToPost implements UseCase<bool, ReactToPostParams> {
   }
 }
 
-// ============================================================================
-// REMOVE REACTION USE CASE
-// ============================================================================
 class RemoveReactionParams {
   final String postId;
 
@@ -109,9 +97,6 @@ class RemoveReaction implements UseCase<bool, RemoveReactionParams> {
   }
 }
 
-// ============================================================================
-// ADD COMMENT USE CASE
-// ============================================================================
 class AddCommentParams {
   final String postId;
   final String message;
@@ -139,9 +124,6 @@ class AddComment implements UseCase<bool, AddCommentParams> {
   }
 }
 
-// ============================================================================
-// GET COMMENTS USE CASE
-// ============================================================================
 class GetCommentsParams {
   final String postId;
   final int page;
@@ -169,9 +151,6 @@ class GetComments implements UseCase<List<CommentEntity>, GetCommentsParams> {
   }
 }
 
-// ============================================================================
-// GET GLOBAL STATS USE CASE
-// ============================================================================
 class GetGlobalStatsParams {
   final String timeRange;
 
@@ -189,9 +168,6 @@ class GetGlobalStats implements UseCase<List<GlobalMoodStatsEntity>, GetGlobalSt
   }
 }
 
-// ============================================================================
-// GET TRENDING POSTS USE CASE
-// ============================================================================
 class GetTrendingPostsParams {
   final int timeRange;
   final int limit;

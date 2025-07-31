@@ -1,4 +1,3 @@
-// lib/features/friends/data/repository/friend_repository_impl.dart
 import 'package:emora_mobile_app/core/errors/failures.dart';
 import 'package:emora_mobile_app/core/errors/exceptions.dart';
 import 'package:emora_mobile_app/core/utils/logger.dart';
@@ -15,9 +14,6 @@ class FriendRepositoryImpl implements FriendRepository {
   FriendRepositoryImpl({required FriendRemoteDataSource remoteDataSource})
       : _remoteDataSource = remoteDataSource;
 
-  // ============================================================================
-  // EXISTING METHODS
-  // ============================================================================
 
   @override
   Future<List<FriendEntity>> getFriendsList({int page = 1, int limit = 20}) async {
@@ -145,7 +141,6 @@ class FriendRepositoryImpl implements FriendRepository {
         
         for (final userData in usersData) {
           try {
-            // Create a FriendEntity with safe defaults for missing fields
             final user = FriendEntity(
               id: userData['id']?.toString() ?? '',
               username: userData['username']?.toString() ?? '',
@@ -153,17 +148,16 @@ class FriendRepositoryImpl implements FriendRepository {
               selectedAvatar: userData['selectedAvatar']?.toString() ?? 'panda',
               location: _parseLocation(userData['location']),
               isOnline: userData['isOnline'] ?? false,
-              lastActiveAt: null, // Not provided in search results
-              friendshipDate: DateTime.now(), // Default for search results
-              status: 'none', // Default for search results
-              mutualFriends: 0, // Default for search results
-              recentMood: null, // Not provided in search results
+lastActiveAt: null, 
+friendshipDate: DateTime.now(), 
+status: 'none', 
+mutualFriends: 0, 
+recentMood: null, 
             );
             users.add(user);
           } catch (e) {
             Logger.warning('⚠️ Repository: Failed to parse user data: $e');
             Logger.warning('⚠️ Repository: User data: $userData');
-            // Continue with next user instead of failing completely
             continue;
           }
         }
@@ -189,7 +183,6 @@ class FriendRepositoryImpl implements FriendRepository {
     }
   }
 
-  // Helper method for parsing location
   String? _parseLocation(dynamic location) {
     if (location == null) return null;
     if (location is String) return location;
@@ -348,9 +341,6 @@ class FriendRepositoryImpl implements FriendRepository {
     }
   }
 
-  // ============================================================================
-  // ENHANCED FRIEND MOOD ACTIVITY METHODS
-  // ============================================================================
 
   @override
   Future<List<FriendMoodEntity>> getFriendMoods({
@@ -510,9 +500,6 @@ class FriendRepositoryImpl implements FriendRepository {
     }
   }
 
-  // ============================================================================
-  // EMOTION STORY SHARING METHODS
-  // ============================================================================
 
   @override
   Future<EmotionStoryEntity> createEmotionStory({

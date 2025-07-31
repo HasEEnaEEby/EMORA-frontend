@@ -25,26 +25,21 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
   late AnimationController _pulseController;
   late AnimationController _breatheController;
 
-  // Logo animations
   late Animation<double> _logoScaleAnimation;
   late Animation<double> _logoOpacityAnimation;
   late Animation<double> _logoRotationAnimation;
   late Animation<Offset> _logoSlideAnimation;
 
-  // Text animations
   late Animation<double> _textSlideAnimation;
   late Animation<double> _textOpacityAnimation;
   late Animation<double> _textScaleAnimation;
 
-  // Background animations
   late Animation<double> _backgroundAnimation;
   late Animation<double> _gradientAnimation;
 
-  // Particle animations
   late Animation<double> _particleAnimation;
   late Animation<double> _particleRotationAnimation;
 
-  // Pulse and breathing effects
   late Animation<double> _pulseAnimation;
   late Animation<double> _breatheAnimation;
 
@@ -56,13 +51,11 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
   }
 
   void _setupAnimations() {
-    // Logo controller - 2.5 seconds
     _logoController = AnimationController(
       duration: const Duration(milliseconds: 2500),
       vsync: this,
     );
 
-    // Enhanced logo animations with more sophisticated curves
     _logoScaleAnimation = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(
         parent: _logoController,
@@ -93,7 +86,6 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
           ),
         );
 
-    // Text controller - 1.8 seconds
     _textController = AnimationController(
       duration: const Duration(milliseconds: 1800),
       vsync: this,
@@ -120,7 +112,6 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
       ),
     );
 
-    // Background controller - 3 seconds
     _backgroundController = AnimationController(
       duration: const Duration(milliseconds: 3000),
       vsync: this,
@@ -140,7 +131,6 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
       ),
     );
 
-    // Particle controller - 4 seconds, repeating
     _particleController = AnimationController(
       duration: const Duration(milliseconds: 4000),
       vsync: this,
@@ -155,7 +145,6 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
           CurvedAnimation(parent: _particleController, curve: Curves.linear),
         );
 
-    // Pulse controller - 1.5 seconds, repeating
     _pulseController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
@@ -165,7 +154,6 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOutSine),
     );
 
-    // Breathe controller - 3 seconds, repeating
     _breatheController = AnimationController(
       duration: const Duration(milliseconds: 3000),
       vsync: this,
@@ -177,30 +165,24 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
   }
 
   void _startAnimations() {
-    // Start background immediately
     _backgroundController.forward();
 
-    // Start logo with slight delay
     Future.delayed(const Duration(milliseconds: 200), () {
       if (mounted) _logoController.forward();
     });
 
-    // Start text after logo starts
     Future.delayed(const Duration(milliseconds: 600), () {
       if (mounted) _textController.forward();
     });
 
-    // Start particles
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) _particleController.repeat();
     });
 
-    // Start pulse effect after logo completes
     Future.delayed(const Duration(milliseconds: 2800), () {
       if (mounted) _pulseController.repeat(reverse: true);
     });
 
-    // Start breathing effect
     Future.delayed(const Duration(milliseconds: 1500), () {
       if (mounted) _breatheController.repeat(reverse: true);
     });
@@ -230,16 +212,12 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
           builder: (context, state) {
             return Stack(
               children: [
-                // Enhanced animated background
                 _buildEnhancedBackground(),
 
-                // Floating particles with rotation
                 _buildEnhancedParticles(),
 
-                // Main content with multiple animations
                 _buildEnhancedMainContent(state),
 
-                // Additional glow effects
                 _buildGlowEffects(),
               ],
             );
@@ -249,9 +227,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
     );
   }
 
-  // . Enhanced navigation handling with user-friendly feedback
   void _handleNavigationState(SplashState state) {
-    // Add delay to ensure smooth animation completion
     Future.delayed(const Duration(milliseconds: 800), () {
       if (!mounted) return;
 
@@ -264,7 +240,6 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
           '🔄 Navigating to auth choice with message: ${state.message}',
         );
 
-        // Show the message first (session expired, etc.)
         if (state.message.isNotEmpty) {
           if (state.isReturningUser) {
             NavigationService.showWarningSnackBar(state.message);
@@ -296,18 +271,15 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
         Logger.error('. Splash error: ${state.message}', state.message);
         NavigationService.showErrorSnackBar('Error: ${state.message}');
 
-        // Smart error fallback based on whether user can retry
         if (state.canRetry) {
           Future.delayed(const Duration(seconds: 2), () {
             if (mounted) {
               Logger.info(
                 '🔄 Error with retry capability - staying on splash for user action',
               );
-              // User can manually retry via button in error state
             }
           });
         } else {
-          // Navigate to onboarding as ultimate fallback if retry is not possible
           Future.delayed(const Duration(seconds: 2), () {
             if (mounted) {
               Logger.info('🔄 Error fallback - navigating to onboarding');
@@ -320,7 +292,6 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
     });
   }
 
-  // . Helper method to show user-friendly navigation feedback
   void _showNavigationFeedback(String message) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -460,22 +431,18 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Enhanced animated logo
           _buildEnhancedLogo(),
 
           const SizedBox(height: 40),
 
-          // Enhanced tagline
           _buildEnhancedTagline(),
 
           const SizedBox(height: 60),
 
-          // Status content with animations
           _buildEnhancedStatusContent(state),
 
           const SizedBox(height: 40),
 
-          // Enhanced bottom branding
           _buildEnhancedBottomBranding(),
         ],
       ),
@@ -525,13 +492,11 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
   }
 
   Widget _buildLogoContent() {
-    // Try to load SVG, fallback to text logo if not available
     try {
       return SvgPicture.asset(
         'assets/images/EmoraLogo.svg',
         width: 320,
         height: 140,
-        // Add error handling for missing SVG
         placeholderBuilder: (context) => _buildTextLogo(),
       );
     } catch (e) {
@@ -763,7 +728,7 @@ class _SplashViewState extends State<SplashView> with TickerProviderStateMixin {
             ),
             const SizedBox(height: 28),
             if (state
-                .canRetry) // Only show retry button if retrying is possible
+.canRetry) 
               Transform.scale(
                 scale: _pulseAnimation.value,
                 child: ElevatedButton(

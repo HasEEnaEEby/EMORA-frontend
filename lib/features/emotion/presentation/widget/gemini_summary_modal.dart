@@ -39,7 +39,6 @@ class GeminiSummaryModal extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
               Row(
                 children: [
                   Container(
@@ -125,7 +124,6 @@ class GeminiSummaryModal extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Summary
                         _buildInsightCard(
                           'Summary',
                           snapshot.data!['summary'],
@@ -135,7 +133,6 @@ class GeminiSummaryModal extends StatelessWidget {
                         
                         SizedBox(height: 16),
                         
-                        // Stats Row
                         Row(
                           children: [
                             Expanded(
@@ -160,7 +157,6 @@ class GeminiSummaryModal extends StatelessWidget {
                         
                         SizedBox(height: 16),
                         
-                        // Trend
                         _buildInsightCard(
                           'Trend',
                           'Emotional trend is ${snapshot.data!['trend']}',
@@ -170,7 +166,6 @@ class GeminiSummaryModal extends StatelessWidget {
                         
                         SizedBox(height: 16),
                         
-                        // Community Sentiment
                         _buildInsightCard(
                           'Community Sentiment',
                           'Overall sentiment is ${snapshot.data!['communitySentiment']}',
@@ -180,7 +175,6 @@ class GeminiSummaryModal extends StatelessWidget {
                         
                         SizedBox(height: 16),
                         
-                        // Top Emotions
                         if (snapshot.data!['topEmotions'] is List && 
                             (snapshot.data!['topEmotions'] as List).isNotEmpty)
                           _buildTopEmotionsCard(snapshot.data!['topEmotions']),

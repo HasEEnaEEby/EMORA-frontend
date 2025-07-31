@@ -1,4 +1,3 @@
-// lib/features/friends/domain/entity/emotion_story_entity.dart
 
 import 'package:emora_mobile_app/features/home/domain/entity/friend_entity.dart';
 
@@ -84,7 +83,7 @@ class EmotionStoryEntity {
 
 class StoryParticipantEntity {
   final FriendEntity user;
-  final String status; // 'invited', 'accepted', 'declined'
+final String status; 
   final DateTime? joinedAt;
 
   StoryParticipantEntity({

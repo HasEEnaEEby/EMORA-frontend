@@ -1,4 +1,3 @@
-// lib/features/home/presentation/widget/insight_cards_grid.dart
 import 'dart:math' as math;
 
 import 'package:emora_mobile_app/features/home/data/model/insights_models.dart';

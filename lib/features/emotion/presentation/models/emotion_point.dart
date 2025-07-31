@@ -7,7 +7,6 @@ class EmotionPoint {
 
   EmotionPoint(this.location, this.emotion, this.intensity);
 
-  // Factory constructor for JSON serialization (optional)
   factory EmotionPoint.fromJson(Map<String, dynamic> json) {
     return EmotionPoint(
       LatLng(json['latitude'], json['longitude']),
@@ -16,7 +15,6 @@ class EmotionPoint {
     );
   }
 
-  // Convert to JSON (optional)
   Map<String, dynamic> toJson() {
     return {
       'latitude': location.latitude,

@@ -22,7 +22,6 @@ class SplashModule {
   static void _initCubit(GetIt sl) {
     Logger.info('🧩 Initializing splash cubit...');
 
-    // Splash Cubit with Auth support
     sl.registerFactory<SplashCubit>(
       () => SplashCubit(
         sharedPreferences: sl<SharedPreferences>(),

@@ -12,7 +12,7 @@ class FriendEntity extends Equatable {
   final bool isOnline;
   final DateTime? lastActiveAt;
   final DateTime friendshipDate;
-  final String status; // 'pending', 'accepted', 'blocked'
+final String status; 
   final int mutualFriends;
   final FriendMoodData? recentMood; 
   final CommunityPostEntity? recentCommunityPost;
@@ -57,7 +57,6 @@ class FriendEntity extends Equatable {
     );
   }
 
-  // Helper methods for safe parsing
   static String? _parseLocation(dynamic location) {
     if (location == null) return null;
     if (location is String) return location;
@@ -148,7 +147,7 @@ class FriendRequestEntity extends Equatable {
   final String selectedAvatar;
   final String? location;
   final DateTime createdAt;
-  final String type; // 'sent', 'received'
+final String type; 
   final int mutualFriends;
 
   const FriendRequestEntity({
@@ -235,7 +234,6 @@ class FriendSuggestionEntity extends Equatable {
     );
   }
 
-  // Helper methods for safe parsing
   static String? _parseLocation(dynamic location) {
     if (location == null) return null;
     if (location is String) return location;

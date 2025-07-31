@@ -1,30 +1,16 @@
-// lib/app/constants/app_strings.dart
 import '../../core/config/app_config.dart';
 
-/// Clean wrapper for all app strings - imports from app_config.dart
-/// This provides organized access to gentle, mindful language throughout the app
 class AppStrings {
-  // ===========================
-  // APP IDENTITY
-  // ===========================
 
-  /// App name
   static const String appName = AppConfig.appName;
 
-  /// App version
   static const String appVersion = AppConfig.appVersion;
 
-  /// App description
   static const String appDescription = AppConfig.appDescription;
 
-  /// App tagline
   static const String appTagline = 'Your mindful emotion companion';
 
-  // ===========================
-  // EMOTIONAL SERENITY MESSAGING
-  // ===========================
 
-  // Welcome & Onboarding
   static const String welcome = 'Welcome';
   static const String welcomeBack = 'Welcome back! 🌸';
   static const String yourSpace = 'Your space to feel, reflect, be';
@@ -34,7 +20,6 @@ class AppStrings {
   static const String reflectionPrompt =
       'Take a moment to check in with yourself';
 
-  // Emotional Check-in
   static const String chooseEmotion = 'Choose what resonates';
   static const String emotionPrompt = 'What\'s in your heart today?';
   static const String intensityQuestion = 'How intense?';
@@ -45,7 +30,6 @@ class AppStrings {
   static const String subtle = 'Subtle';
   static const String intense = 'Intense';
 
-  // Encouragement & Validation
   static const String everyEmotionMatters =
       'Every emotion matters. You\'re doing great by being here';
   static const String emotionsCaptured = 'Feeling captured';
@@ -58,9 +42,6 @@ class AppStrings {
   static const String honorYourFeelings = 'Honor how you feel';
   static const String youreDoingGreat = 'You\'re doing great';
 
-  // ===========================
-  // NAVIGATION
-  // ===========================
 
   static const String navHome = 'Home';
   static const String navMoodAtlas = 'Mood Atlas';
@@ -69,9 +50,6 @@ class AppStrings {
   static const String navVenting = 'Vent';
   static const String navProfile = 'Profile';
 
-  // ===========================
-  // GREETINGS (Time-based)
-  // ===========================
 
   static const String greetingMorning = 'Good Morning';
   static const String greetingAfternoon = 'Good Afternoon';
@@ -79,11 +57,7 @@ class AppStrings {
   static const String greetingNight = 'Good Night';
   static const String greetingGeneral = 'Hello';
 
-  // ===========================
-  // GENTLE ACTIONS
-  // ===========================
 
-  // Primary Actions
   static const String saveFeeling = 'Save This Feeling';
   static const String captureFeeling = 'Capture This Moment';
   static const String skipForNow = 'Skip for now';
@@ -93,7 +67,6 @@ class AppStrings {
   static const String optional = 'Optional';
   static const String yourChoice = 'Your choice';
 
-  // Standard Actions (softened)
   static const String save = 'Save';
   static const String cancel = 'Not now';
   static const String delete = 'Remove';
@@ -107,9 +80,6 @@ class AppStrings {
   static const String close = 'Close';
   static const String ok = 'Okay';
 
-  // ===========================
-  // EMOTION LABELS
-  // ===========================
 
   static const String expressYourself = 'Express Yourself';
   static const String howAreYouFeeling = 'How are you feeling?';
@@ -121,9 +91,6 @@ class AppStrings {
   static const String emotionSaved = 'Emotion saved mindfully';
   static const String thankYouSharing = 'Thank you for sharing';
 
-  // ===========================
-  // MINDFUL MESSAGING
-  // ===========================
 
   static const String safeSpaceTitle = 'Your sanctuary';
   static const String safeSpaceMessage =
@@ -133,7 +100,6 @@ class AppStrings {
   static const String privateThoughts = 'Your private thoughts';
   static const String confidentialSpace = 'This space is just for you';
 
-  // Global Community (Gentle)
   static const String globalEmotions = 'Worldwide Feelings';
   static const String globalCommunity = 'Connected hearts globally';
   static const String emotionsSharedToday = 'emotions shared today';
@@ -141,9 +107,6 @@ class AppStrings {
   static const String connectedSouls = 'Connected to souls worldwide';
   static const String sharedHumanity = 'Part of our shared humanity';
 
-  // ===========================
-  // STATS & PROGRESS (Gentle Language)
-  // ===========================
 
   static const String dayStreak = 'Mindful Days';
   static const String sessions = 'Check-ins';
@@ -153,9 +116,6 @@ class AppStrings {
   static const String growthPath = 'Path of growth';
   static const String selfCareStreak = 'Self-care streak';
 
-  // ===========================
-  // ONBOARDING
-  // ===========================
 
   static const String getStarted = 'Begin Your Journey';
   static const String tellUsAboutYourself = 'Share a bit about yourself';
@@ -164,9 +124,6 @@ class AppStrings {
   static const String setupComplete = 'Your space is ready';
   static const String welcomeToEmora = 'Welcome to your emotional sanctuary';
 
-  // ===========================
-  // GENTLE ERROR MESSAGES
-  // ===========================
 
   static const String errorGeneric =
       'Something didn\'t work. That\'s okay, let\'s try again';
@@ -179,9 +136,6 @@ class AppStrings {
   static const String connectionIssue = 'Connection needs attention';
   static const String tryAgainGently = 'No worries, try again when ready';
 
-  // ===========================
-  // ENCOURAGING SUCCESS MESSAGES
-  // ===========================
 
   static const String successGeneric = 'Beautiful!';
   static const String dataSaved = 'Safely saved';
@@ -194,9 +148,6 @@ class AppStrings {
       AppConfig.registrationSuccessMessage;
   static const String onboardingComplete = AppConfig.onboardingCompleteMessage;
 
-  // ===========================
-  // PLACEHOLDER & FEATURE STATES
-  // ===========================
 
   static const String comingSoon = 'Something beautiful is coming';
   static const String featureNotAvailable =
@@ -204,9 +155,6 @@ class AppStrings {
   static const String inDevelopment = 'Growing with love';
   static const String stayTuned = 'More mindful features coming';
 
-  // ===========================
-  // BREATHING & MINDFULNESS
-  // ===========================
 
   static const String breatheIn = 'Breathe in';
   static const String breatheOut = 'Breathe out';
@@ -217,9 +165,6 @@ class AppStrings {
   static const String pauseReflect = 'Pause and reflect';
   static const String gentleReminder = 'A gentle reminder';
 
-  // ===========================
-  // ACCESSIBILITY & INCLUSION
-  // ===========================
 
   static const String accessibilityHint = 'Tap to select emotion';
   static const String intensitySliderHint = 'Slide to adjust feeling intensity';
@@ -227,9 +172,6 @@ class AppStrings {
   static const String skipOptionHint = 'You can skip this anytime';
   static const String saveButtonHint = 'Save your current feeling';
 
-  // ===========================
-  // TIME & CONTEXT
-  // ===========================
 
   static const String today = 'Today';
   static const String yesterday = 'Yesterday';
@@ -239,9 +181,6 @@ class AppStrings {
   static const String recently = 'Recently';
   static const String earlier = 'Earlier';
 
-  // ===========================
-  // EMOTION DESCRIPTIONS (Gentle & Validating)
-  // ===========================
 
   static const String joyDescription = 'Light and uplifted';
   static const String calmDescription = 'Peaceful and centered';
@@ -253,9 +192,6 @@ class AppStrings {
   static const String excitedDescription = 'Energetic and alive';
   static const String numbDescription = 'Feeling disconnected, we understand';
 
-  // ===========================
-  // SUPPORTIVE PHRASES
-  // ===========================
 
   static const String itsOkayToFeel = 'It\'s okay to feel this way';
   static const String yourEmotionsMatter = 'Your emotions matter';
@@ -263,9 +199,6 @@ class AppStrings {
   static const String oneStepAtATime = 'One step at a time';
   static const String thisTooShallPass = 'This feeling will evolve';
 
-  // ===========================
-  // LOADING & TRANSITIONS
-  // ===========================
 
   static const String connecting = 'Connecting gently...';
   static const String loading = 'Loading with care...';
@@ -274,9 +207,6 @@ class AppStrings {
   static const String oneMoreMoment = 'One more moment...';
   static const String gatheringThoughts = 'Gathering thoughts...';
 
-  // ===========================
-  // TIPS & GUIDANCE
-  // ===========================
 
   static const String dailyTip = 'Daily mindful tip';
   static const String rememberToBreathe = 'Remember to breathe deeply';
@@ -286,9 +216,6 @@ class AppStrings {
       'Take mindful pauses throughout your day';
   static const String gentleProgress = 'Progress is made in gentle steps';
 
-  // ===========================
-  // NOTIFICATION MESSAGES (Gentle)
-  // ===========================
 
   static const String dailyCheckIn = 'How are you feeling today? 🌸';
   static const String gentleReminderNotif =
@@ -297,11 +224,7 @@ class AppStrings {
   static const String breathingSpace = 'Your feelings matter. Take a moment 🌿';
   static const String eveningReflection = 'How was your emotional day? 🌙';
 
-  // ===========================
-  // HELPER METHODS
-  // ===========================
 
-  /// Get time-appropriate greeting
   static String getTimeBasedGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) return greetingMorning;
@@ -310,7 +233,6 @@ class AppStrings {
     return greetingNight;
   }
 
-  /// Get emotion description by name
   static String getEmotionDescription(String emotion) {
     switch (emotion.toLowerCase()) {
       case 'joy':
@@ -336,7 +258,6 @@ class AppStrings {
     }
   }
 
-  /// Get supportive message for emotion
   static String getSupportiveMessage(String emotion) {
     switch (emotion.toLowerCase()) {
       case 'sad':
@@ -364,7 +285,6 @@ class AppStrings {
     }
   }
 
-  /// Get gentle action for emotion
   static String getGentleAction(String emotion) {
     switch (emotion.toLowerCase()) {
       case 'sad':
@@ -388,7 +308,6 @@ class AppStrings {
     }
   }
 
-  /// Get validation message
   static String getValidationMessage() {
     final validations = [
       everyEmotionMatters,
@@ -402,7 +321,6 @@ class AppStrings {
     return validations.first;
   }
 
-  /// Get encouragement message
   static String getEncouragementMessage() {
     final encouragements = [
       gentleWithYourself,
@@ -415,7 +333,6 @@ class AppStrings {
     return encouragements.first;
   }
 
-  /// Get mindful tip
   static String getMindfulTip() {
     final tips = [
       rememberToBreathe,
@@ -428,21 +345,18 @@ class AppStrings {
     return tips.first;
   }
 
-  /// Format emotion entry count
   static String formatEmotionCount(int count) {
     if (count == 0) return 'No emotions logged yet';
     if (count == 1) return '1 emotion captured';
     return '$count emotions captured';
   }
 
-  /// Format streak count
   static String formatStreak(int days) {
     if (days == 0) return 'Start your journey today';
     if (days == 1) return '1 mindful day';
     return '$days mindful days';
   }
 
-  /// Get loading message
   static String getLoadingMessage() {
     final loadingMessages = [
       connecting,

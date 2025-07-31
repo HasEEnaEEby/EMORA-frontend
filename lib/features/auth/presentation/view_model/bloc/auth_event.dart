@@ -7,7 +7,6 @@ abstract class AuthEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Event to check authentication status
 class AuthCheckStatus extends AuthEvent {
   const AuthCheckStatus();
 
@@ -15,7 +14,6 @@ class AuthCheckStatus extends AuthEvent {
   String toString() => 'AuthCheckStatus()';
 }
 
-/// Event to get current user
 class AuthGetCurrentUser extends AuthEvent {
   const AuthGetCurrentUser();
 
@@ -23,7 +21,6 @@ class AuthGetCurrentUser extends AuthEvent {
   String toString() => 'AuthGetCurrentUser()';
 }
 
-/// Event to check username availability
 class AuthCheckUsername extends AuthEvent {
   final String username;
 
@@ -36,7 +33,6 @@ class AuthCheckUsername extends AuthEvent {
   String toString() => 'AuthCheckUsername(username: $username)';
 }
 
-/// Event to login user
 class AuthLogin extends AuthEvent {
   final String username;
   final String password;
@@ -50,7 +46,6 @@ class AuthLogin extends AuthEvent {
   String toString() => 'AuthLogin(username: $username)';
 }
 
-/// SINGLE logout event - removing the duplicate
 class AuthLogout extends AuthEvent {
   const AuthLogout();
 
@@ -58,7 +53,6 @@ class AuthLogout extends AuthEvent {
   String toString() => 'AuthLogout()';
 }
 
-/// Event to register user
 class AuthRegister extends AuthEvent {
   final String username;
   final String email;
@@ -108,7 +102,6 @@ class AuthRegister extends AuthEvent {
   String toString() => 'AuthRegister(username: $username, email: $email)';
 }
 
-/// Event to refresh token
 class AuthRefreshToken extends AuthEvent {
   const AuthRefreshToken();
 

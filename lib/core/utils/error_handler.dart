@@ -1,4 +1,3 @@
-// lib/core/utils/error_handler.dart - Comprehensive Error Handling
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,7 +7,6 @@ import 'app_config.dart';
 class ErrorHandler {
   static const String _tag = 'ErrorHandler';
 
-  // Error types for better categorization
   static const String networkError = 'NETWORK_ERROR';
   static const String serverError = 'SERVER_ERROR';
   static const String authError = 'AUTH_ERROR';
@@ -16,13 +14,11 @@ class ErrorHandler {
   static const String cacheError = 'CACHE_ERROR';
   static const String unknownError = 'UNKNOWN_ERROR';
 
-  // Error severity levels
   static const String severityLow = 'LOW';
   static const String severityMedium = 'MEDIUM';
   static const String severityHigh = 'HIGH';
   static const String severityCritical = 'CRITICAL';
 
-  /// Handles and logs errors with proper categorization
   static void handleError(
     dynamic error,
     String context, {
@@ -45,13 +41,11 @@ class ErrorHandler {
       },
     );
 
-    // Report critical errors to analytics/crash reporting
     if (severity == severityCritical) {
       _reportCriticalError(errorInfo, context, userId);
     }
   }
 
-  /// Extracts structured error information
   static ErrorInfo _extractErrorInfo(dynamic error) {
     if (error is String) {
       return ErrorInfo(
@@ -70,7 +64,6 @@ class ErrorHandler {
     );
   }
 
-  /// Categorizes errors based on content
   static String _categorizeError(String error) {
     final errorLower = error.toLowerCase();
     
@@ -99,7 +92,6 @@ class ErrorHandler {
     }
   }
 
-  /// Extracts user-friendly error message
   static String _extractErrorMessage(dynamic error) {
     if (error is String) {
       return AppConfig.getFriendlyErrorMessage(error);
@@ -107,7 +99,6 @@ class ErrorHandler {
 
     final errorString = error.toString();
     
-    // Handle common error patterns
     if (errorString.contains('Exception:')) {
       return errorString.split('Exception:').last.trim();
     }
@@ -119,7 +110,6 @@ class ErrorHandler {
     return AppConfig.getFriendlyErrorMessage(errorString);
   }
 
-  /// Extracts HTTP status code if available
   static int? _extractStatusCode(dynamic error) {
     try {
       final errorString = error.toString();
@@ -128,18 +118,15 @@ class ErrorHandler {
         return int.tryParse(statusMatch.group(1) ?? '');
       }
     } catch (e) {
-      // Ignore parsing errors
     }
     return null;
   }
 
-  /// Reports critical errors to analytics/crash reporting
   static void _reportCriticalError(
     ErrorInfo errorInfo,
     String context,
     String? userId,
   ) {
-    // TODO: Implement crash reporting integration
     Logger.critical(
       '🚨 Critical error reported: ${errorInfo.message}',
       {
@@ -152,7 +139,6 @@ class ErrorHandler {
     );
   }
 
-  /// Shows user-friendly error dialog
   static Future<void> showErrorDialog(
     BuildContext context,
     String title,
@@ -204,7 +190,6 @@ class ErrorHandler {
     );
   }
 
-  /// Shows error snackbar with retry option
   static void showErrorSnackBar(
     BuildContext context,
     String message, {
@@ -247,7 +232,6 @@ class ErrorHandler {
     );
   }
 
-  /// Handles authentication errors specifically
   static void handleAuthError(
     dynamic error,
     BuildContext context, {
@@ -266,11 +250,9 @@ class ErrorHandler {
       },
     );
 
-    // Handle specific auth error types
     switch (errorInfo.type) {
       case authError:
         if (errorInfo.statusCode == 401) {
-          // Token expired or invalid
           _handleTokenExpired(context, onLogout);
         } else {
           showErrorSnackBar(
@@ -278,7 +260,6 @@ class ErrorHandler {
             'Authentication failed. Please try again.',
             actionText: 'Retry',
             onAction: () {
-              // Trigger re-authentication
               onLogout?.call();
             },
           );
@@ -291,7 +272,6 @@ class ErrorHandler {
           AppConfig.networkErrorMessage,
           actionText: 'Retry',
           onAction: () {
-            // Trigger retry logic
           },
         );
         break;
@@ -302,13 +282,11 @@ class ErrorHandler {
           errorInfo.message,
           actionText: 'Retry',
           onAction: () {
-            // Trigger retry logic
           },
         );
     }
   }
 
-  /// Handles token expiration
   static void _handleTokenExpired(
     BuildContext context,
     VoidCallback? onLogout,
@@ -322,7 +300,6 @@ class ErrorHandler {
     );
   }
 
-  /// Clears error state from storage
   static Future<void> clearErrorState() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -334,7 +311,6 @@ class ErrorHandler {
     }
   }
 
-  /// Records error for analytics
   static Future<void> recordError(
     String errorType,
     String context, {
@@ -362,7 +338,6 @@ class ErrorHandler {
   }
 }
 
-/// Structured error information
 class ErrorInfo {
   final String message;
   final String type;

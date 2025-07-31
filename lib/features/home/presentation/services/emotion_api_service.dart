@@ -7,7 +7,6 @@ class EmotionApiService {
 
   EmotionApiService(this._dioClient);
 
-  /// Get user's emotion history from backend
   Future<List<EmotionEntryModel>> getUserEmotions({
     String? userId,
     int limit = 100,
@@ -81,7 +80,6 @@ class EmotionApiService {
     }
   }
 
-  /// Log a new emotion to the backend
   Future<Map<String, dynamic>> logEmotion({
     required String emotion,
     required int intensity,
@@ -120,7 +118,6 @@ class EmotionApiService {
     }
   }
 
-  /// Get emotion statistics for a user
   Future<Map<String, dynamic>> getUserEmotionStats({
     String? userId,
     String period = '30d',
@@ -146,7 +143,6 @@ class EmotionApiService {
     }
   }
 
-  /// Get emotion constants (types, categories, etc.)
   Future<Map<String, dynamic>> getEmotionConstants() async {
     try {
       Logger.info('. Fetching emotion constants from backend...');
@@ -166,7 +162,6 @@ class EmotionApiService {
     }
   }
 
-  /// Update an existing emotion
   Future<Map<String, dynamic>> updateEmotion({
     required String emotionId,
     String? emotion,
@@ -201,7 +196,6 @@ class EmotionApiService {
     }
   }
 
-  /// Delete an emotion
   Future<bool> deleteEmotion(String emotionId) async {
     try {
       Logger.info('🗑️ Deleting emotion: $emotionId');
@@ -220,14 +214,12 @@ class EmotionApiService {
     }
   }
 
-  /// Get emotion summary for charts and analytics
   Future<Map<String, dynamic>> getEmotionSummary({
     String period = '7d',
   }) async {
     try {
       Logger.info('📈 Fetching emotion summary from backend...');
 
-      // Use the stats endpoint for summary data
       final response = await _dioClient.get(
         '/api/emotions/stats',
         queryParameters: {'period': period},
@@ -246,22 +238,18 @@ class EmotionApiService {
     }
   }
 
-  /// Get weekly emotion insights
   Future<Map<String, dynamic>> getWeeklyInsights() async {
     try {
       Logger.info('. Fetching weekly insights from backend...');
 
-      // Get emotion stats for the last 7 days
       final stats = await getUserEmotionStats(period: '7d');
       
-      // Get recent emotions for detailed analysis
       final recentEmotions = await getUserEmotions(
         limit: 50,
         startDate: DateTime.now().subtract(const Duration(days: 7)),
         endDate: DateTime.now(),
       );
 
-      // Calculate insights from the data
       final insights = _calculateWeeklyInsights(stats, recentEmotions);
 
       Logger.info('. Retrieved weekly insights from backend');
@@ -272,7 +260,6 @@ class EmotionApiService {
     }
   }
 
-  /// Get today's emotion journey
   Future<List<EmotionEntryModel>> getTodaysJourney() async {
     try {
       Logger.info('🌅 Fetching today\'s emotion journey...');
@@ -295,7 +282,6 @@ class EmotionApiService {
     }
   }
 
-  /// Get emotion calendar data for a specific month
   Future<Map<String, List<EmotionEntryModel>>> getEmotionCalendar({
     required DateTime month,
   }) async {
@@ -311,7 +297,6 @@ class EmotionApiService {
         limit: 200,
       );
 
-      // Group emotions by date
       final emotionsByDate = <String, List<EmotionEntryModel>>{};
       
       for (final emotion in emotions) {
@@ -330,7 +315,6 @@ class EmotionApiService {
     }
   }
 
-  /// Check if backend is healthy
   Future<bool> checkBackendHealth() async {
     try {
       final response = await _dioClient.healthCheck();
@@ -341,14 +325,12 @@ class EmotionApiService {
     }
   }
 
-  /// Helper method to calculate weekly insights
   Map<String, dynamic> _calculateWeeklyInsights(
     Map<String, dynamic> stats,
     List<EmotionEntryModel> recentEmotions,
   ) {
     final insights = <String>[];
     
-    // Analyze most common emotion
     final emotionBreakdown = Map<String, int>.from(stats['emotionBreakdown'] ?? {});
     if (emotionBreakdown.isNotEmpty) {
       final mostCommon = emotionBreakdown.entries
@@ -356,7 +338,6 @@ class EmotionApiService {
       insights.add('Your most frequent emotion this week was ${mostCommon.key}');
     }
 
-    // Analyze intensity trends
     final avgIntensity = (stats['averageIntensity'] ?? 0.0).toDouble();
     if (avgIntensity > 4.0) {
       insights.add('You\'ve been experiencing high-intensity emotions this week');
@@ -364,7 +345,6 @@ class EmotionApiService {
       insights.add('Your emotions have been relatively calm this week');
     }
 
-    // Analyze emotional diversity
     final emotionDiversity = stats['emotionDiversity'] ?? 0;
     if (emotionDiversity > 8) {
       insights.add('You\'ve experienced a wide range of emotions this week');
@@ -372,7 +352,6 @@ class EmotionApiService {
       insights.add('Your emotional range has been quite focused this week');
     }
 
-    // Analyze patterns
     if (recentEmotions.isNotEmpty) {
       final positiveCount = recentEmotions.where((e) => 
         ['joy', 'happiness', 'excitement', 'love', 'gratitude', 'contentment', 
